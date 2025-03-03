@@ -1,0 +1,83 @@
+= TODO List for JWT Token Handling Migration
+:toc:
+:toclevels: 3
+:toc-title: Table of Contents
+:sectnums:
+
+== Migration from SmallRye JWT to JJWT
+
+This document outlines the tasks required to migrate from SmallRye JWT to JJWT (https://github.com/jwtk/jjwt).
+
+=== Documentation Tasks
+
+* [ ] Derive requirements and specifications document
+* [ ] Refine requirements and specifications document
+* [ ] Update README.adoc with new implementation details
+* [ ] Update LogMessages.md with any new log messages
+
+=== Code Migration Tasks
+
+* [ ] Replace SmallRye JWT with JJWT (https://github.com/jwtk/jjwt)
+** [ ] Add JJWT dependencies to pom.xml
+** [ ] Remove SmallRye JWT dependencies from pom.xml
+
+=== Interface Preservation
+
+* [ ] Ensure ParsedToken and derived classes remain unchanged
+** [ ] ParsedToken
+** [ ] ParsedAccessToken
+** [ ] ParsedIdToken
+** [ ] ParsedRefreshToken
+* [ ] Maintain TokenFactory interface and functionality
+** [ ] Ensure all public methods continue to work as before
+** [ ] Update internal implementation to use JJWT
+
+=== Implementation Changes
+
+* [ ] Replace JwksAwareTokenParser with a more abstract configuration structure
+** [ ] Design new configuration structure
+** [ ] Implement new configuration structure
+** [ ] Update documentation for new configuration approach
+* [ ] Implement JWKS client if JJWT does not provide one
+** [ ] Research JJWT JWKS capabilities
+** [ ] Design JWKS client if needed
+** [ ] Implement JWKS client with caching and refresh capabilities
+** [ ] Add tests for JWKS client
+
+=== Testing
+
+* [ ] Ensure all existing tests pass with new implementation
+** [ ] JwksAwareTokenParserTest (or its replacement)
+** [ ] ParsedAccessTokenTest
+** [ ] ParsedIdTokenTest
+** [ ] ParsedRefreshTokenTest
+** [ ] ParsedTokenTest
+** [ ] TokenFactoryTest
+** [ ] TokenKeycloakITTest
+* [ ] Add tests for new components
+
+=== Quality Assurance
+
+* [ ] Verify logging follows CUI standards
+* [ ] Run Sonar analysis
+* [ ] Fix any code quality issues
+* [ ] Ensure 80% minimum code coverage
+
+=== Performance Testing
+
+* [ ] Benchmark token parsing performance
+* [ ] Benchmark token validation performance
+* [ ] Compare results with previous implementation
+
+=== Security Review
+
+* [ ] Review JJWT security features
+* [ ] Ensure all security requirements are met
+* [ ] Verify proper key handling and rotation
+* [ ] Check for any security vulnerabilities
+
+=== Final Steps
+
+* [ ] Update version number
+* [ ] Create release notes
+* [ ] Tag release in git
