@@ -1,25 +1,34 @@
-= cui-java-module-template
+= cui-jwt-token-handling
 
 == Status
 
-image:https://github.com/cuioss/cui-java-module-template/actions/workflows/maven.yml/badge.svg[Java CI with Maven,link=https://github.com/cuioss/cui-java-module-template/actions/workflows/maven.yml]
+image:https://github.com/cuioss/cui-jwt-token-handling/actions/workflows/maven.yml/badge.svg[Java CI with Maven,link=https://github.com/cuioss/cui-jwt-token-handling/actions/workflows/maven.yml]
 image:http://img.shields.io/:license-apache-blue.svg[License,link=http://www.apache.org/licenses/LICENSE-2.0.html]
-image:https://maven-badges.herokuapp.com/maven-central/de.cuioss/cui-java-module-template/badge.svg[Maven Central,link=https://maven-badges.herokuapp.com/maven-central/de.cuioss/cui-java-module-template]
+image:https://maven-badges.herokuapp.com/maven-central/de.cuioss/cui-jwt-token-handling/badge.svg[Maven Central,link=https://maven-badges.herokuapp.com/maven-central/de.cuioss/cui-jwt-token-handling]
 
-https://sonarcloud.io/summary/new_code?id=cuioss_cui-java-module-template[image:https://sonarcloud.io/api/project_badges/measure?project=cuioss_cui-java-module-template&metric=alert_status[Quality
+https://sonarcloud.io/summary/new_code?id=cuioss_cui-jwt-token-handling[image:https://sonarcloud.io/api/project_badges/measure?project=cuioss_cui-jwt-token-handling&metric=alert_status[Quality
 Gate Status]]
-image:https://sonarcloud.io/api/project_badges/measure?project=cuioss_cui-java-module-template&metric=ncloc[Lines of Code,link=https://sonarcloud.io/summary/new_code?id=cuioss_cui-java-module-template]
-image:https://sonarcloud.io/api/project_badges/measure?project=cuioss_cui-java-module-template&metric=coverage[Coverage,link=https://sonarcloud.io/summary/new_code?id=cuioss_cui-java-module-template]
+image:https://sonarcloud.io/api/project_badges/measure?project=cuioss_cui-jwt-token-handling&metric=ncloc[Lines of Code,link=https://sonarcloud.io/summary/new_code?id=cuioss_cui-jwt-token-handling]
+image:https://sonarcloud.io/api/project_badges/measure?project=cuioss_cui-jwt-token-handling&metric=coverage[Coverage,link=https://sonarcloud.io/summary/new_code?id=cuioss_cui-jwt-token-handling]
 
 
-https://cuioss.github.io/cui-java-module-template/about.html[Generated Documentation on github-pages]
+https://cuioss.github.io/cui-jwt-token-handling/about.html[Generated Documentation on github-pages]
 
 == What is it?
 
-This is a template repository for creating java-modules for cui-open-source-projects. This incorporates all necessary java-structures, including `pom.xml`, sensible project-documentation, 
-an predefined github pipelines. 
+== What is it?
+A comprehensive framework for handling JWT tokens in multi-issuer environments,
+built on top of `io.smallrye:smallrye-jwt`.
+The module provides robust token parsing, validation,
+and management capabilities with a focus on security and ease of use.
 
-It is meant to be used as copy-paste-template.
+Key features include:
+
+* Multi-issuer support for handling tokens from different identity providers
+* Automatic JWKS (JSON Web Key Set) key management and rotation
+* Type-safe token parsing and validation
+* Role and scope-based authorization support
+* Tested compatibility with Keycloak as identity provider
 
 === Maven Coordinates
 
@@ -27,59 +36,97 @@ It is meant to be used as copy-paste-template.
 ----
     <dependency>
         <groupId>de.cuioss</groupId>
-        <artifactId>cui-java-module-template</artifactId>
+        <artifactId>cui-jwt-token-handling</artifactId>
     </dependency>
 ----
 
-== Customization
+== Core Components
 
-=== Names / Keys
+=== TokenFactory: The Main Entry Point
 
-Create a new Repository by clicking "Use this template"
-Replace all  of `cui-java-module-template` with the new project 'key' / name, e.g. `my-java-module`. Relevant Files are:
+The link:src/main/java/de/cuioss/portal/authentication/token/TokenFactory.java[TokenFactory] serves as the primary entry point for token operations. It provides:
 
-[CAUTION]
-====
-The key must *not* contain spaces. They are used for creating urls as well.
+* Centralized token creation and validation
+* Support for multiple token types (Access, ID, Refresh)
+* Automatic parser selection based on token characteristics
 
-====
+[source, java]
+----
+// Create a factory with multiple token parsers
+TokenFactory factory = TokenFactory.of(parser1, parser2);
 
+// Create and validate tokens
+Optional<ParsedAccessToken> accessToken = factory.createAccessToken(tokenString);
+Optional<ParsedIdToken> idToken = factory.createIdToken(tokenString);
+----
 
-* `README.adoc` -> the badges on top
-* `pom.xml`
-* `SECURITY.adoc`
-* `.github/project.yml`
-* `src/site/site.xml`
-* `src/site/asciidoc/about.adoc`
+=== JwksAwareTokenParser: Secure Token Validation
 
-=== Credentials
+The link:src/main/java/de/cuioss/portal/authentication/token/JwksAwareTokenParser.java[JwksAwareTokenParser] handles secure token validation using JWKS endpoints:
 
-Add the necessary credentials to the project: "Settings" -> "Secrets" -> "Actions", as there are: 
+* Automatic public key retrieval and caching
+* Configurable key refresh intervals
+* TLS support for secure key retrieval
 
-* `GPG_PASSPHRASE` -> Code Signing
-* `GPG_PRIVATE_KEY` -> Code Signing
-* `OSS_SONATYPE_PASSWORD` -> Deploy to maven-central 
-* `OSS_SONATYPE_USERNAME` -> Deploy to maven-central
-* `PAGES_DEPLOY_TOKEN` -> Deploying the result of maven site to https://cuioss.github.io
-* `SONAR_TOKEN` -> Sonar-Cloud
+[source, java]
+----
+// Configure a parser for a specific issuer
+JwksAwareTokenParser parser = JwksAwareTokenParser.builder()
+    .jwksIssuer("https://auth.example.com")
+    .jwksEndpoint("https://auth.example.com/.well-known/jwks.json")
+    .jwksRefreshIntervall(60)
+    .build();
+----
 
-They are picked up in the predefined pipeline-configurations:
+=== Multi-Issuer Support
 
-* `.github/workflows/maven.yml`
-* `.github/workflows/maven-release.yml`
+The module provides robust support for multi-issuer environments through:
 
-Ensure that the actions are authorized correctly: Settings > Actions > General > Workflow permissions >  "Read and write permissions" must be selected *not* "Read repository contents permission"
+* link:src/main/java/de/cuioss/portal/authentication/token/util/MultiIssuerTokenParser.java[MultiIssuerTokenParser]: Manages multiple token parsers
+* Dynamic parser selection based on token issuer
+* Thread-safe token validation
 
-Documentation on how to create a signing key can be found https://github.com/cuioss/cui-parent-pom/blob/master/doc/signing_key.adoc[Documentation at cui-parent-pom] 
+[source, java]
+----
+// Create parsers for different issuers
+JwksAwareTokenParser issuer1Parser = JwksAwareTokenParser.builder()
+    .jwksIssuer("https://issuer1.com")
+    .jwksEndpoint("https://issuer1.com/.well-known/jwks.json")
+    .build();
 
-A sonar token can be derived from https://sonarcloud.io/account/security
+JwksAwareTokenParser issuer2Parser = JwksAwareTokenParser.builder()
+    .jwksIssuer("https://issuer2.com")
+    .jwksEndpoint("https://issuer2.com/.well-known/jwks.json")
+    .build();
 
-=== Further Steps
+// Create a factory supporting both issuers
+TokenFactory multiIssuerFactory = TokenFactory.of(issuer1Parser, issuer2Parser);
+----
 
-* `pom.xml`: Adjust `name` and `description` elements
-* Adjust `module-info` accordingly
-* `pom.xml`: Adjust property `maven.jar.plugin.automatic.module.name` according to your `module-info`
-* `src/site/asciidoc/about.adoc`: Adjust content
-* Review / Enable the elements under 'Security' Tab
-* Review / Add Collaborators
-* Add (link) the resulting maven-documentation: https://github.com/cuioss/cuioss.github.io/edit/main/README.md[github.io-documentation] 
+== Token Types
+
+The module supports three token types, each with specific functionality:
+
+* link:src/main/java/de/cuioss/portal/authentication/token/ParsedAccessToken.java[ParsedAccessToken]: OAuth2 access token with scope and role support
+* link:src/main/java/de/cuioss/portal/authentication/token/ParsedIdToken.java[ParsedIdToken]: OpenID Connect ID token for user identity
+* link:src/main/java/de/cuioss/portal/authentication/token/ParsedRefreshToken.java[ParsedRefreshToken]: OAuth2 refresh token
+
+== Documentation
+
+* link:doc/LogMessages.md[Log Messages]
+
+== Security Considerations
+
+* All token validation is performed using cryptographic signatures
+* Automatic key rotation prevents stale key usage
+* Token size limits prevent memory exhaustion attacks
+* Safe Base64 decoding practices
+* TLS support for secure key retrieval
+
+== Best Practices
+
+1. Always use `TokenFactory` as the main entry point
+2. Configure appropriate key refresh intervals
+3. Use TLS for JWKS endpoints in production
+4. Validate token scopes and roles before granting access
+5. Handle token expiration appropriately

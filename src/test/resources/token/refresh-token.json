@@ -1,0 +1,4 @@
+{
+  "scope": "openid email offline_access",
+  "typ": "Refresh"
+}

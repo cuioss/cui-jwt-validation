@@ -1,0 +1,7 @@
+{
+  "groups": [
+    "reader",
+    "writer",
+    "gambler"
+  ]
+}
