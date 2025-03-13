@@ -1,0 +1,295 @@
+= JWT Token Handling Logging
+:toc:
+:toclevels: 3
+:toc-title: Table of Contents
+:sectnums:
+
+link:../Specification.adoc[Back to Main Specification]
+
+== Overview
+_See Requirement link:../Requirements.adoc#CUI-JWT-7[CUI-JWT-7: Logging Requirements]_
+
+This document provides detailed specifications for the logging implementation in the JWT token handling library.
+
+== Logging Implementation
+
+=== Logger Configuration
+_See Requirement link:../Requirements.adoc#CUI-JWT-7.1[CUI-JWT-7.1: Log Levels]_
+
+The logging implementation follows the CUI logging standards:
+
+1. **Logger Configuration**:
+   * Use `de.cuioss.tools.logging.CuiLogger` with constant name `LOGGER`
+   * Logger must be `private static final`
+   * No log4j, slf4j, System.out, or System.err
+
+Example:
+
+[source,java]
+----
+public class JwtParserImpl implements JwtParser {
+    private static final CuiLogger LOGGER = new CuiLogger(JwtParserImpl.class);
+    
+    // Class implementation...
+}
+----
+
+=== LogRecord Usage
+_See Requirement link:../Requirements.adoc#CUI-JWT-7.2[CUI-JWT-7.2: Log Content]_
+
+The logging implementation follows these rules for LogRecord usage:
+
+1. **LogRecord Usage**:
+   * LogRecord MUST be used for INFO/WARN/ERROR/FATAL in production code
+   * Direct logging is NOT allowed for these levels
+   * LogRecord MUST NOT be used for DEBUG/TRACE levels
+   * All messages must be defined in LogMessages classes
+
+2. **LogRecord Implementation**:
+   * With parameters: Use format method
+     ```java
+     LOGGER.info(INFO.SOME_MESSAGE.format(param1, param2));
+     ```
+   * Without parameters: Use method reference
+     ```java
+     LOGGER.info(INFO.STARTUP_COMPLETE::format);
+     ```
+   * With exceptions (exception first):
+     ```java
+     LOGGER.error(e, ERROR.CANNOT_GENERATE_CODE_CHALLENGE.format());
+     ```
+
+3. **Debug/Trace Direct Logging**:
+   * DEBUG and TRACE levels MUST use direct logging
+   * Always use '%s' for parameter substitution
+   * Exception parameter always first
+     ```java
+     LOGGER.debug("Processing token %s", tokenId);
+     LOGGER.trace(e, "Detailed error info: %s", e.getMessage());
+     ```
+
+=== Message Organization
+_See Requirement link:../Requirements.adoc#CUI-JWT-7.3[CUI-JWT-7.3: Security Events]_
+
+The logging implementation follows these rules for message organization:
+
+1. **Message Organization**:
+   * Aggregate LogRecords in module-specific 'LogMessages'
+   * Create unique module prefix
+   * Store prefix as constant
+   * Message Identifiers:
+     * 001-99: INFO
+     * 100-199: WARN
+     * 200-299: ERROR
+     * 300-399: FATAL
+
+2. **LogMessages Implementation**:
+   * Follow the DSL-Style Nested Constants Pattern
+   * Import category level constant, NOT its members
+
+=== LogMessages Implementation
+
+The JWT token handling library will implement a `JwtTokenLogMessages` class with the following structure:
+
+[source,java]
+----
+package de.cuioss.jwt.token;
+
+import de.cuioss.tools.logging.LogRecord;
+import de.cuioss.tools.logging.LogRecordModel;
+import lombok.experimental.UtilityClass;
+
+@UtilityClass
+public final class JwtTokenLogMessages {
+    public static final String PREFIX = "JwtToken";
+    
+    @UtilityClass
+    public static final class INFO {
+        public static final LogRecord TOKEN_VALIDATED = LogRecordModel.builder()
+                .template("Successfully validated token from issuer '%s'")
+                .prefix(PREFIX)
+                .identifier(1)
+                .build();
+                
+        public static final LogRecord KEYS_REFRESHED = LogRecordModel.builder()
+                .template("Successfully refreshed keys from JWKS endpoint '%s'")
+                .prefix(PREFIX)
+                .identifier(2)
+                .build();
+                
+        public static final LogRecord TOKEN_CREATED = LogRecordModel.builder()
+                .template("Successfully created %s token")
+                .prefix(PREFIX)
+                .identifier(3)
+                .build();
+    }
+    
+    @UtilityClass
+    public static final class WARN {
+        public static final LogRecord TOKEN_EXPIRED = LogRecordModel.builder()
+                .template("Token from issuer '%s' has expired")
+                .prefix(PREFIX)
+                .identifier(100)
+                .build();
+                
+        public static final LogRecord INVALID_SIGNATURE = LogRecordModel.builder()
+                .template("Token has invalid signature")
+                .prefix(PREFIX)
+                .identifier(101)
+                .build();
+                
+        public static final LogRecord KEY_NOT_FOUND = LogRecordModel.builder()
+                .template("Key with ID '%s' not found for issuer '%s'")
+                .prefix(PREFIX)
+                .identifier(102)
+                .build();
+                
+        public static final LogRecord ALGORITHM_NOT_SUPPORTED = LogRecordModel.builder()
+                .template("Algorithm '%s' is not supported")
+                .prefix(PREFIX)
+                .identifier(103)
+                .build();
+                
+        public static final LogRecord MISSING_CLAIM = LogRecordModel.builder()
+                .template("Required claim '%s' is missing")
+                .prefix(PREFIX)
+                .identifier(104)
+                .build();
+                
+        public static final LogRecord ALGORITHM_MISMATCH = LogRecordModel.builder()
+                .template("Key with ID '%s' is not compatible with algorithm '%s'")
+                .prefix(PREFIX)
+                .identifier(105)
+                .build();
+                
+        public static final LogRecord TOKEN_TOO_LARGE = LogRecordModel.builder()
+                .template("Token size (%d bytes) exceeds maximum allowed size (%d bytes)")
+                .prefix(PREFIX)
+                .identifier(106)
+                .build();
+                
+        public static final LogRecord NO_PARSER_FOR_ISSUER = LogRecordModel.builder()
+                .template("No parser found for issuer '%s'")
+                .prefix(PREFIX)
+                .identifier(107)
+                .build();
+                
+        public static final LogRecord UNKNOWN_TOKEN_TYPE = LogRecordModel.builder()
+                .template("Unknown token type: %s")
+                .prefix(PREFIX)
+                .identifier(108)
+                .build();
+    }
+    
+    @UtilityClass
+    public static final class ERROR {
+        public static final LogRecord KEY_RETRIEVAL_FAILED = LogRecordModel.builder()
+                .template("Failed to retrieve keys from JWKS endpoint '%s'")
+                .prefix(PREFIX)
+                .identifier(200)
+                .build();
+                
+        public static final LogRecord TOKEN_VALIDATION_FAILED = LogRecordModel.builder()
+                .template("Token validation failed: %s")
+                .prefix(PREFIX)
+                .identifier(201)
+                .build();
+                
+        public static final LogRecord KEY_REFRESH_FAILED = LogRecordModel.builder()
+                .template("Failed to refresh keys from JWKS endpoint '%s'")
+                .prefix(PREFIX)
+                .identifier(202)
+                .build();
+                
+        public static final LogRecord TOKEN_PARSING_FAILED = LogRecordModel.builder()
+                .template("Token parsing failed: %s")
+                .prefix(PREFIX)
+                .identifier(203)
+                .build();
+                
+        public static final LogRecord CLAIMS_EXTRACTION_FAILED = LogRecordModel.builder()
+                .template("Failed to extract claims: %s")
+                .prefix(PREFIX)
+                .identifier(204)
+                .build();
+                
+        public static final LogRecord CLAIMS_VALIDATION_FAILED = LogRecordModel.builder()
+                .template("Claims validation failed: %s")
+                .prefix(PREFIX)
+                .identifier(205)
+                .build();
+                
+        public static final LogRecord SIGNATURE_VALIDATION_FAILED = LogRecordModel.builder()
+                .template("Signature validation failed: %s")
+                .prefix(PREFIX)
+                .identifier(206)
+                .build();
+                
+        public static final LogRecord HTTP_CLIENT_CREATION_FAILED = LogRecordModel.builder()
+                .template("Failed to create HTTP client: %s")
+                .prefix(PREFIX)
+                .identifier(207)
+                .build();
+                
+        public static final LogRecord TOKEN_CREATION_FAILED = LogRecordModel.builder()
+                .template("Token creation failed: %s")
+                .prefix(PREFIX)
+                .identifier(208)
+                .build();
+    }
+}
+----
+
+=== Security Event Logging
+_See Requirement link:../Requirements.adoc#CUI-JWT-7.3[CUI-JWT-7.3: Security Events]_
+
+The logging implementation will log the following security events:
+
+1. **Token Validation Failures**:
+   * Invalid signatures
+   * Expired tokens
+   * Missing required claims
+   * Algorithm mismatches
+
+2. **Key Rotation Events**:
+   * Key retrieval
+   * Key refresh
+   * Key retrieval failures
+
+3. **Configuration Changes**:
+   * Parser configuration
+   * Algorithm configuration
+   * Issuer configuration
+
+4. **Suspicious Token Usage Patterns**:
+   * Oversized tokens
+   * Unsupported algorithms
+   * Unknown issuers
+
+Example of security event logging:
+
+[source,java]
+----
+// Token validation failure
+try {
+    validateToken(token);
+} catch (SignatureException e) {
+    LOGGER.warn(e, WARN.INVALID_SIGNATURE.format());
+    // Handle exception
+}
+
+// Key rotation event
+try {
+    keyManager.refreshKeys();
+    LOGGER.info(INFO.KEYS_REFRESHED.format(jwksEndpoint));
+} catch (Exception e) {
+    LOGGER.error(e, ERROR.KEY_REFRESH_FAILED.format(jwksEndpoint));
+    // Handle exception
+}
+
+// Suspicious token usage
+if (token.length() > MAX_TOKEN_SIZE) {
+    LOGGER.warn(WARN.TOKEN_TOO_LARGE.format(token.length(), MAX_TOKEN_SIZE));
+    // Handle oversized token
+}
+----

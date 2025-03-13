@@ -1,0 +1,379 @@
+= JWT Token Handling Technical Components
+:toc:
+:toclevels: 3
+:toc-title: Table of Contents
+:sectnums:
+
+link:../Specification.adoc[Back to Main Specification]
+
+== Overview
+_See Requirement link:../Requirements.adoc#CUI-JWT-1[CUI-JWT-1: Token Parsing and Validation]_
+
+This document provides detailed specifications for the technical components of the JWT token handling library.
+
+== Component Specifications
+
+=== TokenFactory
+_See Requirement link:../Requirements.adoc#CUI-JWT-2[CUI-JWT-2: Token Creation and Management]_
+
+The `TokenFactory` is the primary entry point for applications using the library. It provides methods for creating and validating different types of tokens (access, ID, refresh) while handling the complexity of token parsing and validation.
+
+==== Interface Definition
+
+[source,java]
+----
+public interface TokenFactory {
+    Optional<ParsedToken> createToken(String tokenString);
+    Optional<ParsedAccessToken> createAccessToken(String tokenString);
+    Optional<ParsedIdToken> createIdToken(String tokenString);
+    Optional<ParsedRefreshToken> createRefreshToken(String tokenString);
+}
+----
+
+==== Implementation Details
+
+The `TokenFactory` implementation will:
+
+1. Use the `MultiIssuerTokenParser` to parse and validate tokens
+2. Create the appropriate token type based on the token content
+3. Handle exceptions and return empty optionals for invalid tokens
+
+[source,java]
+----
+public class TokenFactoryImpl implements TokenFactory {
+    private static final CuiLogger LOGGER = new CuiLogger(TokenFactoryImpl.class);
+    private final JwtParser tokenParser;
+    
+    @Override
+    public Optional<ParsedToken> createToken(String tokenString) {
+        LOGGER.debug("Creating token from string");
+        
+        try {
+            Optional<Jws<Claims>> jws = tokenParser.parseToken(tokenString);
+            
+            if (jws.isEmpty()) {
+                return Optional.empty();
+            }
+            
+            Claims claims = jws.get().getBody();
+            TokenType tokenType = determineTokenType(claims);
+            
+            switch (tokenType) {
+                case ACCESS:
+                    return Optional.of(new ParsedAccessTokenImpl(jws.get()));
+                case ID:
+                    return Optional.of(new ParsedIdTokenImpl(jws.get()));
+                case REFRESH:
+                    return Optional.of(new ParsedRefreshTokenImpl(jws.get()));
+                default:
+                    LOGGER.warn(WARN.UNKNOWN_TOKEN_TYPE.format(tokenType));
+                    return Optional.empty();
+            }
+        } catch (Exception e) {
+            LOGGER.error(e, ERROR.TOKEN_CREATION_FAILED.format(e.getMessage()));
+            return Optional.empty();
+        }
+    }
+    
+    // Other methods implementation...
+}
+----
+
+=== JwtParser
+_See Requirement link:../Requirements.adoc#CUI-JWT-1.3[CUI-JWT-1.3: Signature Validation]_
+
+The `JwtParser` interface defines the contract for JWT token parsing and validation. It replaces the current `JwksAwareTokenParser` with a more abstract configuration structure.
+
+==== Interface Definition
+
+[source,java]
+----
+public interface JwtParser {
+    Optional<Jws<Claims>> parseToken(String token) throws JwtException;
+    boolean supportsIssuer(String issuer);
+    String getIssuer();
+}
+----
+
+==== Implementation Details
+
+The `JwtParser` implementation will:
+
+1. Parse the token using JJWT library
+2. Validate the token signature using keys from the `KeyManager`
+3. Validate required claims (issuer, expiration, etc.)
+4. Return the parsed token as a `Jws<Claims>` object
+
+[source,java]
+----
+public class JwtParserImpl implements JwtParser {
+    private static final CuiLogger LOGGER = new CuiLogger(JwtParserImpl.class);
+    private final KeyManager keyManager;
+    private final String issuer;
+    
+    @Override
+    public Optional<Jws<Claims>> parseToken(String token) throws JwtException {
+        LOGGER.debug("Parsing token for issuer %s", issuer);
+        
+        try {
+            // Extract key ID from token header
+            String keyId = extractKeyId(token);
+            LOGGER.debug("Extracted key ID: %s", keyId);
+            
+            // Get key from key manager
+            Optional<Key> key = keyManager.getKey(keyId, getAlgorithm(token));
+            
+            if (key.isEmpty()) {
+                LOGGER.warn(WARN.KEY_NOT_FOUND.format(keyId, issuer));
+                return Optional.empty();
+            }
+            
+            // Validate token
+            Jws<Claims> jws = Jwts.parserBuilder()
+                .setSigningKey(key.get())
+                .requireIssuer(issuer)
+                .build()
+                .parseClaimsJws(token);
+                
+            LOGGER.info(INFO.TOKEN_VALIDATED.format(issuer));
+            return Optional.of(jws);
+        } catch (ExpiredJwtException e) {
+            LOGGER.warn(e, WARN.TOKEN_EXPIRED.format(issuer));
+            throw e;
+        } catch (JwtException e) {
+            LOGGER.error(e, ERROR.TOKEN_VALIDATION_FAILED.format(e.getMessage()));
+            throw e;
+        }
+    }
+    
+    @Override
+    public boolean supportsIssuer(String issuer) {
+        return this.issuer.equals(issuer);
+    }
+    
+    @Override
+    public String getIssuer() {
+        return issuer;
+    }
+}
+----
+
+=== MultiIssuerTokenParser
+_See Requirement link:../Requirements.adoc#CUI-JWT-3[CUI-JWT-3: Multi-Issuer Support]_
+
+The `MultiIssuerTokenParser` manages multiple JWT token parsers for different token issuers in a multi-tenant environment. It inspects JWT tokens, determines their issuer, and selects the appropriate parser.
+
+==== Implementation Details
+
+The `MultiIssuerTokenParser` will:
+
+1. Extract the issuer claim from the token without validating the signature
+2. Select the appropriate parser based on the issuer
+3. Delegate token parsing and validation to the selected parser
+
+[source,java]
+----
+public class MultiIssuerTokenParser implements JwtParser {
+    private static final CuiLogger LOGGER = new CuiLogger(MultiIssuerTokenParser.class);
+    private final List<JwtParser> parsers;
+    private final JwtParser defaultParser;
+    
+    @Override
+    public Optional<Jws<Claims>> parseToken(String token) throws JwtException {
+        LOGGER.debug("Parsing token with multi-issuer parser");
+        
+        try {
+            // Extract issuer without validating signature
+            String issuer = extractIssuerWithoutValidation(token);
+            LOGGER.debug("Extracted issuer: %s", issuer);
+            
+            // Find parser for issuer
+            JwtParser parser = findParserForIssuer(issuer);
+            
+            if (parser == null) {
+                LOGGER.warn(WARN.NO_PARSER_FOR_ISSUER.format(issuer));
+                return Optional.empty();
+            }
+            
+            // Delegate to selected parser
+            return parser.parseToken(token);
+        } catch (Exception e) {
+            LOGGER.error(e, ERROR.TOKEN_PARSING_FAILED.format(e.getMessage()));
+            throw new JwtException("Failed to parse token", e);
+        }
+    }
+    
+    private JwtParser findParserForIssuer(String issuer) {
+        return parsers.stream()
+                .filter(parser -> parser.supportsIssuer(issuer))
+                .findFirst()
+                .orElse(defaultParser);
+    }
+    
+    private String extractIssuerWithoutValidation(String token) {
+        // Split token into parts
+        String[] parts = token.split("\\.");
+        if (parts.length != 3) {
+            throw new JwtException("Invalid token format");
+        }
+        
+        // Decode payload
+        String payload = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
+        
+        // Parse payload as JSON
+        try {
+            JsonObject json = Json.createReader(new StringReader(payload)).readObject();
+            return json.getString("iss");
+        } catch (Exception e) {
+            throw new JwtException("Failed to extract issuer", e);
+        }
+    }
+}
+----
+
+=== KeyManager
+_See Requirement link:../Requirements.adoc#CUI-JWT-4[CUI-JWT-4: Key Management]_
+
+The `KeyManager` handles the retrieval, caching, and rotation of cryptographic keys used for token validation.
+
+==== Interface Definition
+
+[source,java]
+----
+public interface KeyManager {
+    Optional<Key> getKey(String keyId, String algorithm);
+    void refreshKeys();
+}
+----
+
+==== Implementation Details
+
+The `KeyManager` implementation will:
+
+1. Fetch keys from JWKS endpoints
+2. Cache keys for performance
+3. Refresh keys periodically
+4. Validate key algorithm compatibility
+
+[source,java]
+----
+public class JwksKeyManager implements KeyManager {
+    private static final CuiLogger LOGGER = new CuiLogger(JwksKeyManager.class);
+    private final JwksClient jwksClient;
+    private final Map<String, Key> keyCache = new ConcurrentHashMap<>();
+    private final long refreshIntervalSeconds;
+    private volatile long lastRefreshTime;
+    
+    @Override
+    public Optional<Key> getKey(String keyId, String algorithm) {
+        LOGGER.debug("Getting key with ID %s for algorithm %s", keyId, algorithm);
+        
+        // Check if refresh is needed
+        if (isRefreshNeeded()) {
+            try {
+                refreshKeys();
+            } catch (Exception e) {
+                LOGGER.error(e, ERROR.KEY_REFRESH_FAILED.format(jwksClient.getEndpointUrl()));
+            }
+        }
+        
+        // Get key from cache
+        Key key = keyCache.get(keyId);
+        if (key == null) {
+            LOGGER.debug("Key not found in cache: %s", keyId);
+            return Optional.empty();
+        }
+        
+        // Verify algorithm matches
+        if (!isAlgorithmCompatible(key, algorithm)) {
+            LOGGER.warn(WARN.ALGORITHM_MISMATCH.format(keyId, algorithm));
+            return Optional.empty();
+        }
+        
+        return Optional.of(key);
+    }
+    
+    @Override
+    public void refreshKeys() {
+        LOGGER.debug("Refreshing keys from JWKS endpoint");
+        
+        try {
+            Map<String, PublicKey> keys = jwksClient.getKeys();
+            
+            // Update cache
+            keyCache.clear();
+            keyCache.putAll(keys);
+            
+            lastRefreshTime = System.currentTimeMillis();
+            LOGGER.info(INFO.KEYS_REFRESHED.format(jwksClient.getEndpointUrl()));
+        } catch (Exception e) {
+            LOGGER.error(e, ERROR.KEY_RETRIEVAL_FAILED.format(jwksClient.getEndpointUrl()));
+            throw new KeyManagementException("Failed to refresh keys", e);
+        }
+    }
+    
+    private boolean isRefreshNeeded() {
+        return System.currentTimeMillis() - lastRefreshTime > refreshIntervalSeconds * 1000;
+    }
+}
+----
+
+=== ParsedToken
+_See Requirement link:../Requirements.adoc#CUI-JWT-1.2[CUI-JWT-1.2: Token Types]_
+
+The `ParsedToken` is an abstract base class for parsed JWT token representations. It provides common functionality for working with JWT tokens.
+
+==== Class Hierarchy
+
+* `ParsedToken` - Base class for all token types
+  * `ParsedAccessToken` - Represents an OAuth 2.0 access token
+  * `ParsedIdToken` - Represents an OpenID Connect ID token
+  * `ParsedRefreshToken` - Represents an OAuth 2.0 refresh token
+
+==== Implementation Details
+
+The `ParsedToken` implementation will:
+
+1. Provide access to common JWT claims
+2. Provide type-specific functionality for different token types
+3. Validate token claims based on token type
+
+[source,java]
+----
+public abstract class ParsedToken {
+    private final Jws<Claims> jws;
+    
+    public String getIssuer() {
+        return jws.getBody().getIssuer();
+    }
+    
+    public String getSubject() {
+        return jws.getBody().getSubject();
+    }
+    
+    public Date getExpirationTime() {
+        return jws.getBody().getExpiration();
+    }
+    
+    public Date getIssuedAt() {
+        return jws.getBody().getIssuedAt();
+    }
+    
+    public List<String> getAudience() {
+        return jws.getBody().getAudience();
+    }
+    
+    public String getTokenId() {
+        return jws.getBody().getId();
+    }
+    
+    public <T> T getClaim(String name, Class<T> clazz) {
+        return jws.getBody().get(name, clazz);
+    }
+    
+    public boolean isExpired() {
+        Date expiration = getExpirationTime();
+        return expiration != null && expiration.before(new Date());
+    }
+}
+----

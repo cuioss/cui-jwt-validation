@@ -1,0 +1,320 @@
+= JWT Token Handling Testing
+:toc:
+:toclevels: 3
+:toc-title: Table of Contents
+:sectnums:
+
+link:../Specification.adoc[Back to Main Specification]
+
+== Overview
+_See Requirement link:../Requirements.adoc#CUI-JWT-5[CUI-JWT-5: Testing Requirements]_
+
+This document provides detailed specifications for testing the JWT token handling library.
+
+== Testing Strategy
+
+=== Unit Testing
+_See Requirement link:../Requirements.adoc#CUI-JWT-5.1[CUI-JWT-5.1: Unit Testing]_
+
+Unit tests will cover:
+
+1. Token parsing and validation
+2. Key management and rotation
+3. Multi-issuer support
+4. Error handling
+5. Edge cases (malformed tokens, expired tokens, etc.)
+
+==== Test Cases
+
+The following test cases will be implemented:
+
+1. **Token Parsing Tests**:
+   * Parse valid token
+   * Parse token with invalid signature
+   * Parse expired token
+   * Parse token with missing claims
+   * Parse token with unsupported algorithm
+
+2. **Key Management Tests**:
+   * Retrieve key by ID
+   * Refresh keys
+   * Handle key rotation
+   * Handle key retrieval failures
+
+3. **Multi-Issuer Tests**:
+   * Parse tokens from different issuers
+   * Handle unknown issuers
+   * Select correct parser based on issuer
+
+4. **Error Handling Tests**:
+   * Handle malformed tokens
+   * Handle network failures
+   * Handle invalid keys
+
+==== Example Test
+
+[source,java]
+----
+@Test
+void shouldParseValidToken() {
+    // Given
+    String token = createValidToken();
+    
+    // When
+    Optional<ParsedToken> result = tokenFactory.createToken(token);
+    
+    // Then
+    assertTrue(result.isPresent());
+    assertEquals("test-subject", result.get().getSubject());
+    assertEquals("test-issuer", result.get().getIssuer());
+}
+
+@Test
+void shouldReturnEmptyForInvalidSignature() {
+    // Given
+    String token = createTokenWithInvalidSignature();
+    
+    // When
+    Optional<ParsedToken> result = tokenFactory.createToken(token);
+    
+    // Then
+    assertFalse(result.isPresent());
+}
+----
+
+=== Integration Testing
+_See Requirement link:../Requirements.adoc#CUI-JWT-5.2[CUI-JWT-5.2: Integration Testing]_
+
+Integration tests will verify compatibility with common identity providers:
+
+1. Keycloak
+2. Auth0
+3. Azure AD
+4. Custom JWKS endpoints
+
+==== Test Cases
+
+The following test cases will be implemented:
+
+1. **Keycloak Integration Tests**:
+   * Parse tokens from Keycloak
+   * Validate tokens against Keycloak JWKS endpoint
+   * Handle Keycloak key rotation
+
+2. **Auth0 Integration Tests**:
+   * Parse tokens from Auth0
+   * Validate tokens against Auth0 JWKS endpoint
+   * Handle Auth0 key rotation
+
+3. **Azure AD Integration Tests**:
+   * Parse tokens from Azure AD
+   * Validate tokens against Azure AD JWKS endpoint
+   * Handle Azure AD key rotation
+
+4. **Custom JWKS Endpoint Tests**:
+   * Parse tokens from custom JWKS endpoint
+   * Validate tokens against custom JWKS endpoint
+   * Handle custom JWKS endpoint key rotation
+
+==== Example Test
+
+[source,java]
+----
+@Test
+void shouldParseKeycloakToken() {
+    // Given
+    String keycloakToken = getKeycloakToken();
+    String jwksEndpoint = "https://keycloak.example.com/auth/realms/master/protocol/openid-connect/certs";
+    
+    // Configure parser with Keycloak JWKS endpoint
+    JwtParser parser = new JwksAwareTokenParserImpl(jwksEndpoint);
+    TokenFactory tokenFactory = new TokenFactoryImpl(parser);
+    
+    // When
+    Optional<ParsedToken> result = tokenFactory.createToken(keycloakToken);
+    
+    // Then
+    assertTrue(result.isPresent());
+    assertEquals("keycloak", result.get().getIssuer());
+}
+----
+
+=== Security Testing
+_See Requirement link:../Requirements.adoc#CUI-JWT-8[CUI-JWT-8: Security Requirements]_
+
+Security tests will include:
+
+1. Token validation bypass tests
+2. Algorithm confusion attack tests
+3. Key disclosure vulnerability tests
+4. Signature verification bypass tests
+5. Token cracking resistance tests
+
+==== Test Cases
+
+The following test cases will be implemented:
+
+1. **Algorithm Confusion Attack Tests**:
+   * Test with "none" algorithm
+   * Test with algorithm switching
+   * Test with symmetric/asymmetric algorithm confusion
+
+2. **Signature Verification Bypass Tests**:
+   * Test with empty signature
+   * Test with modified header
+   * Test with modified payload but valid signature
+
+3. **Key Disclosure Tests**:
+   * Test for key information leakage
+   * Test for private key protection
+
+==== Example Test
+
+[source,java]
+----
+@Test
+void shouldRejectNoneAlgorithm() {
+    // Given
+    String tokenWithNoneAlgorithm = createTokenWithNoneAlgorithm();
+    
+    // When
+    Optional<ParsedToken> result = tokenFactory.createToken(tokenWithNoneAlgorithm);
+    
+    // Then
+    assertFalse(result.isPresent());
+}
+
+@Test
+void shouldRejectAlgorithmSwitching() {
+    // Given
+    String tokenWithSwitchedAlgorithm = createTokenWithSwitchedAlgorithm();
+    
+    // When
+    Optional<ParsedToken> result = tokenFactory.createToken(tokenWithSwitchedAlgorithm);
+    
+    // Then
+    assertFalse(result.isPresent());
+}
+----
+
+=== Performance Testing
+_See Requirement link:../Requirements.adoc#CUI-JWT-5.3[CUI-JWT-5.3: Performance Testing]_
+
+Performance tests will verify:
+
+1. Token parsing performance (at least 1000 tokens per second)
+2. Token validation performance (at least 500 tokens per second)
+3. Key retrieval and caching performance (no more than 100ms overhead per new key)
+
+==== Test Cases
+
+The following test cases will be implemented:
+
+1. **Token Parsing Performance Tests**:
+   * Parse 10,000 tokens and measure throughput
+   * Measure average parsing time per token
+
+2. **Token Validation Performance Tests**:
+   * Validate 10,000 tokens and measure throughput
+   * Measure average validation time per token
+
+3. **Key Retrieval Performance Tests**:
+   * Measure key retrieval time
+   * Measure key caching effectiveness
+
+==== Example Test
+
+[source,java]
+----
+@Test
+void shouldMeetTokenParsingPerformanceRequirements() {
+    // Given
+    int numTokens = 10000;
+    List<String> tokens = createTokens(numTokens);
+    
+    // When
+    long startTime = System.currentTimeMillis();
+    for (String token : tokens) {
+        tokenFactory.createToken(token);
+    }
+    long endTime = System.currentTimeMillis();
+    
+    // Then
+    long durationMs = endTime - startTime;
+    double tokensPerSecond = numTokens / (durationMs / 1000.0);
+    
+    assertTrue(tokensPerSecond >= 1000, 
+        "Token parsing performance should be at least 1000 tokens per second, but was " + tokensPerSecond);
+}
+----
+
+=== Logging Tests
+_See Requirement link:../Requirements.adoc#CUI-JWT-7[CUI-JWT-7: Logging Requirements]_
+
+Logging tests will follow CUI logging test requirements:
+
+1. Use `cui-test-juli-logger` for testing
+2. Use `de.cuioss.test.juli.TestLogLevel` for log levels
+3. Test coverage required for INFO/WARN/ERROR/FATAL logs
+4. Follow LogAsserts guidelines:
+   * First argument must be TestLogLevel
+   * Only assertNoLogMessagePresent needs Logger parameter
+   * Use appropriate assertion methods:
+     * assertLogMessagePresent: Exact match
+     * assertLogMessagePresentContaining: Partial match
+     * assertNoLogMessagePresent: Absence check
+     * assertSingleLogMessagePresent: Single occurrence
+5. Test both successful and error scenarios
+6. Use LogRecord#resolveIdentifierString for message verification
+
+==== Test Cases
+
+The following test cases will be implemented:
+
+1. **Success Scenario Logging Tests**:
+   * Test logging of successful token validation
+   * Test logging of successful key retrieval
+   * Test logging of successful token creation
+
+2. **Error Scenario Logging Tests**:
+   * Test logging of token validation failures
+   * Test logging of key retrieval failures
+   * Test logging of token creation failures
+
+==== Example Test
+
+[source,java]
+----
+@Test
+void shouldLogTokenValidationSuccess() {
+    // Given
+    String issuer = "https://auth.example.com";
+    String tokenString = createValidToken(issuer);
+    
+    // When
+    tokenParser.parseToken(tokenString);
+    
+    // Then
+    LogAsserts.assertLogMessagePresentContaining(
+        TestLogLevel.INFO,
+        JwtTokenLogMessages.INFO.TOKEN_VALIDATED.resolveIdentifierString());
+}
+
+@Test
+void shouldLogKeyRetrievalFailure() {
+    // Given
+    String endpoint = "https://invalid-endpoint.example.com";
+    
+    // When
+    try {
+        keyManager.refreshKeys();
+    } catch (Exception e) {
+        // Expected
+    }
+    
+    // Then
+    LogAsserts.assertLogMessagePresentContaining(
+        TestLogLevel.ERROR,
+        JwtTokenLogMessages.ERROR.KEY_RETRIEVAL_FAILED.resolveIdentifierString());
+}
+----
