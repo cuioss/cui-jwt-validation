@@ -13,7 +13,7 @@
     <name>JWT Token Handling</name>
     <version>1.0.0-SNAPSHOT</version>
     <description>A comprehensive framework for handling JWT tokens in multi-issuer environments, built on top of
-        `io.smallrye:smallrye-jwt`.
+        `io.jsonwebtoken:jjwt`.
         The module provides robust token parsing, validation, and management capabilities
         with a focus on security and ease of use.
     </description>
@@ -53,6 +53,22 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <!-- JJWT dependencies -->
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-api</artifactId>
+                <version>0.11.5</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>0.11.5</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>
+                <version>0.11.5</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
     <dependencies>
@@ -69,16 +85,22 @@
             <groupId>jakarta.json</groupId>
             <artifactId>jakarta.json-api</artifactId>
         </dependency>
+        <!-- JJWT dependencies -->
         <dependency>
-            <groupId>io.smallrye</groupId>
-            <artifactId>smallrye-jwt</artifactId>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <scope>runtime</scope>
         </dependency>
         <!-- Test -->
-        <dependency>
-            <groupId>io.smallrye</groupId>
-            <artifactId>smallrye-jwt-build</artifactId>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>de.cuioss.test</groupId>
             <artifactId>cui-test-mockwebserver-junit5</artifactId>

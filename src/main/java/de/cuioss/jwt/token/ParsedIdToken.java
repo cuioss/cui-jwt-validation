@@ -15,10 +15,9 @@
  */
 package de.cuioss.jwt.token;
 
+import de.cuioss.jwt.token.adapter.JsonWebToken;
 import de.cuioss.tools.logging.CuiLogger;
-import io.smallrye.jwt.auth.principal.JWTParser;
 import lombok.ToString;
-import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import java.util.Optional;
 
@@ -62,7 +61,7 @@ public class ParsedIdToken extends ParsedToken {
      * @return an {@link ParsedIdToken} if given Token can be parsed correctly,
      * otherwise {@link Optional#empty()}
      */
-    public static Optional<ParsedIdToken> fromTokenString(String tokenString, JWTParser tokenParser) {
+    public static Optional<ParsedIdToken> fromTokenString(String tokenString, JwtParser tokenParser) {
         LOGGER.debug("Creating ID token from token string");
         Optional<JsonWebToken> rawToken = jsonWebTokenFrom(tokenString, tokenParser, LOGGER);
         if (rawToken.isEmpty()) {

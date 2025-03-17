@@ -15,14 +15,13 @@
  */
 package de.cuioss.jwt.token;
 
+import de.cuioss.jwt.token.adapter.JsonWebToken;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
-import io.smallrye.jwt.auth.principal.JWTParser;
-import io.smallrye.jwt.auth.principal.ParseException;
+import io.jsonwebtoken.JwtException;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -53,6 +52,10 @@ import static de.cuioss.tools.string.MoreStrings.trimOrNull;
  * <p>
  * Note: The implementation is primarily tested with Keycloak tokens.
  * Some features may be specific to Keycloak's token format.
+ * <p>
+ * See specification: {@code doc/specification/technical-components.adoc#_parsedtoken}
+ * <p>
+ * Implements requirement: {@code CUI-JWT-1.2: Token Types}
  *
  * @author Oliver Wolff
  */
@@ -67,15 +70,15 @@ public abstract class ParsedToken {
         return jsonWebToken.getRawToken();
     }
 
-    protected static Optional<JsonWebToken> jsonWebTokenFrom(String tokenString, JWTParser tokenParser, CuiLogger givenLogger) {
+    protected static Optional<JsonWebToken> jsonWebTokenFrom(String tokenString, JwtParser tokenParser, CuiLogger givenLogger) {
         givenLogger.trace("Parsing token '%s'", tokenString);
         if (MoreStrings.isEmpty(trimOrNull(tokenString))) {
             givenLogger.warn(PortalTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
             return Optional.empty();
         }
         try {
-            return Optional.ofNullable(tokenParser.parse(tokenString));
-        } catch (ParseException e) {
+            return tokenParser.parse(tokenString);
+        } catch (JwtException e) {
             givenLogger.warn(e, PortalTokenLogMessages.WARN.COULD_NOT_PARSE_TOKEN.format(e.getMessage()));
             givenLogger.trace("Offending token '%s'", tokenString);
             return Optional.empty();
@@ -133,7 +136,7 @@ public abstract class ParsedToken {
     public String getIssuer() {
         return jsonWebToken.getIssuer();
     }
-    
+
     /**
      * Returns the "Not Before" time from the token if present.
      * The "nbf" (not before) claim identifies the time before which the JWT must not be accepted for processing.

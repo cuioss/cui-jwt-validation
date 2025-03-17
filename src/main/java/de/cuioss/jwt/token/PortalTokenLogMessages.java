@@ -59,6 +59,41 @@ public final class PortalTokenLogMessages {
                 .template("Unable to parse token due to ParseException: %s")
                 .build();
 
+        public static final LogRecord KEY_NOT_FOUND = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(103)
+                .template("No key found with ID: %s")
+                .build();
+
+        public static final LogRecord ISSUER_MISMATCH = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(104)
+                .template("Token issuer '%s' does not match expected issuer '%s'")
+                .build();
+
+        public static final LogRecord JWKS_FETCH_FAILED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(105)
+                .template("Failed to fetch JWKS: HTTP %s")
+                .build();
+
+        public static final LogRecord JWKS_REFRESH_ERROR = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(106)
+                .template("Error refreshing JWKS: %s")
+                .build();
+
+        public static final LogRecord RSA_KEY_PARSE_FAILED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(107)
+                .template("Failed to parse RSA key with ID %s: %s")
+                .build();
+
+        public static final LogRecord JWKS_JSON_PARSE_FAILED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(108)
+                .template("Failed to parse JWKS JSON: %s")
+                .build();
     }
 
 }

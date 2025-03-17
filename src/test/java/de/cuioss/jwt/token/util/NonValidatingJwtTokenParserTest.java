@@ -33,7 +33,8 @@ import java.util.Base64;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static de.cuioss.jwt.token.TestTokenProducer.*;
+import de.cuioss.jwt.token.test.TestTokenProducer;
+import static de.cuioss.jwt.token.test.TestTokenProducer.*;
 import static de.cuioss.test.juli.LogAsserts.assertLogMessagePresentContaining;
 import static de.cuioss.test.juli.LogAsserts.assertNoLogMessagePresent;
 import static org.junit.jupiter.api.Assertions.assertEquals;

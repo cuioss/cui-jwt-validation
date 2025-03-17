@@ -17,7 +17,6 @@ package de.cuioss.jwt.token.util;
 
 import de.cuioss.jwt.token.JwtParser;
 import de.cuioss.jwt.token.JwksAwareTokenParserImpl;
-import de.cuioss.jwt.token.adapter.JsonWebToken;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
@@ -42,7 +41,7 @@ import java.util.Optional;
  * <p>
  * Usage example:
  * <pre>
- * MultiIssuerTokenParser parser = MultiIssuerTokenParser.builder()
+ * MultiIssuerJwtParser parser = MultiIssuerJwtParser.builder()
  *     .addParser(issuer1Parser)
  *     .addParser(issuer2Parser)
  *     .build();
@@ -52,17 +51,21 @@ import java.util.Optional;
  * <p>
  * The class uses {@link NonValidatingJwtTokenParser} internally for initial token inspection
  * to determine the issuer before selecting the appropriate validating parser.
+ * <p>
+ * See specification: {@code doc/specification/technical-components.adoc#_multiissuertokenparser}
+ * <p>
+ * Implements requirement: {@code CUI-JWT-3: Multi-Issuer Support}
  *
  * @author Oliver Wolff
  */
 @ToString
 @EqualsAndHashCode
-public class MultiIssuerTokenParser {
+public class MultiIssuerJwtParser {
 
-    private static final CuiLogger LOGGER = new CuiLogger(MultiIssuerTokenParser.class);
+    private static final CuiLogger LOGGER = new CuiLogger(MultiIssuerJwtParser.class);
 
     private final Map<String, JwtParser> issuerToParser;
-    private final NonValidatingJwtTokenParser inspectionParser;
+    private final NonValidatingJwtParser inspectionParser;
 
     /**
      * Constructor taking a map of issuer URLs to their corresponding parsers.
@@ -70,14 +73,14 @@ public class MultiIssuerTokenParser {
      * @param issuerToParser Map containing issuer URLs as keys and their corresponding
      *                       {@link JwtParser} instances as values. Must not be null.
      */
-    public MultiIssuerTokenParser(@NonNull Map<String, JwtParser> issuerToParser) {
+    public MultiIssuerJwtParser(@NonNull Map<String, JwtParser> issuerToParser) {
         this.issuerToParser = new HashMap<>(issuerToParser);
-        this.inspectionParser = new NonValidatingJwtTokenParser();
-        LOGGER.debug("Initialized MultiIssuerTokenParser with %s parser(s)", issuerToParser.size());
+        this.inspectionParser = new NonValidatingJwtParser();
+        LOGGER.debug("Initialized MultiIssuerJwtParser with %s parser(s)", issuerToParser.size());
     }
 
     /**
-     * Creates a new builder for {@link MultiIssuerTokenParser}
+     * Creates a new builder for {@link MultiIssuerJwtParser}
      *
      * @return a new {@link Builder} instance
      */
@@ -93,10 +96,7 @@ public class MultiIssuerTokenParser {
      */
     public Optional<String> extractIssuer(@NonNull String token) {
         LOGGER.debug("Extracting issuer from token");
-        var issuer = inspectionParser.unsecured(token)
-                .map(JsonWebToken::getIssuer);
-        LOGGER.debug("Extracted issuer: %s", issuer.orElse("<none>"));
-        return issuer;
+        return inspectionParser.extractIssuer(token);
     }
 
     /**
@@ -127,7 +127,7 @@ public class MultiIssuerTokenParser {
     }
 
     /**
-     * Builder for {@link MultiIssuerTokenParser}
+     * Builder for {@link MultiIssuerJwtParser}
      */
     public static class Builder {
         private final Map<String, JwtParser> issuerToParser = new HashMap<>();
@@ -145,12 +145,12 @@ public class MultiIssuerTokenParser {
         }
 
         /**
-         * Builds the {@link MultiIssuerTokenParser}
+         * Builds the {@link MultiIssuerJwtParser}
          *
-         * @return a new instance of {@link MultiIssuerTokenParser}
+         * @return a new instance of {@link MultiIssuerJwtParser}
          */
-        public MultiIssuerTokenParser build() {
-            return new MultiIssuerTokenParser(issuerToParser);
+        public MultiIssuerJwtParser build() {
+            return new MultiIssuerJwtParser(issuerToParser);
         }
     }
 }

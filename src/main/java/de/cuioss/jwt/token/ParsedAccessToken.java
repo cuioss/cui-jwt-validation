@@ -15,17 +15,16 @@
  */
 package de.cuioss.jwt.token;
 
+import de.cuioss.jwt.token.adapter.Claims;
+import de.cuioss.jwt.token.adapter.JsonWebToken;
 import de.cuioss.tools.collect.MoreCollections;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.Splitter;
-import io.smallrye.jwt.auth.principal.JWTParser;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonString;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.ToString;
-import org.eclipse.microprofile.jwt.Claims;
-import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -62,6 +61,10 @@ import static java.util.stream.Collectors.toSet;
  *     // Token is valid and has required scopes
  * }
  * </pre>
+ * <p>
+ * See specification: {@code doc/specification/technical-components.adoc#_parsedtoken}
+ * <p>
+ * Implements requirement: {@code CUI-JWT-2.2: Access Token Functionality}
  *
  * @author Oliver Wolff
  */
@@ -84,7 +87,7 @@ public class ParsedAccessToken extends ParsedToken {
      * @return an {@link ParsedAccessToken} if given Token can be parsed correctly,
      * {@code Optional#empty()} otherwise.
      */
-    public static Optional<ParsedAccessToken> fromTokenString(String tokenString, @NonNull JWTParser tokenParser) {
+    public static Optional<ParsedAccessToken> fromTokenString(String tokenString, @NonNull JwtParser tokenParser) {
         return fromTokenString(tokenString, null, tokenParser);
     }
 
@@ -95,7 +98,7 @@ public class ParsedAccessToken extends ParsedToken {
      * @return an {@link ParsedAccessToken} if given Token can be parsed correctly,
      * {@code Optional#empty()} otherwise.
      */
-    public static Optional<ParsedAccessToken> fromTokenString(String tokenString, String email, JWTParser tokenParser) {
+    public static Optional<ParsedAccessToken> fromTokenString(String tokenString, String email, JwtParser tokenParser) {
         var rawToken = jsonWebTokenFrom(tokenString, tokenParser, LOGGER);
 
         return rawToken.map(webToken -> new ParsedAccessToken(webToken, email));
@@ -177,19 +180,21 @@ public class ParsedAccessToken extends ParsedToken {
     public Set<String> getRoles() {
         LOGGER.debug("Retrieving roles from token");
         if (!jsonWebToken.containsClaim(CLAIM_NAME_ROLES)) {
-            LOGGER.debug("No roles claim found in token");
+            LOGGER.debug("[DEBUG_LOG] No roles claim found in token, containsClaim returned false");
             return Set.of();
         }
 
         var roles = jsonWebToken.getClaim(CLAIM_NAME_ROLES);
+        LOGGER.debug("[DEBUG_LOG] Roles claim value: %s (type: %s)", roles, roles != null ? roles.getClass().getName() : "null");
+
         if (roles instanceof JsonArray array) {
             var result = array.getValuesAs(JsonString.class).stream()
                     .map(JsonString::getString)
                     .collect(toSet());
-            LOGGER.debug("Found roles in token: %s", result);
+            LOGGER.debug("[DEBUG_LOG] Found roles in token: %s", result);
             return result;
         }
-        LOGGER.debug("Roles claim is not a JSON array");
+        LOGGER.debug("[DEBUG_LOG] Roles claim is not a JSON array");
         return Set.of();
     }
 

@@ -24,6 +24,16 @@ Unit tests will cover:
 4. Error handling
 5. Edge cases (malformed tokens, expired tokens, etc.)
 
+The following test classes implement these unit tests:
+
+* link:../../src/test/java/de/cuioss/jwt/token/JwksAwareTokenParserImplTest.java[JwksAwareTokenParserImplTest.java] - Tests for the JWKS-aware token parser
+* link:../../src/test/java/de/cuioss/jwt/token/ParsedTokenTest.java[ParsedTokenTest.java] - Tests for the ParsedToken base class
+* link:../../src/test/java/de/cuioss/jwt/token/ParsedAccessTokenTest.java[ParsedAccessTokenTest.java] - Tests for the ParsedAccessToken class
+* link:../../src/test/java/de/cuioss/jwt/token/ParsedIdTokenTest.java[ParsedIdTokenTest.java] - Tests for the ParsedIdToken class
+* link:../../src/test/java/de/cuioss/jwt/token/ParsedRefreshTokenTest.java[ParsedRefreshTokenTest.java] - Tests for the ParsedRefreshToken class
+* link:../../src/test/java/de/cuioss/jwt/token/TokenFactoryTest.java[TokenFactoryTest.java] - Tests for the TokenFactory
+* link:../../src/test/java/de/cuioss/jwt/token/jwks/JwksClientTest.java[JwksClientTest.java] - Tests for the JWKS client
+
 ==== Test Cases
 
 The following test cases will be implemented:
@@ -59,10 +69,10 @@ The following test cases will be implemented:
 void shouldParseValidToken() {
     // Given
     String token = createValidToken();
-    
+
     // When
     Optional<ParsedToken> result = tokenFactory.createToken(token);
-    
+
     // Then
     assertTrue(result.isPresent());
     assertEquals("test-subject", result.get().getSubject());
@@ -73,10 +83,10 @@ void shouldParseValidToken() {
 void shouldReturnEmptyForInvalidSignature() {
     // Given
     String token = createTokenWithInvalidSignature();
-    
+
     // When
     Optional<ParsedToken> result = tokenFactory.createToken(token);
-    
+
     // Then
     assertFalse(result.isPresent());
 }
@@ -91,6 +101,10 @@ Integration tests will verify compatibility with common identity providers:
 2. Auth0
 3. Azure AD
 4. Custom JWKS endpoints
+
+The following test class implements integration tests with Keycloak:
+
+* link:../../src/test/java/de/cuioss/jwt/token/TokenKeycloakITTest.java[TokenKeycloakITTest.java] - Integration tests with Keycloak
 
 ==== Test Cases
 
@@ -125,14 +139,14 @@ void shouldParseKeycloakToken() {
     // Given
     String keycloakToken = getKeycloakToken();
     String jwksEndpoint = "https://keycloak.example.com/auth/realms/master/protocol/openid-connect/certs";
-    
+
     // Configure parser with Keycloak JWKS endpoint
     JwtParser parser = new JwksAwareTokenParserImpl(jwksEndpoint);
     TokenFactory tokenFactory = new TokenFactoryImpl(parser);
-    
+
     // When
     Optional<ParsedToken> result = tokenFactory.createToken(keycloakToken);
-    
+
     // Then
     assertTrue(result.isPresent());
     assertEquals("keycloak", result.get().getIssuer());
@@ -176,10 +190,10 @@ The following test cases will be implemented:
 void shouldRejectNoneAlgorithm() {
     // Given
     String tokenWithNoneAlgorithm = createTokenWithNoneAlgorithm();
-    
+
     // When
     Optional<ParsedToken> result = tokenFactory.createToken(tokenWithNoneAlgorithm);
-    
+
     // Then
     assertFalse(result.isPresent());
 }
@@ -188,10 +202,10 @@ void shouldRejectNoneAlgorithm() {
 void shouldRejectAlgorithmSwitching() {
     // Given
     String tokenWithSwitchedAlgorithm = createTokenWithSwitchedAlgorithm();
-    
+
     // When
     Optional<ParsedToken> result = tokenFactory.createToken(tokenWithSwitchedAlgorithm);
-    
+
     // Then
     assertFalse(result.isPresent());
 }
@@ -231,18 +245,18 @@ void shouldMeetTokenParsingPerformanceRequirements() {
     // Given
     int numTokens = 10000;
     List<String> tokens = createTokens(numTokens);
-    
+
     // When
     long startTime = System.currentTimeMillis();
     for (String token : tokens) {
         tokenFactory.createToken(token);
     }
     long endTime = System.currentTimeMillis();
-    
+
     // Then
     long durationMs = endTime - startTime;
     double tokensPerSecond = numTokens / (durationMs / 1000.0);
-    
+
     assertTrue(tokensPerSecond >= 1000, 
         "Token parsing performance should be at least 1000 tokens per second, but was " + tokensPerSecond);
 }
@@ -290,10 +304,10 @@ void shouldLogTokenValidationSuccess() {
     // Given
     String issuer = "https://auth.example.com";
     String tokenString = createValidToken(issuer);
-    
+
     // When
     tokenParser.parseToken(tokenString);
-    
+
     // Then
     LogAsserts.assertLogMessagePresentContaining(
         TestLogLevel.INFO,
@@ -304,14 +318,14 @@ void shouldLogTokenValidationSuccess() {
 void shouldLogKeyRetrievalFailure() {
     // Given
     String endpoint = "https://invalid-endpoint.example.com";
-    
+
     // When
     try {
         keyManager.refreshKeys();
     } catch (Exception e) {
         // Expected
     }
-    
+
     // Then
     LogAsserts.assertLogMessagePresentContaining(
         TestLogLevel.ERROR,

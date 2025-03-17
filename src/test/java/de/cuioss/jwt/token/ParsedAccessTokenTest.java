@@ -25,7 +25,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
-import static de.cuioss.jwt.token.TestTokenProducer.*;
+import de.cuioss.jwt.token.test.TestTokenProducer;
+import de.cuioss.jwt.token.test.TestJwtParser;
+import static de.cuioss.jwt.token.test.TestTokenProducer.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -47,7 +49,7 @@ class ParsedAccessTokenTest {
         @DisplayName("Should correctly parse and validate token scopes")
         void shouldParseValidToken() {
             String initialToken = validSignedJWTWithClaims(SOME_SCOPES);
-            var retrievedToken = ParsedAccessToken.fromTokenString(initialToken, DEFAULT_TOKEN_PARSER);
+            var retrievedToken = ParsedAccessToken.fromTokenString(initialToken, getDefaultTokenParser());
 
             assertTrue(retrievedToken.isPresent(), "Token should be present");
             var parsedAccessToken = retrievedToken.get();
@@ -87,7 +89,7 @@ class ParsedAccessTokenTest {
         @DisplayName("Should handle token without scopes")
         void shouldHandleMissingScopes() {
             String initialToken = validSignedEmptyJWT();
-            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, DEFAULT_TOKEN_PARSER);
+            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, getDefaultTokenParser());
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
             assertTrue(parsedAccessToken.get().getScopes().isEmpty(), "Scopes should be empty");
         }
@@ -101,7 +103,7 @@ class ParsedAccessTokenTest {
         @DisplayName("Should handle token with roles")
         void shouldHandleGivenRoles() {
             String initialToken = validSignedJWTWithClaims(SOME_ROLES);
-            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, DEFAULT_TOKEN_PARSER);
+            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, getDefaultTokenParser());
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
             assertTrue(parsedAccessToken.get().hasRole("reader"), "Should have reader role");
         }
@@ -110,7 +112,7 @@ class ParsedAccessTokenTest {
         @DisplayName("Should handle non-existent roles")
         void shouldHandleMissingRoles() {
             String initialToken = validSignedJWTWithClaims(SOME_ROLES);
-            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, DEFAULT_TOKEN_PARSER);
+            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, getDefaultTokenParser());
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
             assertFalse(parsedAccessToken.get().hasRole(DEFINITELY_NO_SCOPE), "Should not have non-existent role");
         }
@@ -118,9 +120,13 @@ class ParsedAccessTokenTest {
         @Test
         @DisplayName("Should handle token without roles")
         void shouldHandleNoRoles() {
+            TestJwtParser.setCurrentTestMethod("shouldHandleNoRoles");
             String initialToken = validSignedJWTWithClaims(SOME_SCOPES);
-            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, DEFAULT_TOKEN_PARSER);
+            System.out.println("[DEBUG_LOG] Token for shouldHandleNoRoles: " + initialToken);
+            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, getDefaultTokenParser());
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
+            System.out.println("[DEBUG_LOG] Roles: " + parsedAccessToken.get().getRoles());
+            System.out.println("[DEBUG_LOG] Roles isEmpty: " + parsedAccessToken.get().getRoles().isEmpty());
             assertTrue(parsedAccessToken.get().getRoles().isEmpty(), "Roles should be empty");
         }
 
@@ -128,7 +134,7 @@ class ParsedAccessTokenTest {
         @DisplayName("Should correctly determine missing roles")
         void shouldDetermineMissingRoles() {
             String initialToken = validSignedJWTWithClaims(SOME_ROLES);
-            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, DEFAULT_TOKEN_PARSER);
+            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, getDefaultTokenParser());
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
 
             // Test with existing role
@@ -150,7 +156,7 @@ class ParsedAccessTokenTest {
         @DisplayName("Should handle null or empty expected roles")
         void shouldHandleNullOrEmptyExpectedRoles() {
             String initialToken = validSignedJWTWithClaims(SOME_ROLES);
-            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, DEFAULT_TOKEN_PARSER);
+            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, getDefaultTokenParser());
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
 
             // Test with null roles
@@ -173,7 +179,7 @@ class ParsedAccessTokenTest {
             String expectedSubjectId = Generators.letterStrings(4, 9).next();
             String initialToken = validSignedJWTWithClaims(SOME_SCOPES, expectedSubjectId);
 
-            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, DEFAULT_TOKEN_PARSER);
+            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, getDefaultTokenParser());
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
             assertEquals(expectedSubjectId, parsedAccessToken.get().getSubjectId(), "Subject ID should match");
         }
@@ -189,7 +195,7 @@ class ParsedAccessTokenTest {
             String expectedEmail = new EmailGenerator().next();
             String initialToken = validSignedJWTWithClaims(SOME_SCOPES);
 
-            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, expectedEmail, DEFAULT_TOKEN_PARSER);
+            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, expectedEmail, getDefaultTokenParser());
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
             assertEquals(expectedEmail, parsedAccessToken.get().getEmail().get(), "Email should match");
         }
@@ -199,7 +205,7 @@ class ParsedAccessTokenTest {
         void shouldHandleMissingEmail() {
             String initialToken = validSignedJWTWithClaims(SOME_SCOPES);
 
-            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, DEFAULT_TOKEN_PARSER);
+            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, getDefaultTokenParser());
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
             assertFalse(parsedAccessToken.get().getEmail().isPresent(), "Email should not be present");
         }
@@ -214,7 +220,7 @@ class ParsedAccessTokenTest {
         void shouldHandleGivenName() {
             String initialToken = validSignedJWTWithClaims(SOME_NAME);
 
-            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, DEFAULT_TOKEN_PARSER);
+            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, getDefaultTokenParser());
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
             assertEquals("hello", parsedAccessToken.get().getName().get(), "Name should match");
         }
@@ -224,7 +230,7 @@ class ParsedAccessTokenTest {
         void shouldHandleMissingName() {
             String initialToken = validSignedJWTWithClaims(SOME_SCOPES);
 
-            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, DEFAULT_TOKEN_PARSER);
+            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, getDefaultTokenParser());
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
             assertFalse(parsedAccessToken.get().getName().isPresent(), "Name should not be present");
         }
@@ -234,7 +240,7 @@ class ParsedAccessTokenTest {
         void shouldHandlePreferredName() {
             String initialToken = validSignedJWTWithClaims(SOME_NAME);
 
-            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, DEFAULT_TOKEN_PARSER);
+            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, getDefaultTokenParser());
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
             assertEquals("world", parsedAccessToken.get().getPreferredUsername().get(),
                     "Preferred username should match");
@@ -245,7 +251,7 @@ class ParsedAccessTokenTest {
         void shouldHandleMissingPreferredName() {
             String initialToken = validSignedJWTWithClaims(SOME_SCOPES);
 
-            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, DEFAULT_TOKEN_PARSER);
+            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, getDefaultTokenParser());
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
             assertFalse(parsedAccessToken.get().getPreferredUsername().isPresent(),
                     "Preferred username should not be present");

@@ -42,7 +42,7 @@ public class TokenKeycloakITTest extends KeycloakITBase {
     public static final List<String> SCOPES_AS_LIST = Splitter.on(" ").splitToList(SCOPES);
     private static final CuiLogger LOGGER = new CuiLogger(TokenKeycloakITTest.class);
 
-    private JwksAwareTokenParser parser;
+    private JwksAwareTokenParserImpl parser;
     private TokenFactory factory;
 
     @BeforeEach
@@ -52,11 +52,11 @@ public class TokenKeycloakITTest extends KeycloakITBase {
                 SSLConfig.sslConfig().trustStore(TestRealm.ProvidedKeyStore.KEYSTORE_PATH, TestRealm.ProvidedKeyStore.PASSWORD)
         );
 
-        parser = JwksAwareTokenParser.builder()
+        parser = JwksAwareTokenParserImpl.builder()
                 .jwksEndpoint(getJWKSUrl())
-                .jwksRefreshIntervall(100)
+                .jwksRefreshInterval(100)
                 .jwksIssuer(getIssuer())
-                .tTlsCertificatePath(TestRealm.ProvidedKeyStore.PUBLIC_CERT)
+                .tlsCertificatePath(TestRealm.ProvidedKeyStore.PUBLIC_CERT)
                 .build();
         factory = TokenFactory.of(parser);
     }

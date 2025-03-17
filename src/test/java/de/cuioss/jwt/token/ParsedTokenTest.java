@@ -29,10 +29,10 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.OffsetDateTime;
 
-import static de.cuioss.jwt.token.TestTokenProducer.DEFAULT_TOKEN_PARSER;
-import static de.cuioss.jwt.token.TestTokenProducer.SOME_SCOPES;
-import static de.cuioss.jwt.token.TestTokenProducer.validSignedJWTWithClaims;
-import static de.cuioss.jwt.token.TestTokenProducer.validSignedJWTWithNotBefore;
+import de.cuioss.jwt.token.test.TestTokenProducer;
+import static de.cuioss.jwt.token.test.TestTokenProducer.SOME_SCOPES;
+import static de.cuioss.jwt.token.test.TestTokenProducer.validSignedJWTWithClaims;
+import static de.cuioss.jwt.token.test.TestTokenProducer.validSignedJWTWithNotBefore;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -53,7 +53,7 @@ class ParsedTokenTest {
         @DisplayName("Should handle empty or blank token strings")
         void shouldProvideEmptyFallbackOnEmptyInput(String initialTokenString) {
             var jsonWebToken = ParsedToken.jsonWebTokenFrom(initialTokenString,
-                    TestTokenProducer.DEFAULT_TOKEN_PARSER, LOGGER);
+                    TestTokenProducer.getDefaultTokenParser(), LOGGER);
             assertFalse(jsonWebToken.isPresent(), "Token should not be present for empty input");
             LogAsserts.assertSingleLogMessagePresentContaining(TestLogLevel.WARN,
                     PortalTokenLogMessages.WARN.TOKEN_IS_EMPTY.resolveIdentifierString());
@@ -65,7 +65,7 @@ class ParsedTokenTest {
             var initialTokenString = Generators.letterStrings(10, 20).next();
 
             var jsonWebToken = ParsedToken.jsonWebTokenFrom(initialTokenString,
-                    TestTokenProducer.DEFAULT_TOKEN_PARSER, LOGGER);
+                    TestTokenProducer.getDefaultTokenParser(), LOGGER);
 
             assertFalse(jsonWebToken.isPresent(), "Token should not be present for invalid format");
             LogAsserts.assertSingleLogMessagePresentContaining(TestLogLevel.WARN,
@@ -78,7 +78,7 @@ class ParsedTokenTest {
             var initialTokenString = validSignedJWTWithClaims(SOME_SCOPES);
 
             var jsonWebToken = ParsedToken
-                    .jsonWebTokenFrom(initialTokenString, TestTokenProducer.WRONG_ISSUER_TOKEN_PARSER, LOGGER);
+                    .jsonWebTokenFrom(initialTokenString, TestTokenProducer.getWrongIssuerTokenParser(), LOGGER);
 
             assertFalse(jsonWebToken.isPresent(), "Token should not be present for invalid issuer");
             LogAsserts.assertSingleLogMessagePresentContaining(TestLogLevel.WARN,
@@ -92,7 +92,7 @@ class ParsedTokenTest {
 
             var jsonWebToken = ParsedToken
                     .jsonWebTokenFrom(initialTokenString,
-                            TestTokenProducer.WRONG_SIGNATURE_TOKEN_PARSER, LOGGER);
+                            TestTokenProducer.getWrongSignatureTokenParser(), LOGGER);
             assertFalse(jsonWebToken.isPresent(), "Token should not be present for invalid signature");
             LogAsserts.assertSingleLogMessagePresentContaining(TestLogLevel.WARN,
                     PortalTokenLogMessages.WARN.COULD_NOT_PARSE_TOKEN.resolveIdentifierString());
@@ -108,7 +108,7 @@ class ParsedTokenTest {
         void shouldHandleNotExpiredToken() {
             String initialToken = validSignedJWTWithClaims(SOME_SCOPES);
 
-            var token = ParsedAccessToken.fromTokenString(initialToken, DEFAULT_TOKEN_PARSER);
+            var token = ParsedAccessToken.fromTokenString(initialToken, TestTokenProducer.getDefaultTokenParser());
             assertTrue(token.isPresent(), "Token should be present for valid input");
             assertFalse(token.get().isExpired(), "Token should not be expired");
             assertFalse(token.get().willExpireInSeconds(5), "Token should not expire in 5 seconds");
@@ -126,7 +126,7 @@ class ParsedTokenTest {
             // Currently smallrye add nbf claim automatically
             String initialToken = validSignedJWTWithNotBefore(OffsetDateTime.now().toInstant());
 
-            var token = ParsedAccessToken.fromTokenString(initialToken, DEFAULT_TOKEN_PARSER);
+            var token = ParsedAccessToken.fromTokenString(initialToken, TestTokenProducer.getDefaultTokenParser());
             assertTrue(token.isPresent(), "Token should be present for valid input");
 
             // Just verify that the method doesn't throw an exception
@@ -142,7 +142,7 @@ class ParsedTokenTest {
             java.time.Instant notBeforeTime = java.time.Instant.now().minusSeconds(300);
             String initialToken = validSignedJWTWithNotBefore(notBeforeTime);
 
-            var token = ParsedAccessToken.fromTokenString(initialToken, DEFAULT_TOKEN_PARSER);
+            var token = ParsedAccessToken.fromTokenString(initialToken, TestTokenProducer.getDefaultTokenParser());
             assertTrue(token.isPresent(), "Token should be present for nbf in the past");
             var parsedNotBeforeTime = token.get().getNotBeforeTime();
             assertTrue(parsedNotBeforeTime.isPresent(), "Not Before Time should be present");
@@ -158,7 +158,7 @@ class ParsedTokenTest {
             java.time.Instant notBeforeTime = java.time.Instant.now().plusSeconds(30);
             String initialToken = validSignedJWTWithNotBefore(notBeforeTime);
 
-            var token = ParsedAccessToken.fromTokenString(initialToken, DEFAULT_TOKEN_PARSER);
+            var token = ParsedAccessToken.fromTokenString(initialToken, TestTokenProducer.getDefaultTokenParser());
             assertTrue(token.isPresent(), "Token should be present for valid input");
 
             var parsedNotBeforeTime = token.get().getNotBeforeTime();
@@ -176,7 +176,7 @@ class ParsedTokenTest {
             java.time.Instant notBeforeTime = java.time.Instant.now().plusSeconds(300);
             String initialToken = validSignedJWTWithNotBefore(notBeforeTime);
 
-            var token = ParsedAccessToken.fromTokenString(initialToken, DEFAULT_TOKEN_PARSER);
+            var token = ParsedAccessToken.fromTokenString(initialToken, TestTokenProducer.getDefaultTokenParser());
             assertFalse(token.isPresent(), "Token should not be present for valid input");
 
         }

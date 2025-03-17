@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.token;
 
+import de.cuioss.jwt.token.test.TestTokenProducer;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -38,7 +39,7 @@ class ParsedIdTokenTest {
         void shouldHandleValidToken() {
             String initialTokenString = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_ID_TOKEN);
 
-            var parsedIdToken = ParsedIdToken.fromTokenString(initialTokenString, TestTokenProducer.DEFAULT_TOKEN_PARSER);
+            var parsedIdToken = ParsedIdToken.fromTokenString(initialTokenString, TestTokenProducer.getDefaultTokenParser());
 
             assertTrue(parsedIdToken.isPresent(), "Token should be parsed successfully");
             assertEquals(initialTokenString, parsedIdToken.get().getTokenString(), "Token string should match original");
@@ -49,7 +50,7 @@ class ParsedIdTokenTest {
         @Test
         @DisplayName("Should handle invalid token")
         void shouldHandleInvalidToken() {
-            var parsedIdToken = ParsedIdToken.fromTokenString("invalid-token", TestTokenProducer.DEFAULT_TOKEN_PARSER);
+            var parsedIdToken = ParsedIdToken.fromTokenString("invalid-token", TestTokenProducer.getDefaultTokenParser());
             assertFalse(parsedIdToken.isPresent(), "Invalid token should not be parsed");
         }
     }
@@ -63,7 +64,7 @@ class ParsedIdTokenTest {
         void shouldHandleEmail() {
             String initialTokenString = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_ID_TOKEN);
 
-            var parsedIdToken = ParsedIdToken.fromTokenString(initialTokenString, TestTokenProducer.DEFAULT_TOKEN_PARSER);
+            var parsedIdToken = ParsedIdToken.fromTokenString(initialTokenString, TestTokenProducer.getDefaultTokenParser());
             assertTrue(parsedIdToken.isPresent(), "Token should be parsed successfully");
             assertTrue(parsedIdToken.get().getEmail().isPresent(), "Email should be present");
             assertEquals("hello@world.com", parsedIdToken.get().getEmail().get(), "Email should match expected value");

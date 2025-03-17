@@ -34,7 +34,7 @@ package "JWT Token Handling" {
   [TokenFactory] ..> [ParsedToken]
   [MultiIssuerTokenParser] ..|> [JwtParser]
   [JwksAwareTokenParser] ..|> [JwtParser]
-  [NonValidatingJwtTokenParser] ..|> [JwtParser]
+  [NonValidatingJwtParser] ..|> [JwtParser]
   [JwtParser] ..> [KeyManager]
   [KeyManager] ..> [JwksClient]
   [JwksClient] ..> [HttpClient]
@@ -45,7 +45,7 @@ package "JWT Token Handling" {
 === Component Descriptions
 
 ==== TokenFactory
-_See Requirement link:Requirements.adoc#CUI-JWT-2[CUI-JWT-2: Token Creation and Management]_
+_See Requirement link:Requirements.adoc#CUI-JWT-2[CUI-JWT-2: Token Representation]_
 
 The `TokenFactory` is the primary entry point for applications using the library. It provides methods for creating and validating different types of tokens (access, ID, refresh) while handling the complexity of token parsing and validation.
 
@@ -73,11 +73,18 @@ The `KeyManager` handles the retrieval, caching, and rotation of cryptographic k
 For detailed specifications, see link:specification/technical-components.adoc#_keymanager[KeyManager].
 
 ==== JwksClient
-_See Requirement link:Requirements.adoc#CUI-JWT-4.1[CUI-JWT-4.1: JWKS Support]_
+_See Requirement link:Requirements.adoc#CUI-JWT-4.1[CUI-JWT-4.1: JWKS Endpoint Support]_
 
 The `JwksClient` is responsible for fetching and parsing JSON Web Key Sets (JWKS) from remote endpoints.
 
 For detailed specifications, see link:specification/technical-components.adoc#_jwksclient[JwksClient].
+
+==== NonValidatingJwtParser
+_See Requirement link:Requirements.adoc#CUI-JWT-5[CUI-JWT-5: Token Parsing]_
+
+The `NonValidatingJwtParser` is a utility class for inspecting JWT token content without signature validation. It is used for preliminary token analysis to extract claims and metadata before full validation, particularly useful in multi-issuer scenarios.
+
+This component is implemented in link:../src/main/java/de/cuioss/jwt/token/util/NonValidatingJwtParser.java[NonValidatingJwtParser.java].
 
 ==== ParsedToken
 _See Requirement link:Requirements.adoc#CUI-JWT-1.2[CUI-JWT-1.2: Token Types]_

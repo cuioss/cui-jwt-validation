@@ -16,6 +16,7 @@
 package de.cuioss.jwt.token.util;
 
 import de.cuioss.jwt.token.PortalTokenLogMessages;
+import de.cuioss.jwt.token.adapter.JsonWebToken;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
 import de.cuioss.tools.string.Splitter;
@@ -25,7 +26,6 @@ import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
@@ -118,7 +118,7 @@ public class NonValidatingJwtTokenParser {
 
         try {
             JsonObject claims = parsePayload(parts.get(1));
-            return Optional.of(new NotValidatedJsonWebToken(claims));
+            return Optional.of(new NotValidatedJsonWebToken(claims, token));
         } catch (Exception e) {
             LOGGER.debug(e, "Failed to parse token: %s", e.getMessage());
             return Optional.empty();
@@ -143,9 +143,11 @@ public class NonValidatingJwtTokenParser {
      */
     private static class NotValidatedJsonWebToken implements JsonWebToken {
         private final JsonObject claims;
+        private final String rawToken;
 
-        NotValidatedJsonWebToken(JsonObject claims) {
+        NotValidatedJsonWebToken(JsonObject claims, String rawToken) {
             this.claims = claims;
+            this.rawToken = rawToken;
         }
 
         @Override
@@ -173,8 +175,13 @@ public class NonValidatingJwtTokenParser {
         }
 
         @Override
+        public boolean containsClaim(String claimName) {
+            return claims.containsKey(claimName);
+        }
+
+        @Override
         public String getRawToken() {
-            return null; // Not needed for inspection
+            return rawToken;
         }
 
         @Override

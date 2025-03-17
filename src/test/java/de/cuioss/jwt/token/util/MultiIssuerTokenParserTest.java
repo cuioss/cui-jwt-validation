@@ -15,8 +15,8 @@
  */
 package de.cuioss.jwt.token.util;
 
-import de.cuioss.jwt.token.JwksAwareTokenParser;
-import de.cuioss.jwt.token.JwksAwareTokenParserTest;
+import de.cuioss.jwt.token.JwksAwareTokenParserImpl;
+import de.cuioss.jwt.token.JwksAwareTokenParserImplTest;
 import de.cuioss.test.juli.TestLogLevel;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import de.cuioss.tools.logging.CuiLogger;
@@ -27,7 +27,8 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-import static de.cuioss.jwt.token.TestTokenProducer.*;
+import de.cuioss.jwt.token.test.TestTokenProducer;
+import static de.cuioss.jwt.token.test.TestTokenProducer.*;
 import static de.cuioss.test.juli.LogAsserts.assertLogMessagePresentContaining;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -41,25 +42,25 @@ class MultiIssuerTokenParserTest {
     private static final String UNKNOWN_ISSUER = "unknown-issuer";
     private static final String INVALID_TOKEN = "invalid-token";
 
-    private MultiIssuerTokenParser multiIssuerParser;
-    private JwksAwareTokenParser defaultParser;
-    private JwksAwareTokenParser otherParser;
+    private MultiIssuerJwtParser multiIssuerParser;
+    private JwksAwareTokenParserImpl defaultParser;
+    private JwksAwareTokenParserImpl otherParser;
 
     @BeforeEach
     void setUp() throws IOException {
-        defaultParser = JwksAwareTokenParserTest.getValidJWKSParserWithLocalJWKS();
-        otherParser = JwksAwareTokenParserTest.getInvalidValidJWKSParserWithLocalJWKSAndWrongIssuer();
+        defaultParser = JwksAwareTokenParserImplTest.getValidJWKSParserWithLocalJWKS();
+        otherParser = JwksAwareTokenParserImplTest.getInvalidValidJWKSParserWithLocalJWKSAndWrongIssuer();
 
-        multiIssuerParser = MultiIssuerTokenParser.builder()
+        multiIssuerParser = MultiIssuerJwtParser.builder()
                 .addParser(defaultParser)
                 .addParser(otherParser)
                 .build();
-        LOGGER.info("Initialized MultiIssuerTokenParser with default and other parser");
+        LOGGER.info("Initialized MultiIssuerJwtParser with default and other parser");
     }
 
     @Nested
     @DisplayName("Issuer Extraction Tests")
-    @EnableTestLogger(debug = MultiIssuerTokenParser.class)
+    @EnableTestLogger(debug = MultiIssuerJwtParser.class)
     class IssuerExtractionTests {
 
         @Test
@@ -86,7 +87,7 @@ class MultiIssuerTokenParserTest {
 
     @Nested
     @DisplayName("Parser Retrieval Tests")
-    @EnableTestLogger(debug = MultiIssuerTokenParser.class)
+    @EnableTestLogger(debug = MultiIssuerJwtParser.class)
     class ParserRetrievalTests {
 
         @Test

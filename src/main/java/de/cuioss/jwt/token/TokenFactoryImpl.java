@@ -39,19 +39,23 @@ import java.util.Optional;
  * <p>
  * Usage example:
  * <pre>
- * TokenFactory factory = TokenFactory.of(parser1, parser2);
+ * TokenFactoryImpl factory = TokenFactoryImpl.of(parser1, parser2);
  * Optional&lt;ParsedAccessToken&gt; token = factory.createAccessToken(tokenString);
  * </pre>
  * <p>
  * The factory uses {@link MultiIssuerJwtParser} internally to manage multiple token parsers
  * and select the appropriate one based on the token's issuer and format.
+ * <p>
+ * See specification: {@code doc/specification/technical-components.adoc#_tokenfactory}
+ * <p>
+ * Implements requirement: {@code CUI-JWT-2: Token Representation}
  *
  * @author Oliver Wolff
  */
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-public class TokenFactory {
+public class TokenFactoryImpl {
 
-    private static final CuiLogger LOGGER = new CuiLogger(TokenFactory.class);
+    private static final CuiLogger LOGGER = new CuiLogger(TokenFactoryImpl.class);
 
     private final MultiIssuerJwtParser tokenParser;
 
@@ -59,16 +63,16 @@ public class TokenFactory {
      * Creates a new token factory using the given parser.
      *
      * @param tokenParser The parser to use for token validation, must not be null
-     * @return A new TokenFactory instance
+     * @return A new TokenFactoryImpl instance
      */
-    public static TokenFactory of(@NonNull JwksAwareTokenParserImpl... tokenParser) {
+    public static TokenFactoryImpl of(@NonNull JwksAwareTokenParserImpl... tokenParser) {
         Preconditions.checkArgument(tokenParser.length > 0, "tokenParser must be set");
         var builder = MultiIssuerJwtParser.builder();
         for (JwksAwareTokenParserImpl parser : tokenParser) {
             builder.addParser(parser);
         }
-        var factory = new TokenFactory(builder.build());
-        LOGGER.debug("Created TokenFactory with %s parser(s)", tokenParser.length);
+        var factory = new TokenFactoryImpl(builder.build());
+        LOGGER.debug("Created TokenFactoryImpl with %s parser(s)", tokenParser.length);
         return factory;
     }
 
