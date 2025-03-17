@@ -58,6 +58,11 @@ import java.util.Optional;
  *     // Use issuer to select appropriate validator
  * });
  * </pre>
+ * <p>
+ * TODO: Consider merging with {@link NonValidatingJwtTokenParser} in the future.
+ * Both classes serve similar purposes but with different implementations.
+ * NonValidatingJwtParser is focused on extracting the issuer, while
+ * NonValidatingJwtTokenParser provides a more complete representation of the token.
  *
  * @author Oliver Wolff
  */
