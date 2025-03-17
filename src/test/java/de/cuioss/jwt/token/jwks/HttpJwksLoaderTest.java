@@ -36,7 +36,6 @@ import org.junit.jupiter.api.Test;
 
 import java.security.Key;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import static jakarta.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 import static jakarta.servlet.http.HttpServletResponse.SC_OK;
@@ -230,6 +229,21 @@ class HttpJwksLoaderTest implements MockWebServerHolder {
 
         // Then
         assertTrue(key.isPresent(), "First key should be present");
+    }
+
+    @Test
+    @DisplayName("Should return correct keySet")
+    void shouldReturnCorrectKeySet() {
+        // Given
+        // The loader is already initialized with a valid JWKS endpoint in setUp()
+
+        // When
+        var keySet = httpJwksLoader.keySet();
+
+        // Then
+        assertFalse(keySet.isEmpty(), "KeySet should not be empty");
+        assertTrue(keySet.contains(TEST_KID), "KeySet should contain the test key ID");
+        assertEquals(1, keySet.size(), "KeySet should contain exactly one key");
     }
 
     @Test

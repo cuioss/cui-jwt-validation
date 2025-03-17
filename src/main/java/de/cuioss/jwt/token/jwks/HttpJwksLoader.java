@@ -29,7 +29,7 @@ import java.security.Key;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
-
+import java.util.Set;
 import javax.net.ssl.SSLContext;
 
 import static de.cuioss.jwt.token.PortalTokenLogMessages.WARN;
@@ -189,6 +189,11 @@ public class HttpJwksLoader extends AbstractJwksLoader {
         // Get the key from the cache's internal map
         Map<String, Key> keys = keyCache.asMap();
         return keys.get(kid);
+    }
+
+    @Override
+    public Set<String> keySet() {
+        return keyCache.asMap().keySet();
     }
 
 }

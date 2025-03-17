@@ -26,6 +26,7 @@ import java.nio.file.Paths;
 import java.security.Key;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -99,6 +100,11 @@ public class FileJwksLoader extends AbstractJwksLoader {
         } catch (IOException e) {
             LOGGER.warn(e, "Failed to read JWKS from file: %s", jwksPath);
         }
+    }
+
+    @Override
+    public Set<String> keySet() {
+        return keyMap.keySet();
     }
 
 }

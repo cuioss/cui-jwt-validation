@@ -23,8 +23,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.security.Key;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -64,6 +66,11 @@ class AbstractJwksLoaderTest {
         public Map<String, Key> testParseJwks(String jwksContent) {
             keys = parseJwks(jwksContent);
             return keys;
+        }
+
+        @Override
+        public Set<String> keySet() {
+            return keys != null ? keys.keySet() : Collections.emptySet();
         }
     }
 

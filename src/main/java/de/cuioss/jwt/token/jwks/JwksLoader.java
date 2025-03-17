@@ -17,6 +17,7 @@ package de.cuioss.jwt.token.jwks;
 
 import java.security.Key;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Interface for loading JSON Web Keys (JWK) from a JWKS source.
@@ -46,5 +47,12 @@ public interface JwksLoader {
      * Refreshes the keys from the JWKS source.
      */
     void refreshKeys();
+
+    /**
+     * Gets the set of all available key IDs.
+     *
+     * @return a Set containing all available key IDs
+     */
+    Set<String> keySet();
 
 }

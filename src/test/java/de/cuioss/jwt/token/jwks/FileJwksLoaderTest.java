@@ -31,6 +31,7 @@ import java.nio.file.Path;
 import java.security.Key;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -179,5 +180,20 @@ class FileJwksLoaderTest {
 
         Optional<Key> newKey = fileJwksLoader.getKey("updated-key-id");
         assertTrue(newKey.isPresent(), "New key should be present");
+    }
+
+    @Test
+    @DisplayName("Should return correct keySet")
+    void shouldReturnCorrectKeySet() {
+        // Given
+        // The loader is already initialized with a valid JWKS file in setUp()
+
+        // When
+        var keySet = fileJwksLoader.keySet();
+
+        // Then
+        assertFalse(keySet.isEmpty(), "KeySet should not be empty");
+        assertTrue(keySet.contains(TEST_KID), "KeySet should contain the test key ID");
+        assertEquals(1, keySet.size(), "KeySet should contain exactly one key");
     }
 }

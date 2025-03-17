@@ -43,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Simple benchmark test for JwksClient performance.
  * This is not a comprehensive benchmark, but provides basic performance metrics.
  */
-@EnableTestLogger(debug = JwksClient.class)
+@EnableTestLogger(debug = JwksClientFactory.class)
 @DisplayName("Benchmarks JwksClient performance")
 @EnableMockWebServer
 public class JwksClientBenchmarkTest implements MockWebServerHolder {
@@ -58,7 +58,7 @@ public class JwksClientBenchmarkTest implements MockWebServerHolder {
     @Setter
     private MockWebServer mockWebServer;
 
-    private JwksClient jwksClient;
+    private JwksLoader jwksLoader;
     private String jwksEndpoint;
     private JwksTestDispatcher jwksDispatcher;
 
@@ -74,7 +74,7 @@ public class JwksClientBenchmarkTest implements MockWebServerHolder {
         int port = mockWebServer.getPort();
         jwksEndpoint = "http://localhost:" + port + JWKS_PATH;
         jwksDispatcher = testDispatcher;
-        jwksClient = new JwksClient(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
+        jwksLoader = JwksClientFactory.createHttpLoader(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
     }
 
     @AfterEach
@@ -87,13 +87,13 @@ public class JwksClientBenchmarkTest implements MockWebServerHolder {
     void benchmarkKeyRetrieval() {
         // Warm up
         for (int i = 0; i < WARMUP_ITERATIONS; i++) {
-            jwksClient.getKey(TEST_KID);
+            jwksLoader.getKey(TEST_KID);
         }
 
         // Benchmark
         long startTime = System.nanoTime();
         for (int i = 0; i < BENCHMARK_ITERATIONS; i++) {
-            Optional<Key> key = jwksClient.getKey(TEST_KID);
+            Optional<Key> key = jwksLoader.getKey(TEST_KID);
             assertTrue(key.isPresent(), "Key should be present");
         }
         long endTime = System.nanoTime();
@@ -113,13 +113,13 @@ public class JwksClientBenchmarkTest implements MockWebServerHolder {
     void benchmarkKeyRefresh() {
         // Warm up
         for (int i = 0; i < WARMUP_ITERATIONS; i++) {
-            jwksClient.refreshKeys();
+            jwksLoader.refreshKeys();
         }
 
         // Benchmark
         long startTime = System.nanoTime();
         for (int i = 0; i < BENCHMARK_ITERATIONS; i++) {
-            jwksClient.refreshKeys();
+            jwksLoader.refreshKeys();
         }
         long endTime = System.nanoTime();
 

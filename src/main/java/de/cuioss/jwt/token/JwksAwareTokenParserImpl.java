@@ -17,7 +17,8 @@ package de.cuioss.jwt.token;
 
 import de.cuioss.jwt.token.adapter.JsonWebToken;
 import de.cuioss.jwt.token.adapter.JwtAdapter;
-import de.cuioss.jwt.token.jwks.JwksClient;
+import de.cuioss.jwt.token.jwks.JwksClientFactory;
+import de.cuioss.jwt.token.jwks.JwksLoader;
 import de.cuioss.tools.base.Preconditions;
 import de.cuioss.tools.logging.CuiLogger;
 import io.jsonwebtoken.Claims;
@@ -82,7 +83,7 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
     public static final int DEFAULT_REFRESH_INTERVAL = 180;
 
     private final JwtParser jwtParser;
-    private final JwksClient jwksClient;
+    private final JwksLoader jwksLoader;
 
     @Getter
     private final String issuer;
@@ -122,8 +123,8 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
 
             Optional<Key> key;
             if (kid != null) {
-                // Get the key from the JWKS client using the key ID
-                key = jwksClient.getKey(kid);
+                // Get the key from the JWKS loader using the key ID
+                key = jwksLoader.getKey(kid);
                 if (key.isEmpty()) {
                     LOGGER.warn(WARN.KEY_NOT_FOUND.format(kid));
                     return Optional.empty();
@@ -131,7 +132,7 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
             } else {
                 // If no key ID is present, try all available keys
                 LOGGER.debug("No key ID found in token header, trying all available keys");
-                key = jwksClient.getFirstKey();
+                key = jwksLoader.getFirstKey();
                 if (key.isEmpty()) {
                     LOGGER.warn("No keys available in JWKS");
                     return Optional.empty();
@@ -243,8 +244,15 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
                 jwksRefreshInterval = DEFAULT_REFRESH_INTERVAL;
             }
 
-            // Create the JWKS client
-            JwksClient jwksClient = new JwksClient(jwksEndpoint, jwksRefreshInterval, tlsCertificatePath);
+            // Create the JWKS loader based on the endpoint type
+            JwksLoader jwksLoader;
+            if (JwksClientFactory.isFilePath(jwksEndpoint)) {
+                LOGGER.debug("Creating FileJwksLoader for path: %s", jwksEndpoint);
+                jwksLoader = JwksClientFactory.createFileLoader(jwksEndpoint);
+            } else {
+                LOGGER.debug("Creating HttpJwksLoader for URL: %s", jwksEndpoint);
+                jwksLoader = JwksClientFactory.createHttpLoader(jwksEndpoint, jwksRefreshInterval, null);
+            }
 
             // Create the JWT parser
             JwtParser jwtParser = Jwts.parserBuilder()
@@ -257,7 +265,7 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
                     jwksRefreshInterval,
                     jwksIssuer));
 
-            return new JwksAwareTokenParserImpl(jwtParser, jwksClient, jwksIssuer);
+            return new JwksAwareTokenParserImpl(jwtParser, jwksLoader, jwksIssuer);
         }
     }
 
