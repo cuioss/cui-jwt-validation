@@ -40,6 +40,7 @@ public class JwksResolveDispatcher implements ModuleDispatcherElement {
      */
     public static final String LOCAL_PATH = "/oidc/jwks.json";
     public static final String PUBLIC_KEY_JWKS = KeyMaterialHandler.PUBLIC_KEY_JWKS;
+    public static final String PUBLIC_KEY_OTHER_JWKS = KeyMaterialHandler.BASE_PATH + "other-public-key.jwks";
     public static final String PUBLIC_KEY_OTHER = KeyMaterialHandler.PUBLIC_KEY_OTHER;
 
     public String currentKey;
@@ -56,12 +57,12 @@ public class JwksResolveDispatcher implements ModuleDispatcherElement {
     public Optional<MockResponse> handleGet(@NonNull RecordedRequest request) {
         callCounter++;
 
-        // If we're using the dynamically generated key, generate a JWKS on the fly
-        if (KeyMaterialHandler.isDynamicKeyGeneration()) {
+        // Always generate a JWKS on the fly for the default key
+        if (currentKey.equals(PUBLIC_KEY_JWKS)) {
             String jwks = generateJwksFromDynamicKey();
             return Optional.of(new MockResponse(SC_OK, Headers.of("Content-Type", "application/json"), jwks));
         } else {
-            // Otherwise, use the file
+            // For other keys, use the file
             return Optional.of(new MockResponse(SC_OK, Headers.of("Content-Type", "application/json"), FileLoaderUtility
                     .toStringUnchecked(FileLoaderUtility.getLoaderForPath(currentKey))));
         }
@@ -97,7 +98,7 @@ public class JwksResolveDispatcher implements ModuleDispatcherElement {
     }
 
     public void switchToOtherPublicKey() {
-        currentKey = PUBLIC_KEY_OTHER;
+        currentKey = PUBLIC_KEY_OTHER_JWKS;
     }
 
     @Override

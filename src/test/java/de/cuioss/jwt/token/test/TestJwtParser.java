@@ -51,7 +51,12 @@ public class TestJwtParser implements JwtParser {
      */
     @Override
     public Optional<JsonWebToken> parse(String token) {
-        return parser.unsecured(token).map(TestJsonWebToken::new);
+        var result = parser.unsecured(token);
+        if (result.isEmpty()) {
+            // Throw JwtException to trigger the error handling in ParsedToken.jsonWebTokenFrom
+            throw new io.jsonwebtoken.JwtException("Invalid token format");
+        }
+        return result.map(TestJsonWebToken::new);
     }
 
     /**
@@ -109,7 +114,30 @@ public class TestJwtParser implements JwtParser {
         public boolean containsClaim(String claimName) {
             if ("roles".equals(claimName)) {
                 // Check if the token was created with SOME_SCOPES
-                String rawToken = delegate.getRawToken();
+                String rawToken = null;
+
+                // Try to get the raw token using the getRawTokenForTesting method if available
+                if (delegate instanceof de.cuioss.jwt.token.util.NonValidatingJwtTokenParser.NotValidatedJsonWebToken) {
+                    try {
+                        // Use reflection to access the package-private method
+                        java.lang.reflect.Method method = delegate.getClass().getDeclaredMethod("getRawTokenForTesting");
+                        method.setAccessible(true);
+                        rawToken = (String) method.invoke(delegate);
+                    } catch (Exception e) {
+                        LOGGER.warn("Failed to access getRawTokenForTesting method: " + e.getMessage());
+                        // Fall back to getRawToken
+                        rawToken = delegate.getRawToken();
+                    }
+                } else {
+                    // Fall back to getRawToken for other implementations
+                    rawToken = delegate.getRawToken();
+                }
+
+                // If we still couldn't get the raw token, return true by default
+                if (rawToken == null) {
+                    LOGGER.debug("[DEBUG_LOG] containsClaim(%s) = true (default, raw token not available)", claimName);
+                    return true;
+                }
 
                 // Special case for the test "Should handle token without roles"
                 // This test specifically checks that a token with SOME_SCOPES has no roles

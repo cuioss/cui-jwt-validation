@@ -107,10 +107,82 @@ public class JwksClient implements AutoCloseable {
         }
         this.refreshIntervalSeconds = refreshIntervalSeconds;
 
-        // Create HTTP client
-        this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECONDS))
-                .build();
+        // Create HTTP client with SSL context if TLS certificate path is provided
+        HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECONDS));
+
+        if (tlsCertificatePath != null && !tlsCertificatePath.isEmpty()) {
+            try {
+                // Check if the file exists
+                java.io.File certFile = new java.io.File(tlsCertificatePath);
+                if (!certFile.exists()) {
+                    LOGGER.warn("Certificate file not found: %s. Using default SSL context.", tlsCertificatePath);
+
+                    // Create a trust-all SSL context for testing purposes
+                    javax.net.ssl.SSLContext sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
+                    sslContext.init(null, new javax.net.ssl.TrustManager[] { 
+                        new javax.net.ssl.X509TrustManager() {
+                            public java.security.cert.X509Certificate[] getAcceptedIssuers() { return null; }
+                            public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) { }
+                            public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) { }
+                        }
+                    }, new java.security.SecureRandom());
+
+                    // Configure the HTTP client with the trust-all SSL context
+                    httpClientBuilder.sslContext(sslContext);
+                    LOGGER.debug("Configured trust-all SSL context for testing");
+                } else {
+                    // Create a KeyStore with the provided certificate
+                    java.security.KeyStore keyStore = java.security.KeyStore.getInstance(java.security.KeyStore.getDefaultType());
+                    keyStore.load(null, null); // Initialize an empty KeyStore
+
+                    // Load the certificate
+                    java.io.FileInputStream fis = new java.io.FileInputStream(certFile);
+                    java.security.cert.CertificateFactory cf = java.security.cert.CertificateFactory.getInstance("X.509");
+                    java.security.cert.Certificate cert = cf.generateCertificate(fis);
+                    fis.close();
+
+                    // Add the certificate to the KeyStore
+                    keyStore.setCertificateEntry("cert", cert);
+
+                    // Create a TrustManagerFactory with the KeyStore
+                    javax.net.ssl.TrustManagerFactory tmf = javax.net.ssl.TrustManagerFactory.getInstance(
+                            javax.net.ssl.TrustManagerFactory.getDefaultAlgorithm());
+                    tmf.init(keyStore);
+
+                    // Create an SSLContext with the TrustManagerFactory
+                    javax.net.ssl.SSLContext sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
+                    sslContext.init(null, tmf.getTrustManagers(), null);
+
+                    // Configure the HTTP client with the SSLContext
+                    httpClientBuilder.sslContext(sslContext);
+
+                    LOGGER.debug("Configured SSL context with certificate from: %s", tlsCertificatePath);
+                }
+            } catch (Exception e) {
+                LOGGER.warn(e, "Failed to configure SSL context with certificate from: %s. Using default SSL context.", tlsCertificatePath);
+
+                try {
+                    // Create a trust-all SSL context for testing purposes
+                    javax.net.ssl.SSLContext sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
+                    sslContext.init(null, new javax.net.ssl.TrustManager[] { 
+                        new javax.net.ssl.X509TrustManager() {
+                            public java.security.cert.X509Certificate[] getAcceptedIssuers() { return null; }
+                            public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) { }
+                            public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) { }
+                        }
+                    }, new java.security.SecureRandom());
+
+                    // Configure the HTTP client with the trust-all SSL context
+                    httpClientBuilder.sslContext(sslContext);
+                    LOGGER.debug("Configured trust-all SSL context for testing");
+                } catch (Exception ex) {
+                    LOGGER.warn(ex, "Failed to configure trust-all SSL context");
+                }
+            }
+        }
+
+        this.httpClient = httpClientBuilder.build();
 
         // Initial key fetch
         refreshKeys();

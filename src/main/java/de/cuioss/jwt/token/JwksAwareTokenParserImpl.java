@@ -139,19 +139,26 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
             }
 
             // Create a new JwtParser with the signing key and parse the token
-            Jws<Claims> jws = Jwts.parserBuilder()
-                    .setSigningKey(key.get())
-                    .build()
-                    .parseClaimsJws(token);
+            LOGGER.debug("Using key with algorithm: %s", key.get().getAlgorithm());
+            try {
+                Jws<Claims> jws = Jwts.parserBuilder()
+                        .setSigningKey(key.get())
+                        .build()
+                        .parseClaimsJws(token);
 
-            // Verify the issuer
-            String tokenIssuer = jws.getBody().getIssuer();
-            if (!issuer.equals(tokenIssuer)) {
-                LOGGER.warn(WARN.ISSUER_MISMATCH.format(tokenIssuer, issuer));
+                // Verify the issuer
+                String tokenIssuer = jws.getBody().getIssuer();
+                if (!issuer.equals(tokenIssuer)) {
+                    LOGGER.warn(WARN.ISSUER_MISMATCH.format(tokenIssuer, issuer));
+                    return Optional.empty();
+                }
+
+                return Optional.of(jws);
+            } catch (JwtException e) {
+                LOGGER.warn(e, WARN.COULD_NOT_PARSE_TOKEN.format(e.getMessage()));
+                LOGGER.trace("Offending token '%s'", token);
                 return Optional.empty();
             }
-
-            return Optional.of(jws);
         } catch (JwtException e) {
             LOGGER.warn(e, WARN.COULD_NOT_PARSE_TOKEN.format(e.getMessage()));
             LOGGER.trace("Offending token '%s'", token);

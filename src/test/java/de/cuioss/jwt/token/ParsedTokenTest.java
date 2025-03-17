@@ -106,7 +106,9 @@ class ParsedTokenTest {
         @Test
         @DisplayName("Should correctly handle token expiration checks")
         void shouldHandleNotExpiredToken() {
-            String initialToken = validSignedJWTWithClaims(SOME_SCOPES);
+            // Create a token that expires in 5 minutes
+            java.time.Instant expireAt = java.time.Instant.now().plusSeconds(300);
+            String initialToken = TestTokenProducer.validSignedJWTExpireAt(expireAt);
 
             var token = ParsedAccessToken.fromTokenString(initialToken, TestTokenProducer.getDefaultTokenParser());
             assertTrue(token.isPresent(), "Token should be present for valid input");

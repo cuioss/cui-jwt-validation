@@ -108,6 +108,8 @@ public class JwksAwareTokenParserImplTest {
         @DisplayName("Should fail with invalid JWKS")
         void shouldFailFromRemoteWithInvalidJWKS() {
             jwksResolveDispatcher.switchToOtherPublicKey();
+            // Create a new token parser to force fetching the new JWKS
+            tokenParser = getValidJWKSParserWithRemoteJWKS();
             String initialToken = validSignedJWTWithClaims(SOME_SCOPES);
             var jsonWebToken = assertDoesNotThrow(() -> ParsedToken.jsonWebTokenFrom(initialToken, tokenParser, LOGGER));
 
@@ -160,15 +162,67 @@ public class JwksAwareTokenParserImplTest {
     }
 
     public static JwksAwareTokenParserImpl getValidJWKSParserWithLocalJWKS() throws IOException {
+        // Create a dynamic JWKS with the current key pair
+        java.security.PublicKey publicKey = KeyMaterialHandler.getPublicKey();
+        java.security.interfaces.RSAPublicKey rsaKey = (java.security.interfaces.RSAPublicKey) publicKey;
+
+        // Extract the modulus and exponent
+        byte[] modulusBytes = rsaKey.getModulus().toByteArray();
+        byte[] exponentBytes = rsaKey.getPublicExponent().toByteArray();
+
+        // Remove leading zero byte if present (BigInteger sign bit)
+        if (modulusBytes.length > 0 && modulusBytes[0] == 0) {
+            byte[] tmp = new byte[modulusBytes.length - 1];
+            System.arraycopy(modulusBytes, 1, tmp, 0, tmp.length);
+            modulusBytes = tmp;
+        }
+
+        // Base64 URL encode
+        String n = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(modulusBytes);
+        String e = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(exponentBytes);
+
+        // Create JWKS JSON with the correct key ID
+        String jwks = String.format("{\"kty\":\"RSA\",\"kid\":\"default-key-id\",\"n\":\"%s\",\"e\":\"%s\",\"alg\":\"RS256\"}", n, e);
+
+        // Create a temporary file with the JWKS
+        java.nio.file.Path tempFile = java.nio.file.Files.createTempFile("test-jwks", ".json");
+        java.nio.file.Files.writeString(tempFile, jwks);
+
         return JwksAwareTokenParserImpl.builder()
-                .jwksEndpoint(JwksResolveDispatcher.PUBLIC_KEY_JWKS)
+                .jwksEndpoint(tempFile.toAbsolutePath().toString())
                 .jwksIssuer(ISSUER)
                 .build();
     }
 
     public static JwksAwareTokenParserImpl getInvalidJWKSParserWithWrongLocalJWKS() throws IOException {
+        // Generate a different key pair for testing
+        java.security.KeyPair keyPair = io.jsonwebtoken.security.Keys.keyPairFor(io.jsonwebtoken.SignatureAlgorithm.RS256);
+        java.security.interfaces.RSAPublicKey rsaKey = (java.security.interfaces.RSAPublicKey) keyPair.getPublic();
+
+        // Extract the modulus and exponent
+        byte[] modulusBytes = rsaKey.getModulus().toByteArray();
+        byte[] exponentBytes = rsaKey.getPublicExponent().toByteArray();
+
+        // Remove leading zero byte if present (BigInteger sign bit)
+        if (modulusBytes.length > 0 && modulusBytes[0] == 0) {
+            byte[] tmp = new byte[modulusBytes.length - 1];
+            System.arraycopy(modulusBytes, 1, tmp, 0, tmp.length);
+            modulusBytes = tmp;
+        }
+
+        // Base64 URL encode
+        String n = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(modulusBytes);
+        String e = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(exponentBytes);
+
+        // Create JWKS JSON with the same key ID as in the token but different key material
+        String invalidJwks = String.format("{\"keys\":[{\"kty\":\"RSA\",\"kid\":\"default-key-id\",\"n\":\"%s\",\"e\":\"%s\",\"alg\":\"RS256\"}]}", n, e);
+
+        // Create a temporary file with the invalid JWKS
+        java.nio.file.Path tempFile = java.nio.file.Files.createTempFile("invalid-jwks", ".json");
+        java.nio.file.Files.writeString(tempFile, invalidJwks);
+
         return JwksAwareTokenParserImpl.builder()
-                .jwksEndpoint(KeyMaterialHandler.PUBLIC_KEY_OTHER)
+                .jwksEndpoint(tempFile.toAbsolutePath().toString())
                 .jwksIssuer(ISSUER)
                 .build();
     }

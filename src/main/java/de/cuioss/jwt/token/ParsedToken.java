@@ -103,7 +103,7 @@ public abstract class ParsedToken {
      * @return boolean indicating whether the token will expired within the given number of seconds.
      */
     public boolean willExpireInSeconds(int seconds) {
-        return OffsetDateTime.now().plusSeconds(seconds).isAfter(getExpirationTime());
+        return getExpirationTime().isBefore(OffsetDateTime.now().plusSeconds(seconds));
     }
 
     /**

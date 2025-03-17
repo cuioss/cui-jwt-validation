@@ -96,7 +96,9 @@ public class MultiIssuerJwtParser {
      */
     public Optional<String> extractIssuer(@NonNull String token) {
         LOGGER.debug("Extracting issuer from token");
-        return inspectionParser.extractIssuer(token);
+        var issuer = inspectionParser.extractIssuer(token);
+        LOGGER.debug("Extracted issuer: %s", issuer.orElse("<none>"));
+        return issuer;
     }
 
     /**

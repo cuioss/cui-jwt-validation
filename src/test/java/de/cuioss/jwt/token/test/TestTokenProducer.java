@@ -135,6 +135,9 @@ public class TestTokenProducer {
             JwtBuilder builder = Jwts.builder()
                     .setIssuer(ISSUER)
                     .setSubject(SUBJECT)
+                    .setIssuedAt(Date.from(Instant.now()))
+                    .setExpiration(Date.from(Instant.now().plusSeconds(3600))) // Set expiration to 1 hour from now
+                    .setHeaderParam("kid", "default-key-id") // Add key ID to header
                     .signWith(KeyMaterialHandler.getPrivateKey(), SignatureAlgorithm.RS256);
 
             // Add claims from file if provided

@@ -101,7 +101,21 @@ public class ParsedAccessToken extends ParsedToken {
     public static Optional<ParsedAccessToken> fromTokenString(String tokenString, String email, JwtParser tokenParser) {
         var rawToken = jsonWebTokenFrom(tokenString, tokenParser, LOGGER);
 
-        return rawToken.map(webToken -> new ParsedAccessToken(webToken, email));
+        if (rawToken.isPresent()) {
+            // Check if the token has a "not before" claim that is more than 60 seconds in the future
+            Long notBeforeTime = rawToken.get().getClaim("nbf");
+            if (notBeforeTime != null) {
+                long currentTime = java.time.Instant.now().getEpochSecond();
+                if (notBeforeTime > currentTime + 60) {
+                    LOGGER.warn("Token has a 'not before' claim that is more than 60 seconds in the future");
+                    return Optional.empty();
+                }
+            }
+
+            return Optional.of(new ParsedAccessToken(rawToken.get(), email));
+        }
+
+        return Optional.empty();
     }
 
     private ParsedAccessToken(JsonWebToken jsonWebToken, String email) {

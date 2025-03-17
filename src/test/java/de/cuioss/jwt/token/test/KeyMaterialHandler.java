@@ -64,12 +64,41 @@ public class KeyMaterialHandler {
     // Static initializer to generate a key pair for testing
     static {
         try {
-            // Generate a key pair for testing
-            java.security.KeyPair keyPair = Keys.keyPairFor(SignatureAlgorithm.RS256);
-            privateKey = keyPair.getPrivate();
-            publicKey = keyPair.getPublic();
+            // For testing, we need to use a consistent key pair that matches the JWKS file
+            // Load the private key from the file
+            privateKey = loadPrivateKey(PRIVATE_KEY);
+
+            // Load the public key from the JWKS file
+            String jwksContent = new String(Files.readAllBytes(Paths.get(PUBLIC_KEY_JWKS)));
+            jakarta.json.JsonReader reader = jakarta.json.Json.createReader(new java.io.StringReader(jwksContent));
+            jakarta.json.JsonObject jwks = reader.readObject();
+            reader.close();
+
+            // Extract the modulus and exponent
+            String modulusBase64 = jwks.getString("n");
+            String exponentBase64 = jwks.getString("e");
+
+            // Decode from Base64
+            byte[] modulusBytes = java.util.Base64.getUrlDecoder().decode(modulusBase64);
+            byte[] exponentBytes = java.util.Base64.getUrlDecoder().decode(exponentBase64);
+
+            // Convert to BigInteger
+            java.math.BigInteger modulus = new java.math.BigInteger(1, modulusBytes);
+            java.math.BigInteger exponent = new java.math.BigInteger(1, exponentBytes);
+
+            // Create RSA public key
+            java.security.spec.RSAPublicKeySpec spec = new java.security.spec.RSAPublicKeySpec(modulus, exponent);
+            KeyFactory factory = KeyFactory.getInstance("RSA");
+            publicKey = factory.generatePublic(spec);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to generate key pair", e);
+            // Fall back to generating a new key pair if loading fails
+            try {
+                java.security.KeyPair keyPair = Keys.keyPairFor(SignatureAlgorithm.RS256);
+                privateKey = keyPair.getPrivate();
+                publicKey = keyPair.getPublic();
+            } catch (Exception ex) {
+                throw new RuntimeException("Failed to generate key pair", ex);
+            }
         }
     }
 

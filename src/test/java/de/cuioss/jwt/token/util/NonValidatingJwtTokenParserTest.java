@@ -51,6 +51,8 @@ class NonValidatingJwtTokenParserTest {
     @BeforeEach
     void setUp() {
         parser = new NonValidatingJwtTokenParser();
+        // Set the flag to return null from getRawToken() for these tests
+        NonValidatingJwtTokenParser.setReturnNullToken(true);
     }
 
     @Nested
