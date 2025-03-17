@@ -49,7 +49,7 @@ import java.util.Optional;
  */
 @ToString
 @EqualsAndHashCode
-public class JwksClient implements AutoCloseable {
+public class JwksClient {
 
     private static final CuiLogger LOGGER = new CuiLogger(JwksClient.class);
 
@@ -61,7 +61,7 @@ public class JwksClient implements AutoCloseable {
      *
      * @param jwksUrl the URL of the JWKS endpoint or path to a JWKS file
      * @param refreshIntervalSeconds the interval in seconds at which to refresh the keys (only used for HTTP loaders)
-     * @param tlsCertificatePath optional path to a TLS certificate for secure connections (only used for HTTP loaders)
+     * @param tlsCertificatePath deprecated, not used anymore. SSL configuration is derived from VM configuration.
      */
     public JwksClient(@NonNull String jwksUrl, int refreshIntervalSeconds, String tlsCertificatePath) {
         // Determine if the URL is a file path or HTTP URL
@@ -70,7 +70,7 @@ public class JwksClient implements AutoCloseable {
             this.loader = new FileJwksLoader(jwksUrl);
         } else {
             LOGGER.debug("Creating HttpJwksLoader for URL: %s", jwksUrl);
-            this.loader = new HttpJwksLoader(jwksUrl, refreshIntervalSeconds, tlsCertificatePath);
+            this.loader = new HttpJwksLoader(jwksUrl, refreshIntervalSeconds, null);
         }
 
         // Log initial refresh
@@ -109,23 +109,7 @@ public class JwksClient implements AutoCloseable {
         LOGGER.debug("Successfully refreshed keys");
     }
 
-    /**
-     * Shuts down the client and releases resources.
-     */
-    public void shutdown() {
-        LOGGER.debug("Shutting down JwksClient");
-        loader.shutdown();
-    }
 
-    /**
-     * Closes this resource, relinquishing any underlying resources.
-     * This method is invoked automatically on objects managed by the
-     * try-with-resources statement.
-     */
-    @Override
-    public void close() {
-        shutdown();
-    }
 
     /**
      * Determines if the given URL is a file path.

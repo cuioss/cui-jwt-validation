@@ -29,7 +29,8 @@ import java.security.Key;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
+
+import javax.net.ssl.SSLContext;
 
 import static de.cuioss.jwt.token.PortalTokenLogMessages.WARN;
 
@@ -45,7 +46,6 @@ public class HttpJwksLoader extends AbstractJwksLoader {
 
     private static final int DEFAULT_TIMEOUT_SECONDS = 10;
 
-    private final String jwksUrl;
     private final URI jwksUri;
     private final int refreshIntervalSeconds;
     private final LoadingCache<String, Key> keyCache;
@@ -56,9 +56,9 @@ public class HttpJwksLoader extends AbstractJwksLoader {
      *
      * @param jwksUrl the URL of the JWKS endpoint
      * @param refreshIntervalSeconds the interval in seconds at which to refresh the keys
-     * @param tlsCertificatePath optional path to a TLS certificate for secure connections
+     * @param sslContext optional SSLContext for secure connections, if null the default SSLContext from VM configuration is used
      */
-    public HttpJwksLoader(@NonNull String jwksUrl, int refreshIntervalSeconds, String tlsCertificatePath) {
+    public HttpJwksLoader(@NonNull String jwksUrl, int refreshIntervalSeconds, SSLContext sslContext) {
         // Validate URL format and create URI
         URI uri;
         try {
@@ -67,98 +67,20 @@ public class HttpJwksLoader extends AbstractJwksLoader {
             throw new IllegalArgumentException("Invalid JWKS URL: " + jwksUrl, e);
         }
 
-        this.jwksUrl = jwksUrl;
         this.jwksUri = uri;
         if (refreshIntervalSeconds <= 0) {
             throw new IllegalArgumentException("Refresh interval must be greater than zero");
         }
         this.refreshIntervalSeconds = refreshIntervalSeconds;
 
-        // Create HTTP client with SSL context if TLS certificate path is provided
+        // Create HTTP client with SSL context if provided
         HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECONDS));
 
-        if (tlsCertificatePath != null && !tlsCertificatePath.isEmpty()) {
-            try {
-                // Check if the file exists
-                java.io.File certFile = new java.io.File(tlsCertificatePath);
-                if (!certFile.exists()) {
-                    LOGGER.warn("Certificate file not found: %s. Using default SSL context.", tlsCertificatePath);
-
-                    // Create a trust-all SSL context for testing purposes
-                    javax.net.ssl.SSLContext sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
-                    sslContext.init(null, new javax.net.ssl.TrustManager[]{
-                            new javax.net.ssl.X509TrustManager() {
-                                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                                    return null;
-                                }
-
-                                public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-                                }
-
-                                public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-                                }
-                            }
-                    }, new java.security.SecureRandom());
-
-                    // Configure the HTTP client with the trust-all SSL context
-                    httpClientBuilder.sslContext(sslContext);
-                    LOGGER.debug("Configured trust-all SSL context for testing");
-                } else {
-                    // Create a KeyStore with the provided certificate
-                    java.security.KeyStore keyStore = java.security.KeyStore.getInstance(java.security.KeyStore.getDefaultType());
-                    keyStore.load(null, null); // Initialize an empty KeyStore
-
-                    // Load the certificate
-                    java.io.FileInputStream fis = new java.io.FileInputStream(certFile);
-                    java.security.cert.CertificateFactory cf = java.security.cert.CertificateFactory.getInstance("X.509");
-                    java.security.cert.Certificate cert = cf.generateCertificate(fis);
-                    fis.close();
-
-                    // Add the certificate to the KeyStore
-                    keyStore.setCertificateEntry("cert", cert);
-
-                    // Create a TrustManagerFactory with the KeyStore
-                    javax.net.ssl.TrustManagerFactory tmf = javax.net.ssl.TrustManagerFactory.getInstance(
-                            javax.net.ssl.TrustManagerFactory.getDefaultAlgorithm());
-                    tmf.init(keyStore);
-
-                    // Create an SSLContext with the TrustManagerFactory
-                    javax.net.ssl.SSLContext sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
-                    sslContext.init(null, tmf.getTrustManagers(), null);
-
-                    // Configure the HTTP client with the SSLContext
-                    httpClientBuilder.sslContext(sslContext);
-
-                    LOGGER.debug("Configured SSL context with certificate from: %s", tlsCertificatePath);
-                }
-            } catch (Exception e) {
-                LOGGER.warn(e, "Failed to configure SSL context with certificate from: %s. Using default SSL context.", tlsCertificatePath);
-
-                try {
-                    // Create a trust-all SSL context for testing purposes
-                    javax.net.ssl.SSLContext sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
-                    sslContext.init(null, new javax.net.ssl.TrustManager[]{
-                            new javax.net.ssl.X509TrustManager() {
-                                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                                    return null;
-                                }
-
-                                public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-                                }
-
-                                public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-                                }
-                            }
-                    }, new java.security.SecureRandom());
-
-                    // Configure the HTTP client with the trust-all SSL context
-                    httpClientBuilder.sslContext(sslContext);
-                    LOGGER.debug("Configured trust-all SSL context for testing");
-                } catch (Exception ex) {
-                    LOGGER.warn(ex, "Failed to configure trust-all SSL context");
-                }
-            }
+        // If sslContext is provided, use it, otherwise use the default from VM configuration
+        if (sslContext != null) {
+            httpClientBuilder.sslContext(sslContext);
+            LOGGER.debug("Using provided SSL context");
         }
 
         this.httpClient = httpClientBuilder.build();
@@ -169,26 +91,13 @@ public class HttpJwksLoader extends AbstractJwksLoader {
                 .refreshAfterWrite(Duration.ofSeconds(refreshIntervalSeconds))
                 .build(this::loadKey);
 
-        // Force a refresh after the refresh interval
-        new Thread(() -> {
-            while (!Thread.currentThread().isInterrupted()) {
-                try {
-                    TimeUnit.SECONDS.sleep(refreshIntervalSeconds);
-                    // Force refresh of all keys
-                    refreshKeys();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-            }
-        }).start();
-
         // Initial key fetch to populate cache
         refreshKeys();
 
         LOGGER.debug("Initialized HttpJwksLoader with URL: %s, refresh interval: %s seconds",
-                jwksUrl, refreshIntervalSeconds);
+                jwksUri.toString(), refreshIntervalSeconds);
     }
+
 
     @Override
     public Optional<Key> getKey(String kid) {
@@ -225,7 +134,7 @@ public class HttpJwksLoader extends AbstractJwksLoader {
 
     @Override
     public void refreshKeys() {
-        LOGGER.debug("Refreshing keys from JWKS endpoint: %s", jwksUrl);
+        LOGGER.debug("Refreshing keys from JWKS endpoint: %s", jwksUri.toString());
         try {
             String jwksContent;
 
@@ -246,9 +155,9 @@ public class HttpJwksLoader extends AbstractJwksLoader {
                 }
 
                 jwksContent = response.body();
-                LOGGER.debug("Successfully fetched JWKS from URL: %s", jwksUrl);
+                LOGGER.debug("Successfully fetched JWKS from URL: %s", jwksUri.toString());
             } catch (Exception e) {
-                LOGGER.warn(e, "Failed to fetch JWKS from URL: %s", jwksUrl);
+                LOGGER.warn(e, "Failed to fetch JWKS from URL: %s", jwksUri.toString());
                 return;
             }
 
@@ -282,12 +191,4 @@ public class HttpJwksLoader extends AbstractJwksLoader {
         return keys.get(kid);
     }
 
-    @Override
-    public void shutdown() {
-        LOGGER.debug("Shutting down HttpJwksLoader");
-
-        // Clean up the cache
-        keyCache.invalidateAll();
-        keyCache.cleanUp();
-    }
 }

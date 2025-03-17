@@ -58,13 +58,6 @@ class AbstractJwksLoaderTest {
             // No-op for testing
         }
 
-        @Override
-        public void shutdown() {
-            if (keys != null) {
-                keys.clear();
-            }
-        }
-
         /**
          * Expose the protected parseJwks method for testing.
          */

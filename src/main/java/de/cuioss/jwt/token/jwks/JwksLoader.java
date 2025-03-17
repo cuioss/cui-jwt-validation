@@ -47,8 +47,4 @@ public interface JwksLoader {
      */
     void refreshKeys();
 
-    /**
-     * Shuts down the loader and releases resources.
-     */
-    void shutdown();
 }

@@ -59,9 +59,7 @@ class FileJwksLoaderTest {
 
     @AfterEach
     void tearDown() {
-        if (fileJwksLoader != null) {
-            fileJwksLoader.shutdown();
-        }
+        // No cleanup needed
     }
 
     @Test
@@ -121,8 +119,7 @@ class FileJwksLoaderTest {
         assertFalse(key.isPresent(), "Key should not be present when file is not found");
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to read JWKS from file");
 
-        // Clean up
-        nonExistentFileLoader.shutdown();
+        // No cleanup needed
     }
 
     @Test
@@ -140,8 +137,7 @@ class FileJwksLoaderTest {
         assertFalse(key.isPresent(), "Key should not be present when JWKS is invalid");
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to parse JWKS JSON");
 
-        // Clean up
-        invalidJwksLoader.shutdown();
+        // No cleanup needed
     }
 
     @Test
@@ -160,8 +156,7 @@ class FileJwksLoaderTest {
         assertFalse(key.isPresent(), "Key should not be present when JWK is missing required fields");
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to parse RSA key");
 
-        // Clean up
-        missingFieldsJwksLoader.shutdown();
+        // No cleanup needed
     }
 
     @Test

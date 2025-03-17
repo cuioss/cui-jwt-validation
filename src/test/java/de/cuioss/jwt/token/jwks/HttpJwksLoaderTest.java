@@ -76,9 +76,7 @@ class HttpJwksLoaderTest implements MockWebServerHolder {
 
     @AfterEach
     void tearDown() {
-        if (httpJwksLoader != null) {
-            httpJwksLoader.shutdown();
-        }
+        // No cleanup needed
     }
 
     @Test
@@ -140,7 +138,7 @@ class HttpJwksLoaderTest implements MockWebServerHolder {
             assertFalse(key.isPresent(), "Key should not be present when server returns error");
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to fetch JWKS");
         } finally {
-            errorLoader.shutdown();
+            // No cleanup needed
         }
     }
 
@@ -161,22 +159,22 @@ class HttpJwksLoaderTest implements MockWebServerHolder {
             assertFalse(key.isPresent(), "Key should not be present when JWKS is invalid");
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to parse JWKS JSON");
         } finally {
-            invalidJsonLoader.shutdown();
+            // No cleanup needed
         }
     }
 
     @Test
-    @DisplayName("Should refresh keys periodically")
-    void shouldRefreshKeysPeriodically() throws InterruptedException {
+    @DisplayName("Should refresh keys when explicitly called")
+    void shouldRefreshKeysWhenExplicitlyCalled() {
         // Given
         httpJwksLoader.getKey(TEST_KID); // Initial fetch
         assertEquals(1, jwksDispatcher.getCallCounter());
 
-        // When - wait for refresh interval
-        TimeUnit.SECONDS.sleep(REFRESH_INTERVAL_SECONDS + 1);
+        // When - explicitly refresh keys
+        httpJwksLoader.refreshKeys();
 
-        // Then - verify keys were refreshed automatically
-        assertTrue(jwksDispatcher.getCallCounter() > 1, "JWKS endpoint should be called again after refresh interval");
+        // Then - verify keys were refreshed
+        assertEquals(2, jwksDispatcher.getCallCounter(), "JWKS endpoint should be called again after explicit refresh");
     }
 
     @Test
@@ -220,7 +218,7 @@ class HttpJwksLoaderTest implements MockWebServerHolder {
             assertFalse(key.isPresent(), "Key should not be present when JWK is missing required fields");
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to parse RSA key");
         } finally {
-            missingFieldsLoader.shutdown();
+            // No cleanup needed
         }
     }
 
@@ -248,7 +246,7 @@ class HttpJwksLoaderTest implements MockWebServerHolder {
             assertFalse(key.isPresent(), "Key should not be present when URL is invalid");
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to fetch JWKS from URL: invalid-url");
         } finally {
-            invalidUrlLoader.shutdown();
+            // No cleanup needed
         }
     }
 

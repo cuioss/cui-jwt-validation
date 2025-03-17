@@ -90,15 +90,11 @@ class JwksClientTest implements MockWebServerHolder {
         // When
         JwksClient client = new JwksClient(httpJwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
 
-        try {
-            // Then
-            Optional<Key> key = client.getKey(TEST_KID);
-            assertTrue(key.isPresent(), "Key should be present");
-            assertEquals(1, jwksDispatcher.getCallCounter(), "JWKS endpoint should be called once");
-            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Creating HttpJwksLoader for URL");
-        } finally {
-            client.shutdown();
-        }
+        // Then
+        Optional<Key> key = client.getKey(TEST_KID);
+        assertTrue(key.isPresent(), "Key should be present");
+        assertEquals(1, jwksDispatcher.getCallCounter(), "JWKS endpoint should be called once");
+        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Creating HttpJwksLoader for URL");
     }
 
     @Test
@@ -107,15 +103,11 @@ class JwksClientTest implements MockWebServerHolder {
         // When
         JwksClient client = new JwksClient(fileJwksPath.toString(), REFRESH_INTERVAL_SECONDS, null);
 
-        try {
-            // Then
-            Optional<Key> key = client.getKey(TEST_KID);
-            assertTrue(key.isPresent(), "Key should be present");
-            assertEquals(0, jwksDispatcher.getCallCounter(), "JWKS endpoint should not be called");
-            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Creating FileJwksLoader for path");
-        } finally {
-            client.shutdown();
-        }
+        // Then
+        Optional<Key> key = client.getKey(TEST_KID);
+        assertTrue(key.isPresent(), "Key should be present");
+        assertEquals(0, jwksDispatcher.getCallCounter(), "JWKS endpoint should not be called");
+        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Creating FileJwksLoader for path");
     }
 
     @Test
@@ -124,16 +116,12 @@ class JwksClientTest implements MockWebServerHolder {
         // Given
         JwksClient client = new JwksClient(httpJwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
 
-        try {
-            // When
-            Optional<Key> key = client.getKey(TEST_KID);
+        // When
+        Optional<Key> key = client.getKey(TEST_KID);
 
-            // Then
-            assertTrue(key.isPresent(), "Key should be present");
-            assertEquals(1, jwksDispatcher.getCallCounter(), "JWKS endpoint should be called once");
-        } finally {
-            client.shutdown();
-        }
+        // Then
+        assertTrue(key.isPresent(), "Key should be present");
+        assertEquals(1, jwksDispatcher.getCallCounter(), "JWKS endpoint should be called once");
     }
 
     @Test
@@ -142,16 +130,12 @@ class JwksClientTest implements MockWebServerHolder {
         // Given
         JwksClient client = new JwksClient(httpJwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
 
-        try {
-            // When
-            Optional<Key> key = client.getFirstKey();
+        // When
+        Optional<Key> key = client.getFirstKey();
 
-            // Then
-            assertTrue(key.isPresent(), "Key should be present");
-            assertEquals(1, jwksDispatcher.getCallCounter(), "JWKS endpoint should be called once");
-        } finally {
-            client.shutdown();
-        }
+        // Then
+        assertTrue(key.isPresent(), "Key should be present");
+        assertEquals(1, jwksDispatcher.getCallCounter(), "JWKS endpoint should be called once");
     }
 
     @Test
@@ -162,41 +146,13 @@ class JwksClientTest implements MockWebServerHolder {
         // The endpoint is called once during initialization
         int initialCallCount = jwksDispatcher.getCallCounter();
 
-        try {
-            // When
-            client.refreshKeys();
-
-            // Then
-            assertEquals(initialCallCount + 1, jwksDispatcher.getCallCounter(), "JWKS endpoint should be called once more after refreshKeys");
-            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Refreshing keys from JWKS endpoint");
-            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Successfully refreshed keys");
-        } finally {
-            client.shutdown();
-        }
-    }
-
-    @Test
-    @DisplayName("Should delegate shutdown to loader")
-    void shouldDelegateShutdownToLoader() {
-        // Given
-        JwksClient client = new JwksClient(httpJwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
-
         // When
-        client.shutdown();
+        client.refreshKeys();
 
         // Then
-        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Shutting down JwksClient");
-    }
-
-    @Test
-    @DisplayName("Should use close method from AutoCloseable")
-    void shouldUseCloseMethod() {
-        // Given
-        JwksClient client = new JwksClient(httpJwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
-
-        // When/Then
-        // Verify that close method doesn't throw an exception
-        assertDoesNotThrow(() -> client.close(), "close method should not throw an exception");
+        assertEquals(initialCallCount + 1, jwksDispatcher.getCallCounter(), "JWKS endpoint should be called once more after refreshKeys");
+        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Refreshing keys from JWKS endpoint");
+        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Successfully refreshed keys");
     }
 
     @Test

@@ -79,9 +79,7 @@ public class JwksClientBenchmarkTest implements MockWebServerHolder {
 
     @AfterEach
     void tearDown() {
-        if (jwksClient != null) {
-            jwksClient.shutdown();
-        }
+        // No cleanup needed
     }
 
     @Test

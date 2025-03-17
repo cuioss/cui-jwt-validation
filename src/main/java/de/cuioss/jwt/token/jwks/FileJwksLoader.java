@@ -101,9 +101,4 @@ public class FileJwksLoader extends AbstractJwksLoader {
         }
     }
 
-    @Override
-    public void shutdown() {
-        LOGGER.debug("Shutting down FileJwksLoader");
-        keyMap.clear();
-    }
 }
