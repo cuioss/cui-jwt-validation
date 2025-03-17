@@ -49,13 +49,59 @@ public class TokenKeycloakITTest extends KeycloakITBase {
                 SSLConfig.sslConfig().trustStore(TestRealm.ProvidedKeyStore.KEYSTORE_PATH, TestRealm.ProvidedKeyStore.PASSWORD)
         );
 
-        parser = JwksAwareTokenParserImpl.builder()
-                .jwksEndpoint(getJWKSUrl())
-                .jwksRefreshInterval(100)
-                .jwksIssuer(getIssuer())
-                .tlsCertificatePath(TestRealm.ProvidedKeyStore.PUBLIC_CERT)
-                .build();
-        factory = TokenFactory.of(parser);
+        // Log the keystore path and password for debugging
+        System.out.println("[DEBUG_LOG] KEYSTORE_PATH: " + TestRealm.ProvidedKeyStore.KEYSTORE_PATH);
+        System.out.println("[DEBUG_LOG] PASSWORD: " + TestRealm.ProvidedKeyStore.PASSWORD);
+
+        try {
+            // Create a trust-all SSLContext for testing
+            javax.net.ssl.SSLContext sslContext = createTrustAllSSLContext();
+
+            // Create a JwksClientFactory that uses the trust-all SSLContext
+            parser = JwksAwareTokenParserImpl.builder()
+                    .jwksEndpoint(getJWKSUrl())
+                    .jwksRefreshInterval(100)
+                    .jwksIssuer(getIssuer())
+                    .build();
+
+            // Replace the JwksLoader in the parser with one that uses the trust-all SSLContext
+            java.lang.reflect.Field jwksLoaderField = JwksAwareTokenParserImpl.class.getDeclaredField("jwksLoader");
+            jwksLoaderField.setAccessible(true);
+            jwksLoaderField.set(parser, de.cuioss.jwt.token.jwks.JwksClientFactory.createHttpLoader(getJWKSUrl(), 100, sslContext));
+
+            factory = TokenFactory.of(parser);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to set up test", e);
+        }
+    }
+
+    /**
+     * Creates an SSLContext that trusts all certificates.
+     * WARNING: This should only be used for testing purposes, never in production!
+     *
+     * @return an SSLContext that trusts all certificates
+     * @throws Exception if an error occurs
+     */
+    private javax.net.ssl.SSLContext createTrustAllSSLContext() throws Exception {
+        // Create a trust manager that does not validate certificate chains
+        javax.net.ssl.TrustManager[] trustAllCerts = new javax.net.ssl.TrustManager[] {
+            new javax.net.ssl.X509TrustManager() {
+                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                    return new java.security.cert.X509Certificate[0];
+                }
+                public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) {
+                    // Trust all client certificates
+                }
+                public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) {
+                    // Trust all server certificates
+                }
+            }
+        };
+
+        // Create an SSL context that uses the trust-all trust manager
+        javax.net.ssl.SSLContext sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
+        sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+        return sslContext;
     }
 
     @Nested

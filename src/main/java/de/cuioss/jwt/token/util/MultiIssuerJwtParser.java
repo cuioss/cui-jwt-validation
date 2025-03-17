@@ -49,7 +49,7 @@ import java.util.Optional;
  * Optional&lt;JwtParser&gt; selectedParser = parser.getParserForToken(tokenString);
  * </pre>
  * <p>
- * The class uses {@link NonValidatingJwtTokenParser} internally for initial token inspection
+ * The class uses {@link NonValidatingJwtParser} internally for initial token inspection
  * to determine the issuer before selecting the appropriate validating parser.
  * <p>
  * See specification: {@code doc/specification/technical-components.adoc#_multiissuertokenparser}

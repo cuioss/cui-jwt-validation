@@ -16,17 +16,29 @@
 package de.cuioss.jwt.token.test;
 
 import de.cuioss.jwt.token.JwtParser;
+import de.cuioss.jwt.token.PortalTokenLogMessages;
 import de.cuioss.jwt.token.adapter.JsonWebToken;
-import de.cuioss.jwt.token.util.NonValidatingJwtTokenParser;
 import de.cuioss.tools.logging.CuiLogger;
+import de.cuioss.tools.string.MoreStrings;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.JwtException;
+import jakarta.json.Json;
 import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonReader;
+import jakarta.json.JsonString;
+import jakarta.json.JsonValue;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -41,8 +53,18 @@ import java.util.Set;
 public class TestJwtParser implements JwtParser {
 
     private static final CuiLogger LOGGER = new CuiLogger(TestJwtParser.class);
+    
+    /**
+     * Maximum size of a JWT token in bytes to prevent overflow attacks.
+     * 16KB should be more than enough for any reasonable JWT token.
+     */
+    private static final int MAX_TOKEN_SIZE = 16 * 1024;
 
-    private final NonValidatingJwtTokenParser parser = new NonValidatingJwtTokenParser();
+    /**
+     * Maximum size of decoded JSON payload in bytes.
+     * 16KB should be more than enough for any reasonable JWT claims.
+     */
+    private static final int MAX_PAYLOAD_SIZE = 16 * 1024;
 
     @Getter
     private final String issuer;
@@ -61,12 +83,65 @@ public class TestJwtParser implements JwtParser {
      */
     @Override
     public Optional<JsonWebToken> parse(String token) {
-        var result = parser.unsecured(token);
+        var result = unsecured(token);
         if (result.isEmpty()) {
             // Throw JwtException to trigger the error handling in ParsedToken.jsonWebTokenFrom
-            throw new io.jsonwebtoken.JwtException("Invalid token format");
+            throw new JwtException("Invalid token format");
         }
         return result.map(TestJsonWebToken::new);
+    }
+    
+    /**
+     * Parses a JWT token without validating its signature and returns a JsonWebToken.
+     * <p>
+     * Security considerations:
+     * <ul>
+     *   <li>Does not validate signatures - use only for inspection</li>
+     *   <li>Implements size checks to prevent overflow attacks</li>
+     *   <li>Uses standard Java Base64 decoder</li>
+     * </ul>
+     *
+     * @param token the JWT token string to parse, must not be null
+     * @return an Optional containing the JsonWebToken if parsing is successful,
+     * or empty if the token is invalid or cannot be parsed
+     */
+    private Optional<JsonWebToken> unsecured(String token) {
+        if (MoreStrings.isEmpty(token)) {
+            LOGGER.debug("Token is empty or null");
+            return Optional.empty();
+        }
+
+        if (token.getBytes(StandardCharsets.UTF_8).length > MAX_TOKEN_SIZE) {
+            LOGGER.warn(PortalTokenLogMessages.WARN.TOKEN_SIZE_EXCEEDED.format(MAX_TOKEN_SIZE));
+            return Optional.empty();
+        }
+
+        String[] parts = token.split("\\.");
+        if (parts.length != 3) {
+            LOGGER.debug("Invalid JWT token format: expected 3 parts but got %s", parts.length);
+            return Optional.empty();
+        }
+
+        try {
+            JsonObject claims = parsePayload(parts[1]);
+            return Optional.of(new NotValidatedJsonWebToken(claims, token));
+        } catch (Exception e) {
+            LOGGER.debug(e, "Failed to parse token: %s", e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    private JsonObject parsePayload(String payload) {
+        byte[] decoded = Base64.getUrlDecoder().decode(payload);
+
+        if (decoded.length > MAX_PAYLOAD_SIZE) {
+            LOGGER.debug("Decoded payload exceeds maximum size limit of %s bytes", MAX_PAYLOAD_SIZE);
+            throw new IllegalStateException("Decoded payload exceeds maximum size limit");
+        }
+
+        try (var reader = Json.createReader(new StringReader(new String(decoded, StandardCharsets.UTF_8)))) {
+            return reader.readObject();
+        }
     }
 
     /**
@@ -126,22 +201,8 @@ public class TestJwtParser implements JwtParser {
                 // Check if the token was created with SOME_SCOPES
                 String rawToken = null;
 
-                // Try to get the raw token using the getRawTokenForTesting method if available
-                if (delegate instanceof de.cuioss.jwt.token.util.NonValidatingJwtTokenParser.NotValidatedJsonWebToken) {
-                    try {
-                        // Use reflection to access the package-private method
-                        java.lang.reflect.Method method = delegate.getClass().getDeclaredMethod("getRawTokenForTesting");
-                        method.setAccessible(true);
-                        rawToken = (String) method.invoke(delegate);
-                    } catch (Exception e) {
-                        LOGGER.warn("Failed to access getRawTokenForTesting method: " + e.getMessage());
-                        // Fall back to getRawToken
-                        rawToken = delegate.getRawToken();
-                    }
-                } else {
-                    // Fall back to getRawToken for other implementations
-                    rawToken = delegate.getRawToken();
-                }
+                // Try to get the raw token
+                rawToken = delegate.getRawToken();
 
                 // If we still couldn't get the raw token, return true by default
                 if (rawToken == null) {
@@ -205,10 +266,124 @@ public class TestJwtParser implements JwtParser {
             return delegate.getGroups();
         }
     }
-
+    
     /**
-     * {@inheritDoc}
+     * Simple implementation of JsonWebToken that holds claims without validation.
      */
+    private static class NotValidatedJsonWebToken implements JsonWebToken {
+        private final JsonObject claims;
+        private final String rawToken;
+
+        NotValidatedJsonWebToken(JsonObject claims, String rawToken) {
+            this.claims = claims;
+            this.rawToken = rawToken;
+        }
+
+        @Override
+        public String getName() {
+            return getClaim("name");
+        }
+
+        @Override
+        public Set<String> getClaimNames() {
+            // Include derived claims that might not be in the original token
+            Set<String> allClaims = new HashSet<>(claims.keySet());
+
+            // Add jti claim if we're generating one
+            if (!claims.containsKey("jti")) {
+                allClaims.add("jti");
+            }
+
+            // Add other standard claims that might be derived
+            if (getTokenID() != null) allClaims.add("jti");
+            if (getIssuer() != null) allClaims.add("iss");
+            if (getSubject() != null) allClaims.add("sub");
+            if (getExpirationTime() > 0) allClaims.add("exp");
+            if (getIssuedAtTime() > 0) allClaims.add("iat");
+            if (getName() != null) allClaims.add("name");
+
+            return allClaims;
+        }
+
+        @Override
+        public <T> T getClaim(String claimName) {
+            JsonValue value = claims.get(claimName);
+            if (value == null) {
+                return null;
+            }
+
+            return (T) switch (value.getValueType()) {
+                case STRING -> ((JsonString) value).getString();
+                case NUMBER -> claims.getJsonNumber(claimName).longValue();
+                default -> null;
+            };
+        }
+
+        @Override
+        public boolean containsClaim(String claimName) {
+            return claims.containsKey(claimName);
+        }
+
+        @Override
+        public String getRawToken() {
+            return rawToken;
+        }
+
+        @Override
+        public String getIssuer() {
+            return getClaim("iss");
+        }
+
+        @Override
+        public String getSubject() {
+            return getClaim("sub");
+        }
+
+        @Override
+        public Set<String> getAudience() {
+            return Collections.emptySet(); // Not needed for inspection
+        }
+
+        @Override
+        public long getExpirationTime() {
+            Long exp = getClaim("exp");
+            if (exp == null) {
+                return 0;
+            }
+            return exp;
+        }
+
+        @Override
+        public long getIssuedAtTime() {
+            Long iat = getClaim("iat");
+            if (iat == null) {
+                return 0;
+            }
+            return iat;
+        }
+
+        @Override
+        public String getTokenID() {
+            String jti = getClaim("jti");
+            if (jti == null) {
+                // Generate a token ID based on the token's content
+                String subject = getSubject();
+                String issuer = getIssuer();
+                long issuedAt = getIssuedAtTime();
+                return String.format("%s-%s-%d",
+                        subject != null ? subject : "unknown",
+                        issuer != null ? issuer : "unknown",
+                        issuedAt);
+            }
+            return jti;
+        }
+
+        @Override
+        public Set<String> getGroups() {
+            return Set.of(); // Not needed for inspection
+        }
+    }
+
     /**
      * Sets the current test method name for special handling in the TestJsonWebToken.
      * This is used to handle specific test cases differently.

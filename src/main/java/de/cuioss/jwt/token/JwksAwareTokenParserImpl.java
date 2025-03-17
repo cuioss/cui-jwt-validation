@@ -39,6 +39,7 @@ import java.io.StringReader;
 import java.security.Key;
 import java.util.Base64;
 import java.util.Optional;
+import javax.net.ssl.SSLContext;
 
 import static de.cuioss.jwt.token.PortalTokenLogMessages.INFO;
 import static de.cuioss.jwt.token.PortalTokenLogMessages.WARN;
@@ -251,7 +252,91 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
                 jwksLoader = JwksClientFactory.createFileLoader(jwksEndpoint);
             } else {
                 LOGGER.debug("Creating HttpJwksLoader for URL: %s", jwksEndpoint);
-                jwksLoader = JwksClientFactory.createHttpLoader(jwksEndpoint, jwksRefreshInterval, null);
+
+                // Create SSLContext from certificate or keystore file if provided
+                SSLContext sslContext = null;
+                if (tlsCertificatePath != null && !tlsCertificatePath.isEmpty()) {
+                    try {
+                        LOGGER.info("Creating SSLContext from file: %s", tlsCertificatePath);
+
+                        // Check if the file exists
+                        java.io.File certFile = new java.io.File(tlsCertificatePath);
+                        if (!certFile.exists()) {
+                            LOGGER.warn("File does not exist: %s", tlsCertificatePath);
+                            LOGGER.warn("Current directory: %s", new java.io.File(".").getAbsolutePath());
+                            // Try to list files in the directory
+                            java.io.File parentDir = certFile.getParentFile();
+                            if (parentDir != null && parentDir.exists()) {
+                                LOGGER.info("Files in directory %s:", parentDir.getAbsolutePath());
+                                for (java.io.File file : parentDir.listFiles()) {
+                                    LOGGER.info("  %s", file.getName());
+                                }
+                            }
+                            throw new java.io.FileNotFoundException("File not found: " + tlsCertificatePath);
+                        }
+
+                        // Try to load as a keystore first
+                        try {
+                            LOGGER.debug("Trying to load as keystore");
+                            java.security.KeyStore keyStore = java.security.KeyStore.getInstance(java.security.KeyStore.getDefaultType());
+                            try (java.io.FileInputStream fis = new java.io.FileInputStream(certFile)) {
+                                // Try with default password "changeit" first
+                                char[] password = "changeit".toCharArray();
+                                try {
+                                    keyStore.load(fis, password);
+                                    LOGGER.debug("Successfully loaded keystore with default password");
+                                } catch (java.io.IOException e) {
+                                    // If that fails, try with empty password
+                                    LOGGER.debug("Failed to load keystore with default password, trying empty password");
+                                    fis.close();
+                                    try (java.io.FileInputStream fis2 = new java.io.FileInputStream(certFile)) {
+                                        keyStore.load(fis2, null);
+                                        LOGGER.debug("Successfully loaded keystore with empty password");
+                                    } catch (java.io.IOException e2) {
+                                        // If that fails too, throw the original exception
+                                        throw e;
+                                    }
+                                }
+                            }
+
+                            // Create a TrustManager that trusts the keystore
+                            javax.net.ssl.TrustManagerFactory tmf = javax.net.ssl.TrustManagerFactory.getInstance(javax.net.ssl.TrustManagerFactory.getDefaultAlgorithm());
+                            tmf.init(keyStore);
+
+                            // Create an SSLContext that uses the TrustManager
+                            sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
+                            sslContext.init(null, tmf.getTrustManagers(), null);
+
+                            LOGGER.info("Successfully created SSLContext from keystore file");
+                        } catch (Exception e) {
+                            // If loading as a keystore fails, try loading as a certificate
+                            LOGGER.debug("Failed to load as keystore, trying as certificate: %s", e.getMessage());
+                            try (java.io.FileInputStream fis = new java.io.FileInputStream(certFile)) {
+                                java.security.cert.CertificateFactory cf = java.security.cert.CertificateFactory.getInstance("X.509");
+                                java.security.cert.Certificate certificate = cf.generateCertificate(fis);
+
+                                // Create a KeyStore containing the certificate
+                                java.security.KeyStore keyStore = java.security.KeyStore.getInstance(java.security.KeyStore.getDefaultType());
+                                keyStore.load(null, null);
+                                keyStore.setCertificateEntry("cert", certificate);
+
+                                // Create a TrustManager that trusts the certificate
+                                javax.net.ssl.TrustManagerFactory tmf = javax.net.ssl.TrustManagerFactory.getInstance(javax.net.ssl.TrustManagerFactory.getDefaultAlgorithm());
+                                tmf.init(keyStore);
+
+                                // Create an SSLContext that uses the TrustManager
+                                sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
+                                sslContext.init(null, tmf.getTrustManagers(), null);
+
+                                LOGGER.info("Successfully created SSLContext from certificate file");
+                            }
+                        }
+                    } catch (Exception e) {
+                        LOGGER.warn(WARN.JWKS_FETCH_FAILED.format("Failed to create SSLContext: " + e.getMessage()));
+                    }
+                }
+
+                jwksLoader = JwksClientFactory.createHttpLoader(jwksEndpoint, jwksRefreshInterval, sslContext);
             }
 
             // Create the JWT parser
@@ -274,5 +359,34 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Creates an SSLContext that trusts all certificates.
+     * WARNING: This should only be used for testing purposes, never in production!
+     *
+     * @return an SSLContext that trusts all certificates
+     * @throws Exception if an error occurs
+     */
+    private static SSLContext createTrustAllSSLContext() throws Exception {
+        // Create a trust manager that does not validate certificate chains
+        javax.net.ssl.TrustManager[] trustAllCerts = new javax.net.ssl.TrustManager[] {
+            new javax.net.ssl.X509TrustManager() {
+                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                    return new java.security.cert.X509Certificate[0];
+                }
+                public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) {
+                    // Trust all client certificates
+                }
+                public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) {
+                    // Trust all server certificates
+                }
+            }
+        };
+
+        // Create an SSL context that uses the trust-all trust manager
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+        return sslContext;
     }
 }

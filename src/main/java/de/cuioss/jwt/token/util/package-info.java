@@ -21,14 +21,14 @@
  * <p>
  * Key components:
  * <ul>
- *   <li>{@link de.cuioss.jwt.token.util.MultiIssuerTokenParser}:
+ *   <li>{@link de.cuioss.jwt.token.util.MultiIssuerJwtParser}:
  *     <ul>
  *       <li>Manages multiple token parsers for different issuers</li>
  *       <li>Provides dynamic parser selection based on token characteristics</li>
  *       <li>Supports thread-safe token parsing in multi-tenant environments</li>
  *     </ul>
  *   </li>
- *   <li>{@link de.cuioss.jwt.token.util.NonValidatingJwtTokenParser}:
+ *   <li>{@link de.cuioss.jwt.token.util.NonValidatingJwtParser}:
  *     <ul>
  *       <li>Performs preliminary token inspection without signature validation</li>
  *       <li>Implements security measures against token-based attacks</li>
