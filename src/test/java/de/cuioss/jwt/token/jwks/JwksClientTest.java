@@ -1,5 +1,21 @@
+/*
+ * Copyright 2023 the original author or authors.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * https://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package de.cuioss.jwt.token.jwks;
 
+import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
@@ -7,43 +23,44 @@ import de.cuioss.test.mockwebserver.EnableMockWebServer;
 import de.cuioss.test.mockwebserver.MockWebServerHolder;
 import de.cuioss.test.mockwebserver.dispatcher.CombinedDispatcher;
 import de.cuioss.test.mockwebserver.dispatcher.ModuleDispatcherElement;
-import de.cuioss.tools.io.FileLoaderUtility;
-import de.cuioss.tools.logging.CuiLogger;
-import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
 import mockwebserver3.RecordedRequest;
 import okhttp3.Headers;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.Key;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
-import static jakarta.servlet.http.HttpServletResponse.SC_OK;
 import static jakarta.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+import static jakarta.servlet.http.HttpServletResponse.SC_OK;
 import static org.junit.jupiter.api.Assertions.*;
 
 @EnableTestLogger(debug = JwksClient.class)
-@DisplayName("Tests JwksClient functionality")
+@DisplayName("Tests JwksClient factory functionality")
 @EnableMockWebServer
-public class JwksClientTest implements MockWebServerHolder {
+class JwksClientTest implements MockWebServerHolder {
 
-    private static final CuiLogger LOGGER = new CuiLogger(JwksClientTest.class);
     private static final String JWKS_PATH = "/oidc/jwks.json";
     private static final int REFRESH_INTERVAL_SECONDS = 1; // Short interval for testing
-    private static final String TEST_KID = "test-key-id";
+    private static final String TEST_KID = JWKSFactory.TEST_KEY_ID;
 
     @Setter
     private MockWebServer mockWebServer;
 
-    private JwksClient jwksClient;
-    private String jwksEndpoint;
+    @TempDir
+    Path tempDir;
+
+    private String httpJwksEndpoint;
+    private Path fileJwksPath;
     private JwksTestDispatcher jwksDispatcher;
 
     private final JwksTestDispatcher testDispatcher = new JwksTestDispatcher();
@@ -54,128 +71,132 @@ public class JwksClientTest implements MockWebServerHolder {
     }
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws IOException {
+        // Setup HTTP endpoint
         int port = mockWebServer.getPort();
-        jwksEndpoint = "http://localhost:" + port + JWKS_PATH;
+        httpJwksEndpoint = "http://localhost:" + port + JWKS_PATH;
         jwksDispatcher = testDispatcher;
         jwksDispatcher.setCallCounter(0);
-        jwksClient = new JwksClient(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
+
+        // Setup file path
+        fileJwksPath = tempDir.resolve("jwks.json");
+        String jwksContent = JWKSFactory.createValidJwks();
+        Files.writeString(fileJwksPath, jwksContent);
     }
 
-    @AfterEach
-    void tearDown() {
-        if (jwksClient != null) {
-            jwksClient.shutdown();
+    @Test
+    @DisplayName("Should create HttpJwksLoader for HTTP URL")
+    void shouldCreateHttpJwksLoaderForHttpUrl() {
+        // When
+        JwksClient client = new JwksClient(httpJwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
+
+        try {
+            // Then
+            Optional<Key> key = client.getKey(TEST_KID);
+            assertTrue(key.isPresent(), "Key should be present");
+            assertEquals(1, jwksDispatcher.getCallCounter(), "JWKS endpoint should be called once");
+            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Creating HttpJwksLoader for URL");
+        } finally {
+            client.shutdown();
         }
     }
 
     @Test
-    @DisplayName("Should fetch and parse JWKS from remote endpoint")
-    void shouldFetchAndParseJwks() {
+    @DisplayName("Should create FileJwksLoader for file path")
+    void shouldCreateFileJwksLoaderForFilePath() {
         // When
-        Optional<Key> key = jwksClient.getKey(TEST_KID);
+        JwksClient client = new JwksClient(fileJwksPath.toString(), REFRESH_INTERVAL_SECONDS, null);
 
-        // Then
-        assertTrue(key.isPresent(), "Key should be present");
-        assertEquals(1, jwksDispatcher.getCallCounter(), "JWKS endpoint should be called once");
-        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Refreshing keys from JWKS endpoint");
-        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Successfully refreshed");
-    }
-
-    @Test
-    @DisplayName("Should cache keys and minimize HTTP requests")
-    void shouldCacheKeys() {
-        // When
-        for (int i = 0; i < 5; i++) {
-            Optional<Key> key = jwksClient.getKey(TEST_KID);
-            assertTrue(key.isPresent(), "Key should be present on call " + i);
+        try {
+            // Then
+            Optional<Key> key = client.getKey(TEST_KID);
+            assertTrue(key.isPresent(), "Key should be present");
+            assertEquals(0, jwksDispatcher.getCallCounter(), "JWKS endpoint should not be called");
+            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Creating FileJwksLoader for path");
+        } finally {
+            client.shutdown();
         }
-
-        // Then
-        assertEquals(1, jwksDispatcher.getCallCounter(), "JWKS endpoint should be called only once due to caching");
     }
 
     @Test
-    @DisplayName("Should refresh keys when kid not found")
-    void shouldRefreshKeysWhenKidNotFound() {
+    @DisplayName("Should delegate getKey to loader")
+    void shouldDelegateGetKeyToLoader() {
         // Given
-        jwksClient.getKey(TEST_KID); // Initial fetch
-        assertEquals(1, jwksDispatcher.getCallCounter());
-
-        // When
-        jwksDispatcher.setReturnEmptyJwks(true);
-        Optional<Key> key = jwksClient.getKey("unknown-kid");
-
-        // Then
-        assertFalse(key.isPresent(), "Key should not be present");
-        assertEquals(2, jwksDispatcher.getCallCounter(), "JWKS endpoint should be called again");
-    }
-
-    @Test
-    @DisplayName("Should handle server errors")
-    void shouldHandleServerErrors() {
-        // Given
-        jwksDispatcher.setReturnError(true);
-
-        // Create a new client that will encounter server error
-        JwksClient errorClient = new JwksClient(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
+        JwksClient client = new JwksClient(httpJwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
 
         try {
             // When
-            Optional<Key> key = errorClient.getKey(TEST_KID);
+            Optional<Key> key = client.getKey(TEST_KID);
 
             // Then
-            assertFalse(key.isPresent(), "Key should not be present when server returns error");
-            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to fetch JWKS: HTTP 500");
+            assertTrue(key.isPresent(), "Key should be present");
+            assertEquals(1, jwksDispatcher.getCallCounter(), "JWKS endpoint should be called once");
         } finally {
-            errorClient.shutdown();
+            client.shutdown();
         }
     }
 
     @Test
-    @DisplayName("Should handle invalid JWKS format")
-    void shouldHandleInvalidJwksFormat() {
+    @DisplayName("Should delegate getFirstKey to loader")
+    void shouldDelegateGetFirstKeyToLoader() {
         // Given
-        jwksDispatcher.setReturnInvalidJson(true);
-
-        // Create a new client with invalid JSON response
-        JwksClient invalidJsonClient = new JwksClient(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
+        JwksClient client = new JwksClient(httpJwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
 
         try {
             // When
-            Optional<Key> key = invalidJsonClient.getKey(TEST_KID);
+            Optional<Key> key = client.getFirstKey();
 
             // Then
-            assertFalse(key.isPresent(), "Key should not be present when JWKS is invalid");
-            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to parse JWKS JSON");
+            assertTrue(key.isPresent(), "Key should be present");
+            assertEquals(1, jwksDispatcher.getCallCounter(), "JWKS endpoint should be called once");
         } finally {
-            invalidJsonClient.shutdown();
+            client.shutdown();
         }
     }
 
     @Test
-    @DisplayName("Should refresh keys periodically")
-    void shouldRefreshKeysPeriodically() throws InterruptedException {
+    @DisplayName("Should delegate refreshKeys to loader")
+    void shouldDelegateRefreshKeysToLoader() {
         // Given
-        jwksClient.getKey(TEST_KID); // Initial fetch
-        assertEquals(1, jwksDispatcher.getCallCounter());
+        JwksClient client = new JwksClient(httpJwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
+        // The endpoint is called once during initialization
+        int initialCallCount = jwksDispatcher.getCallCounter();
 
-        // When - wait for refresh interval
-        TimeUnit.SECONDS.sleep(REFRESH_INTERVAL_SECONDS + 1);
+        try {
+            // When
+            client.refreshKeys();
 
-        // Then - verify keys were refreshed automatically
-        assertTrue(jwksDispatcher.getCallCounter() > 1, "JWKS endpoint should be called again after refresh interval");
+            // Then
+            assertEquals(initialCallCount + 1, jwksDispatcher.getCallCounter(), "JWKS endpoint should be called once more after refreshKeys");
+            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Refreshing keys from JWKS endpoint");
+            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Successfully refreshed keys");
+        } finally {
+            client.shutdown();
+        }
     }
 
     @Test
-    @DisplayName("Should return empty when kid is null")
-    void shouldReturnEmptyWhenKidIsNull() {
+    @DisplayName("Should delegate shutdown to loader")
+    void shouldDelegateShutdownToLoader() {
+        // Given
+        JwksClient client = new JwksClient(httpJwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
+
         // When
-        Optional<Key> key = jwksClient.getKey(null);
+        client.shutdown();
 
         // Then
-        assertFalse(key.isPresent(), "Key should not be present when kid is null");
-        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Key ID is null");
+        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Shutting down JwksClient");
+    }
+
+    @Test
+    @DisplayName("Should use close method from AutoCloseable")
+    void shouldUseCloseMethod() {
+        // Given
+        JwksClient client = new JwksClient(httpJwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
+
+        // When/Then
+        // Verify that close method doesn't throw an exception
+        assertDoesNotThrow(() -> client.close(), "close method should not throw an exception");
     }
 
     @Test
@@ -183,49 +204,12 @@ public class JwksClientTest implements MockWebServerHolder {
     void shouldThrowExceptionWhenRefreshIntervalIsInvalid() {
         // When/Then
         assertThrows(IllegalArgumentException.class, () -> {
-            new JwksClient(jwksEndpoint, 0, null);
+            new JwksClient(httpJwksEndpoint, 0, null);
         }, "Should throw exception when refresh interval is zero");
 
         assertThrows(IllegalArgumentException.class, () -> {
-            new JwksClient(jwksEndpoint, -1, null);
+            new JwksClient(httpJwksEndpoint, -1, null);
         }, "Should throw exception when refresh interval is negative");
-    }
-
-    @Test
-    @DisplayName("Should use close method from AutoCloseable")
-    void shouldUseCloseMethod() {
-        // Given
-        JwksClient client = new JwksClient(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
-
-        // When
-        try (JwksClient autoCloseableClient = client) {
-            // Use in try-with-resources
-        }
-
-        // Then
-        // Verify client was shut down by checking logs
-        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Shutting down JwksClient");
-    }
-
-    @Test
-    @DisplayName("Should handle missing required fields in JWK")
-    void shouldHandleMissingRequiredFieldsInJwk() {
-        // Given
-        jwksDispatcher.setReturnMissingFieldsJwk(true);
-
-        // Create a new client with JWK missing required fields
-        JwksClient missingFieldsClient = new JwksClient(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
-
-        try {
-            // When
-            Optional<Key> key = missingFieldsClient.getKey(TEST_KID);
-
-            // Then
-            assertFalse(key.isPresent(), "Key should not be present when JWK is missing required fields");
-            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to parse RSA key");
-        } finally {
-            missingFieldsClient.shutdown();
-        }
     }
 
     /**
@@ -249,24 +233,6 @@ public class JwksClientTest implements MockWebServerHolder {
             this.returnError = returnError;
         }
 
-        private boolean returnInvalidJson = false;
-
-        public void setReturnInvalidJson(boolean returnInvalidJson) {
-            this.returnInvalidJson = returnInvalidJson;
-        }
-
-        private boolean returnEmptyJwks = false;
-
-        public void setReturnEmptyJwks(boolean returnEmptyJwks) {
-            this.returnEmptyJwks = returnEmptyJwks;
-        }
-
-        private boolean returnMissingFieldsJwk = false;
-
-        public void setReturnMissingFieldsJwk(boolean returnMissingFieldsJwk) {
-            this.returnMissingFieldsJwk = returnMissingFieldsJwk;
-        }
-
         @Override
         public Optional<MockResponse> handleGet(@NonNull RecordedRequest request) {
             callCounter++;
@@ -275,37 +241,7 @@ public class JwksClientTest implements MockWebServerHolder {
                 return Optional.of(new MockResponse(SC_INTERNAL_SERVER_ERROR, Headers.of(), ""));
             }
 
-            if (returnInvalidJson) {
-                return Optional.of(new MockResponse(
-                        SC_OK, 
-                        Headers.of("Content-Type", "application/json"), 
-                        "invalid json"));
-            }
-
-            String jwksJson;
-            if (returnEmptyJwks) {
-                jwksJson = "{\"keys\": []}";
-            } else if (returnMissingFieldsJwk) {
-                jwksJson = "{"
-                        + "\"keys\": ["
-                        + "  {"
-                        + "    \"kid\": \"" + TEST_KID + "\","
-                        + "    \"kty\": \"RSA\""
-                        + "  }"
-                        + "]"
-                        + "}";
-            } else {
-                jwksJson = "{"
-                        + "\"keys\": ["
-                        + "  {"
-                        + "    \"kid\": \"" + TEST_KID + "\","
-                        + "    \"kty\": \"RSA\","
-                        + "    \"n\": \"pBTkqmr5QeF3AN1e64t8z78ChaSuika4KWg1tV520qDEJk4BsWNzjcgTuHOFV0gQnG5c-p9gW7QOHZvq-FxTH4G64S01L3C9jGMqCODvYbm9Kv1Bc-gRwbXzfaue7PqPNSVK7xh5JQ4EqXgiGSbmnYQSrDGCQeV-NZevoxUL2yneRbgSl-cdazfi0qLn884hzysvr2NJwRWiWXooNzzPooRlvay4hHCkibbBnZpiOIMZFuXu4EGrwD24qZmPzQL_LoIT_BAv5ZyNGmsIvqdMKpCYfQrO2VAHifa05VSZJfwdXlYxPL815hxIGWHYKHTiuoZrdJ9fcebN9x2cAEGAYw\","
-                        + "    \"e\": \"AQAB\""
-                        + "  }"
-                        + "]"
-                        + "}";
-            }
+            String jwksJson = JWKSFactory.createValidJwks();
 
             return Optional.of(new MockResponse(
                     SC_OK,

@@ -75,23 +75,8 @@ public class JwksResolveDispatcher implements ModuleDispatcherElement {
         if (publicKey instanceof java.security.interfaces.RSAPublicKey) {
             java.security.interfaces.RSAPublicKey rsaKey = (java.security.interfaces.RSAPublicKey) publicKey;
 
-            // Extract the modulus and exponent
-            byte[] modulusBytes = rsaKey.getModulus().toByteArray();
-            byte[] exponentBytes = rsaKey.getPublicExponent().toByteArray();
-
-            // Remove leading zero byte if present (BigInteger sign bit)
-            if (modulusBytes.length > 0 && modulusBytes[0] == 0) {
-                byte[] tmp = new byte[modulusBytes.length - 1];
-                System.arraycopy(modulusBytes, 1, tmp, 0, tmp.length);
-                modulusBytes = tmp;
-            }
-
-            // Base64 URL encode
-            String n = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(modulusBytes);
-            String e = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(exponentBytes);
-
-            // Create JWKS JSON with the correct key ID
-            return String.format("{\"keys\":[{\"kty\":\"RSA\",\"kid\":\"default-key-id\",\"n\":\"%s\",\"e\":\"%s\",\"alg\":\"RS256\"}]}", n, e);
+            // Create JWKS JSON with the default key ID
+            return JWKSFactory.createJwksFromRsaKey(rsaKey, JWKSFactory.DEFAULT_KEY_ID);
         } else {
             throw new IllegalStateException("Only RSA keys are supported");
         }

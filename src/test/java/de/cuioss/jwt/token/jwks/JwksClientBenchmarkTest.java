@@ -1,5 +1,21 @@
+/*
+ * Copyright 2023 the original author or authors.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * https://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package de.cuioss.jwt.token.jwks;
 
+import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import de.cuioss.test.mockwebserver.EnableMockWebServer;
 import de.cuioss.test.mockwebserver.MockWebServerHolder;
@@ -19,7 +35,6 @@ import org.junit.jupiter.api.Test;
 
 import java.security.Key;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import static jakarta.servlet.http.HttpServletResponse.SC_OK;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -36,7 +51,7 @@ public class JwksClientBenchmarkTest implements MockWebServerHolder {
     private static final CuiLogger LOGGER = new CuiLogger(JwksClientBenchmarkTest.class);
     private static final String JWKS_PATH = "/oidc/jwks.json";
     private static final int REFRESH_INTERVAL_SECONDS = 60; // Longer interval for benchmarking
-    private static final String TEST_KID = "test-key-id";
+    private static final String TEST_KID = JWKSFactory.TEST_KEY_ID;
     private static final int WARMUP_ITERATIONS = 10;
     private static final int BENCHMARK_ITERATIONS = 100;
 
@@ -127,16 +142,7 @@ public class JwksClientBenchmarkTest implements MockWebServerHolder {
 
         @Override
         public Optional<MockResponse> handleGet(@NonNull RecordedRequest request) {
-            String jwksJson = "{"
-                    + "\"keys\": ["
-                    + "  {"
-                    + "    \"kid\": \"" + TEST_KID + "\","
-                    + "    \"kty\": \"RSA\","
-                    + "    \"n\": \"pBTkqmr5QeF3AN1e64t8z78ChaSuika4KWg1tV520qDEJk4BsWNzjcgTuHOFV0gQnG5c-p9gW7QOHZvq-FxTH4G64S01L3C9jGMqCODvYbm9Kv1Bc-gRwbXzfaue7PqPNSVK7xh5JQ4EqXgiGSbmnYQSrDGCQeV-NZevoxUL2yneRbgSl-cdazfi0qLn884hzysvr2NJwRWiWXooNzzPooRlvay4hHCkibbBnZpiOIMZFuXu4EGrwD24qZmPzQL_LoIT_BAv5ZyNGmsIvqdMKpCYfQrO2VAHifa05VSZJfwdXlYxPL815hxIGWHYKHTiuoZrdJ9fcebN9x2cAEGAYw\","
-                    + "    \"e\": \"AQAB\""
-                    + "  }"
-                    + "]"
-                    + "}";
+            String jwksJson = JWKSFactory.createValidJwks();
 
             return Optional.of(new MockResponse(
                     SC_OK,

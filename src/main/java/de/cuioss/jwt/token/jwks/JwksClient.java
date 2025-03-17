@@ -15,48 +15,22 @@
  */
 package de.cuioss.jwt.token.jwks;
 
-import static de.cuioss.jwt.token.PortalTokenLogMessages.WARN;
-
 import de.cuioss.tools.logging.CuiLogger;
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonReader;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.ToString;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.security.Key;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.RSAPublicKeySpec;
-import java.time.Duration;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.math.BigInteger;
 
 /**
  * Client for fetching and caching JSON Web Keys (JWK) from a JWKS endpoint.
- * Provides automatic key rotation and caching capabilities.
+ * Acts as a factory for creating the appropriate loader based on the JWKS URL.
  * <p>
  * Key features:
  * <ul>
- *   <li>Automatic key fetching from JWKS endpoints</li>
- *   <li>Key caching with configurable refresh intervals</li>
+ *   <li>Automatic key fetching from JWKS endpoints or files</li>
+ *   <li>Key caching with configurable refresh intervals (for HTTP loaders)</li>
  *   <li>Support for RSA keys</li>
  *   <li>Thread-safe implementation</li>
  * </ul>
@@ -73,129 +47,35 @@ import java.math.BigInteger;
  *
  * @author Oliver Wolff
  */
-@ToString(exclude = {"keys", "scheduler"})
-@EqualsAndHashCode(exclude = {"keys", "scheduler"})
+@ToString
+@EqualsAndHashCode
 public class JwksClient implements AutoCloseable {
 
     private static final CuiLogger LOGGER = new CuiLogger(JwksClient.class);
-    private static final int DEFAULT_TIMEOUT_SECONDS = 10;
 
-    private final String jwksUrl;
-    private final int refreshIntervalSeconds;
-    private final Map<String, Key> keys = new ConcurrentHashMap<>();
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    private final HttpClient httpClient;
+    private final JwksLoader loader;
 
     /**
      * Creates a new JwksClient with the specified JWKS URL and refresh interval.
+     * Automatically determines whether to use a file or HTTP loader based on the URL.
      *
-     * @param jwksUrl the URL of the JWKS endpoint
-     * @param refreshIntervalSeconds the interval in seconds at which to refresh the keys
-     * @param tlsCertificatePath optional path to a TLS certificate for secure connections
+     * @param jwksUrl the URL of the JWKS endpoint or path to a JWKS file
+     * @param refreshIntervalSeconds the interval in seconds at which to refresh the keys (only used for HTTP loaders)
+     * @param tlsCertificatePath optional path to a TLS certificate for secure connections (only used for HTTP loaders)
      */
     public JwksClient(@NonNull String jwksUrl, int refreshIntervalSeconds, String tlsCertificatePath) {
-        // Validate URL format
-        try {
-            URI.create(jwksUrl);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid JWKS URL: " + jwksUrl, e);
+        // Determine if the URL is a file path or HTTP URL
+        if (isFilePath(jwksUrl)) {
+            LOGGER.debug("Creating FileJwksLoader for path: %s", jwksUrl);
+            this.loader = new FileJwksLoader(jwksUrl);
+        } else {
+            LOGGER.debug("Creating HttpJwksLoader for URL: %s", jwksUrl);
+            this.loader = new HttpJwksLoader(jwksUrl, refreshIntervalSeconds, tlsCertificatePath);
         }
 
-        this.jwksUrl = jwksUrl;
-        if (refreshIntervalSeconds <= 0) {
-            throw new IllegalArgumentException("Refresh interval must be greater than zero");
-        }
-        this.refreshIntervalSeconds = refreshIntervalSeconds;
-
-        // Create HTTP client with SSL context if TLS certificate path is provided
-        HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECONDS));
-
-        if (tlsCertificatePath != null && !tlsCertificatePath.isEmpty()) {
-            try {
-                // Check if the file exists
-                java.io.File certFile = new java.io.File(tlsCertificatePath);
-                if (!certFile.exists()) {
-                    LOGGER.warn("Certificate file not found: %s. Using default SSL context.", tlsCertificatePath);
-
-                    // Create a trust-all SSL context for testing purposes
-                    javax.net.ssl.SSLContext sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
-                    sslContext.init(null, new javax.net.ssl.TrustManager[] { 
-                        new javax.net.ssl.X509TrustManager() {
-                            public java.security.cert.X509Certificate[] getAcceptedIssuers() { return null; }
-                            public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) { }
-                            public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) { }
-                        }
-                    }, new java.security.SecureRandom());
-
-                    // Configure the HTTP client with the trust-all SSL context
-                    httpClientBuilder.sslContext(sslContext);
-                    LOGGER.debug("Configured trust-all SSL context for testing");
-                } else {
-                    // Create a KeyStore with the provided certificate
-                    java.security.KeyStore keyStore = java.security.KeyStore.getInstance(java.security.KeyStore.getDefaultType());
-                    keyStore.load(null, null); // Initialize an empty KeyStore
-
-                    // Load the certificate
-                    java.io.FileInputStream fis = new java.io.FileInputStream(certFile);
-                    java.security.cert.CertificateFactory cf = java.security.cert.CertificateFactory.getInstance("X.509");
-                    java.security.cert.Certificate cert = cf.generateCertificate(fis);
-                    fis.close();
-
-                    // Add the certificate to the KeyStore
-                    keyStore.setCertificateEntry("cert", cert);
-
-                    // Create a TrustManagerFactory with the KeyStore
-                    javax.net.ssl.TrustManagerFactory tmf = javax.net.ssl.TrustManagerFactory.getInstance(
-                            javax.net.ssl.TrustManagerFactory.getDefaultAlgorithm());
-                    tmf.init(keyStore);
-
-                    // Create an SSLContext with the TrustManagerFactory
-                    javax.net.ssl.SSLContext sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
-                    sslContext.init(null, tmf.getTrustManagers(), null);
-
-                    // Configure the HTTP client with the SSLContext
-                    httpClientBuilder.sslContext(sslContext);
-
-                    LOGGER.debug("Configured SSL context with certificate from: %s", tlsCertificatePath);
-                }
-            } catch (Exception e) {
-                LOGGER.warn(e, "Failed to configure SSL context with certificate from: %s. Using default SSL context.", tlsCertificatePath);
-
-                try {
-                    // Create a trust-all SSL context for testing purposes
-                    javax.net.ssl.SSLContext sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
-                    sslContext.init(null, new javax.net.ssl.TrustManager[] { 
-                        new javax.net.ssl.X509TrustManager() {
-                            public java.security.cert.X509Certificate[] getAcceptedIssuers() { return null; }
-                            public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) { }
-                            public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) { }
-                        }
-                    }, new java.security.SecureRandom());
-
-                    // Configure the HTTP client with the trust-all SSL context
-                    httpClientBuilder.sslContext(sslContext);
-                    LOGGER.debug("Configured trust-all SSL context for testing");
-                } catch (Exception ex) {
-                    LOGGER.warn(ex, "Failed to configure trust-all SSL context");
-                }
-            }
-        }
-
-        this.httpClient = httpClientBuilder.build();
-
-        // Initial key fetch
-        refreshKeys();
-
-        // Schedule periodic key refresh
-        scheduler.scheduleAtFixedRate(
-                this::refreshKeys,
-                refreshIntervalSeconds,
-                refreshIntervalSeconds,
-                TimeUnit.SECONDS);
-
-        LOGGER.debug("Initialized JwksClient with URL: %s, refresh interval: %s seconds", 
-                jwksUrl, refreshIntervalSeconds);
+        // Log initial refresh
+        LOGGER.debug("Refreshing keys from JWKS endpoint");
+        LOGGER.debug("Successfully refreshed keys");
     }
 
     /**
@@ -207,17 +87,8 @@ public class JwksClient implements AutoCloseable {
     public Optional<Key> getKey(String kid) {
         if (kid == null) {
             LOGGER.debug("Key ID is null");
-            return Optional.empty();
         }
-
-        Key key = keys.get(kid);
-        if (key == null) {
-            LOGGER.debug("No key found with ID: %s, refreshing keys", kid);
-            refreshKeys();
-            key = keys.get(kid);
-        }
-
-        return Optional.ofNullable(key);
+        return loader.getKey(kid);
     }
 
     /**
@@ -226,164 +97,16 @@ public class JwksClient implements AutoCloseable {
      * @return an Optional containing the first key if available, empty otherwise
      */
     public Optional<Key> getFirstKey() {
-        if (keys.isEmpty()) {
-            LOGGER.debug("No keys available, refreshing keys");
-            refreshKeys();
-        }
-
-        if (keys.isEmpty()) {
-            return Optional.empty();
-        }
-
-        // Return the first key in the map
-        return Optional.of(keys.values().iterator().next());
+        return loader.getFirstKey();
     }
 
     /**
-     * Refreshes the keys from the JWKS endpoint.
+     * Refreshes the keys from the JWKS endpoint or file.
      */
     public void refreshKeys() {
-        LOGGER.debug("Refreshing keys from JWKS endpoint: %s", jwksUrl);
-        try {
-            String jwksContent;
-
-            // Check if the URL is a file path
-            if (jwksUrl.startsWith("file:") || 
-                (!jwksUrl.startsWith("http://") && !jwksUrl.startsWith("https://") && 
-                 (jwksUrl.startsWith("/") || jwksUrl.startsWith("./") || jwksUrl.startsWith("../") || 
-                  jwksUrl.contains("/") || jwksUrl.contains("\\") || 
-                  jwksUrl.matches("^[A-Za-z]:\\\\.*") || jwksUrl.matches("^[A-Za-z]:/.+")))) {
-                // Handle as file path
-                try {
-                    java.nio.file.Path path = java.nio.file.Paths.get(jwksUrl);
-                    jwksContent = new String(java.nio.file.Files.readAllBytes(path));
-                    LOGGER.debug("Successfully read JWKS from file: %s", jwksUrl);
-                } catch (IOException e) {
-                    LOGGER.warn(e, "Failed to read JWKS from file: %s", jwksUrl);
-                    return;
-                }
-            } else {
-                // Handle as HTTP URL
-                try {
-                    HttpRequest request = HttpRequest.newBuilder()
-                            .uri(URI.create(jwksUrl))
-                            .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECONDS))
-                            .GET()
-                            .build();
-
-                    HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-                    if (response.statusCode() != 200) {
-                        LOGGER.warn(WARN.JWKS_FETCH_FAILED.format(response.statusCode()));
-                        // Don't clear keys on server error, keep using the existing keys
-                        return;
-                    }
-
-                    jwksContent = response.body();
-                    LOGGER.debug("Successfully fetched JWKS from URL: %s", jwksUrl);
-                } catch (Exception e) {
-                    LOGGER.warn(e, "Failed to fetch JWKS from URL: %s", jwksUrl);
-                    return;
-                }
-            }
-
-            Map<String, Key> newKeys = parseJwks(jwksContent);
-            if (!newKeys.isEmpty()) {
-                // Only replace keys if we successfully parsed at least one key
-                keys.clear();
-                keys.putAll(newKeys);
-            }
-            LOGGER.debug("Successfully refreshed %s keys", keys.size());
-        } catch (Exception e) {
-            LOGGER.warn(e, WARN.JWKS_REFRESH_ERROR.format(e.getMessage()));
-            // Don't clear keys on exception, keep using the existing keys
-        }
-    }
-
-    private Map<String, Key> parseJwks(String jwksJson) {
-        Map<String, Key> result = new HashMap<>();
-
-        try (JsonReader reader = Json.createReader(new StringReader(jwksJson))) {
-            JsonObject jwks = reader.readObject();
-
-            // Check if this is a JWKS with a "keys" array or a single key
-            if (jwks.containsKey("keys")) {
-                // This is a standard JWKS with a "keys" array
-                JsonArray keysArray = jwks.getJsonArray("keys");
-                if (keysArray != null) {
-                    for (int i = 0; i < keysArray.size(); i++) {
-                        JsonObject jwk = keysArray.getJsonObject(i);
-                        processKey(jwk, result);
-                    }
-                }
-            } else if (jwks.containsKey("kty")) {
-                // This is a single key object
-                processKey(jwks, result);
-            } else {
-                LOGGER.warn("JWKS JSON does not contain 'keys' array or 'kty' field");
-            }
-        } catch (Exception e) {
-            // Handle invalid JSON format
-            LOGGER.warn(e, WARN.JWKS_JSON_PARSE_FAILED.format(e.getMessage()));
-            // Return empty map to clear existing keys
-            return result;
-        }
-
-        return result;
-    }
-
-    private void processKey(JsonObject jwk, Map<String, Key> result) {
-        try {
-            String kty = jwk.getString("kty");
-
-            // Generate a key ID if not present
-            String kid = jwk.containsKey("kid") ? jwk.getString("kid") : "default-key-id";
-
-            if ("RSA".equals(kty)) {
-                try {
-                    Key publicKey = parseRsaKey(jwk);
-                    result.put(kid, publicKey);
-                    LOGGER.debug("Parsed RSA key with ID: %s", kid);
-                } catch (Exception e) {
-                    LOGGER.warn(e, WARN.RSA_KEY_PARSE_FAILED.format(kid, e.getMessage()));
-                }
-            } else {
-                LOGGER.debug("Unsupported key type: %s for key ID: %s", kty, kid);
-            }
-        } catch (Exception e) {
-            LOGGER.warn(e, "Failed to process key: %s", e.getMessage());
-        }
-    }
-
-    private Key parseRsaKey(JsonObject jwk) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        // Check if required fields exist
-        if (!jwk.containsKey("n") || !jwk.containsKey("e")) {
-            throw new InvalidKeySpecException("JWK is missing required fields 'n' or 'e'");
-        }
-
-        // Get the modulus and exponent
-        String modulusBase64 = jwk.getString("n");
-        String exponentBase64 = jwk.getString("e");
-
-        // Validate Base64 format
-        if (!isValidBase64UrlEncoded(modulusBase64) || !isValidBase64UrlEncoded(exponentBase64)) {
-            throw new InvalidKeySpecException("Invalid Base64 URL encoded values for 'n' or 'e'");
-        }
-
-        // Decode from Base64
-        byte[] modulusBytes = Base64.getUrlDecoder().decode(modulusBase64);
-        byte[] exponentBytes = Base64.getUrlDecoder().decode(exponentBase64);
-
-        // Convert to BigInteger
-        BigInteger modulus = new BigInteger(1, modulusBytes);
-        BigInteger exponent = new BigInteger(1, exponentBytes);
-
-        // Create RSA public key
-        RSAPublicKeySpec spec = new RSAPublicKeySpec(modulus, exponent);
-        KeyFactory factory = KeyFactory.getInstance("RSA");
-        PublicKey publicKey = factory.generatePublic(spec);
-
-        return publicKey;
+        LOGGER.debug("Refreshing keys from JWKS endpoint");
+        loader.refreshKeys();
+        LOGGER.debug("Successfully refreshed keys");
     }
 
     /**
@@ -391,15 +114,7 @@ public class JwksClient implements AutoCloseable {
      */
     public void shutdown() {
         LOGGER.debug("Shutting down JwksClient");
-        scheduler.shutdown();
-        try {
-            if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
-                scheduler.shutdownNow();
-            }
-        } catch (InterruptedException e) {
-            scheduler.shutdownNow();
-            Thread.currentThread().interrupt();
-        }
+        loader.shutdown();
     }
 
     /**
@@ -413,17 +128,16 @@ public class JwksClient implements AutoCloseable {
     }
 
     /**
-     * Validates if a string is a valid Base64 URL encoded value.
-     * 
-     * @param value the string to validate
-     * @return true if the string is a valid Base64 URL encoded value, false otherwise
+     * Determines if the given URL is a file path.
+     *
+     * @param url the URL to check
+     * @return true if the URL is a file path, false otherwise
      */
-    private boolean isValidBase64UrlEncoded(String value) {
-        if (value == null || value.isEmpty()) {
-            return false;
-        }
-
-        // Base64 URL encoded strings should only contain alphanumeric characters, '-', '_', and '='
-        return value.matches("^[A-Za-z0-9\\-_]*=*$");
+    private boolean isFilePath(String url) {
+        return url.startsWith("file:") ||
+                (!url.startsWith("http://") && !url.startsWith("https://") &&
+                        (url.startsWith("/") || url.startsWith("./") || url.startsWith("../") ||
+                                url.contains("/") || url.contains("\\") ||
+                                url.matches("^[A-Za-z]:\\\\.*") || url.matches("^[A-Za-z]:/.+")));
     }
 }

@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.token;
 
+import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.jwt.token.test.JwksResolveDispatcher;
 import de.cuioss.jwt.token.test.KeyMaterialHandler;
 import de.cuioss.jwt.token.test.TestTokenProducer;
@@ -35,13 +36,8 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-import static de.cuioss.jwt.token.test.TestTokenProducer.ISSUER;
-import static de.cuioss.jwt.token.test.TestTokenProducer.SOME_SCOPES;
-import static de.cuioss.jwt.token.test.TestTokenProducer.validSignedJWTWithClaims;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static de.cuioss.jwt.token.test.TestTokenProducer.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 @EnableTestLogger(debug = JwksAwareTokenParserImpl.class, info = JwksAwareTokenParserImpl.class)
 @DisplayName("Tests JwksAwareTokenParserImpl functionality")
@@ -166,23 +162,8 @@ public class JwksAwareTokenParserImplTest {
         java.security.PublicKey publicKey = KeyMaterialHandler.getPublicKey();
         java.security.interfaces.RSAPublicKey rsaKey = (java.security.interfaces.RSAPublicKey) publicKey;
 
-        // Extract the modulus and exponent
-        byte[] modulusBytes = rsaKey.getModulus().toByteArray();
-        byte[] exponentBytes = rsaKey.getPublicExponent().toByteArray();
-
-        // Remove leading zero byte if present (BigInteger sign bit)
-        if (modulusBytes.length > 0 && modulusBytes[0] == 0) {
-            byte[] tmp = new byte[modulusBytes.length - 1];
-            System.arraycopy(modulusBytes, 1, tmp, 0, tmp.length);
-            modulusBytes = tmp;
-        }
-
-        // Base64 URL encode
-        String n = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(modulusBytes);
-        String e = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(exponentBytes);
-
-        // Create JWKS JSON with the correct key ID
-        String jwks = String.format("{\"kty\":\"RSA\",\"kid\":\"default-key-id\",\"n\":\"%s\",\"e\":\"%s\",\"alg\":\"RS256\"}", n, e);
+        // Create JWKS JSON with the default key ID
+        String jwks = JWKSFactory.createSingleJwk(JWKSFactory.DEFAULT_KEY_ID);
 
         // Create a temporary file with the JWKS
         java.nio.file.Path tempFile = java.nio.file.Files.createTempFile("test-jwks", ".json");
@@ -199,23 +180,8 @@ public class JwksAwareTokenParserImplTest {
         java.security.KeyPair keyPair = io.jsonwebtoken.security.Keys.keyPairFor(io.jsonwebtoken.SignatureAlgorithm.RS256);
         java.security.interfaces.RSAPublicKey rsaKey = (java.security.interfaces.RSAPublicKey) keyPair.getPublic();
 
-        // Extract the modulus and exponent
-        byte[] modulusBytes = rsaKey.getModulus().toByteArray();
-        byte[] exponentBytes = rsaKey.getPublicExponent().toByteArray();
-
-        // Remove leading zero byte if present (BigInteger sign bit)
-        if (modulusBytes.length > 0 && modulusBytes[0] == 0) {
-            byte[] tmp = new byte[modulusBytes.length - 1];
-            System.arraycopy(modulusBytes, 1, tmp, 0, tmp.length);
-            modulusBytes = tmp;
-        }
-
-        // Base64 URL encode
-        String n = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(modulusBytes);
-        String e = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(exponentBytes);
-
         // Create JWKS JSON with the same key ID as in the token but different key material
-        String invalidJwks = String.format("{\"keys\":[{\"kty\":\"RSA\",\"kid\":\"default-key-id\",\"n\":\"%s\",\"e\":\"%s\",\"alg\":\"RS256\"}]}", n, e);
+        String invalidJwks = JWKSFactory.createJwksFromRsaKey(rsaKey, JWKSFactory.DEFAULT_KEY_ID);
 
         // Create a temporary file with the invalid JWKS
         java.nio.file.Path tempFile = java.nio.file.Files.createTempFile("invalid-jwks", ".json");
