@@ -164,8 +164,8 @@ class TestTokenProducerTest {
     @Test
     void shouldHandleInvalidClaimsPath() {
         // This should not throw an exception but handle the error gracefully
-        assertThrows(RuntimeException.class, () -> 
-            TestTokenProducer.validSignedJWTWithClaims("non-existent-file.json"));
+        assertThrows(RuntimeException.class, () ->
+                TestTokenProducer.validSignedJWTWithClaims("non-existent-file.json"));
     }
 
     @Test

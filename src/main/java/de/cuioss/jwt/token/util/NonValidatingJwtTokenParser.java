@@ -268,10 +268,10 @@ public class NonValidatingJwtTokenParser {
                 String subject = getSubject();
                 String issuer = getIssuer();
                 long issuedAt = getIssuedAtTime();
-                return String.format("%s-%s-%d", 
-                    subject != null ? subject : "unknown", 
-                    issuer != null ? issuer : "unknown", 
-                    issuedAt);
+                return String.format("%s-%s-%d",
+                        subject != null ? subject : "unknown",
+                        issuer != null ? issuer : "unknown",
+                        issuedAt);
             }
             return jti;
         }

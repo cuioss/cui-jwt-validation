@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.token;
 
+import de.cuioss.jwt.token.test.TestJwtParser;
 import de.cuioss.test.generator.Generators;
 import de.cuioss.test.generator.domain.EmailGenerator;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
@@ -25,12 +26,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
-import de.cuioss.jwt.token.test.TestTokenProducer;
-import de.cuioss.jwt.token.test.TestJwtParser;
 import static de.cuioss.jwt.token.test.TestTokenProducer.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @EnableTestLogger
 @DisplayName("Tests ParsedAccessToken functionality")

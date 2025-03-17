@@ -15,8 +15,8 @@
  */
 package de.cuioss.jwt.token.util;
 
-import de.cuioss.jwt.token.JwtParser;
 import de.cuioss.jwt.token.JwksAwareTokenParserImpl;
+import de.cuioss.jwt.token.JwtParser;
 import de.cuioss.jwt.token.adapter.JsonWebToken;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.EqualsAndHashCode;

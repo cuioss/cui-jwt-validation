@@ -21,7 +21,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import de.cuioss.jwt.token.test.TestTokenProducer;
 import static de.cuioss.jwt.token.test.TestTokenProducer.REFRESH_TOKEN;
 import static de.cuioss.jwt.token.test.TestTokenProducer.validSignedJWTWithClaims;
 import static org.junit.jupiter.api.Assertions.assertEquals;

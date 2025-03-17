@@ -124,7 +124,7 @@ public class TestTokenProducer {
                     // Handle objects if needed
                     break;
                 default:
-                    // Ignore other types
+                // Ignore other types
             }
         }
         return builder;

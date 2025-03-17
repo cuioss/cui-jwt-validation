@@ -27,12 +27,9 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-import de.cuioss.jwt.token.test.TestTokenProducer;
 import static de.cuioss.jwt.token.test.TestTokenProducer.*;
 import static de.cuioss.test.juli.LogAsserts.assertLogMessagePresentContaining;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @EnableTestLogger
 @DisplayName("Tests MultiIssuerTokenParser functionality")
