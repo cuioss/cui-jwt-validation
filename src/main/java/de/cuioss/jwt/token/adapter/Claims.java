@@ -15,63 +15,66 @@
  */
 package de.cuioss.jwt.token.adapter;
 
+import lombok.experimental.UtilityClass;
+
 /**
- * Interface defining standard claim names for JWT tokens.
+ * Class defining standard claim names for JWT tokens as constants.
  * This is a replacement for the org.eclipse.microprofile.jwt.Claims interface
  * to allow for migration from SmallRye JWT to JJWT without changing the existing code.
  *
  * @author Oliver Wolff
  */
-public interface Claims {
+@UtilityClass
+public final class Claims {
 
     /**
      * The "iss" (issuer) claim identifies the principal that issued the JWT.
      */
-    String iss = "iss";
+    public static final String ISSUER = "iss";
 
     /**
      * The "sub" (subject) claim identifies the principal that is the subject of the JWT.
      */
-    String sub = "sub";
+    public static final String SUBJECT = "sub";
 
     /**
      * The "aud" (audience) claim identifies the recipients that the JWT is intended for.
      */
-    String aud = "aud";
+    public static final String AUDIENCE = "aud";
 
     /**
      * The "exp" (expiration time) claim identifies the expiration time on or after which
      * the JWT MUST NOT be accepted for processing.
      */
-    String exp = "exp";
+    public static final String EXPIRATION = "exp";
 
     /**
      * The "nbf" (not before) claim identifies the time before which the JWT MUST NOT be accepted for processing.
      */
-    String nbf = "nbf";
+    public static final String NOT_BEFORE = "nbf";
 
     /**
      * The "iat" (issued at) claim identifies the time at which the JWT was issued.
      */
-    String iat = "iat";
+    public static final String ISSUED_AT = "iat";
 
     /**
      * The "jti" (JWT ID) claim provides a unique identifier for the JWT.
      */
-    String jti = "jti";
+    public static final String TOKEN_ID = "jti";
 
     /**
      * The "groups" claim identifies the groups that the JWT belongs to.
      */
-    String groups = "groups";
+    public static final String GROUPS = "groups";
 
     /**
      * The "email" claim identifies the email address of the JWT subject.
      */
-    String email = "email";
+    public static final String EMAIL = "email";
 
     /**
      * The "preferred_username" claim identifies the preferred username of the JWT subject.
      */
-    String preferred_username = "preferred_username";
+    public static final String PREFERRED_USERNAME = "preferred_username";
 }

@@ -79,7 +79,7 @@ public class ParsedIdToken extends ParsedToken {
      */
     public Optional<String> getEmail() {
         LOGGER.debug("Retrieving email from ID token");
-        Optional<String> email = jsonWebToken.claim("email");
+        Optional<String> email = jsonWebToken.claim(de.cuioss.jwt.token.adapter.Claims.EMAIL);
         if (email.isEmpty()) {
             LOGGER.debug("No email claim found in ID token");
         } else {

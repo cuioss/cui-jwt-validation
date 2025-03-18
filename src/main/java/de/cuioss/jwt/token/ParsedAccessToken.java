@@ -50,8 +50,8 @@ import static java.util.stream.Collectors.toSet;
  *   <li>{@link #CLAIM_NAME_SCOPE}: Space-separated list of OAuth2 scopes</li>
  *   <li>{@link #CLAIM_NAME_ROLES}: JSON array of assigned roles</li>
  *   <li>{@link #CLAIM_NAME_NAME}: User's display name</li>
- *   <li>{@link Claims#email}: User's email address</li>
- *   <li>{@link Claims#preferred_username}: User's preferred username</li>
+ *   <li>{@link Claims#EMAIL}: User's email address</li>
+ *   <li>{@link Claims#PREFERRED_USERNAME}: User's preferred username</li>
  * </ul>
  * <p>
  * Usage example:
@@ -103,7 +103,7 @@ public class ParsedAccessToken extends ParsedToken {
 
         if (rawToken.isPresent()) {
             // Check if the token has a "not before" claim that is more than 60 seconds in the future
-            Long notBeforeTime = rawToken.get().getClaim("nbf");
+            Long notBeforeTime = rawToken.get().getClaim(de.cuioss.jwt.token.adapter.Claims.NOT_BEFORE);
             if (notBeforeTime != null) {
                 long currentTime = java.time.Instant.now().getEpochSecond();
                 if (notBeforeTime > currentTime + 60) {
@@ -255,7 +255,7 @@ public class ParsedAccessToken extends ParsedToken {
     public Optional<String> getEmail() {
         return Optional
                 .ofNullable(email)
-                .or(() -> Optional.ofNullable(jsonWebToken.getClaim(Claims.email)));
+                .or(() -> Optional.ofNullable(jsonWebToken.getClaim(Claims.EMAIL)));
     }
 
     /**
@@ -273,6 +273,6 @@ public class ParsedAccessToken extends ParsedToken {
      * @return an optional containing the potential preferred username
      */
     public Optional<String> getPreferredUsername() {
-        return Optional.ofNullable(jsonWebToken.getClaim(Claims.preferred_username));
+        return Optional.ofNullable(jsonWebToken.getClaim(Claims.PREFERRED_USERNAME));
     }
 }

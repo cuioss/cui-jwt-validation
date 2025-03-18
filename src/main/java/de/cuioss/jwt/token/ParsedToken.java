@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.token;
 
+import de.cuioss.jwt.token.adapter.Claims;
 import de.cuioss.jwt.token.adapter.JsonWebToken;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
@@ -72,7 +73,7 @@ public abstract class ParsedToken {
 
     protected static Optional<JsonWebToken> jsonWebTokenFrom(String tokenString, JwtParser tokenParser, CuiLogger givenLogger) {
         givenLogger.trace("Parsing token '%s'", tokenString);
-        if (MoreStrings.isEmpty(trimOrNull(tokenString))) {
+        if (MoreStrings.isBlank(tokenString)) {
             givenLogger.warn(PortalTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
             return Optional.empty();
         }
@@ -146,11 +147,8 @@ public abstract class ParsedToken {
      *         if the claim is present, or an empty Optional if not
      */
     public Optional<OffsetDateTime> getNotBeforeTime() {
-        Long notBeforeTime = jsonWebToken.getClaim("nbf");
-        if (notBeforeTime == null) {
-            return Optional.empty();
-        }
-        return Optional.of(OffsetDateTime
-                .ofInstant(Instant.ofEpochSecond(notBeforeTime), ZoneId.systemDefault()));
+        Optional<Long> notBeforeTime = jsonWebToken.claim(Claims.NOT_BEFORE);
+        return notBeforeTime.map(aLong -> OffsetDateTime
+                .ofInstant(Instant.ofEpochSecond(aLong), ZoneId.systemDefault()));
     }
 }

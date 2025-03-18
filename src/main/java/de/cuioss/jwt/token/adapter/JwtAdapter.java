@@ -76,7 +76,7 @@ public class JwtAdapter implements JsonWebToken {
 
     @Override
     public Set<String> getAudience() {
-        Object audience = jws.getBody().get("aud");
+        Object audience = jws.getBody().get(de.cuioss.jwt.token.adapter.Claims.AUDIENCE);
         if (audience == null) {
             return Collections.emptySet();
         }
@@ -112,7 +112,7 @@ public class JwtAdapter implements JsonWebToken {
 
     @Override
     public Set<String> getGroups() {
-        Object groups = jws.getBody().get("groups");
+        Object groups = jws.getBody().get(de.cuioss.jwt.token.adapter.Claims.GROUPS);
         if (groups instanceof List) {
             return new HashSet<>((List<String>) groups);
         }
