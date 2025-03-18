@@ -18,23 +18,20 @@ package de.cuioss.jwt.token;
 import de.cuioss.jwt.token.adapter.JsonWebToken;
 import de.cuioss.jwt.token.adapter.JwtAdapter;
 import de.cuioss.jwt.token.jwks.JwksLoader;
+import de.cuioss.jwt.token.util.DecodedJwt;
+import de.cuioss.jwt.token.util.NonValidatingJwtParser;
 import de.cuioss.tools.logging.CuiLogger;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
-import jakarta.json.Json;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonReader;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.ToString;
 
-import java.io.StringReader;
 import java.security.Key;
-import java.util.Base64;
 import java.util.Optional;
 
 import static de.cuioss.jwt.token.PortalTokenLogMessages.INFO;
@@ -56,11 +53,11 @@ import static de.cuioss.jwt.token.PortalTokenLogMessages.WARN;
  * The parser can be configured using the constructor:
  * <pre>
  * JwksLoader jwksLoader = JwksClientFactory.createHttpLoader(
- *     "https://auth.example.com/.well-known/jwks.json", 
- *     60, 
+ *     "https://auth.example.com/.well-known/jwks.json",
+ *     60,
  *     null);
  * JwksAwareTokenParserImpl parser = new JwksAwareTokenParserImpl(
- *     jwksLoader, 
+ *     jwksLoader,
  *     "https://auth.example.com");
  * </pre>
  * <p>
@@ -88,22 +85,9 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
 
     /**
      * Constructor for JwksAwareTokenParserImpl.
-     * 
-     * @param jwtParser the JWT parser
-     * @param jwksLoader the JWKS loader
-     * @param issuer the issuer
-     */
-    JwksAwareTokenParserImpl(JwtParser jwtParser, JwksLoader jwksLoader, String issuer) {
-        this.jwtParser = jwtParser;
-        this.jwksLoader = jwksLoader;
-        this.issuer = issuer;
-    }
-
-    /**
-     * Constructor for JwksAwareTokenParserImpl.
-     * 
+     *
      * @param jwksLoader the JWKS loader, must not be null
-     * @param issuer the issuer, must not be null
+     * @param issuer     the issuer, must not be null
      */
     public JwksAwareTokenParserImpl(@NonNull JwksLoader jwksLoader, @NonNull String issuer) {
         this.jwksLoader = jwksLoader;
@@ -112,6 +96,7 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
                 .setAllowedClockSkewSeconds(30)
                 .requireIssuer(issuer)
                 .build();
+        this.tokenParser = NonValidatingJwtParser.builder().build();
 
         // Log the initialization
         LOGGER.info(INFO.CONFIGURED_JWKS.format(
@@ -121,41 +106,31 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
     }
 
     /**
+     * The JWT token parser used for decoding tokens.
+     */
+    private final de.cuioss.jwt.token.util.NonValidatingJwtParser tokenParser;
+
+    /**
      * {@inheritDoc}
      */
     @Override
     public Optional<Jws<Claims>> parseToken(String token) throws JwtException {
-        LOGGER.debug("Parsing token");
-        if (token == null || token.isBlank()) {
-            LOGGER.warn(WARN.TOKEN_IS_EMPTY::format);
-            return Optional.empty();
-        }
 
         try {
-            // Extract the key ID from the token header
-            // Split the token into parts
-            String[] parts = token.split("\\.");
-            if (parts.length != 3) {
-                LOGGER.warn("Invalid JWT format: expected 3 parts but got %s", parts.length);
+            // Use the NonValidatingJwtParser to decode the token
+            Optional<DecodedJwt> decodedJwt = tokenParser.decode(token);
+            if (decodedJwt.isEmpty()) {
+                LOGGER.warn("Failed to decode JWT token");
                 return Optional.empty();
             }
 
-            // Decode the header
-            String headerJson = new String(Base64.getUrlDecoder().decode(parts[0]));
-            JsonObject header;
-            try (JsonReader reader = Json.createReader(new StringReader(headerJson))) {
-                header = reader.readObject();
-            }
-
-            // Get the key ID if present
-            String kid = null;
-            if (header.containsKey("kid")) {
-                kid = header.getString("kid");
-            }
+            // Extract the header and get the key ID if present
+            Optional<String> kidOption = decodedJwt.get().getKid();
 
             Optional<Key> key;
-            if (kid != null) {
+            if (kidOption.isPresent()) {
                 // Get the key from the JWKS loader using the key ID
+                String kid = kidOption.get();
                 key = jwksLoader.getKey(kid);
                 if (key.isEmpty()) {
                     LOGGER.warn(WARN.KEY_NOT_FOUND.format(kid));

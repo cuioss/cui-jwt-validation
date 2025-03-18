@@ -21,7 +21,10 @@ import de.cuioss.tools.string.MoreStrings;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonReader;
+import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
+import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
 import java.io.StringReader;
@@ -30,32 +33,28 @@ import java.util.Base64;
 import java.util.Optional;
 
 /**
- * Utility class for inspecting JWT token content without signature validation.
- * This parser is designed for preliminary token analysis to extract claims and metadata
- * before full validation, particularly useful in multi-issuer scenarios.
+ * Utility class for parsing JWT tokens and extracting common information from them.
+ * This class provides a unified way to parse JWT tokens and extract common information
+ * such as the header, body, signature, issuer, and kid-header.
  * <p>
  * Security features:
  * <ul>
- *   <li>Token size validation (max 16KB) to prevent memory exhaustion</li>
- *   <li>Payload size validation (max 16KB) for JSON parsing</li>
+ *   <li>Token size validation to prevent memory exhaustion</li>
+ *   <li>Payload size validation for JSON parsing</li>
  *   <li>Standard Base64 decoding for JWT parts</li>
  *   <li>Proper character encoding handling</li>
  * </ul>
  * <p>
- * Important security note: This parser does NOT validate token signatures.
- * It should only be used for:
- * <ul>
- *   <li>Extracting issuer information to select the appropriate validator</li>
- *   <li>Preliminary token inspection and debugging</li>
- *   <li>Token format validation</li>
- * </ul>
- * <p>
  * Usage example:
  * <pre>
- * NonValidatingJwtParser parser = new NonValidatingJwtParser();
- * Optional&lt;String&gt; issuer = parser.extractIssuer(tokenString);
- * issuer.ifPresent(iss -> {
- *     // Use issuer to select appropriate validator
+ * NonValidatingJwtParser parser = NonValidatingJwtParser.builder().build();
+ * Optional&lt;NonValidatingJwtParser.DecodedJwt&gt; decodedJwt = parser.decode(tokenString);
+ * decodedJwt.ifPresent(jwt -> {
+ *     // Access decoded JWT information
+ *     jwt.getHeader().ifPresent(header -> System.out.println("Header: " + header));
+ *     jwt.getBody().ifPresent(body -> System.out.println("Body: " + body));
+ *     jwt.getIssuer().ifPresent(issuer -> System.out.println("Issuer: " + issuer));
+ *     jwt.getKid().ifPresent(kid -> System.out.println("Kid: " + kid));
  * });
  * </pre>
  *
@@ -63,24 +62,38 @@ import java.util.Optional;
  */
 @ToString
 @EqualsAndHashCode
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 public class NonValidatingJwtParser {
 
     private static final CuiLogger LOGGER = new CuiLogger(NonValidatingJwtParser.class);
 
     /**
-     * Maximum size of a JWT token in bytes to prevent overflow attacks.
+     * Default maximum size of a JWT token in bytes to prevent overflow attacks.
      * 16KB should be more than enough for any reasonable JWT token.
      */
-    private static final int MAX_TOKEN_SIZE = 16 * 1024;
+    public static final int DEFAULT_MAX_TOKEN_SIZE = 16 * 1024;
+
+    /**
+     * Default maximum size of decoded JSON payload in bytes.
+     * 16KB should be more than enough for any reasonable JWT claims.
+     */
+    public static final int DEFAULT_MAX_PAYLOAD_SIZE = 16 * 1024;
+
+    /**
+     * Maximum size of a JWT token in bytes to prevent overflow attacks.
+     */
+    @Builder.Default
+    private final int maxTokenSize = DEFAULT_MAX_TOKEN_SIZE;
 
     /**
      * Maximum size of decoded JSON payload in bytes.
-     * 16KB should be more than enough for any reasonable JWT claims.
      */
-    private static final int MAX_PAYLOAD_SIZE = 16 * 1024;
+    @Builder.Default
+    private final int maxPayloadSize = DEFAULT_MAX_PAYLOAD_SIZE;
 
     /**
-     * Extracts the issuer from a JWT token without validating its signature.
+     * Decodes a JWT token and returns a DecodedJwt object containing the decoded parts.
      * <p>
      * Security considerations:
      * <ul>
@@ -89,54 +102,75 @@ public class NonValidatingJwtParser {
      *   <li>Uses standard Java Base64 decoder</li>
      * </ul>
      *
-     * @param token the JWT token string to parse, must not be null
-     * @return an Optional containing the issuer if parsing is successful,
+     * @param token the JWT token string to parse
+     * @return an Optional containing the DecodedJwt if parsing is successful,
      * or empty if the token is invalid or cannot be parsed
      */
-    public Optional<String> extractIssuer(String token) {
+    public Optional<DecodedJwt> decode(String token) {
         if (MoreStrings.isEmpty(token)) {
-            LOGGER.debug("Token is empty or null");
+            LOGGER.warn(PortalTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
             return Optional.empty();
         }
 
-        if (token.getBytes(StandardCharsets.UTF_8).length > MAX_TOKEN_SIZE) {
-            LOGGER.warn(PortalTokenLogMessages.WARN.TOKEN_SIZE_EXCEEDED.format(MAX_TOKEN_SIZE));
+        if (token.getBytes(StandardCharsets.UTF_8).length > maxTokenSize) {
+            LOGGER.warn(PortalTokenLogMessages.WARN.TOKEN_SIZE_EXCEEDED.format(maxTokenSize));
             return Optional.empty();
         }
 
         String[] parts = token.split("\\.");
         if (parts.length != 3) {
-            LOGGER.debug("Invalid JWT token format: expected 3 parts but got %s", parts.length);
+            LOGGER.warn("Invalid JWT token format: expected 3 parts but got %s", parts.length);
             return Optional.empty();
         }
 
         try {
+            // Decode the header (first part)
+            Optional<JsonObject> headerOpt = decodeJsonPart(parts[0]);
+            if (headerOpt.isEmpty()) {
+                LOGGER.warn("Failed to decode header part");
+                return Optional.empty();
+            }
+
             // Decode the payload (second part)
-            byte[] decoded = Base64.getUrlDecoder().decode(parts[1]);
-
-            if (decoded.length > MAX_PAYLOAD_SIZE) {
-                LOGGER.debug("Decoded payload exceeds maximum size limit of %s bytes", MAX_PAYLOAD_SIZE);
+            Optional<JsonObject> bodyOpt = decodeJsonPart(parts[1]);
+            if (bodyOpt.isEmpty()) {
+                LOGGER.warn("Failed to decode payload part");
                 return Optional.empty();
             }
 
-            // Parse the payload as JSON
-            JsonObject payload;
-            try (JsonReader reader = Json.createReader(new StringReader(new String(decoded, StandardCharsets.UTF_8)))) {
-                payload = reader.readObject();
-            }
+            // The signature part (third part) is kept as is
+            String signature = parts[2];
 
-            // Extract the issuer claim
-            if (payload.containsKey("iss")) {
-                String issuer = payload.getString("iss");
-                LOGGER.debug("Extracted issuer: %s", issuer);
-                return Optional.of(issuer);
-            } else {
-                LOGGER.debug("No issuer claim found in token");
-                return Optional.empty();
-            }
+            return Optional.of(new DecodedJwt(headerOpt.get(), bodyOpt.get(), signature, parts, token));
         } catch (Exception e) {
-            LOGGER.debug(e, "Failed to parse token: %s", e.getMessage());
+            LOGGER.warn(e, "Failed to parse token: %s", e.getMessage());
             return Optional.empty();
         }
     }
+
+    /**
+     * Decodes a Base64Url encoded JSON part of a JWT token.
+     *
+     * @param encodedPart the Base64Url encoded part
+     * @return an Optional containing the decoded JsonObject, or empty if decoding fails
+     */
+    private Optional<JsonObject> decodeJsonPart(String encodedPart) {
+        try {
+            byte[] decoded = Base64.getUrlDecoder().decode(encodedPart);
+
+            if (decoded.length > maxPayloadSize) {
+                LOGGER.warn("Decoded part exceeds maximum size limit of %s bytes", maxPayloadSize);
+                return Optional.empty();
+            }
+
+            // Parse the part as JSON
+            try (JsonReader reader = Json.createReader(new StringReader(new String(decoded, StandardCharsets.UTF_8)))) {
+                return Optional.of(reader.readObject());
+            }
+        } catch (Exception e) {
+            LOGGER.warn(e, "Failed to decode part: %s", e.getMessage());
+            return Optional.empty();
+        }
+    }
+
 }

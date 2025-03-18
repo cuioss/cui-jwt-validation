@@ -75,7 +75,7 @@ public class MultiIssuerJwtParser {
      */
     public MultiIssuerJwtParser(@NonNull Map<String, JwtParser> issuerToParser) {
         this.issuerToParser = new HashMap<>(issuerToParser);
-        this.inspectionParser = new NonValidatingJwtParser();
+        this.inspectionParser = NonValidatingJwtParser.builder().build();
         LOGGER.debug("Initialized MultiIssuerJwtParser with %s parser(s)", issuerToParser.size());
     }
 
@@ -96,7 +96,7 @@ public class MultiIssuerJwtParser {
      */
     public Optional<String> extractIssuer(@NonNull String token) {
         LOGGER.debug("Extracting issuer from token");
-        var issuer = inspectionParser.extractIssuer(token);
+        var issuer = inspectionParser.decode(token).flatMap(DecodedJwt::getIssuer);
         LOGGER.debug("Extracted issuer: %s", issuer.orElse("<none>"));
         return issuer;
     }

@@ -40,8 +40,8 @@ class TokenFactoryTest {
         var token = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_SCOPES);
 
         // Use NonValidatingJwtParser to validate the token
-        var nonValidatingParser = new de.cuioss.jwt.token.util.NonValidatingJwtParser();
-        var issuer = nonValidatingParser.extractIssuer(token);
+        var tokenParser = de.cuioss.jwt.token.util.NonValidatingJwtParser.builder().build();
+        var issuer = tokenParser.decode(token).flatMap(de.cuioss.jwt.token.util.DecodedJwt::getIssuer);
 
         assertTrue(issuer.isPresent());
         assertEquals(TestTokenProducer.ISSUER, issuer.get());
@@ -52,8 +52,8 @@ class TokenFactoryTest {
         var token = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_ID_TOKEN);
 
         // Use NonValidatingJwtParser to validate the token
-        var nonValidatingParser = new de.cuioss.jwt.token.util.NonValidatingJwtParser();
-        var issuer = nonValidatingParser.extractIssuer(token);
+        var tokenParser = de.cuioss.jwt.token.util.NonValidatingJwtParser.builder().build();
+        var issuer = tokenParser.decode(token).flatMap(de.cuioss.jwt.token.util.DecodedJwt::getIssuer);
 
         assertTrue(issuer.isPresent());
         assertEquals(TestTokenProducer.ISSUER, issuer.get());
