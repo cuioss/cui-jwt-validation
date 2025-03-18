@@ -52,7 +52,7 @@ class ParsedTokenTest {
                     TestTokenProducer.getDefaultTokenParser(), LOGGER);
             assertFalse(jsonWebToken.isPresent(), "Token should not be present for empty input");
             LogAsserts.assertSingleLogMessagePresentContaining(TestLogLevel.WARN,
-                    PortalTokenLogMessages.WARN.TOKEN_IS_EMPTY.resolveIdentifierString());
+                    JWTTokenLogMessages.WARN.TOKEN_IS_EMPTY.resolveIdentifierString());
         }
 
         @Test
@@ -65,7 +65,7 @@ class ParsedTokenTest {
 
             assertFalse(jsonWebToken.isPresent(), "Token should not be present for invalid format");
             LogAsserts.assertSingleLogMessagePresentContaining(TestLogLevel.WARN,
-                    PortalTokenLogMessages.WARN.COULD_NOT_PARSE_TOKEN.resolveIdentifierString());
+                    JWTTokenLogMessages.WARN.COULD_NOT_PARSE_TOKEN.resolveIdentifierString());
         }
 
         @Test
@@ -78,7 +78,7 @@ class ParsedTokenTest {
 
             assertFalse(jsonWebToken.isPresent(), "Token should not be present for invalid issuer");
             LogAsserts.assertSingleLogMessagePresentContaining(TestLogLevel.WARN,
-                    PortalTokenLogMessages.WARN.COULD_NOT_PARSE_TOKEN.resolveIdentifierString());
+                    JWTTokenLogMessages.WARN.COULD_NOT_PARSE_TOKEN.resolveIdentifierString());
         }
 
         @Test
@@ -91,7 +91,7 @@ class ParsedTokenTest {
                             TestTokenProducer.getWrongSignatureTokenParser(), LOGGER);
             assertFalse(jsonWebToken.isPresent(), "Token should not be present for invalid signature");
             LogAsserts.assertSingleLogMessagePresentContaining(TestLogLevel.WARN,
-                    PortalTokenLogMessages.WARN.COULD_NOT_PARSE_TOKEN.resolveIdentifierString());
+                    JWTTokenLogMessages.WARN.COULD_NOT_PARSE_TOKEN.resolveIdentifierString());
         }
     }
 

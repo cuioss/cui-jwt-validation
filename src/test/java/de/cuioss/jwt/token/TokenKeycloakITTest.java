@@ -15,7 +15,7 @@
  */
 package de.cuioss.jwt.token;
 
-import de.cuioss.jwt.token.jwks.JwksClientFactory;
+import de.cuioss.jwt.token.jwks.JwksLoaderFactory;
 import de.cuioss.jwt.token.jwks.JwksLoader;
 import de.cuioss.test.keycloakit.KeycloakITBase;
 import de.cuioss.test.keycloakit.TestRealm;
@@ -63,7 +63,7 @@ public class TokenKeycloakITTest extends KeycloakITBase {
         LOGGER.debug(() -> "PASSWORD: " + TestRealm.ProvidedKeyStore.PASSWORD);
 
         // Create a JwksLoader with the SSLContext
-        JwksLoader jwksLoader = JwksClientFactory.createHttpLoader(getJWKSUrl(), 100, createSSLContextFromSSLConfig(sslConfig));
+        JwksLoader jwksLoader = JwksLoaderFactory.createHttpLoader(getJWKSUrl(), 100, createSSLContextFromSSLConfig(sslConfig));
         JwksAwareTokenParserImpl parser = new JwksAwareTokenParserImpl(jwksLoader, getIssuer());
 
         factory = TokenFactory.of(parser);

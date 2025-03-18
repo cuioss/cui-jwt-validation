@@ -32,7 +32,7 @@ import javax.net.ssl.SSLContext;
  * <p>
  * Usage example:
  * <pre>
- * JwksLoader loader = JwksClientFactory.createHttpLoader("https://auth.example.com/.well-known/jwks.json", 60, null);
+ * JwksLoader loader = JwksLoaderFactory.createHttpLoader("https://auth.example.com/.well-known/jwks.json", 60, null);
  * Optional&lt;Key&gt; key = loader.getKey("kid123");
  * </pre>
  * <p>
@@ -43,9 +43,9 @@ import javax.net.ssl.SSLContext;
  * @author Oliver Wolff
  */
 @UtilityClass
-public class JwksClientFactory {
+public class JwksLoaderFactory {
 
-    private static final CuiLogger LOGGER = new CuiLogger(JwksClientFactory.class);
+    private static final CuiLogger LOGGER = new CuiLogger(JwksLoaderFactory.class);
 
 
     /**

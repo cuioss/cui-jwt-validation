@@ -15,7 +15,7 @@
  */
 package de.cuioss.jwt.token;
 
-import de.cuioss.jwt.token.jwks.JwksClientFactory;
+import de.cuioss.jwt.token.jwks.JwksLoaderFactory;
 import de.cuioss.jwt.token.jwks.JwksLoader;
 import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.jwt.token.test.JwksResolveDispatcher;
@@ -90,7 +90,7 @@ public class JwksAwareTokenParserImplTest {
         @Test
         @DisplayName("Should fail with invalid issuer")
         void shouldFailFromRemoteWithInvalidIssuer() {
-            JwksLoader jwksLoader = JwksClientFactory.createHttpLoader(jwksEndpoint, JWKS_REFRESH_INTERVAL, null);
+            JwksLoader jwksLoader = JwksLoaderFactory.createHttpLoader(jwksEndpoint, JWKS_REFRESH_INTERVAL, null);
             tokenParser = new JwksAwareTokenParserImpl(jwksLoader, "Wrong Issuer");
             String initialToken = validSignedJWTWithClaims(SOME_SCOPES);
             var jsonWebToken = assertDoesNotThrow(() -> ParsedToken.jsonWebTokenFrom(initialToken, tokenParser, LOGGER));
@@ -132,7 +132,7 @@ public class JwksAwareTokenParserImplTest {
         }
 
         private JwksAwareTokenParserImpl getValidJWKSParserWithRemoteJWKS() {
-            JwksLoader jwksLoader = JwksClientFactory.createHttpLoader(jwksEndpoint, JWKS_REFRESH_INTERVAL, null);
+            JwksLoader jwksLoader = JwksLoaderFactory.createHttpLoader(jwksEndpoint, JWKS_REFRESH_INTERVAL, null);
             return new JwksAwareTokenParserImpl(jwksLoader, ISSUER);
         }
     }
@@ -165,7 +165,7 @@ public class JwksAwareTokenParserImplTest {
         java.nio.file.Path tempFile = java.nio.file.Files.createTempFile("test-jwks", ".json");
         java.nio.file.Files.writeString(tempFile, jwks);
 
-        JwksLoader jwksLoader = JwksClientFactory.createFileLoader(tempFile.toAbsolutePath().toString());
+        JwksLoader jwksLoader = JwksLoaderFactory.createFileLoader(tempFile.toAbsolutePath().toString());
         return new JwksAwareTokenParserImpl(jwksLoader, ISSUER);
     }
 
@@ -181,12 +181,12 @@ public class JwksAwareTokenParserImplTest {
         java.nio.file.Path tempFile = java.nio.file.Files.createTempFile("invalid-jwks", ".json");
         java.nio.file.Files.writeString(tempFile, invalidJwks);
 
-        JwksLoader jwksLoader = JwksClientFactory.createFileLoader(tempFile.toAbsolutePath().toString());
+        JwksLoader jwksLoader = JwksLoaderFactory.createFileLoader(tempFile.toAbsolutePath().toString());
         return new JwksAwareTokenParserImpl(jwksLoader, ISSUER);
     }
 
     public static JwksAwareTokenParserImpl getInvalidValidJWKSParserWithLocalJWKSAndWrongIssuer() throws IOException {
-        JwksLoader jwksLoader = JwksClientFactory.createFileLoader(JwksResolveDispatcher.PUBLIC_KEY_JWKS);
+        JwksLoader jwksLoader = JwksLoaderFactory.createFileLoader(JwksResolveDispatcher.PUBLIC_KEY_JWKS);
         return new JwksAwareTokenParserImpl(jwksLoader, TestTokenProducer.WRONG_ISSUER);
     }
 }

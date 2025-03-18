@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@EnableTestLogger(debug = {JWKSKeyLoader.class, JwksClientFactory.class})
+@EnableTestLogger(debug = {JWKSKeyLoader.class, JwksLoaderFactory.class})
 @DisplayName("Tests file-based JWKSKeyLoader functionality")
 class FileJwksLoaderTest {
 
@@ -55,7 +55,7 @@ class FileJwksLoaderTest {
         Files.writeString(jwksFilePath, jwksContent);
 
         // Create the FileJwksLoader with the temporary file
-        fileJwksLoader = JwksClientFactory.createFileLoader(jwksFilePath.toString());
+        fileJwksLoader = JwksLoaderFactory.createFileLoader(jwksFilePath.toString());
     }
 
     @AfterEach
@@ -110,7 +110,7 @@ class FileJwksLoaderTest {
     @DisplayName("Should handle file not found")
     void shouldHandleFileNotFound() {
         // Given
-        JwksLoader nonExistentFileLoader = JwksClientFactory.createFileLoader(tempDir.resolve("non-existent.json").toString());
+        JwksLoader nonExistentFileLoader = JwksLoaderFactory.createFileLoader(tempDir.resolve("non-existent.json").toString());
 
         // When
         Optional<Key> key = nonExistentFileLoader.getKey(TEST_KID);
@@ -128,7 +128,7 @@ class FileJwksLoaderTest {
         // Given
         Path invalidJwksPath = tempDir.resolve("invalid-jwks.json");
         Files.writeString(invalidJwksPath, JWKSFactory.createInvalidJson());
-        JwksLoader invalidJwksLoader = JwksClientFactory.createFileLoader(invalidJwksPath.toString());
+        JwksLoader invalidJwksLoader = JwksLoaderFactory.createFileLoader(invalidJwksPath.toString());
 
         // When
         Optional<Key> key = invalidJwksLoader.getKey(TEST_KID);
@@ -147,7 +147,7 @@ class FileJwksLoaderTest {
         Path missingFieldsJwksPath = tempDir.resolve("missing-fields-jwks.json");
         String missingFieldsJwksContent = JWKSFactory.createJwksWithMissingFields(TEST_KID);
         Files.writeString(missingFieldsJwksPath, missingFieldsJwksContent);
-        JwksLoader missingFieldsJwksLoader = JwksClientFactory.createFileLoader(missingFieldsJwksPath.toString());
+        JwksLoader missingFieldsJwksLoader = JwksLoaderFactory.createFileLoader(missingFieldsJwksPath.toString());
 
         // When
         Optional<Key> key = missingFieldsJwksLoader.getKey(TEST_KID);
@@ -171,7 +171,7 @@ class FileJwksLoaderTest {
         Files.writeString(jwksFilePath, updatedJwksContent);
 
         // Create a new FileJwksLoader to force refresh
-        JwksLoader newLoader = JwksClientFactory.createFileLoader(jwksFilePath.toString());
+        JwksLoader newLoader = JwksLoaderFactory.createFileLoader(jwksFilePath.toString());
 
         // Then - verify the old key is no longer available and the new key is
         Optional<Key> oldKey = newLoader.getKey(TEST_KID);

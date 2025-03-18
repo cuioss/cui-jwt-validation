@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@EnableTestLogger(debug = {JWKSKeyLoader.class, JwksClientFactory.class})
+@EnableTestLogger(debug = {JWKSKeyLoader.class, JwksLoaderFactory.class})
 @DisplayName("Tests in-memory JWKSKeyLoader functionality")
 class InMemoryJwksLoaderTest {
 
@@ -46,7 +46,7 @@ class InMemoryJwksLoaderTest {
         validJwksContent = JWKSFactory.createValidJwks();
 
         // Create the InMemoryJwksLoader with the valid content
-        inMemoryJwksLoader = JwksClientFactory.createInMemoryLoader(validJwksContent);
+        inMemoryJwksLoader = JwksLoaderFactory.createInMemoryLoader(validJwksContent);
     }
 
 
@@ -98,7 +98,7 @@ class InMemoryJwksLoaderTest {
     void shouldHandleInvalidJwksFormat() {
         // Given
         String invalidJwksContent = JWKSFactory.createInvalidJson();
-        JwksLoader invalidJwksLoader = JwksClientFactory.createInMemoryLoader(invalidJwksContent);
+        JwksLoader invalidJwksLoader = JwksLoaderFactory.createInMemoryLoader(invalidJwksContent);
 
         // When
         Optional<Key> key = invalidJwksLoader.getKey(TEST_KID);
@@ -113,7 +113,7 @@ class InMemoryJwksLoaderTest {
     void shouldHandleMissingRequiredFieldsInJwk() {
         // Given
         String missingFieldsJwksContent = JWKSFactory.createJwksWithMissingFields(TEST_KID);
-        JwksLoader missingFieldsJwksLoader = JwksClientFactory.createInMemoryLoader(missingFieldsJwksContent);
+        JwksLoader missingFieldsJwksLoader = JwksLoaderFactory.createInMemoryLoader(missingFieldsJwksContent);
 
         // When
         Optional<Key> key = missingFieldsJwksLoader.getKey(TEST_KID);
@@ -132,7 +132,7 @@ class InMemoryJwksLoaderTest {
 
         // When - create a new loader with updated content
         String updatedJwksContent = JWKSFactory.createValidJwksWithKeyId("updated-key-id");
-        JwksLoader updatedLoader = JwksClientFactory.createInMemoryLoader(updatedJwksContent);
+        JwksLoader updatedLoader = JwksLoaderFactory.createInMemoryLoader(updatedJwksContent);
 
         // Then - verify the new loader has the updated key
         Optional<Key> oldKey = updatedLoader.getKey(TEST_KID);
@@ -164,7 +164,7 @@ class InMemoryJwksLoaderTest {
         String jwksContent = JWKSFactory.createValidJwks();
 
         // When
-        JwksLoader loader = JwksClientFactory.createInMemoryLoader(jwksContent);
+        JwksLoader loader = JwksLoaderFactory.createInMemoryLoader(jwksContent);
 
         // Then
         assertInstanceOf(JWKSKeyLoader.class, loader, "Loader should be an instance of JWKSKeyLoader");

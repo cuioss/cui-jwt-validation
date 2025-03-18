@@ -34,7 +34,7 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.Set;
 
-import static de.cuioss.jwt.token.PortalTokenLogMessages.WARN;
+import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
 
 /**
  * Implementation of {@link JwksLoader} that loads JWKS from an HTTP endpoint.
@@ -171,7 +171,6 @@ public class HttpJwksLoader implements JwksLoader {
 
             String jwksContent = response.body();
             LOGGER.debug("Successfully fetched JWKS from URL: %s", jwksUri.toString());
-            LOGGER.debug("Successfully refreshed keys");
             return new JWKSKeyLoader(jwksContent);
         } catch (InterruptedException e) {
             LOGGER.warn(e, "Failed to fetch JWKS from URL: %s", jwksUri.toString());

@@ -16,7 +16,7 @@
 package de.cuioss.jwt.token.test;
 
 import de.cuioss.jwt.token.JwtParser;
-import de.cuioss.jwt.token.PortalTokenLogMessages;
+import de.cuioss.jwt.token.JWTTokenLogMessages;
 import de.cuioss.jwt.token.adapter.JsonWebToken;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
@@ -26,7 +26,6 @@ import io.jsonwebtoken.JwtException;
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
-import jakarta.json.JsonReader;
 import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
 import lombok.EqualsAndHashCode;
@@ -112,7 +111,7 @@ public class TestJwtParser implements JwtParser {
         }
 
         if (token.getBytes(StandardCharsets.UTF_8).length > MAX_TOKEN_SIZE) {
-            LOGGER.warn(PortalTokenLogMessages.WARN.TOKEN_SIZE_EXCEEDED.format(MAX_TOKEN_SIZE));
+            LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_SIZE_EXCEEDED.format(MAX_TOKEN_SIZE));
             return Optional.empty();
         }
 

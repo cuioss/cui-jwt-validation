@@ -29,8 +29,6 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.Optional;
 
-import static de.cuioss.tools.string.MoreStrings.trimOrNull;
-
 /**
  * Abstract base class for parsed JWT token representations.
  * Provides common functionality for working with {@link JsonWebToken} instances
@@ -74,13 +72,13 @@ public abstract class ParsedToken {
     protected static Optional<JsonWebToken> jsonWebTokenFrom(String tokenString, JwtParser tokenParser, CuiLogger givenLogger) {
         givenLogger.trace("Parsing token '%s'", tokenString);
         if (MoreStrings.isBlank(tokenString)) {
-            givenLogger.warn(PortalTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
+            givenLogger.warn(JWTTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
             return Optional.empty();
         }
         try {
             return tokenParser.parse(tokenString);
         } catch (JwtException e) {
-            givenLogger.warn(e, PortalTokenLogMessages.WARN.COULD_NOT_PARSE_TOKEN.format(e.getMessage()));
+            givenLogger.warn(e, JWTTokenLogMessages.WARN.COULD_NOT_PARSE_TOKEN.format(e.getMessage()));
             givenLogger.trace("Offending token '%s'", tokenString);
             return Optional.empty();
         }

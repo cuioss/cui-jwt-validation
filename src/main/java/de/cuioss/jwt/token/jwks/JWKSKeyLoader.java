@@ -39,7 +39,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
-import static de.cuioss.jwt.token.PortalTokenLogMessages.WARN;
+import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
 
 /**
  * Implementation of {@link JwksLoader} that loads JWKS from a string content.

@@ -20,13 +20,13 @@ import de.cuioss.tools.logging.LogRecordModel;
 import lombok.experimental.UtilityClass;
 
 /**
- * Provides logging messages for the portal-authentication-token module.
- * All messages follow the format: PortalToken-[identifier]: [message]
+ * Provides logging messages for the cui-jwt-token-handling module.
+ * All messages follow the format: JWTToken-[identifier]: [message]
  */
 @UtilityClass
-public final class PortalTokenLogMessages {
+public final class JWTTokenLogMessages {
 
-    private static final String PREFIX = "PortalToken";
+    private static final String PREFIX = "JWTToken";
 
     @UtilityClass
     public static final class INFO {
@@ -35,8 +35,6 @@ public final class PortalTokenLogMessages {
                 .identifier(1)
                 .template("Initializing JWKS lookup, jwks-endpoint='%s', refresh-interval='%s', issuer='%s'")
                 .build();
-
-
     }
 
     @UtilityClass

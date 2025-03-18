@@ -15,7 +15,7 @@
  */
 package de.cuioss.jwt.token.util;
 
-import de.cuioss.jwt.token.PortalTokenLogMessages;
+import de.cuioss.jwt.token.JWTTokenLogMessages;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
 import jakarta.json.Json;
@@ -108,12 +108,12 @@ public class NonValidatingJwtParser {
      */
     public Optional<DecodedJwt> decode(String token) {
         if (MoreStrings.isEmpty(token)) {
-            LOGGER.warn(PortalTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
+            LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
             return Optional.empty();
         }
 
         if (token.getBytes(StandardCharsets.UTF_8).length > maxTokenSize) {
-            LOGGER.warn(PortalTokenLogMessages.WARN.TOKEN_SIZE_EXCEEDED.format(maxTokenSize));
+            LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_SIZE_EXCEEDED.format(maxTokenSize));
             return Optional.empty();
         }
 

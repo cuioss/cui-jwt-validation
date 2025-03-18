@@ -43,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Simple benchmark test for JwksClient performance.
  * This is not a comprehensive benchmark, but provides basic performance metrics.
  */
-@EnableTestLogger(debug = JwksClientFactory.class)
+@EnableTestLogger(debug = JwksLoaderFactory.class)
 @DisplayName("Benchmarks JwksClient performance")
 @EnableMockWebServer
 public class JwksClientBenchmarkTest implements MockWebServerHolder {
@@ -74,7 +74,7 @@ public class JwksClientBenchmarkTest implements MockWebServerHolder {
         int port = mockWebServer.getPort();
         jwksEndpoint = "http://localhost:" + port + JWKS_PATH;
         jwksDispatcher = testDispatcher;
-        jwksLoader = JwksClientFactory.createHttpLoader(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
+        jwksLoader = JwksLoaderFactory.createHttpLoader(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
     }
 
     @AfterEach
@@ -113,13 +113,13 @@ public class JwksClientBenchmarkTest implements MockWebServerHolder {
     void benchmarkKeyLoaderCreation() {
         // Warm up
         for (int i = 0; i < WARMUP_ITERATIONS; i++) {
-            JwksClientFactory.createHttpLoader(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
+            JwksLoaderFactory.createHttpLoader(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
         }
 
         // Benchmark
         long startTime = System.nanoTime();
         for (int i = 0; i < BENCHMARK_ITERATIONS; i++) {
-            JwksLoader loader = JwksClientFactory.createHttpLoader(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
+            JwksLoader loader = JwksLoaderFactory.createHttpLoader(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
             Optional<Key> key = loader.getKey(TEST_KID);
             assertTrue(key.isPresent(), "Key should be present");
         }

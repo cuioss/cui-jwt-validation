@@ -16,8 +16,6 @@
 package de.cuioss.jwt.token.jwks;
 
 import de.cuioss.jwt.token.test.JWKSFactory;
-import de.cuioss.test.juli.LogAsserts;
-import de.cuioss.test.juli.TestLogLevel;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import de.cuioss.test.mockwebserver.EnableMockWebServer;
 import de.cuioss.test.mockwebserver.MockWebServerHolder;
@@ -44,10 +42,10 @@ import static jakarta.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 import static jakarta.servlet.http.HttpServletResponse.SC_OK;
 import static org.junit.jupiter.api.Assertions.*;
 
-@EnableTestLogger(debug = JwksClientFactory.class)
-@DisplayName("Tests JwksClientFactory functionality")
+@EnableTestLogger(debug = JwksLoaderFactory.class)
+@DisplayName("Tests JwksLoaderFactory functionality")
 @EnableMockWebServer
-class JwksClientFactoryTest implements MockWebServerHolder {
+class JwksLoaderFactoryTest implements MockWebServerHolder {
 
     private static final String JWKS_PATH = "/oidc/jwks.json";
     private static final int REFRESH_INTERVAL_SECONDS = 1; // Short interval for testing
@@ -89,7 +87,7 @@ class JwksClientFactoryTest implements MockWebServerHolder {
     @DisplayName("Should create HttpJwksLoader directly")
     void shouldCreateHttpJwksLoaderDirectly() {
         // When
-        JwksLoader loader = JwksClientFactory.createHttpLoader(httpJwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
+        JwksLoader loader = JwksLoaderFactory.createHttpLoader(httpJwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
 
         // Then
         Optional<Key> key = loader.getKey(TEST_KID);
@@ -101,7 +99,7 @@ class JwksClientFactoryTest implements MockWebServerHolder {
     @DisplayName("Should create FileJwksLoader directly")
     void shouldCreateFileJwksLoaderDirectly() {
         // When
-        JwksLoader loader = JwksClientFactory.createFileLoader(fileJwksPath.toString());
+        JwksLoader loader = JwksLoaderFactory.createFileLoader(fileJwksPath.toString());
 
         // Then
         Optional<Key> key = loader.getKey(TEST_KID);
@@ -114,11 +112,11 @@ class JwksClientFactoryTest implements MockWebServerHolder {
     void shouldThrowExceptionWhenRefreshIntervalIsInvalid() {
         // When/Then
         assertThrows(IllegalArgumentException.class, () -> {
-            JwksClientFactory.createHttpLoader(httpJwksEndpoint, 0, null);
+            JwksLoaderFactory.createHttpLoader(httpJwksEndpoint, 0, null);
         }, "Should throw exception when refresh interval is zero");
 
         assertThrows(IllegalArgumentException.class, () -> {
-            JwksClientFactory.createHttpLoader(httpJwksEndpoint, -1, null);
+            JwksLoaderFactory.createHttpLoader(httpJwksEndpoint, -1, null);
         }, "Should throw exception when refresh interval is negative");
     }
 

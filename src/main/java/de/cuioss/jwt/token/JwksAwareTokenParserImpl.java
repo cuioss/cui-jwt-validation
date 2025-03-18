@@ -34,8 +34,8 @@ import lombok.ToString;
 import java.security.Key;
 import java.util.Optional;
 
-import static de.cuioss.jwt.token.PortalTokenLogMessages.INFO;
-import static de.cuioss.jwt.token.PortalTokenLogMessages.WARN;
+import static de.cuioss.jwt.token.JWTTokenLogMessages.INFO;
+import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
 
 /**
  * JWT parser implementation with support for remote JWKS (JSON Web Key Set) loading.
@@ -52,7 +52,7 @@ import static de.cuioss.jwt.token.PortalTokenLogMessages.WARN;
  * <p>
  * The parser can be configured using the constructor:
  * <pre>
- * JwksLoader jwksLoader = JwksClientFactory.createHttpLoader(
+ * JwksLoader jwksLoader = JwksLoaderFactory.createHttpLoader(
  *     "https://auth.example.com/.well-known/jwks.json",
  *     60,
  *     null);
