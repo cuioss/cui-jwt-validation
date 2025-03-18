@@ -15,6 +15,8 @@
  */
 package de.cuioss.jwt.token;
 
+import de.cuioss.jwt.token.jwks.JwksClientFactory;
+import de.cuioss.jwt.token.jwks.JwksLoader;
 import de.cuioss.test.keycloakit.KeycloakITBase;
 import de.cuioss.test.keycloakit.TestRealm;
 import de.cuioss.tools.logging.CuiLogger;
@@ -26,11 +28,20 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
+import java.security.KeyStore;
+import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("Tests Token integration with Keycloak")
 public class TokenKeycloakITTest extends KeycloakITBase {
@@ -39,40 +50,23 @@ public class TokenKeycloakITTest extends KeycloakITBase {
     public static final List<String> SCOPES_AS_LIST = Splitter.on(" ").splitToList(SCOPES);
     private static final CuiLogger LOGGER = new CuiLogger(TokenKeycloakITTest.class);
 
-    private JwksAwareTokenParserImpl parser;
     private TokenFactory factory;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         // Configure RestAssured to use the keystore used / provided by testcontainers-keycloak
-        RestAssured.config = RestAssured.config().sslConfig(
-                SSLConfig.sslConfig().trustStore(TestRealm.ProvidedKeyStore.KEYSTORE_PATH, TestRealm.ProvidedKeyStore.PASSWORD)
-        );
+        SSLConfig sslConfig = SSLConfig.sslConfig().trustStore(TestRealm.ProvidedKeyStore.KEYSTORE_PATH, TestRealm.ProvidedKeyStore.PASSWORD);
+        RestAssured.config = RestAssured.config().sslConfig(sslConfig);
 
         // Log the keystore path and password for debugging
-        System.out.println("[DEBUG_LOG] KEYSTORE_PATH: " + TestRealm.ProvidedKeyStore.KEYSTORE_PATH);
-        System.out.println("[DEBUG_LOG] PASSWORD: " + TestRealm.ProvidedKeyStore.PASSWORD);
+        LOGGER.debug(() -> "KEYSTORE_PATH: " + TestRealm.ProvidedKeyStore.KEYSTORE_PATH);
+        LOGGER.debug(() -> "PASSWORD: " + TestRealm.ProvidedKeyStore.PASSWORD);
 
-        try {
-            // Create a trust-all SSLContext for testing
-            javax.net.ssl.SSLContext sslContext = createTrustAllSSLContext();
+        // Create a JwksLoader with the SSLContext
+        JwksLoader jwksLoader = JwksClientFactory.createHttpLoader(getJWKSUrl(), 100, createSSLContextFromSSLConfig(sslConfig));
+        JwksAwareTokenParserImpl parser = new JwksAwareTokenParserImpl(jwksLoader, getIssuer());
 
-            // Create a JwksClientFactory that uses the trust-all SSLContext
-            parser = JwksAwareTokenParserImpl.builder()
-                    .jwksEndpoint(getJWKSUrl())
-                    .jwksRefreshInterval(100)
-                    .jwksIssuer(getIssuer())
-                    .build();
-
-            // Replace the JwksLoader in the parser with one that uses the trust-all SSLContext
-            java.lang.reflect.Field jwksLoaderField = JwksAwareTokenParserImpl.class.getDeclaredField("jwksLoader");
-            jwksLoaderField.setAccessible(true);
-            jwksLoaderField.set(parser, de.cuioss.jwt.token.jwks.JwksClientFactory.createHttpLoader(getJWKSUrl(), 100, sslContext));
-
-            factory = TokenFactory.of(parser);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to set up test", e);
-        }
+        factory = TokenFactory.of(parser);
     }
 
     /**
@@ -82,25 +76,28 @@ public class TokenKeycloakITTest extends KeycloakITBase {
      * @return an SSLContext that trusts all certificates
      * @throws Exception if an error occurs
      */
-    private javax.net.ssl.SSLContext createTrustAllSSLContext() throws Exception {
-        // Create a trust manager that does not validate certificate chains
-        javax.net.ssl.TrustManager[] trustAllCerts = new javax.net.ssl.TrustManager[] {
-            new javax.net.ssl.X509TrustManager() {
-                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                    return new java.security.cert.X509Certificate[0];
-                }
-                public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-                    // Trust all client certificates
-                }
-                public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-                    // Trust all server certificates
-                }
-            }
-        };
+    private static SSLContext createSSLContextFromSSLConfig(SSLConfig sslConfig) throws Exception {
+        KeyStore trustStore = sslConfig.getTrustStore();
 
-        // Create an SSL context that uses the trust-all trust manager
-        javax.net.ssl.SSLContext sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
-        sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        tmf.init(trustStore);
+        TrustManager[] trustAllCerts = new TrustManager[]{
+                new X509TrustManager() {
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return new X509Certificate[0];
+                    }
+
+                    public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                        // Trust all client certificates
+                    }
+
+                    public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                        // Trust all server certificates
+                    }
+                }
+        };
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, trustAllCerts, null);
         return sslContext;
     }
 

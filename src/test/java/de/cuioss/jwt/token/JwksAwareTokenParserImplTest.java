@@ -15,6 +15,8 @@
  */
 package de.cuioss.jwt.token;
 
+import de.cuioss.jwt.token.jwks.JwksClientFactory;
+import de.cuioss.jwt.token.jwks.JwksLoader;
 import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.jwt.token.test.JwksResolveDispatcher;
 import de.cuioss.jwt.token.test.KeyMaterialHandler;
@@ -88,11 +90,8 @@ public class JwksAwareTokenParserImplTest {
         @Test
         @DisplayName("Should fail with invalid issuer")
         void shouldFailFromRemoteWithInvalidIssuer() {
-            tokenParser = JwksAwareTokenParserImpl.builder()
-                    .jwksEndpoint(jwksEndpoint)
-                    .jwksRefreshInterval(JWKS_REFRESH_INTERVAL)
-                    .jwksIssuer("Wrong Issuer")
-                    .build();
+            JwksLoader jwksLoader = JwksClientFactory.createHttpLoader(jwksEndpoint, JWKS_REFRESH_INTERVAL, null);
+            tokenParser = new JwksAwareTokenParserImpl(jwksLoader, "Wrong Issuer");
             String initialToken = validSignedJWTWithClaims(SOME_SCOPES);
             var jsonWebToken = assertDoesNotThrow(() -> ParsedToken.jsonWebTokenFrom(initialToken, tokenParser, LOGGER));
 
@@ -133,11 +132,8 @@ public class JwksAwareTokenParserImplTest {
         }
 
         private JwksAwareTokenParserImpl getValidJWKSParserWithRemoteJWKS() {
-            return JwksAwareTokenParserImpl.builder()
-                    .jwksEndpoint(jwksEndpoint)
-                    .jwksRefreshInterval(JWKS_REFRESH_INTERVAL)
-                    .jwksIssuer(ISSUER)
-                    .build();
+            JwksLoader jwksLoader = JwksClientFactory.createHttpLoader(jwksEndpoint, JWKS_REFRESH_INTERVAL, null);
+            return new JwksAwareTokenParserImpl(jwksLoader, ISSUER);
         }
     }
 
@@ -169,10 +165,8 @@ public class JwksAwareTokenParserImplTest {
         java.nio.file.Path tempFile = java.nio.file.Files.createTempFile("test-jwks", ".json");
         java.nio.file.Files.writeString(tempFile, jwks);
 
-        return JwksAwareTokenParserImpl.builder()
-                .jwksEndpoint(tempFile.toAbsolutePath().toString())
-                .jwksIssuer(ISSUER)
-                .build();
+        JwksLoader jwksLoader = JwksClientFactory.createFileLoader(tempFile.toAbsolutePath().toString());
+        return new JwksAwareTokenParserImpl(jwksLoader, ISSUER);
     }
 
     public static JwksAwareTokenParserImpl getInvalidJWKSParserWithWrongLocalJWKS() throws IOException {
@@ -187,16 +181,12 @@ public class JwksAwareTokenParserImplTest {
         java.nio.file.Path tempFile = java.nio.file.Files.createTempFile("invalid-jwks", ".json");
         java.nio.file.Files.writeString(tempFile, invalidJwks);
 
-        return JwksAwareTokenParserImpl.builder()
-                .jwksEndpoint(tempFile.toAbsolutePath().toString())
-                .jwksIssuer(ISSUER)
-                .build();
+        JwksLoader jwksLoader = JwksClientFactory.createFileLoader(tempFile.toAbsolutePath().toString());
+        return new JwksAwareTokenParserImpl(jwksLoader, ISSUER);
     }
 
     public static JwksAwareTokenParserImpl getInvalidValidJWKSParserWithLocalJWKSAndWrongIssuer() throws IOException {
-        return JwksAwareTokenParserImpl.builder()
-                .jwksEndpoint(JwksResolveDispatcher.PUBLIC_KEY_JWKS)
-                .jwksIssuer(TestTokenProducer.WRONG_ISSUER)
-                .build();
+        JwksLoader jwksLoader = JwksClientFactory.createFileLoader(JwksResolveDispatcher.PUBLIC_KEY_JWKS);
+        return new JwksAwareTokenParserImpl(jwksLoader, TestTokenProducer.WRONG_ISSUER);
     }
 }
