@@ -31,8 +31,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@EnableTestLogger(debug = {InMemoryJwksLoader.class, JWKSKeyLoader.class})
-@DisplayName("Tests InMemoryJwksLoader functionality")
+@EnableTestLogger(debug = {JWKSKeyLoader.class, JwksClientFactory.class})
+@DisplayName("Tests in-memory JWKSKeyLoader functionality")
 class InMemoryJwksLoaderTest {
 
     private static final String TEST_KID = JWKSFactory.TEST_KEY_ID;
@@ -167,22 +167,7 @@ class InMemoryJwksLoaderTest {
         JwksLoader loader = JwksClientFactory.createInMemoryLoader(jwksContent);
 
         // Then
-        assertInstanceOf(InMemoryJwksLoader.class, loader, "Loader should be an instance of InMemoryJwksLoader");
-        Optional<Key> key = loader.getKey(TEST_KID);
-        assertTrue(key.isPresent(), "Key should be present");
-    }
-
-    @Test
-    @DisplayName("Should create loader from factory method with byte array")
-    void shouldCreateLoaderFromFactoryMethodWithByteArray() {
-        // Given
-        byte[] jwksData = JWKSFactory.createValidJwks().getBytes();
-
-        // When
-        JwksLoader loader = JwksClientFactory.createInMemoryLoader(jwksData);
-
-        // Then
-        assertInstanceOf(InMemoryJwksLoader.class, loader, "Loader should be an instance of InMemoryJwksLoader");
+        assertInstanceOf(JWKSKeyLoader.class, loader, "Loader should be an instance of JWKSKeyLoader");
         Optional<Key> key = loader.getKey(TEST_KID);
         assertTrue(key.isPresent(), "Key should be present");
     }

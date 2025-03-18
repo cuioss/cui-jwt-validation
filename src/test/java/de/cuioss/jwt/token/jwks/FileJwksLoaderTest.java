@@ -35,8 +35,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@EnableTestLogger(debug = {FileJwksLoader.class, JWKSKeyLoader.class})
-@DisplayName("Tests FileJwksLoader functionality")
+@EnableTestLogger(debug = {JWKSKeyLoader.class, JwksClientFactory.class})
+@DisplayName("Tests file-based JWKSKeyLoader functionality")
 class FileJwksLoaderTest {
 
     private static final String TEST_KID = JWKSFactory.TEST_KEY_ID;

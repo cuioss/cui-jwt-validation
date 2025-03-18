@@ -67,31 +67,17 @@ public class JwksClientFactory {
      * @return an instance of JwksLoader
      */
     public static JwksLoader createFileLoader(@NonNull String filePath) {
-        return new FileJwksLoader(filePath);
-    }
-
-    /**
-     * Determines if the given URL is a file path.
-     *
-     * @param url the URL to check
-     * @return true if the URL is a file path, false otherwise
-     */
-    public static boolean isFilePath(String url) {
-        return url.startsWith("file:") ||
-                (!url.startsWith("http://") && !url.startsWith("https://") &&
-                        (url.startsWith("/") || url.startsWith("./") || url.startsWith("../") ||
-                                url.contains("/") || url.contains("\\") ||
-                                url.matches("^[A-Za-z]:\\\\.*") || url.matches("^[A-Za-z]:/.+")));
-    }
-
-    /**
-     * Creates a JwksLoader that loads JWKS from in-memory data.
-     *
-     * @param jwksData the JWKS data as a byte array
-     * @return an instance of JwksLoader
-     */
-    public static JwksLoader createInMemoryLoader(@NonNull byte[] jwksData) {
-        return new InMemoryJwksLoader(jwksData);
+        LOGGER.debug("Resolving key loader for JWKS file: %s", filePath);
+        try {
+            String jwksContent = new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(filePath)));
+            LOGGER.debug("Successfully read JWKS from file: %s", filePath);
+            JWKSKeyLoader keyLoader = new JWKSKeyLoader(jwksContent);
+            LOGGER.debug("Successfully loaded %s keys", keyLoader.keySet().size());
+            return keyLoader;
+        } catch (java.io.IOException e) {
+            LOGGER.warn(e, "Failed to read JWKS from file: %s", filePath);
+            return new JWKSKeyLoader("{}"); // Empty JWKS
+        }
     }
 
     /**
@@ -101,6 +87,11 @@ public class JwksClientFactory {
      * @return an instance of JwksLoader
      */
     public static JwksLoader createInMemoryLoader(@NonNull String jwksContent) {
-        return new InMemoryJwksLoader(jwksContent);
+        LOGGER.debug("Resolving key loader for in-memory JWKS data");
+        LOGGER.debug("Successfully read JWKS from in-memory data");
+        JWKSKeyLoader keyLoader = new JWKSKeyLoader(jwksContent);
+        LOGGER.debug("Successfully loaded %s keys", keyLoader.keySet().size());
+        return keyLoader;
     }
+
 }

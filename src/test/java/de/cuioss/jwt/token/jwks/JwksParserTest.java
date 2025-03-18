@@ -23,63 +23,25 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.security.Key;
-import java.util.Collections;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @EnableTestLogger(debug = JwksParser.class)
 @DisplayName("Tests JwksParser functionality")
-class AbstractJwksLoaderTest {
+class JwksParserTest {
 
     private static final String TEST_KID = JWKSFactory.TEST_KEY_ID;
-
-    /**
-     * Test implementation of JwksLoader for testing JwksParser.
-     */
-    private static class TestJwksLoader implements JwksLoader {
-        private Map<String, Key> keys;
-        private final JwksParser jwksParser = new JwksParser();
-
-        public Optional<Key> getKey(String kid) {
-            return Optional.ofNullable(keys != null ? keys.get(kid) : null);
-        }
-
-        public Optional<Key> getFirstKey() {
-            if (keys == null || keys.isEmpty()) {
-                return Optional.empty();
-            }
-            return Optional.of(keys.values().iterator().next());
-        }
-
-        public void refreshKeys() {
-            // No-op for testing
-        }
-
-        /**
-         * Use JwksParser to parse JWKS content for testing.
-         */
-        public Map<String, Key> testParseJwks(String jwksContent) {
-            keys = jwksParser.parseJwks(jwksContent);
-            return keys;
-        }
-
-        public Set<String> keySet() {
-            return keys != null ? keys.keySet() : Collections.emptySet();
-        }
-    }
+    private final JwksParser jwksParser = new JwksParser();
 
     @Test
     @DisplayName("Should parse valid JWKS content")
     void shouldParseValidJwksContent() {
         // Given
-        TestJwksLoader loader = new TestJwksLoader();
         String jwksContent = JWKSFactory.createValidJwks();
 
         // When
-        Map<String, Key> keys = loader.testParseJwks(jwksContent);
+        Map<String, Key> keys = jwksParser.parseJwks(jwksContent);
 
         // Then
         assertNotNull(keys, "Keys map should not be null");
@@ -92,11 +54,10 @@ class AbstractJwksLoaderTest {
     @DisplayName("Should handle invalid JSON format")
     void shouldHandleInvalidJsonFormat() {
         // Given
-        TestJwksLoader loader = new TestJwksLoader();
         String invalidJson = JWKSFactory.createInvalidJson();
 
         // When
-        Map<String, Key> keys = loader.testParseJwks(invalidJson);
+        Map<String, Key> keys = jwksParser.parseJwks(invalidJson);
 
         // Then
         assertNotNull(keys, "Keys map should not be null even with invalid JSON");
@@ -108,11 +69,10 @@ class AbstractJwksLoaderTest {
     @DisplayName("Should handle missing keys array")
     void shouldHandleMissingKeysArray() {
         // Given
-        TestJwksLoader loader = new TestJwksLoader();
         String noKeysJson = JWKSFactory.createJsonWithNoKeysArray();
 
         // When
-        Map<String, Key> keys = loader.testParseJwks(noKeysJson);
+        Map<String, Key> keys = jwksParser.parseJwks(noKeysJson);
 
         // Then
         assertNotNull(keys, "Keys map should not be null");
@@ -124,11 +84,10 @@ class AbstractJwksLoaderTest {
     @DisplayName("Should handle empty keys array")
     void shouldHandleEmptyKeysArray() {
         // Given
-        TestJwksLoader loader = new TestJwksLoader();
         String emptyKeysJson = JWKSFactory.createEmptyJwks();
 
         // When
-        Map<String, Key> keys = loader.testParseJwks(emptyKeysJson);
+        Map<String, Key> keys = jwksParser.parseJwks(emptyKeysJson);
 
         // Then
         assertNotNull(keys, "Keys map should not be null");
@@ -139,11 +98,10 @@ class AbstractJwksLoaderTest {
     @DisplayName("Should handle missing required fields in JWK")
     void shouldHandleMissingRequiredFieldsInJwk() {
         // Given
-        TestJwksLoader loader = new TestJwksLoader();
         String missingFieldsJson = JWKSFactory.createJwksWithMissingFields(TEST_KID);
 
         // When
-        Map<String, Key> keys = loader.testParseJwks(missingFieldsJson);
+        Map<String, Key> keys = jwksParser.parseJwks(missingFieldsJson);
 
         // Then
         assertNotNull(keys, "Keys map should not be null");
@@ -155,11 +113,10 @@ class AbstractJwksLoaderTest {
     @DisplayName("Should handle unsupported key type")
     void shouldHandleUnsupportedKeyType() {
         // Given
-        TestJwksLoader loader = new TestJwksLoader();
         String unsupportedTypeJson = JWKSFactory.createJwksWithUnsupportedKeyType(TEST_KID);
 
         // When
-        Map<String, Key> keys = loader.testParseJwks(unsupportedTypeJson);
+        Map<String, Key> keys = jwksParser.parseJwks(unsupportedTypeJson);
 
         // Then
         assertNotNull(keys, "Keys map should not be null");
@@ -171,11 +128,10 @@ class AbstractJwksLoaderTest {
     @DisplayName("Should handle single JWK object (not in keys array)")
     void shouldHandleSingleJwkObject() {
         // Given
-        TestJwksLoader loader = new TestJwksLoader();
         String singleJwkJson = JWKSFactory.createSingleJwk(TEST_KID);
 
         // When
-        Map<String, Key> keys = loader.testParseJwks(singleJwkJson);
+        Map<String, Key> keys = jwksParser.parseJwks(singleJwkJson);
 
         // Then
         assertNotNull(keys, "Keys map should not be null");
@@ -188,11 +144,10 @@ class AbstractJwksLoaderTest {
     @DisplayName("Should generate default key ID if not present")
     void shouldGenerateDefaultKeyIdIfNotPresent() {
         // Given
-        TestJwksLoader loader = new TestJwksLoader();
         String noKidJson = JWKSFactory.createJwksWithNoKeyId();
 
         // When
-        Map<String, Key> keys = loader.testParseJwks(noKidJson);
+        Map<String, Key> keys = jwksParser.parseJwks(noKidJson);
 
         // Then
         assertNotNull(keys, "Keys map should not be null");

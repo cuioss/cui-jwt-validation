@@ -41,7 +41,7 @@ import static jakarta.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 import static jakarta.servlet.http.HttpServletResponse.SC_OK;
 import static org.junit.jupiter.api.Assertions.*;
 
-@EnableTestLogger(debug = {HttpJwksLoader.class, AbstractJwksLoader.class})
+@EnableTestLogger(debug = {HttpJwksLoader.class, JWKSKeyLoader.class})
 @DisplayName("Tests HttpJwksLoader functionality")
 @EnableMockWebServer
 class HttpJwksLoaderTest implements MockWebServerHolder {

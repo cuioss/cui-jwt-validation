@@ -43,6 +43,9 @@ import static de.cuioss.jwt.token.PortalTokenLogMessages.WARN;
 public class JwksParser {
 
     private static final CuiLogger LOGGER = new CuiLogger(JwksParser.class);
+    private static final String RSA_KEY_TYPE = "RSA";
+    private static final String DEFAULT_KEY_ID = "default-key-id";
+    private static final java.util.regex.Pattern BASE64_URL_PATTERN = java.util.regex.Pattern.compile("^[A-Za-z0-9\\-_]*=*$");
 
     /**
      * Parse JWKS content and extract keys.
@@ -83,25 +86,21 @@ public class JwksParser {
     }
 
     private void processKey(JsonObject jwk, Map<String, Key> result) {
-        try {
-            String kty = jwk.getString("kty");
+        String kty = jwk.getString("kty");
 
-            // Generate a key ID if not present
-            String kid = jwk.containsKey("kid") ? jwk.getString("kid") : "default-key-id";
+        // Generate a key ID if not present
+        String kid = jwk.containsKey("kid") ? jwk.getString("kid") : DEFAULT_KEY_ID;
 
-            if ("RSA".equals(kty)) {
-                try {
-                    Key publicKey = parseRsaKey(jwk);
-                    result.put(kid, publicKey);
-                    LOGGER.debug("Parsed RSA key with ID: %s", kid);
-                } catch (Exception e) {
-                    LOGGER.warn(e, WARN.RSA_KEY_PARSE_FAILED.format(kid, e.getMessage()));
-                }
-            } else {
-                LOGGER.debug("Unsupported key type: %s for key ID: %s", kty, kid);
+        if (RSA_KEY_TYPE.equals(kty)) {
+            try {
+                Key publicKey = parseRsaKey(jwk);
+                result.put(kid, publicKey);
+                LOGGER.debug("Parsed RSA key with ID: %s", kid);
+            } catch (Exception e) {
+                LOGGER.warn(e, WARN.RSA_KEY_PARSE_FAILED.format(kid, e.getMessage()));
             }
-        } catch (Exception e) {
-            LOGGER.warn(e, "Failed to process key: %s", e.getMessage());
+        } else {
+            LOGGER.debug("Unsupported key type: %s for key ID: %s", kty, kid);
         }
     }
 
@@ -130,7 +129,7 @@ public class JwksParser {
 
         // Create RSA public key
         RSAPublicKeySpec spec = new RSAPublicKeySpec(modulus, exponent);
-        KeyFactory factory = KeyFactory.getInstance("RSA");
+        KeyFactory factory = KeyFactory.getInstance(RSA_KEY_TYPE);
         return factory.generatePublic(spec);
     }
 
@@ -146,6 +145,6 @@ public class JwksParser {
         }
 
         // Base64 URL encoded strings should only contain alphanumeric characters, '-', '_', and '='
-        return value.matches("^[A-Za-z0-9\\-_]*=*$");
+        return BASE64_URL_PATTERN.matcher(value).matches();
     }
 }

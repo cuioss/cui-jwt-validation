@@ -18,132 +18,143 @@ package de.cuioss.jwt.token.jwks;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import de.cuioss.tools.logging.CuiLogger;
+import de.cuioss.tools.string.MoreStrings;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.ToString;
-import lombok.experimental.Delegate;
 
+import javax.net.ssl.SSLContext;
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.security.Key;
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import javax.net.ssl.SSLContext;
 
 import static de.cuioss.jwt.token.PortalTokenLogMessages.WARN;
 
 /**
  * Implementation of {@link JwksLoader} that loads JWKS from an HTTP endpoint.
  * Uses Caffeine cache for caching keys.
- * 
+ *
  * @author Oliver Wolff
  */
-@ToString(exclude = {"keyCache"})
-@EqualsAndHashCode(exclude = {"keyCache"})
+@ToString(exclude = {"jwksCache"})
+@EqualsAndHashCode(exclude = {"jwksCache"})
 public class HttpJwksLoader implements JwksLoader {
 
     private static final CuiLogger LOGGER = new CuiLogger(HttpJwksLoader.class);
     private static final int DEFAULT_TIMEOUT_SECONDS = 10;
+    private static final String EMPTY_JWKS = "{}";
+    private static final String CACHE_KEY = "jwks";
+    private static final int HTTP_OK = 200;
 
     private final URI jwksUri;
     private final int refreshIntervalSeconds;
-    private final LoadingCache<String, Key> keyCache;
+    private final LoadingCache<String, JWKSKeyLoader> jwksCache;
     private final HttpClient httpClient;
 
     /**
      * Creates a new HttpJwksLoader with the specified JWKS URL and refresh interval.
      *
-     * @param jwksUrl the URL of the JWKS endpoint
+     * @param jwksUrl                the URL of the JWKS endpoint
      * @param refreshIntervalSeconds the interval in seconds at which to refresh the keys
-     * @param sslContext optional SSLContext for secure connections, if null the default SSLContext from VM configuration is used
+     * @param sslContext             optional SSLContext for secure connections, if null the default SSLContext from VM configuration is used
      */
     public HttpJwksLoader(@NonNull String jwksUrl, int refreshIntervalSeconds, SSLContext sslContext) {
-        // Validate URL format and create URI
-        URI uri;
-        try {
-            uri = URI.create(jwksUrl);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid JWKS URL: " + jwksUrl, e);
-        }
-
-        this.jwksUri = uri;
-        if (refreshIntervalSeconds <= 0) {
-            throw new IllegalArgumentException("Refresh interval must be greater than zero");
-        }
-        this.refreshIntervalSeconds = refreshIntervalSeconds;
-
-        // Create HTTP client with SSL context if provided
-        HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECONDS));
-
-        // If sslContext is provided, use it, otherwise use the default from VM configuration
-        if (sslContext != null) {
-            httpClientBuilder.sslContext(sslContext);
-            LOGGER.debug("Using provided SSL context");
-        }
-
-        this.httpClient = httpClientBuilder.build();
-
-        // Initialize Caffeine cache with automatic loading and refreshing
-        this.keyCache = Caffeine.newBuilder()
+        this.jwksUri = validateAndCreateUri(jwksUrl);
+        this.refreshIntervalSeconds = validateRefreshInterval(refreshIntervalSeconds);
+        this.httpClient = createHttpClient(sslContext);
+        this.jwksCache = Caffeine.newBuilder()
                 .expireAfterWrite(Duration.ofSeconds(refreshIntervalSeconds))
                 .refreshAfterWrite(Duration.ofSeconds(refreshIntervalSeconds))
-                .build(this::loadKey);
+                .build(this::loadJwksKeyLoader);
 
-        // Initial key fetch to populate cache
-        refreshKeysInternal();
+        // Initial JWKS content fetch to populate cache
+        jwksCache.get(CACHE_KEY);
 
         LOGGER.debug("Initialized HttpJwksLoader with URL: %s, refresh interval: %s seconds",
                 jwksUri.toString(), refreshIntervalSeconds);
     }
 
-
-    @Override
-    public Optional<Key> getKey(String kid) {
-        if (kid == null) {
-            LOGGER.debug("Key ID is null");
-            return Optional.empty();
-        }
-
+    /**
+     * Validates the JWKS URL and creates a URI.
+     *
+     * @param jwksUrl the URL of the JWKS endpoint
+     * @return the validated URI
+     * @throws IllegalArgumentException if the URL is invalid
+     */
+    private URI validateAndCreateUri(String jwksUrl) {
         try {
-            Key key = keyCache.get(kid);
-            return Optional.ofNullable(key);
-        } catch (Exception e) {
-            LOGGER.debug("Error loading key with ID: %s, %s", kid, e.getMessage());
-            return Optional.empty();
+            return URI.create(jwksUrl);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid JWKS URL: " + jwksUrl, e);
         }
     }
 
-    @Override
-    public Optional<Key> getFirstKey() {
-        Map<String, Key> snapshot = keyCache.asMap();
-        if (snapshot.isEmpty()) {
-            LOGGER.debug("No keys available, refreshing keys");
-            refreshKeysInternal();
-            snapshot = keyCache.asMap();
+    /**
+     * Validates the refresh interval.
+     *
+     * @param refreshIntervalSeconds the refresh interval in seconds
+     * @return the validated refresh interval
+     * @throws IllegalArgumentException if the refresh interval is not positive
+     */
+    private int validateRefreshInterval(int refreshIntervalSeconds) {
+        if (refreshIntervalSeconds <= 0) {
+            throw new IllegalArgumentException("Refresh interval must be greater than zero");
+        }
+        return refreshIntervalSeconds;
+    }
+
+    /**
+     * Creates an HTTP client with the specified SSL context.
+     *
+     * @param sslContext the SSL context to use, or null to use the default
+     * @return the HTTP client
+     */
+    private HttpClient createHttpClient(SSLContext sslContext) {
+        HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECONDS));
+
+        if (sslContext != null) {
+            httpClientBuilder.sslContext(sslContext);
+            LOGGER.debug("Using provided SSL context");
         }
 
-        if (snapshot.isEmpty()) {
-            return Optional.empty();
-        }
-
-        // Return the first key in the cache
-        return Optional.of(snapshot.values().iterator().next());
+        return httpClientBuilder.build();
     }
 
     /**
      * Resolves a JWKSKeyLoader for the current JWKS content.
-     * 
+     * This method gets the current JWKSKeyLoader from the cache, which will trigger a refresh if needed.
+     *
      * @return a JWKSKeyLoader instance with the current JWKS content
      */
-    private JWKSKeyLoader resolveKeyLoader() {
+    public JWKSKeyLoader resolve() {
         LOGGER.debug("Resolving key loader for JWKS endpoint: %s", jwksUri.toString());
-        String jwksContent = "{}"; // Default empty JWKS
+
+        try {
+            // Get the current JWKSKeyLoader from cache, which will trigger a refresh if needed
+            return jwksCache.get(CACHE_KEY);
+        } catch (RuntimeException e) {
+            LOGGER.warn(e, WARN.JWKS_REFRESH_ERROR.format(e.getMessage()));
+            // Return an empty key loader on exception
+            return new JWKSKeyLoader(EMPTY_JWKS);
+        }
+    }
+
+
+    /**
+     * Loads a JWKSKeyLoader from the endpoint. This method is used by the LoadingCache.
+     *
+     * @param key the cache key (ignored)
+     * @return a JWKSKeyLoader instance with the current JWKS content, or an empty one if an error occurs
+     */
+    private JWKSKeyLoader loadJwksKeyLoader(String key) {
+        LOGGER.debug("Refreshing keys from JWKS endpoint: %s", jwksUri.toString());
 
         try {
             HttpRequest request = HttpRequest.newBuilder()
@@ -151,76 +162,57 @@ public class HttpJwksLoader implements JwksLoader {
                     .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECONDS))
                     .GET()
                     .build();
-
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-            if (response.statusCode() != 200) {
+            if (response.statusCode() != HTTP_OK) {
                 LOGGER.warn(WARN.JWKS_FETCH_FAILED.format(response.statusCode()));
-                // Return empty JWKS content
-                return new JWKSKeyLoader(jwksContent);
+                return new JWKSKeyLoader(EMPTY_JWKS);
             }
 
-            jwksContent = response.body();
+            String jwksContent = response.body();
             LOGGER.debug("Successfully fetched JWKS from URL: %s", jwksUri.toString());
-        } catch (Exception e) {
-            LOGGER.warn(e, "Failed to fetch JWKS from URL: %s", jwksUri.toString());
-            // Return empty JWKS content
+            LOGGER.debug("Successfully refreshed keys");
             return new JWKSKeyLoader(jwksContent);
-        }
-
-        // Create a new JWKSKeyLoader with the fetched content
-        return new JWKSKeyLoader(jwksContent);
-    }
-
-    /**
-     * Internal method to refresh keys from the JWKS endpoint.
-     */
-    private void refreshKeysInternal() {
-        LOGGER.debug("Refreshing keys from JWKS endpoint: %s", jwksUri.toString());
-        try {
-            // Create a new JWKSKeyLoader with the fetched content
-            JWKSKeyLoader keyLoader = resolveKeyLoader();
-
-            // Extract keys from the key loader
-            Map<String, Key> newKeys = new HashMap<>();
-            keyLoader.keySet().forEach(kid -> 
-                keyLoader.getKey(kid).ifPresent(key -> 
-                    newKeys.put(kid, key)
-                )
-            );
-
-            if (!newKeys.isEmpty()) {
-                // Only replace keys if we successfully parsed at least one key
-                keyCache.invalidateAll();
-                newKeys.forEach(keyCache::put);
-            }
-            LOGGER.debug("Successfully refreshed %s keys", keyCache.estimatedSize());
-        } catch (Exception e) {
-            LOGGER.warn(e, WARN.JWKS_REFRESH_ERROR.format(e.getMessage()));
-            // Don't clear keys on exception, keep using the existing keys
+        } catch (InterruptedException e) {
+            LOGGER.warn(e, "Failed to fetch JWKS from URL: %s", jwksUri.toString());
+            // Preserve the interrupt status
+            Thread.currentThread().interrupt();
+            return new JWKSKeyLoader(EMPTY_JWKS);
+        } catch (IOException | SecurityException | IllegalArgumentException e) {
+            LOGGER.warn(e, "Failed to fetch JWKS from URL: %s", jwksUri.toString());
+            return new JWKSKeyLoader(EMPTY_JWKS);
         }
     }
 
-    /**
-     * Loads a key by its ID. This method is used by the LoadingCache.
-     *
-     * @param kid the key ID
-     * @return the key if found, null otherwise
-     */
-    private Key loadKey(String kid) {
-        LOGGER.debug("Loading key with ID: %s", kid);
 
-        // Refresh keys if needed
-        refreshKeysInternal();
+    @Override
+    public Optional<Key> getKey(String kid) {
+        if (MoreStrings.isEmpty(kid)) {
+            LOGGER.debug("Key ID is null or empty");
+            return Optional.empty();
+        }
 
-        // Get the key from the cache's internal map
-        Map<String, Key> keys = keyCache.asMap();
-        return keys.get(kid);
+        // First try to get the key from the current loader
+        Optional<Key> key = resolve().getKey(kid);
+
+        // If key not found, force a refresh and try again
+        if (key.isEmpty()) {
+            LOGGER.debug("Key with ID %s not found, refreshing keys", kid);
+            jwksCache.invalidate(CACHE_KEY);
+            key = resolve().getKey(kid);
+        }
+
+        return key;
+    }
+
+    @Override
+    public Optional<Key> getFirstKey() {
+        return resolve().getFirstKey();
     }
 
     @Override
     public Set<String> keySet() {
-        return keyCache.asMap().keySet();
+        return resolve().keySet();
     }
 
 }
