@@ -54,7 +54,6 @@ public class JWKSKeyLoader implements JwksLoader {
 
     private static final CuiLogger LOGGER = new CuiLogger(JWKSKeyLoader.class);
     private static final String RSA_KEY_TYPE = "RSA";
-    private static final String DEFAULT_KEY_ID = "default-key-id";
     private static final Pattern BASE64_URL_PATTERN = Pattern.compile("^[A-Za-z0-9\\-_]*=*$");
 
     private final Map<String, Key> keyMap;
@@ -79,38 +78,59 @@ public class JWKSKeyLoader implements JwksLoader {
 
         try (JsonReader reader = Json.createReader(new StringReader(jwksContent))) {
             JsonObject jwks = reader.readObject();
-
-            // Check if this is a JWKS with a "keys" array or a single key
-            if (jwks.containsKey("keys")) {
-                // This is a standard JWKS with a "keys" array
-                JsonArray keysArray = jwks.getJsonArray("keys");
-                if (keysArray != null) {
-                    for (int i = 0; i < keysArray.size(); i++) {
-                        JsonObject jwk = keysArray.getJsonObject(i);
-                        processKey(jwk, result);
-                    }
-                }
-            } else if (jwks.containsKey("kty")) {
-                // This is a single key object
-                processKey(jwks, result);
-            } else {
-                LOGGER.warn("JWKS JSON does not contain 'keys' array or 'kty' field");
-            }
+            parseJsonWebKeySet(jwks, result);
         } catch (Exception e) {
             // Handle invalid JSON format
             LOGGER.warn(e, WARN.JWKS_JSON_PARSE_FAILED.format(e.getMessage()));
-            // Return empty map to clear existing keys
-            return result;
         }
 
         return result;
     }
 
+    /**
+     * Parse a JSON Web Key Set object and extract keys.
+     *
+     * @param jwks the JSON Web Key Set object
+     * @param result the map to store the extracted keys
+     */
+    private void parseJsonWebKeySet(JsonObject jwks, Map<String, Key> result) {
+        // Check if this is a JWKS with a "keys" array or a single key
+        if (jwks.containsKey("keys")) {
+            parseStandardJwks(jwks, result);
+        } else if (jwks.containsKey("kty")) {
+            // This is a single key object
+            processKey(jwks, result);
+        } else {
+            LOGGER.warn("JWKS JSON does not contain 'keys' array or 'kty' field");
+        }
+    }
+
+    /**
+     * Parse a standard JWKS with a "keys" array.
+     *
+     * @param jwks the JWKS object
+     * @param result the map to store the extracted keys
+     */
+    private void parseStandardJwks(JsonObject jwks, Map<String, Key> result) {
+        JsonArray keysArray = jwks.getJsonArray("keys");
+        if (keysArray != null) {
+            for (int i = 0; i < keysArray.size(); i++) {
+                JsonObject jwk = keysArray.getJsonObject(i);
+                processKey(jwk, result);
+            }
+        }
+    }
+
     private void processKey(JsonObject jwk, Map<String, Key> result) {
+        if (!jwk.containsKey("kty")) {
+            LOGGER.warn("JWK is missing required field 'kty'");
+            return;
+        }
+
         String kty = jwk.getString("kty");
 
         // Generate a key ID if not present
-        String kid = jwk.containsKey("kid") ? jwk.getString("kid") : DEFAULT_KEY_ID;
+        String kid = jwk.containsKey("kid") ? jwk.getString("kid") : "default-key-id";
 
         if (RSA_KEY_TYPE.equals(kty)) {
             try {
@@ -126,19 +146,11 @@ public class JWKSKeyLoader implements JwksLoader {
     }
 
     private Key parseRsaKey(JsonObject jwk) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        // Check if required fields exist
-        if (!jwk.containsKey("n") || !jwk.containsKey("e")) {
-            throw new InvalidKeySpecException("JWK is missing required fields 'n' or 'e'");
-        }
+        validateRsaKeyFields(jwk);
 
         // Get the modulus and exponent
         String modulusBase64 = jwk.getString("n");
         String exponentBase64 = jwk.getString("e");
-
-        // Validate Base64 format
-        if (!isValidBase64UrlEncoded(modulusBase64) || !isValidBase64UrlEncoded(exponentBase64)) {
-            throw new InvalidKeySpecException("Invalid Base64 URL encoded values for 'n' or 'e'");
-        }
 
         // Decode from Base64
         byte[] modulusBytes = Base64.getUrlDecoder().decode(modulusBase64);
@@ -155,18 +167,39 @@ public class JWKSKeyLoader implements JwksLoader {
     }
 
     /**
+     * Validates that the RSA key has all required fields and that they are properly formatted.
+     *
+     * @param jwk the JWK object
+     * @throws InvalidKeySpecException if the JWK is missing required fields or has invalid values
+     */
+    private void validateRsaKeyFields(JsonObject jwk) throws InvalidKeySpecException {
+        // Check if required fields exist
+        if (!jwk.containsKey("n") || !jwk.containsKey("e")) {
+            throw new InvalidKeySpecException("JWK is missing required fields 'n' or 'e'");
+        }
+
+        // Get the modulus and exponent
+        String modulusBase64 = jwk.getString("n");
+        String exponentBase64 = jwk.getString("e");
+
+        // Validate Base64 format
+        if (!isValidBase64UrlEncoded(modulusBase64)) {
+            throw new InvalidKeySpecException("Invalid Base64 URL encoded value for 'n'");
+        }
+
+        if (!isValidBase64UrlEncoded(exponentBase64)) {
+            throw new InvalidKeySpecException("Invalid Base64 URL encoded value for 'e'");
+        }
+    }
+
+    /**
      * Validates if a string is a valid Base64 URL encoded value.
      *
      * @param value the string to validate
      * @return true if the string is a valid Base64 URL encoded value, false otherwise
      */
     private boolean isValidBase64UrlEncoded(String value) {
-        if (MoreStrings.isEmpty(value)) {
-            return false;
-        }
-
-        // Base64 URL encoded strings should only contain alphanumeric characters, '-', '_', and '='
-        return BASE64_URL_PATTERN.matcher(value).matches();
+        return !MoreStrings.isEmpty(value) && BASE64_URL_PATTERN.matcher(value).matches();
     }
 
     @Override
