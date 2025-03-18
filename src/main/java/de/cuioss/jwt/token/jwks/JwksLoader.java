@@ -44,11 +44,6 @@ public interface JwksLoader {
     Optional<Key> getFirstKey();
 
     /**
-     * Refreshes the keys from the JWKS source.
-     */
-    void refreshKeys();
-
-    /**
      * Gets the set of all available key IDs.
      *
      * @return a Set containing all available key IDs

@@ -30,24 +30,23 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@EnableTestLogger(debug = AbstractJwksLoader.class)
-@DisplayName("Tests AbstractJwksLoader functionality")
+@EnableTestLogger(debug = JwksParser.class)
+@DisplayName("Tests JwksParser functionality")
 class AbstractJwksLoaderTest {
 
     private static final String TEST_KID = JWKSFactory.TEST_KEY_ID;
 
     /**
-     * Concrete implementation of AbstractJwksLoader for testing.
+     * Test implementation of JwksLoader for testing JwksParser.
      */
-    private static class TestJwksLoader extends AbstractJwksLoader {
+    private static class TestJwksLoader implements JwksLoader {
         private Map<String, Key> keys;
+        private final JwksParser jwksParser = new JwksParser();
 
-        @Override
         public Optional<Key> getKey(String kid) {
             return Optional.ofNullable(keys != null ? keys.get(kid) : null);
         }
 
-        @Override
         public Optional<Key> getFirstKey() {
             if (keys == null || keys.isEmpty()) {
                 return Optional.empty();
@@ -55,20 +54,18 @@ class AbstractJwksLoaderTest {
             return Optional.of(keys.values().iterator().next());
         }
 
-        @Override
         public void refreshKeys() {
             // No-op for testing
         }
 
         /**
-         * Expose the protected parseJwks method for testing.
+         * Use JwksParser to parse JWKS content for testing.
          */
         public Map<String, Key> testParseJwks(String jwksContent) {
-            keys = parseJwks(jwksContent);
+            keys = jwksParser.parseJwks(jwksContent);
             return keys;
         }
 
-        @Override
         public Set<String> keySet() {
             return keys != null ? keys.keySet() : Collections.emptySet();
         }

@@ -17,9 +17,11 @@ package de.cuioss.jwt.token.jwks;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
+import de.cuioss.tools.logging.CuiLogger;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.ToString;
+import lombok.experimental.Delegate;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -27,6 +29,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.security.Key;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -41,9 +44,10 @@ import static de.cuioss.jwt.token.PortalTokenLogMessages.WARN;
  * @author Oliver Wolff
  */
 @ToString(exclude = {"keyCache"})
-@EqualsAndHashCode(exclude = {"keyCache"}, callSuper = false)
-public class HttpJwksLoader extends AbstractJwksLoader {
+@EqualsAndHashCode(exclude = {"keyCache"})
+public class HttpJwksLoader implements JwksLoader {
 
+    private static final CuiLogger LOGGER = new CuiLogger(HttpJwksLoader.class);
     private static final int DEFAULT_TIMEOUT_SECONDS = 10;
 
     private final URI jwksUri;
@@ -92,7 +96,7 @@ public class HttpJwksLoader extends AbstractJwksLoader {
                 .build(this::loadKey);
 
         // Initial key fetch to populate cache
-        refreshKeys();
+        refreshKeysInternal();
 
         LOGGER.debug("Initialized HttpJwksLoader with URL: %s, refresh interval: %s seconds",
                 jwksUri.toString(), refreshIntervalSeconds);
@@ -120,7 +124,7 @@ public class HttpJwksLoader extends AbstractJwksLoader {
         Map<String, Key> snapshot = keyCache.asMap();
         if (snapshot.isEmpty()) {
             LOGGER.debug("No keys available, refreshing keys");
-            refreshKeys();
+            refreshKeysInternal();
             snapshot = keyCache.asMap();
         }
 
@@ -132,36 +136,59 @@ public class HttpJwksLoader extends AbstractJwksLoader {
         return Optional.of(snapshot.values().iterator().next());
     }
 
-    @Override
-    public void refreshKeys() {
-        LOGGER.debug("Refreshing keys from JWKS endpoint: %s", jwksUri.toString());
+    /**
+     * Resolves a JWKSKeyLoader for the current JWKS content.
+     * 
+     * @return a JWKSKeyLoader instance with the current JWKS content
+     */
+    private JWKSKeyLoader resolveKeyLoader() {
+        LOGGER.debug("Resolving key loader for JWKS endpoint: %s", jwksUri.toString());
+        String jwksContent = "{}"; // Default empty JWKS
+
         try {
-            String jwksContent;
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(jwksUri)
+                    .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECONDS))
+                    .GET()
+                    .build();
 
-            // Handle as HTTP URL
-            try {
-                HttpRequest request = HttpRequest.newBuilder()
-                        .uri(jwksUri)
-                        .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECONDS))
-                        .GET()
-                        .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-                if (response.statusCode() != 200) {
-                    LOGGER.warn(WARN.JWKS_FETCH_FAILED.format(response.statusCode()));
-                    // Don't clear keys on server error, keep using the existing keys
-                    return;
-                }
-
-                jwksContent = response.body();
-                LOGGER.debug("Successfully fetched JWKS from URL: %s", jwksUri.toString());
-            } catch (Exception e) {
-                LOGGER.warn(e, "Failed to fetch JWKS from URL: %s", jwksUri.toString());
-                return;
+            if (response.statusCode() != 200) {
+                LOGGER.warn(WARN.JWKS_FETCH_FAILED.format(response.statusCode()));
+                // Return empty JWKS content
+                return new JWKSKeyLoader(jwksContent);
             }
 
-            Map<String, Key> newKeys = parseJwks(jwksContent);
+            jwksContent = response.body();
+            LOGGER.debug("Successfully fetched JWKS from URL: %s", jwksUri.toString());
+        } catch (Exception e) {
+            LOGGER.warn(e, "Failed to fetch JWKS from URL: %s", jwksUri.toString());
+            // Return empty JWKS content
+            return new JWKSKeyLoader(jwksContent);
+        }
+
+        // Create a new JWKSKeyLoader with the fetched content
+        return new JWKSKeyLoader(jwksContent);
+    }
+
+    /**
+     * Internal method to refresh keys from the JWKS endpoint.
+     */
+    private void refreshKeysInternal() {
+        LOGGER.debug("Refreshing keys from JWKS endpoint: %s", jwksUri.toString());
+        try {
+            // Create a new JWKSKeyLoader with the fetched content
+            JWKSKeyLoader keyLoader = resolveKeyLoader();
+
+            // Extract keys from the key loader
+            Map<String, Key> newKeys = new HashMap<>();
+            keyLoader.keySet().forEach(kid -> 
+                keyLoader.getKey(kid).ifPresent(key -> 
+                    newKeys.put(kid, key)
+                )
+            );
+
             if (!newKeys.isEmpty()) {
                 // Only replace keys if we successfully parsed at least one key
                 keyCache.invalidateAll();
@@ -184,7 +211,7 @@ public class HttpJwksLoader extends AbstractJwksLoader {
         LOGGER.debug("Loading key with ID: %s", kid);
 
         // Refresh keys if needed
-        refreshKeys();
+        refreshKeysInternal();
 
         // Get the key from the cache's internal map
         Map<String, Key> keys = keyCache.asMap();

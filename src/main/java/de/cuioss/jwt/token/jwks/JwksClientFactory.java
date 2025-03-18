@@ -83,4 +83,24 @@ public class JwksClientFactory {
                                 url.contains("/") || url.contains("\\") ||
                                 url.matches("^[A-Za-z]:\\\\.*") || url.matches("^[A-Za-z]:/.+")));
     }
+
+    /**
+     * Creates a JwksLoader that loads JWKS from in-memory data.
+     *
+     * @param jwksData the JWKS data as a byte array
+     * @return an instance of JwksLoader
+     */
+    public static JwksLoader createInMemoryLoader(@NonNull byte[] jwksData) {
+        return new InMemoryJwksLoader(jwksData);
+    }
+
+    /**
+     * Creates a JwksLoader that loads JWKS from in-memory string content.
+     *
+     * @param jwksContent the JWKS content as a string
+     * @return an instance of JwksLoader
+     */
+    public static JwksLoader createInMemoryLoader(@NonNull String jwksContent) {
+        return new InMemoryJwksLoader(jwksContent);
+    }
 }

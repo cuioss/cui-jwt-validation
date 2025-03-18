@@ -109,17 +109,19 @@ public class JwksClientBenchmarkTest implements MockWebServerHolder {
     }
 
     @Test
-    @DisplayName("Benchmark key refresh performance")
-    void benchmarkKeyRefresh() {
+    @DisplayName("Benchmark key loader creation performance")
+    void benchmarkKeyLoaderCreation() {
         // Warm up
         for (int i = 0; i < WARMUP_ITERATIONS; i++) {
-            jwksLoader.refreshKeys();
+            JwksClientFactory.createHttpLoader(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
         }
 
         // Benchmark
         long startTime = System.nanoTime();
         for (int i = 0; i < BENCHMARK_ITERATIONS; i++) {
-            jwksLoader.refreshKeys();
+            JwksLoader loader = JwksClientFactory.createHttpLoader(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
+            Optional<Key> key = loader.getKey(TEST_KID);
+            assertTrue(key.isPresent(), "Key should be present");
         }
         long endTime = System.nanoTime();
 
@@ -127,7 +129,7 @@ public class JwksClientBenchmarkTest implements MockWebServerHolder {
         double durationMillis = durationNanos / 1_000_000.0;
         double avgOperationTimeMillis = durationMillis / BENCHMARK_ITERATIONS;
 
-        LOGGER.info("Key refresh benchmark results:");
+        LOGGER.info("Key loader creation benchmark results:");
         LOGGER.info("Total time: %s ms", durationMillis);
         LOGGER.info("Average time per operation: %s ms", avgOperationTimeMillis);
         LOGGER.info("Operations per second: %s", (1000.0 / avgOperationTimeMillis));

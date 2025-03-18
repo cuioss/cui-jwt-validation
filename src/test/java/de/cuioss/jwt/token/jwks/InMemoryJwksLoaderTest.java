@@ -19,59 +19,46 @@ import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.security.Key;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@EnableTestLogger(debug = {FileJwksLoader.class, JWKSKeyLoader.class})
-@DisplayName("Tests FileJwksLoader functionality")
-class FileJwksLoaderTest {
+@EnableTestLogger(debug = {InMemoryJwksLoader.class, JWKSKeyLoader.class})
+@DisplayName("Tests InMemoryJwksLoader functionality")
+class InMemoryJwksLoaderTest {
 
     private static final String TEST_KID = JWKSFactory.TEST_KEY_ID;
 
-    @TempDir
-    Path tempDir;
-
-    private Path jwksFilePath;
-    private JwksLoader fileJwksLoader;
+    private JwksLoader inMemoryJwksLoader;
+    private String validJwksContent;
 
     @BeforeEach
-    void setUp() throws IOException {
-        // Create a temporary JWKS file for testing
-        jwksFilePath = tempDir.resolve("jwks.json");
-        String jwksContent = JWKSFactory.createValidJwks();
-        Files.writeString(jwksFilePath, jwksContent);
+    void setUp() {
+        // Create valid JWKS content for testing
+        validJwksContent = JWKSFactory.createValidJwks();
 
-        // Create the FileJwksLoader with the temporary file
-        fileJwksLoader = JwksClientFactory.createFileLoader(jwksFilePath.toString());
+        // Create the InMemoryJwksLoader with the valid content
+        inMemoryJwksLoader = JwksClientFactory.createInMemoryLoader(validJwksContent);
     }
 
-    @AfterEach
-    void tearDown() {
-        // No cleanup needed
-    }
 
     @Test
-    @DisplayName("Should load and parse JWKS from file")
-    void shouldLoadAndParseJwks() {
+    @DisplayName("Should load and parse JWKS from string")
+    void shouldLoadAndParseJwksFromString() {
         // When
-        Optional<Key> key = fileJwksLoader.getKey(TEST_KID);
+        Optional<Key> key = inMemoryJwksLoader.getKey(TEST_KID);
 
         // Then
         assertTrue(key.isPresent(), "Key should be present");
-        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Resolving key loader for JWKS file");
+        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Resolving key loader for in-memory JWKS data");
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Successfully loaded");
     }
 
@@ -79,18 +66,18 @@ class FileJwksLoaderTest {
     @DisplayName("Should return empty when kid is null")
     void shouldReturnEmptyWhenKidIsNull() {
         // When
-        Optional<Key> key = fileJwksLoader.getKey(null);
+        Optional<Key> key = inMemoryJwksLoader.getKey(null);
 
         // Then
         assertFalse(key.isPresent(), "Key should not be present when kid is null");
-        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Key ID is null");
+        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Key ID is null or empty");
     }
 
     @Test
     @DisplayName("Should return empty when kid is not found")
     void shouldReturnEmptyWhenKidNotFound() {
         // When
-        Optional<Key> key = fileJwksLoader.getKey("unknown-kid");
+        Optional<Key> key = inMemoryJwksLoader.getKey("unknown-kid");
 
         // Then
         assertFalse(key.isPresent(), "Key should not be present when kid is not found");
@@ -100,35 +87,18 @@ class FileJwksLoaderTest {
     @DisplayName("Should get first key when available")
     void shouldGetFirstKeyWhenAvailable() {
         // When
-        Optional<Key> key = fileJwksLoader.getFirstKey();
+        Optional<Key> key = inMemoryJwksLoader.getFirstKey();
 
         // Then
         assertTrue(key.isPresent(), "First key should be present");
     }
 
     @Test
-    @DisplayName("Should handle file not found")
-    void shouldHandleFileNotFound() {
-        // Given
-        JwksLoader nonExistentFileLoader = JwksClientFactory.createFileLoader(tempDir.resolve("non-existent.json").toString());
-
-        // When
-        Optional<Key> key = nonExistentFileLoader.getKey(TEST_KID);
-
-        // Then
-        assertFalse(key.isPresent(), "Key should not be present when file is not found");
-        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to read JWKS from file");
-
-        // No cleanup needed
-    }
-
-    @Test
     @DisplayName("Should handle invalid JWKS format")
-    void shouldHandleInvalidJwksFormat() throws IOException {
+    void shouldHandleInvalidJwksFormat() {
         // Given
-        Path invalidJwksPath = tempDir.resolve("invalid-jwks.json");
-        Files.writeString(invalidJwksPath, JWKSFactory.createInvalidJson());
-        JwksLoader invalidJwksLoader = JwksClientFactory.createFileLoader(invalidJwksPath.toString());
+        String invalidJwksContent = JWKSFactory.createInvalidJson();
+        JwksLoader invalidJwksLoader = JwksClientFactory.createInMemoryLoader(invalidJwksContent);
 
         // When
         Optional<Key> key = invalidJwksLoader.getKey(TEST_KID);
@@ -136,18 +106,14 @@ class FileJwksLoaderTest {
         // Then
         assertFalse(key.isPresent(), "Key should not be present when JWKS is invalid");
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to parse JWKS JSON");
-
-        // No cleanup needed
     }
 
     @Test
     @DisplayName("Should handle missing required fields in JWK")
-    void shouldHandleMissingRequiredFieldsInJwk() throws IOException {
+    void shouldHandleMissingRequiredFieldsInJwk() {
         // Given
-        Path missingFieldsJwksPath = tempDir.resolve("missing-fields-jwks.json");
         String missingFieldsJwksContent = JWKSFactory.createJwksWithMissingFields(TEST_KID);
-        Files.writeString(missingFieldsJwksPath, missingFieldsJwksContent);
-        JwksLoader missingFieldsJwksLoader = JwksClientFactory.createFileLoader(missingFieldsJwksPath.toString());
+        JwksLoader missingFieldsJwksLoader = JwksClientFactory.createInMemoryLoader(missingFieldsJwksContent);
 
         // When
         Optional<Key> key = missingFieldsJwksLoader.getKey(TEST_KID);
@@ -155,44 +121,69 @@ class FileJwksLoaderTest {
         // Then
         assertFalse(key.isPresent(), "Key should not be present when JWK is missing required fields");
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to parse RSA key");
-
-        // No cleanup needed
     }
 
     @Test
-    @DisplayName("Should refresh keys when file is updated")
-    void shouldRefreshKeysWhenFileIsUpdated() throws IOException {
+    @DisplayName("Should update keys when refreshed with new data")
+    void shouldUpdateKeysWhenRefreshedWithNewData() {
         // Given
-        Optional<Key> initialKey = fileJwksLoader.getKey(TEST_KID);
+        Optional<Key> initialKey = inMemoryJwksLoader.getKey(TEST_KID);
         assertTrue(initialKey.isPresent(), "Initial key should be present");
 
-        // When - update the file with new content
+        // When - create a new loader with updated content
         String updatedJwksContent = JWKSFactory.createValidJwksWithKeyId("updated-key-id");
-        Files.writeString(jwksFilePath, updatedJwksContent);
+        JwksLoader updatedLoader = JwksClientFactory.createInMemoryLoader(updatedJwksContent);
 
-        // Create a new FileJwksLoader to force refresh
-        JwksLoader newLoader = JwksClientFactory.createFileLoader(jwksFilePath.toString());
+        // Then - verify the new loader has the updated key
+        Optional<Key> oldKey = updatedLoader.getKey(TEST_KID);
+        assertFalse(oldKey.isPresent(), "Old key should not be present in the new loader");
 
-        // Then - verify the old key is no longer available and the new key is
-        Optional<Key> oldKey = newLoader.getKey(TEST_KID);
-        assertFalse(oldKey.isPresent(), "Old key should no longer be present");
-
-        Optional<Key> newKey = newLoader.getKey("updated-key-id");
-        assertTrue(newKey.isPresent(), "New key should be present");
+        Optional<Key> newKey = updatedLoader.getKey("updated-key-id");
+        assertTrue(newKey.isPresent(), "New key should be present in the new loader");
     }
 
     @Test
     @DisplayName("Should return correct keySet")
     void shouldReturnCorrectKeySet() {
         // Given
-        // The loader is already initialized with a valid JWKS file in setUp()
+        // The loader is already initialized with valid JWKS content in setUp()
 
         // When
-        var keySet = fileJwksLoader.keySet();
+        var keySet = inMemoryJwksLoader.keySet();
 
         // Then
         assertFalse(keySet.isEmpty(), "KeySet should not be empty");
         assertTrue(keySet.contains(TEST_KID), "KeySet should contain the test key ID");
         assertEquals(1, keySet.size(), "KeySet should contain exactly one key");
+    }
+
+    @Test
+    @DisplayName("Should create loader from factory method")
+    void shouldCreateLoaderFromFactoryMethod() {
+        // Given
+        String jwksContent = JWKSFactory.createValidJwks();
+
+        // When
+        JwksLoader loader = JwksClientFactory.createInMemoryLoader(jwksContent);
+
+        // Then
+        assertInstanceOf(InMemoryJwksLoader.class, loader, "Loader should be an instance of InMemoryJwksLoader");
+        Optional<Key> key = loader.getKey(TEST_KID);
+        assertTrue(key.isPresent(), "Key should be present");
+    }
+
+    @Test
+    @DisplayName("Should create loader from factory method with byte array")
+    void shouldCreateLoaderFromFactoryMethodWithByteArray() {
+        // Given
+        byte[] jwksData = JWKSFactory.createValidJwks().getBytes();
+
+        // When
+        JwksLoader loader = JwksClientFactory.createInMemoryLoader(jwksData);
+
+        // Then
+        assertInstanceOf(InMemoryJwksLoader.class, loader, "Loader should be an instance of InMemoryJwksLoader");
+        Optional<Key> key = loader.getKey(TEST_KID);
+        assertTrue(key.isPresent(), "Key should be present");
     }
 }

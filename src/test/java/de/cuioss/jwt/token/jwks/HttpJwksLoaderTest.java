@@ -163,17 +163,18 @@ class HttpJwksLoaderTest implements MockWebServerHolder {
     }
 
     @Test
-    @DisplayName("Should refresh keys when explicitly called")
-    void shouldRefreshKeysWhenExplicitlyCalled() {
+    @DisplayName("Should refresh keys when creating a new instance")
+    void shouldRefreshKeysWhenCreatingNewInstance() {
         // Given
         httpJwksLoader.getKey(TEST_KID); // Initial fetch
         assertEquals(1, jwksDispatcher.getCallCounter());
 
-        // When - explicitly refresh keys
-        httpJwksLoader.refreshKeys();
+        // When - create a new instance to force refresh
+        HttpJwksLoader newLoader = new HttpJwksLoader(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
+        newLoader.getKey(TEST_KID);
 
         // Then - verify keys were refreshed
-        assertEquals(2, jwksDispatcher.getCallCounter(), "JWKS endpoint should be called again after explicit refresh");
+        assertEquals(2, jwksDispatcher.getCallCounter(), "JWKS endpoint should be called again with new instance");
     }
 
     @Test

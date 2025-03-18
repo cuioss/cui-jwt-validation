@@ -21,44 +21,41 @@ import lombok.NonNull;
 import lombok.ToString;
 import lombok.experimental.Delegate;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 /**
- * Implementation of {@link JwksLoader} that loads JWKS from a file.
+ * Implementation of {@link JwksLoader} that loads JWKS from in-memory data.
+ * <p>
+ * This implementation is useful for testing or when JWKS data is already available in memory.
  *
  * @author Oliver Wolff
  */
 @ToString
 @EqualsAndHashCode
-public class FileJwksLoader implements JwksLoader {
+public class InMemoryJwksLoader implements JwksLoader {
 
-    private static final CuiLogger LOGGER = new CuiLogger(FileJwksLoader.class);
-
-    private final Path jwksPath;
+    private static final CuiLogger LOGGER = new CuiLogger(InMemoryJwksLoader.class);
 
     @Delegate
     private final JWKSKeyLoader delegate;
 
+
     /**
-     * Creates a new FileJwksLoader with the specified file path.
+     * Creates a new InMemoryJwksLoader with the specified JWKS content.
      *
-     * @param filePath the path to the JWKS file
+     * @param jwksContent the JWKS content as a string, must not be null
      */
-    public FileJwksLoader(@NonNull String filePath) {
-        this.jwksPath = Paths.get(filePath);
-        LOGGER.debug("Resolving key loader for JWKS file: %s", jwksPath);
-        String jwksContent;
-        try {
-            jwksContent = new String(Files.readAllBytes(jwksPath));
-            LOGGER.debug("Successfully read JWKS from file: %s", jwksPath);
-        } catch (IOException e) {
-            LOGGER.warn(e, "Failed to read JWKS from file: %s", jwksPath);
-            jwksContent = "{}"; // Empty JWKS
-        }
+    public InMemoryJwksLoader(@NonNull String jwksContent) {
+        LOGGER.debug("Resolving key loader for in-memory JWKS data");
+        LOGGER.debug("Successfully read JWKS from in-memory data");
         this.delegate = new JWKSKeyLoader(jwksContent);
         LOGGER.debug("Successfully loaded %s keys", delegate.keySet().size());
+    }
+
+    /**
+     * Creates a new InMemoryJwksLoader with the specified JWKS data.
+     *
+     * @param jwksData the JWKS data as a byte array, must not be null
+     */
+    public InMemoryJwksLoader(byte @NonNull [] jwksData) {
+        this(new String(jwksData.clone())); // Defensive copy and convert to string
     }
 }
