@@ -88,7 +88,6 @@ public class JwksClientFactory {
      */
     public static JwksLoader createInMemoryLoader(@NonNull String jwksContent) {
         LOGGER.debug("Resolving key loader for in-memory JWKS data");
-        LOGGER.debug("Successfully read JWKS from in-memory data");
         JWKSKeyLoader keyLoader = new JWKSKeyLoader(jwksContent);
         LOGGER.debug("Successfully loaded %s keys", keyLoader.keySet().size());
         return keyLoader;
