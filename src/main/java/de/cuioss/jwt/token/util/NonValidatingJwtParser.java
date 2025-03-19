@@ -119,7 +119,7 @@ public class NonValidatingJwtParser {
 
         String[] parts = token.split("\\.");
         if (parts.length != 3) {
-            LOGGER.warn("Invalid JWT token format: expected 3 parts but got %s", parts.length);
+            LOGGER.warn(JWTTokenLogMessages.WARN.INVALID_JWT_FORMAT.format(parts.length));
             return Optional.empty();
         }
 
@@ -127,14 +127,14 @@ public class NonValidatingJwtParser {
             // Decode the header (first part)
             Optional<JsonObject> headerOpt = decodeJsonPart(parts[0]);
             if (headerOpt.isEmpty()) {
-                LOGGER.warn("Failed to decode header part");
+                LOGGER.warn(JWTTokenLogMessages.WARN.FAILED_TO_DECODE_HEADER::format);
                 return Optional.empty();
             }
 
             // Decode the payload (second part)
             Optional<JsonObject> bodyOpt = decodeJsonPart(parts[1]);
             if (bodyOpt.isEmpty()) {
-                LOGGER.warn("Failed to decode payload part");
+                LOGGER.warn(JWTTokenLogMessages.WARN.FAILED_TO_DECODE_PAYLOAD::format);
                 return Optional.empty();
             }
 
@@ -143,7 +143,7 @@ public class NonValidatingJwtParser {
 
             return Optional.of(new DecodedJwt(headerOpt.get(), bodyOpt.get(), signature, parts, token));
         } catch (Exception e) {
-            LOGGER.warn(e, "Failed to parse token: %s", e.getMessage());
+            LOGGER.warn(e, JWTTokenLogMessages.WARN.FAILED_TO_PARSE_TOKEN.format(e.getMessage()));
             return Optional.empty();
         }
     }
@@ -159,7 +159,7 @@ public class NonValidatingJwtParser {
             byte[] decoded = Base64.getUrlDecoder().decode(encodedPart);
 
             if (decoded.length > maxPayloadSize) {
-                LOGGER.warn("Decoded part exceeds maximum size limit of %s bytes", maxPayloadSize);
+                LOGGER.warn(JWTTokenLogMessages.WARN.DECODED_PART_SIZE_EXCEEDED.format(maxPayloadSize));
                 return Optional.empty();
             }
 
@@ -168,7 +168,7 @@ public class NonValidatingJwtParser {
                 return Optional.of(reader.readObject());
             }
         } catch (Exception e) {
-            LOGGER.warn(e, "Failed to decode part: %s", e.getMessage());
+            LOGGER.warn(e, JWTTokenLogMessages.WARN.FAILED_TO_DECODE_PART.format(e.getMessage()));
             return Optional.empty();
         }
     }

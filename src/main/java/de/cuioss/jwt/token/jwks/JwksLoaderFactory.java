@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.token.jwks;
 
+import de.cuioss.jwt.token.JWTTokenLogMessages;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
@@ -75,7 +76,7 @@ public class JwksLoaderFactory {
             LOGGER.debug("Successfully loaded %s keys", keyLoader.keySet().size());
             return keyLoader;
         } catch (java.io.IOException e) {
-            LOGGER.warn(e, "Failed to read JWKS from file: %s", filePath);
+            LOGGER.warn(e, JWTTokenLogMessages.WARN.FAILED_TO_READ_JWKS_FILE.format(filePath));
             return new JWKSKeyLoader("{}"); // Empty JWKS
         }
     }

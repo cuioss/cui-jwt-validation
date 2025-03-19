@@ -173,12 +173,12 @@ public class HttpJwksLoader implements JwksLoader {
             LOGGER.debug("Successfully fetched JWKS from URL: %s", jwksUri.toString());
             return new JWKSKeyLoader(jwksContent);
         } catch (InterruptedException e) {
-            LOGGER.warn(e, "Failed to fetch JWKS from URL: %s", jwksUri.toString());
+            LOGGER.warn(e, WARN.FAILED_TO_FETCH_JWKS.format(jwksUri.toString()));
             // Preserve the interrupt status
             Thread.currentThread().interrupt();
             return new JWKSKeyLoader(EMPTY_JWKS);
         } catch (IOException | SecurityException | IllegalArgumentException e) {
-            LOGGER.warn(e, "Failed to fetch JWKS from URL: %s", jwksUri.toString());
+            LOGGER.warn(e, WARN.FAILED_TO_FETCH_JWKS.format(jwksUri.toString()));
             return new JWKSKeyLoader(EMPTY_JWKS);
         }
     }

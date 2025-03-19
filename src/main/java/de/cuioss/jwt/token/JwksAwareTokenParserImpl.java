@@ -120,7 +120,7 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
             // Use the NonValidatingJwtParser to decode the token
             Optional<DecodedJwt> decodedJwt = tokenParser.decode(token);
             if (decodedJwt.isEmpty()) {
-                LOGGER.warn("Failed to decode JWT token");
+                LOGGER.warn(WARN.FAILED_TO_DECODE_JWT::format);
                 return Optional.empty();
             }
 
@@ -141,7 +141,7 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
                 LOGGER.debug("No key ID found in token header, trying all available keys");
                 key = jwksLoader.getFirstKey();
                 if (key.isEmpty()) {
-                    LOGGER.warn("No keys available in JWKS");
+                    LOGGER.warn(WARN.NO_KEYS_AVAILABLE::format);
                     return Optional.empty();
                 }
             }
@@ -172,7 +172,7 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
             LOGGER.trace("Offending token '%s'", token);
             return Optional.empty();
         } catch (Exception e) {
-            LOGGER.warn(e, "Error parsing token: %s", e.getMessage());
+            LOGGER.warn(e, WARN.ERROR_PARSING_TOKEN.format(e.getMessage()));
             return Optional.empty();
         }
     }

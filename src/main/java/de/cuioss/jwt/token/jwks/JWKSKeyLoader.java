@@ -101,7 +101,7 @@ public class JWKSKeyLoader implements JwksLoader {
             // This is a single key object
             processKey(jwks, result);
         } else {
-            LOGGER.warn("JWKS JSON does not contain 'keys' array or 'kty' field");
+            LOGGER.warn(WARN.JWKS_MISSING_KEYS::format);
         }
     }
 
@@ -123,7 +123,7 @@ public class JWKSKeyLoader implements JwksLoader {
 
     private void processKey(JsonObject jwk, Map<String, Key> result) {
         if (!jwk.containsKey("kty")) {
-            LOGGER.warn("JWK is missing required field 'kty'");
+            LOGGER.warn(WARN.JWK_MISSING_KTY::format);
             return;
         }
 

@@ -107,7 +107,7 @@ public class ParsedAccessToken extends ParsedToken {
             if (notBeforeTime != null) {
                 long currentTime = java.time.Instant.now().getEpochSecond();
                 if (notBeforeTime > currentTime + 60) {
-                    LOGGER.warn("Token has a 'not before' claim that is more than 60 seconds in the future");
+                    LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_NBF_FUTURE::format);
                     return Optional.empty();
                 }
             }

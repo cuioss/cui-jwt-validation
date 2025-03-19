@@ -56,7 +56,7 @@ public enum TokenType {
                 return tokenType;
             }
         }
-        LOGGER.warn("Unknown token type: %s", typeClaimName);
+        LOGGER.warn(JWTTokenLogMessages.WARN.UNKNOWN_TOKEN_TYPE.format(typeClaimName));
         return UNKNOWN;
     }
 }
