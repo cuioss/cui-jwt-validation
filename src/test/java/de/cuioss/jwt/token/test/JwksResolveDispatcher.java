@@ -94,7 +94,7 @@ public class JwksResolveDispatcher implements ModuleDispatcherElement {
             return Optional.of(new MockResponse(
                     SC_OK,
                     Headers.of("Content-Type", "application/json"),
-                    JWKSFactory.createJwksWithMissingFields(JWKSFactory.TEST_KEY_ID)));
+                    JWKSFactory.createJwksWithMissingFields(JWKSFactory.DEFAULT_KEY_ID)));
         }
 
         // Always generate a JWKS on the fly for the default key
@@ -112,11 +112,10 @@ public class JwksResolveDispatcher implements ModuleDispatcherElement {
         // Get the public key from the key pair
         java.security.PublicKey publicKey = KeyMaterialHandler.getPublicKey();
 
-        if (publicKey instanceof java.security.interfaces.RSAPublicKey) {
-            java.security.interfaces.RSAPublicKey rsaKey = (java.security.interfaces.RSAPublicKey) publicKey;
+        if (publicKey instanceof java.security.interfaces.RSAPublicKey rsaKey) {
 
-            // Create JWKS JSON with the test key ID
-            return JWKSFactory.createJwksFromRsaKey(rsaKey, JWKSFactory.TEST_KEY_ID);
+            // Create JWKS JSON with the default key ID
+            return JWKSFactory.createJwksFromRsaKey(rsaKey, JWKSFactory.DEFAULT_KEY_ID);
         } else {
             throw new IllegalStateException("Only RSA keys are supported");
         }

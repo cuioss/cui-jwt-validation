@@ -15,8 +15,8 @@
  */
 package de.cuioss.jwt.token;
 
-import de.cuioss.jwt.token.jwks.JwksLoaderFactory;
 import de.cuioss.jwt.token.jwks.JwksLoader;
+import de.cuioss.jwt.token.jwks.JwksLoaderFactory;
 import de.cuioss.test.keycloakit.KeycloakITBase;
 import de.cuioss.test.keycloakit.TestRealm;
 import de.cuioss.tools.logging.CuiLogger;
@@ -38,10 +38,7 @@ import java.util.List;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("Tests Token integration with Keycloak")
 public class TokenKeycloakITTest extends KeycloakITBase {

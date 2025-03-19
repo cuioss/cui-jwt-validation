@@ -33,10 +33,7 @@ import org.junit.jupiter.api.Test;
 import java.security.Key;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @EnableTestLogger(debug = {HttpJwksLoader.class, JWKSKeyLoader.class})
 @DisplayName("Tests HttpJwksLoader functionality")
@@ -45,7 +42,7 @@ class HttpJwksLoaderTest implements MockWebServerHolder {
 
     private static final String JWKS_PATH = "/oidc/jwks.json";
     private static final int REFRESH_INTERVAL_SECONDS = 1; // Short interval for testing
-    private static final String TEST_KID = JWKSFactory.TEST_KEY_ID;
+    private static final String TEST_KID = JWKSFactory.DEFAULT_KEY_ID;
 
     @Setter
     private MockWebServer mockWebServer;

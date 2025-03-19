@@ -22,7 +22,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.security.PrivateKey;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -70,13 +70,13 @@ class KeyMaterialHandlerTest {
     @Test
     void shouldVerifyResourcePaths() {
         // Verify that all resource paths exist
-        assertTrue(Files.exists(Paths.get(KeyMaterialHandler.BASE_PATH)));
-        assertTrue(Files.exists(Paths.get(KeyMaterialHandler.PRIVATE_KEY)));
-        assertTrue(Files.exists(Paths.get(KeyMaterialHandler.PUBLIC_KEY)));
-        assertTrue(Files.exists(Paths.get(KeyMaterialHandler.PUBLIC_KEY_JWKS)));
-        assertTrue(Files.exists(Paths.get(TestTokenProducer.SOME_SCOPES)));
-        assertTrue(Files.exists(Paths.get(TestTokenProducer.REFRESH_TOKEN)));
-        assertTrue(Files.exists(Paths.get(TestTokenProducer.SOME_ROLES)));
-        assertTrue(Files.exists(Paths.get(TestTokenProducer.SOME_ID_TOKEN)));
+        assertTrue(Files.exists(Path.of(KeyMaterialHandler.BASE_PATH)));
+        assertTrue(Files.exists(Path.of(KeyMaterialHandler.PRIVATE_KEY)));
+        assertTrue(Files.exists(Path.of(KeyMaterialHandler.PUBLIC_KEY)));
+        assertTrue(Files.exists(Path.of(KeyMaterialHandler.PUBLIC_KEY_JWKS)));
+        assertTrue(Files.exists(Path.of(TestTokenProducer.SOME_SCOPES)));
+        assertTrue(Files.exists(Path.of(TestTokenProducer.REFRESH_TOKEN)));
+        assertTrue(Files.exists(Path.of(TestTokenProducer.SOME_ROLES)));
+        assertTrue(Files.exists(Path.of(TestTokenProducer.SOME_ID_TOKEN)));
     }
 }

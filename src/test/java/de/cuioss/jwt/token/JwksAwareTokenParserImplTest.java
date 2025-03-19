@@ -38,13 +38,8 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-import static de.cuioss.jwt.token.test.TestTokenProducer.ISSUER;
-import static de.cuioss.jwt.token.test.TestTokenProducer.SOME_SCOPES;
-import static de.cuioss.jwt.token.test.TestTokenProducer.validSignedJWTWithClaims;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static de.cuioss.jwt.token.test.TestTokenProducer.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 @EnableTestLogger(debug = JwksAwareTokenParserImpl.class, info = JwksAwareTokenParserImpl.class)
 @DisplayName("Tests JwksAwareTokenParserImpl functionality")

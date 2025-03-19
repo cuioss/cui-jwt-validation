@@ -45,7 +45,7 @@ public class JwksClientBenchmarkTest implements MockWebServerHolder {
 
     private static final CuiLogger LOGGER = new CuiLogger(JwksClientBenchmarkTest.class);
     private static final int REFRESH_INTERVAL_SECONDS = 60; // Longer interval for benchmarking
-    private static final String TEST_KID = JWKSFactory.TEST_KEY_ID;
+    private static final String TEST_KID = JWKSFactory.DEFAULT_KEY_ID;
     private static final int WARMUP_ITERATIONS = 10;
     private static final int BENCHMARK_ITERATIONS = 100;
 

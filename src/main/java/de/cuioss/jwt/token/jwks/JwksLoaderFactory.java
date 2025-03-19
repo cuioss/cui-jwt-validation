@@ -21,6 +21,7 @@ import lombok.NonNull;
 import lombok.experimental.UtilityClass;
 
 import javax.net.ssl.SSLContext;
+import java.nio.file.Path;
 
 /**
  * Factory for creating instances of {@link JwksLoader}.
@@ -70,7 +71,7 @@ public class JwksLoaderFactory {
     public static JwksLoader createFileLoader(@NonNull String filePath) {
         LOGGER.debug("Resolving key loader for JWKS file: %s", filePath);
         try {
-            String jwksContent = new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(filePath)));
+            String jwksContent = new String(java.nio.file.Files.readAllBytes(Path.of(filePath)));
             LOGGER.debug("Successfully read JWKS from file: %s", filePath);
             JWKSKeyLoader keyLoader = new JWKSKeyLoader(jwksContent);
             LOGGER.debug("Successfully loaded %s keys", keyLoader.keySet().size());

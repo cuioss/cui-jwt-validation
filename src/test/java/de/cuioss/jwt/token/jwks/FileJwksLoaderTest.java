@@ -31,15 +31,13 @@ import java.nio.file.Path;
 import java.security.Key;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @EnableTestLogger(debug = {JWKSKeyLoader.class, JwksLoaderFactory.class})
 @DisplayName("Tests file-based JWKSKeyLoader functionality")
 class FileJwksLoaderTest {
 
-    private static final String TEST_KID = JWKSFactory.TEST_KEY_ID;
+    private static final String TEST_KID = JWKSFactory.DEFAULT_KEY_ID;
 
     @TempDir
     Path tempDir;

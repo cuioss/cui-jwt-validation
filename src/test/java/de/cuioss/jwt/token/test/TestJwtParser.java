@@ -15,8 +15,8 @@
  */
 package de.cuioss.jwt.token.test;
 
-import de.cuioss.jwt.token.JwtParser;
 import de.cuioss.jwt.token.JWTTokenLogMessages;
+import de.cuioss.jwt.token.JwtParser;
 import de.cuioss.jwt.token.adapter.JsonWebToken;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
@@ -52,7 +52,7 @@ import java.util.Set;
 public class TestJwtParser implements JwtParser {
 
     private static final CuiLogger LOGGER = new CuiLogger(TestJwtParser.class);
-    
+
     /**
      * Maximum size of a JWT token in bytes to prevent overflow attacks.
      * 16KB should be more than enough for any reasonable JWT token.
@@ -89,7 +89,7 @@ public class TestJwtParser implements JwtParser {
         }
         return result.map(TestJsonWebToken::new);
     }
-    
+
     /**
      * Parses a JWT token without validating its signature and returns a JsonWebToken.
      * <p>
@@ -265,7 +265,7 @@ public class TestJwtParser implements JwtParser {
             return delegate.getGroups();
         }
     }
-    
+
     /**
      * Simple implementation of JsonWebToken that holds claims without validation.
      */
@@ -369,7 +369,7 @@ public class TestJwtParser implements JwtParser {
                 String subject = getSubject();
                 String issuer = getIssuer();
                 long issuedAt = getIssuedAtTime();
-                return String.format("%s-%s-%d",
+                return "%s-%s-%d".formatted(
                         subject != null ? subject : "unknown",
                         issuer != null ? issuer : "unknown",
                         issuedAt);

@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class JwksLoaderFactoryTest implements MockWebServerHolder {
 
     private static final int REFRESH_INTERVAL_SECONDS = 1; // Short interval for testing
-    private static final String TEST_KID = JWKSFactory.TEST_KEY_ID;
+    private static final String TEST_KID = JWKSFactory.DEFAULT_KEY_ID;
 
     @Setter
     private MockWebServer mockWebServer;

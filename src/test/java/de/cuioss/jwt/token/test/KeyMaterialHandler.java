@@ -19,7 +19,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -68,7 +68,7 @@ public class KeyMaterialHandler {
             privateKey = loadPrivateKey(PRIVATE_KEY);
 
             // Load the public key from the JWKS file
-            String jwksContent = new String(Files.readAllBytes(Paths.get(PUBLIC_KEY_JWKS)));
+            String jwksContent = new String(Files.readAllBytes(Path.of(PUBLIC_KEY_JWKS)));
             jakarta.json.JsonReader reader = jakarta.json.Json.createReader(new java.io.StringReader(jwksContent));
             jakarta.json.JsonObject jwks = reader.readObject();
             reader.close();
@@ -109,7 +109,7 @@ public class KeyMaterialHandler {
      * @throws Exception if loading the key fails
      */
     public static PrivateKey loadPrivateKey(String path) throws Exception {
-        byte[] keyBytes = Files.readAllBytes(Paths.get(path));
+        byte[] keyBytes = Files.readAllBytes(Path.of(path));
         PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
         KeyFactory kf = KeyFactory.getInstance("RSA");
         return kf.generatePrivate(spec);

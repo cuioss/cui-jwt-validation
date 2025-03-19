@@ -55,7 +55,7 @@ public class JWKSFactory {
      * @return a valid JWKS JSON string
      */
     public static String createValidJwks() {
-        return createValidJwksWithKeyId(TEST_KEY_ID);
+        return createValidJwksWithKeyId(DEFAULT_KEY_ID);
     }
 
     /**
@@ -94,8 +94,7 @@ public class JWKSFactory {
         String e = Base64.getUrlEncoder().withoutPadding().encodeToString(exponentBytes);
 
         // Create JWKS JSON with the specified key ID
-        return String.format(
-                "{\"keys\":[{\"kty\":\"RSA\",\"kid\":\"%s\",\"n\":\"%s\",\"e\":\"%s\",\"alg\":\"RS256\"}]}",
+        return "{\"keys\":[{\"kty\":\"RSA\",\"kid\":\"%s\",\"n\":\"%s\",\"e\":\"%s\",\"alg\":\"RS256\"}]}".formatted(
                 keyId, n, e);
     }
 
@@ -124,8 +123,7 @@ public class JWKSFactory {
         String e = Base64.getUrlEncoder().withoutPadding().encodeToString(exponentBytes);
 
         // Create JWK JSON with the specified key ID
-        return String.format(
-                "{\"kty\":\"RSA\",\"kid\":\"%s\",\"n\":\"%s\",\"e\":\"%s\",\"alg\":\"RS256\"}",
+        return "{\"kty\":\"RSA\",\"kid\":\"%s\",\"n\":\"%s\",\"e\":\"%s\",\"alg\":\"RS256\"}".formatted(
                 keyId, n, e);
     }
 
@@ -136,8 +134,7 @@ public class JWKSFactory {
      * @return a JWKS JSON string with missing required fields
      */
     public static String createJwksWithMissingFields(String keyId) {
-        return String.format(
-                "{\"keys\":[{\"kty\":\"RSA\",\"kid\":\"%s\"}]}",
+        return "{\"keys\":[{\"kty\":\"RSA\",\"kid\":\"%s\"}]}".formatted(
                 keyId);
     }
 
@@ -148,8 +145,7 @@ public class JWKSFactory {
      * @return a JWKS JSON string with an unsupported key type
      */
     public static String createJwksWithUnsupportedKeyType(String keyId) {
-        return String.format(
-                "{\"keys\":[{\"kty\":\"EC\",\"kid\":\"%s\"}]}",
+        return "{\"keys\":[{\"kty\":\"EC\",\"kid\":\"%s\"}]}".formatted(
                 keyId);
     }
 
@@ -177,8 +173,7 @@ public class JWKSFactory {
         String e = Base64.getUrlEncoder().withoutPadding().encodeToString(exponentBytes);
 
         // Create JWKS JSON with no key ID
-        return String.format(
-                "{\"keys\":[{\"kty\":\"RSA\",\"n\":\"%s\",\"e\":\"%s\",\"alg\":\"RS256\"}]}",
+        return "{\"keys\":[{\"kty\":\"RSA\",\"n\":\"%s\",\"e\":\"%s\",\"alg\":\"RS256\"}]}".formatted(
                 n, e);
     }
 

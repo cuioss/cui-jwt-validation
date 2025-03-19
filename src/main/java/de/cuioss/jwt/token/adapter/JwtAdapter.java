@@ -83,8 +83,8 @@ public class JwtAdapter implements JsonWebToken {
         if (audience instanceof List) {
             return new HashSet<>((List<String>) audience);
         }
-        if (audience instanceof String) {
-            return Collections.singleton((String) audience);
+        if (audience instanceof String string) {
+            return Set.of(string);
         }
         return Collections.emptySet();
     }

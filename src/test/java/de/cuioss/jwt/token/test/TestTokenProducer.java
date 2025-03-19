@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -89,7 +89,7 @@ public class TestTokenProducer {
      * @throws IOException if loading the file fails
      */
     private static JsonObject loadJsonClaims(String path) throws IOException {
-        String content = Files.readString(Paths.get(path));
+        String content = Files.readString(Path.of(path));
         try (JsonReader reader = Json.createReader(new StringReader(content))) {
             return reader.readObject();
         }
