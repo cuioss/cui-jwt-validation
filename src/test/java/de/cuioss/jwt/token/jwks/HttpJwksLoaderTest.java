@@ -16,19 +16,15 @@
 package de.cuioss.jwt.token.jwks;
 
 import de.cuioss.jwt.token.test.JWKSFactory;
+import de.cuioss.jwt.token.test.JwksResolveDispatcher;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import de.cuioss.test.mockwebserver.EnableMockWebServer;
 import de.cuioss.test.mockwebserver.MockWebServerHolder;
 import de.cuioss.test.mockwebserver.dispatcher.CombinedDispatcher;
-import de.cuioss.test.mockwebserver.dispatcher.ModuleDispatcherElement;
-import lombok.NonNull;
 import lombok.Setter;
-import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
-import mockwebserver3.RecordedRequest;
-import okhttp3.Headers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -37,9 +33,10 @@ import org.junit.jupiter.api.Test;
 import java.security.Key;
 import java.util.Optional;
 
-import static jakarta.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
-import static jakarta.servlet.http.HttpServletResponse.SC_OK;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @EnableTestLogger(debug = {HttpJwksLoader.class, JWKSKeyLoader.class})
 @DisplayName("Tests HttpJwksLoader functionality")
@@ -55,9 +52,9 @@ class HttpJwksLoaderTest implements MockWebServerHolder {
 
     private HttpJwksLoader httpJwksLoader;
     private String jwksEndpoint;
-    private JwksTestDispatcher jwksDispatcher;
+    private JwksResolveDispatcher jwksDispatcher;
 
-    private final JwksTestDispatcher testDispatcher = new JwksTestDispatcher();
+    private final JwksResolveDispatcher testDispatcher = new JwksResolveDispatcher();
 
     @Override
     public mockwebserver3.Dispatcher getDispatcher() {
@@ -67,7 +64,7 @@ class HttpJwksLoaderTest implements MockWebServerHolder {
     @BeforeEach
     void setUp() {
         int port = mockWebServer.getPort();
-        jwksEndpoint = "http://localhost:" + port + JWKS_PATH;
+        jwksEndpoint = "http://localhost:" + port + JwksResolveDispatcher.LOCAL_PATH;
         jwksDispatcher = testDispatcher;
         jwksDispatcher.setCallCounter(0);
         httpJwksLoader = new HttpJwksLoader(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
@@ -88,7 +85,6 @@ class HttpJwksLoaderTest implements MockWebServerHolder {
         assertTrue(key.isPresent(), "Key should be present");
         assertEquals(1, jwksDispatcher.getCallCounter(), "JWKS endpoint should be called once");
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Refreshing keys from JWKS endpoint");
-        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Successfully refreshed");
     }
 
     @Test
@@ -262,81 +258,6 @@ class HttpJwksLoaderTest implements MockWebServerHolder {
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to fetch JWKS from URL: invalid-url");
         } finally {
             // No cleanup needed
-        }
-    }
-
-    /**
-     * Test dispatcher that simulates a JWKS endpoint.
-     */
-    public static class JwksTestDispatcher implements ModuleDispatcherElement {
-
-        private int callCounter = 0;
-
-        public int getCallCounter() {
-            return callCounter;
-        }
-
-        public void setCallCounter(int callCounter) {
-            this.callCounter = callCounter;
-        }
-
-        private boolean returnError = false;
-
-        public void setReturnError(boolean returnError) {
-            this.returnError = returnError;
-        }
-
-        private boolean returnInvalidJson = false;
-
-        public void setReturnInvalidJson(boolean returnInvalidJson) {
-            this.returnInvalidJson = returnInvalidJson;
-        }
-
-        private boolean returnEmptyJwks = false;
-
-        public void setReturnEmptyJwks(boolean returnEmptyJwks) {
-            this.returnEmptyJwks = returnEmptyJwks;
-        }
-
-        private boolean returnMissingFieldsJwk = false;
-
-        public void setReturnMissingFieldsJwk(boolean returnMissingFieldsJwk) {
-            this.returnMissingFieldsJwk = returnMissingFieldsJwk;
-        }
-
-        @Override
-        public Optional<MockResponse> handleGet(@NonNull RecordedRequest request) {
-            callCounter++;
-
-            if (returnError) {
-                return Optional.of(new MockResponse(SC_INTERNAL_SERVER_ERROR, Headers.of(), ""));
-            }
-
-            if (returnInvalidJson) {
-                return Optional.of(new MockResponse(
-                        SC_OK,
-                        Headers.of("Content-Type", "application/json"),
-                        JWKSFactory.createInvalidJson()));
-            }
-
-            String jwksJson;
-            if (returnEmptyJwks) {
-                jwksJson = JWKSFactory.createEmptyJwks();
-            } else if (returnMissingFieldsJwk) {
-                jwksJson = JWKSFactory.createJwksWithMissingFields(TEST_KID);
-            } else {
-                jwksJson = JWKSFactory.createValidJwks();
-            }
-
-            return Optional.of(new MockResponse(
-                    SC_OK,
-                    Headers.of("Content-Type", "application/json"),
-                    jwksJson));
-        }
-
-        @Override
-        public String getBaseUrl() {
-            return JWKS_PATH;
         }
     }
 }

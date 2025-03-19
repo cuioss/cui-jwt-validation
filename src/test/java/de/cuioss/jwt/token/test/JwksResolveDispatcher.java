@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.token.test;
 
+import de.cuioss.test.mockwebserver.dispatcher.HttpMethodMapper;
 import de.cuioss.test.mockwebserver.dispatcher.ModuleDispatcherElement;
 import de.cuioss.tools.io.FileLoaderUtility;
 import lombok.Getter;
@@ -25,7 +26,9 @@ import mockwebserver3.RecordedRequest;
 import okhttp3.Headers;
 
 import java.util.Optional;
+import java.util.Set;
 
+import static jakarta.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 import static jakarta.servlet.http.HttpServletResponse.SC_OK;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -53,9 +56,46 @@ public class JwksResolveDispatcher implements ModuleDispatcherElement {
     @Setter
     private int callCounter = 0;
 
+    @Setter
+    private boolean returnError = false;
+
+    @Setter
+    private boolean returnInvalidJson = false;
+
+    @Setter
+    private boolean returnEmptyJwks = false;
+
+    @Setter
+    private boolean returnMissingFieldsJwk = false;
+
     @Override
     public Optional<MockResponse> handleGet(@NonNull RecordedRequest request) {
         callCounter++;
+
+        if (returnError) {
+            return Optional.of(new MockResponse(SC_INTERNAL_SERVER_ERROR, Headers.of(), ""));
+        }
+
+        if (returnInvalidJson) {
+            return Optional.of(new MockResponse(
+                    SC_OK,
+                    Headers.of("Content-Type", "application/json"),
+                    JWKSFactory.createInvalidJson()));
+        }
+
+        if (returnEmptyJwks) {
+            return Optional.of(new MockResponse(
+                    SC_OK,
+                    Headers.of("Content-Type", "application/json"),
+                    JWKSFactory.createEmptyJwks()));
+        }
+
+        if (returnMissingFieldsJwk) {
+            return Optional.of(new MockResponse(
+                    SC_OK,
+                    Headers.of("Content-Type", "application/json"),
+                    JWKSFactory.createJwksWithMissingFields(JWKSFactory.TEST_KEY_ID)));
+        }
 
         // Always generate a JWKS on the fly for the default key
         if (currentKey.equals(PUBLIC_KEY_JWKS)) {
@@ -75,8 +115,8 @@ public class JwksResolveDispatcher implements ModuleDispatcherElement {
         if (publicKey instanceof java.security.interfaces.RSAPublicKey) {
             java.security.interfaces.RSAPublicKey rsaKey = (java.security.interfaces.RSAPublicKey) publicKey;
 
-            // Create JWKS JSON with the default key ID
-            return JWKSFactory.createJwksFromRsaKey(rsaKey, JWKSFactory.DEFAULT_KEY_ID);
+            // Create JWKS JSON with the test key ID
+            return JWKSFactory.createJwksFromRsaKey(rsaKey, JWKSFactory.TEST_KEY_ID);
         } else {
             throw new IllegalStateException("Only RSA keys are supported");
         }
@@ -91,6 +131,11 @@ public class JwksResolveDispatcher implements ModuleDispatcherElement {
         return LOCAL_PATH;
     }
 
+    @Override
+    public @NonNull Set<HttpMethodMapper> supportedMethods() {
+        return Set.of(HttpMethodMapper.GET);
+    }
+
     /**
      * Verifies whether this endpoint was called the given times
      *
@@ -99,4 +144,6 @@ public class JwksResolveDispatcher implements ModuleDispatcherElement {
     public void assertCallsAnswered(int expected) {
         assertEquals(expected, callCounter);
     }
+
+
 }

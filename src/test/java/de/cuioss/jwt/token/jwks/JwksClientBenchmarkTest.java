@@ -16,18 +16,14 @@
 package de.cuioss.jwt.token.jwks;
 
 import de.cuioss.jwt.token.test.JWKSFactory;
+import de.cuioss.jwt.token.test.JwksResolveDispatcher;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import de.cuioss.test.mockwebserver.EnableMockWebServer;
 import de.cuioss.test.mockwebserver.MockWebServerHolder;
 import de.cuioss.test.mockwebserver.dispatcher.CombinedDispatcher;
-import de.cuioss.test.mockwebserver.dispatcher.ModuleDispatcherElement;
 import de.cuioss.tools.logging.CuiLogger;
-import lombok.NonNull;
 import lombok.Setter;
-import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
-import mockwebserver3.RecordedRequest;
-import okhttp3.Headers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -36,7 +32,6 @@ import org.junit.jupiter.api.Test;
 import java.security.Key;
 import java.util.Optional;
 
-import static jakarta.servlet.http.HttpServletResponse.SC_OK;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -49,7 +44,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class JwksClientBenchmarkTest implements MockWebServerHolder {
 
     private static final CuiLogger LOGGER = new CuiLogger(JwksClientBenchmarkTest.class);
-    private static final String JWKS_PATH = "/oidc/jwks.json";
     private static final int REFRESH_INTERVAL_SECONDS = 60; // Longer interval for benchmarking
     private static final String TEST_KID = JWKSFactory.TEST_KEY_ID;
     private static final int WARMUP_ITERATIONS = 10;
@@ -60,9 +54,9 @@ public class JwksClientBenchmarkTest implements MockWebServerHolder {
 
     private JwksLoader jwksLoader;
     private String jwksEndpoint;
-    private JwksTestDispatcher jwksDispatcher;
+    private JwksResolveDispatcher jwksDispatcher;
 
-    private final JwksTestDispatcher testDispatcher = new JwksTestDispatcher();
+    private final JwksResolveDispatcher testDispatcher = new JwksResolveDispatcher();
 
     @Override
     public mockwebserver3.Dispatcher getDispatcher() {
@@ -72,7 +66,7 @@ public class JwksClientBenchmarkTest implements MockWebServerHolder {
     @BeforeEach
     void setUp() {
         int port = mockWebServer.getPort();
-        jwksEndpoint = "http://localhost:" + port + JWKS_PATH;
+        jwksEndpoint = "http://localhost:" + port + JwksResolveDispatcher.LOCAL_PATH;
         jwksDispatcher = testDispatcher;
         jwksLoader = JwksLoaderFactory.createHttpLoader(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
     }
@@ -133,26 +127,5 @@ public class JwksClientBenchmarkTest implements MockWebServerHolder {
         LOGGER.info("Total time: %s ms", durationMillis);
         LOGGER.info("Average time per operation: %s ms", avgOperationTimeMillis);
         LOGGER.info("Operations per second: %s", (1000.0 / avgOperationTimeMillis));
-    }
-
-    /**
-     * Test dispatcher that simulates a JWKS endpoint.
-     */
-    public static class JwksTestDispatcher implements ModuleDispatcherElement {
-
-        @Override
-        public Optional<MockResponse> handleGet(@NonNull RecordedRequest request) {
-            String jwksJson = JWKSFactory.createValidJwks();
-
-            return Optional.of(new MockResponse(
-                    SC_OK,
-                    Headers.of("Content-Type", "application/json"),
-                    jwksJson));
-        }
-
-        @Override
-        public String getBaseUrl() {
-            return JWKS_PATH;
-        }
     }
 }

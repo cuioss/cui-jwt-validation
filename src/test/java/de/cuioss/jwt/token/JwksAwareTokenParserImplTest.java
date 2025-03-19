@@ -15,8 +15,8 @@
  */
 package de.cuioss.jwt.token;
 
-import de.cuioss.jwt.token.jwks.JwksLoaderFactory;
 import de.cuioss.jwt.token.jwks.JwksLoader;
+import de.cuioss.jwt.token.jwks.JwksLoaderFactory;
 import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.jwt.token.test.JwksResolveDispatcher;
 import de.cuioss.jwt.token.test.KeyMaterialHandler;
@@ -38,8 +38,13 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-import static de.cuioss.jwt.token.test.TestTokenProducer.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static de.cuioss.jwt.token.test.TestTokenProducer.ISSUER;
+import static de.cuioss.jwt.token.test.TestTokenProducer.SOME_SCOPES;
+import static de.cuioss.jwt.token.test.TestTokenProducer.validSignedJWTWithClaims;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @EnableTestLogger(debug = JwksAwareTokenParserImpl.class, info = JwksAwareTokenParserImpl.class)
 @DisplayName("Tests JwksAwareTokenParserImpl functionality")

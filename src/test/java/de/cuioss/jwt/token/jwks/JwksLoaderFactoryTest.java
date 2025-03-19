@@ -16,17 +16,13 @@
 package de.cuioss.jwt.token.jwks;
 
 import de.cuioss.jwt.token.test.JWKSFactory;
+import de.cuioss.jwt.token.test.JwksResolveDispatcher;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import de.cuioss.test.mockwebserver.EnableMockWebServer;
 import de.cuioss.test.mockwebserver.MockWebServerHolder;
 import de.cuioss.test.mockwebserver.dispatcher.CombinedDispatcher;
-import de.cuioss.test.mockwebserver.dispatcher.ModuleDispatcherElement;
-import lombok.NonNull;
 import lombok.Setter;
-import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
-import mockwebserver3.RecordedRequest;
-import okhttp3.Headers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,8 +34,6 @@ import java.nio.file.Path;
 import java.security.Key;
 import java.util.Optional;
 
-import static jakarta.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
-import static jakarta.servlet.http.HttpServletResponse.SC_OK;
 import static org.junit.jupiter.api.Assertions.*;
 
 @EnableTestLogger(debug = JwksLoaderFactory.class)
@@ -47,7 +41,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @EnableMockWebServer
 class JwksLoaderFactoryTest implements MockWebServerHolder {
 
-    private static final String JWKS_PATH = "/oidc/jwks.json";
     private static final int REFRESH_INTERVAL_SECONDS = 1; // Short interval for testing
     private static final String TEST_KID = JWKSFactory.TEST_KEY_ID;
 
@@ -59,9 +52,9 @@ class JwksLoaderFactoryTest implements MockWebServerHolder {
 
     private String httpJwksEndpoint;
     private Path fileJwksPath;
-    private JwksTestDispatcher jwksDispatcher;
+    private JwksResolveDispatcher jwksDispatcher;
 
-    private final JwksTestDispatcher testDispatcher = new JwksTestDispatcher();
+    private final JwksResolveDispatcher testDispatcher = new JwksResolveDispatcher();
 
     @Override
     public mockwebserver3.Dispatcher getDispatcher() {
@@ -72,7 +65,7 @@ class JwksLoaderFactoryTest implements MockWebServerHolder {
     void setUp() throws IOException {
         // Setup HTTP endpoint
         int port = mockWebServer.getPort();
-        httpJwksEndpoint = "http://localhost:" + port + JWKS_PATH;
+        httpJwksEndpoint = "http://localhost:" + port + JwksResolveDispatcher.LOCAL_PATH;
         jwksDispatcher = testDispatcher;
         jwksDispatcher.setCallCounter(0);
 
@@ -81,7 +74,6 @@ class JwksLoaderFactoryTest implements MockWebServerHolder {
         String jwksContent = JWKSFactory.createValidJwks();
         Files.writeString(fileJwksPath, jwksContent);
     }
-
 
     @Test
     @DisplayName("Should create HttpJwksLoader directly")
@@ -118,48 +110,5 @@ class JwksLoaderFactoryTest implements MockWebServerHolder {
         assertThrows(IllegalArgumentException.class, () -> {
             JwksLoaderFactory.createHttpLoader(httpJwksEndpoint, -1, null);
         }, "Should throw exception when refresh interval is negative");
-    }
-
-    /**
-     * Test dispatcher that simulates a JWKS endpoint.
-     */
-    public static class JwksTestDispatcher implements ModuleDispatcherElement {
-
-        private int callCounter = 0;
-
-        public int getCallCounter() {
-            return callCounter;
-        }
-
-        public void setCallCounter(int callCounter) {
-            this.callCounter = callCounter;
-        }
-
-        private boolean returnError = false;
-
-        public void setReturnError(boolean returnError) {
-            this.returnError = returnError;
-        }
-
-        @Override
-        public Optional<MockResponse> handleGet(@NonNull RecordedRequest request) {
-            callCounter++;
-
-            if (returnError) {
-                return Optional.of(new MockResponse(SC_INTERNAL_SERVER_ERROR, Headers.of(), ""));
-            }
-
-            String jwksJson = JWKSFactory.createValidJwks();
-
-            return Optional.of(new MockResponse(
-                    SC_OK,
-                    Headers.of("Content-Type", "application/json"),
-                    jwksJson));
-        }
-
-        @Override
-        public String getBaseUrl() {
-            return JWKS_PATH;
-        }
     }
 }
