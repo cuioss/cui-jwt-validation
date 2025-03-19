@@ -33,7 +33,10 @@ import org.junit.jupiter.api.Test;
 import java.security.Key;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @EnableTestLogger(debug = {HttpJwksLoader.class, JWKSKeyLoader.class})
 @DisplayName("Tests HttpJwksLoader functionality")
@@ -43,15 +46,12 @@ class HttpJwksLoaderTest implements MockWebServerHolder {
     private static final String JWKS_PATH = "/oidc/jwks.json";
     private static final int REFRESH_INTERVAL_SECONDS = 1; // Short interval for testing
     private static final String TEST_KID = JWKSFactory.DEFAULT_KEY_ID;
-
+    private final JwksResolveDispatcher testDispatcher = new JwksResolveDispatcher();
     @Setter
     private MockWebServer mockWebServer;
-
     private HttpJwksLoader httpJwksLoader;
     private String jwksEndpoint;
     private JwksResolveDispatcher jwksDispatcher;
-
-    private final JwksResolveDispatcher testDispatcher = new JwksResolveDispatcher();
 
     @Override
     public mockwebserver3.Dispatcher getDispatcher() {
@@ -105,7 +105,7 @@ class HttpJwksLoaderTest implements MockWebServerHolder {
         assertEquals(1, jwksDispatcher.getCallCounter());
 
         // When
-        jwksDispatcher.setReturnEmptyJwks(true);
+        jwksDispatcher.returnEmptyJwks();
         Optional<Key> key = httpJwksLoader.getKey("unknown-kid");
 
         // Then
@@ -117,42 +117,34 @@ class HttpJwksLoaderTest implements MockWebServerHolder {
     @DisplayName("Should handle server errors")
     void shouldHandleServerErrors() {
         // Given
-        jwksDispatcher.setReturnError(true);
+        jwksDispatcher.returnError();
 
         // Create a new loader that will encounter server error
         HttpJwksLoader errorLoader = new HttpJwksLoader(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
 
-        try {
-            // When
-            Optional<Key> key = errorLoader.getKey(TEST_KID);
+        // When
+        Optional<Key> key = errorLoader.getKey(TEST_KID);
 
-            // Then
-            assertFalse(key.isPresent(), "Key should not be present when server returns error");
-            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to fetch JWKS");
-        } finally {
-            // No cleanup needed
-        }
+        // Then
+        assertFalse(key.isPresent(), "Key should not be present when server returns error");
+        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to fetch JWKS");
     }
 
     @Test
     @DisplayName("Should handle invalid JWKS format")
     void shouldHandleInvalidJwksFormat() {
         // Given
-        jwksDispatcher.setReturnInvalidJson(true);
+        jwksDispatcher.returnInvalidJson();
 
         // Create a new loader with invalid JSON response
         HttpJwksLoader invalidJsonLoader = new HttpJwksLoader(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
 
-        try {
-            // When
-            Optional<Key> key = invalidJsonLoader.getKey(TEST_KID);
+        // When
+        Optional<Key> key = invalidJsonLoader.getKey(TEST_KID);
 
-            // Then
-            assertFalse(key.isPresent(), "Key should not be present when JWKS is invalid");
-            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to parse JWKS JSON");
-        } finally {
-            // No cleanup needed
-        }
+        // Then
+        assertFalse(key.isPresent(), "Key should not be present when JWKS is invalid");
+        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to parse JWKS JSON");
     }
 
     @Test
@@ -198,21 +190,17 @@ class HttpJwksLoaderTest implements MockWebServerHolder {
     @DisplayName("Should handle missing required fields in JWK")
     void shouldHandleMissingRequiredFieldsInJwk() {
         // Given
-        jwksDispatcher.setReturnMissingFieldsJwk(true);
+        jwksDispatcher.returnMissingFieldsJwk();
 
         // Create a new loader with JWK missing required fields
         HttpJwksLoader missingFieldsLoader = new HttpJwksLoader(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
 
-        try {
-            // When
-            Optional<Key> key = missingFieldsLoader.getKey(TEST_KID);
+        // When
+        Optional<Key> key = missingFieldsLoader.getKey(TEST_KID);
 
-            // Then
-            assertFalse(key.isPresent(), "Key should not be present when JWK is missing required fields");
-            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to parse RSA key");
-        } finally {
-            // No cleanup needed
-        }
+        // Then
+        assertFalse(key.isPresent(), "Key should not be present when JWK is missing required fields");
+        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to parse RSA key");
     }
 
     @Test
@@ -246,15 +234,11 @@ class HttpJwksLoaderTest implements MockWebServerHolder {
         // Given
         HttpJwksLoader invalidUrlLoader = new HttpJwksLoader("invalid-url", REFRESH_INTERVAL_SECONDS, null);
 
-        try {
-            // When
-            Optional<Key> key = invalidUrlLoader.getKey(TEST_KID);
+        // When
+        Optional<Key> key = invalidUrlLoader.getKey(TEST_KID);
 
-            // Then
-            assertFalse(key.isPresent(), "Key should not be present when URL is invalid");
-            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to fetch JWKS from URL: invalid-url");
-        } finally {
-            // No cleanup needed
-        }
+        // Then
+        assertFalse(key.isPresent(), "Key should not be present when URL is invalid");
+        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to fetch JWKS from URL: invalid-url");
     }
 }

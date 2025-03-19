@@ -31,6 +31,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 class ParsedRefreshTokenTest implements ShouldBeSerializable<ParsedRefreshToken> {
 
 
+    @Override
+    public ParsedRefreshToken getUnderTest() {
+        return ParsedRefreshToken.fromTokenString(validSignedJWTWithClaims(REFRESH_TOKEN));
+    }
+
     @Nested
     @DisplayName("Token Parsing Tests")
     class TokenParsingTests {
@@ -53,10 +58,5 @@ class ParsedRefreshTokenTest implements ShouldBeSerializable<ParsedRefreshToken>
             assertFalse(parsedRefreshToken.isEmpty(), "Invalid token should still be wrapped");
             assertEquals("invalid-token", parsedRefreshToken.getTokenString(), "Token string should match original");
         }
-    }
-
-    @Override
-    public ParsedRefreshToken getUnderTest() {
-        return ParsedRefreshToken.fromTokenString(validSignedJWTWithClaims(REFRESH_TOKEN));
     }
 }

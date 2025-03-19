@@ -34,7 +34,9 @@ import java.nio.file.Path;
 import java.security.Key;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @EnableTestLogger(debug = JwksLoaderFactory.class)
 @DisplayName("Tests JwksLoaderFactory functionality")
@@ -43,18 +45,14 @@ class JwksLoaderFactoryTest implements MockWebServerHolder {
 
     private static final int REFRESH_INTERVAL_SECONDS = 1; // Short interval for testing
     private static final String TEST_KID = JWKSFactory.DEFAULT_KEY_ID;
-
-    @Setter
-    private MockWebServer mockWebServer;
-
+    private final JwksResolveDispatcher testDispatcher = new JwksResolveDispatcher();
     @TempDir
     Path tempDir;
-
+    @Setter
+    private MockWebServer mockWebServer;
     private String httpJwksEndpoint;
     private Path fileJwksPath;
     private JwksResolveDispatcher jwksDispatcher;
-
-    private final JwksResolveDispatcher testDispatcher = new JwksResolveDispatcher();
 
     @Override
     public mockwebserver3.Dispatcher getDispatcher() {

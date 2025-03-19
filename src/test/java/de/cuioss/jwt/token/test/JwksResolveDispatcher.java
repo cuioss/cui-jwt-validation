@@ -36,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * Handles the Resolving of JWKS Files from the Mocked oauth-Server. In essence, it returns the file
  * "src/test/resources/token/test-public-key.jwks"
  */
+@SuppressWarnings("UnusedReturnValue")
 public class JwksResolveDispatcher implements ModuleDispatcherElement {
 
     /**
@@ -44,67 +45,104 @@ public class JwksResolveDispatcher implements ModuleDispatcherElement {
     public static final String LOCAL_PATH = "/oidc/jwks.json";
     public static final String PUBLIC_KEY_JWKS = KeyMaterialHandler.PUBLIC_KEY_JWKS;
     public static final String PUBLIC_KEY_OTHER_JWKS = KeyMaterialHandler.BASE_PATH + "other-public-key.jwks";
-    public static final String PUBLIC_KEY_OTHER = KeyMaterialHandler.PUBLIC_KEY_OTHER;
 
     public String currentKey;
+    @Getter
+    @Setter
+    private int callCounter = 0;
+    private ResponseStrategy responseStrategy = ResponseStrategy.DEFAULT;
 
     public JwksResolveDispatcher() {
         currentKey = PUBLIC_KEY_JWKS;
     }
 
-    @Getter
-    @Setter
-    private int callCounter = 0;
+    /**
+     * Convenience method to set the response strategy to return an error.
+     *
+     * @return this instance for method chaining
+     */
+    public JwksResolveDispatcher returnError() {
+        this.responseStrategy = ResponseStrategy.ERROR;
+        return this;
+    }
 
-    @Setter
-    private boolean returnError = false;
+    /**
+     * Convenience method to set the response strategy to return invalid JSON.
+     *
+     * @return this instance for method chaining
+     */
+    public JwksResolveDispatcher returnInvalidJson() {
+        this.responseStrategy = ResponseStrategy.INVALID_JSON;
+        return this;
+    }
 
-    @Setter
-    private boolean returnInvalidJson = false;
+    /**
+     * Convenience method to set the response strategy to return an empty JWKS.
+     *
+     * @return this instance for method chaining
+     */
+    public JwksResolveDispatcher returnEmptyJwks() {
+        this.responseStrategy = ResponseStrategy.EMPTY_JWKS;
+        return this;
+    }
 
-    @Setter
-    private boolean returnEmptyJwks = false;
+    /**
+     * Convenience method to set the response strategy to return a JWKS with missing fields.
+     *
+     * @return this instance for method chaining
+     */
+    public JwksResolveDispatcher returnMissingFieldsJwk() {
+        this.responseStrategy = ResponseStrategy.MISSING_FIELDS_JWK;
+        return this;
+    }
 
-    @Setter
-    private boolean returnMissingFieldsJwk = false;
+    /**
+     * Convenience method to reset the response strategy to the default.
+     *
+     * @return this instance for method chaining
+     */
+    public JwksResolveDispatcher returnDefault() {
+        this.responseStrategy = ResponseStrategy.DEFAULT;
+        return this;
+    }
 
     @Override
     public Optional<MockResponse> handleGet(@NonNull RecordedRequest request) {
         callCounter++;
 
-        if (returnError) {
-            return Optional.of(new MockResponse(SC_INTERNAL_SERVER_ERROR, Headers.of(), ""));
-        }
+        switch (responseStrategy) {
+            case ERROR:
+                return Optional.of(new MockResponse(SC_INTERNAL_SERVER_ERROR, Headers.of(), ""));
 
-        if (returnInvalidJson) {
-            return Optional.of(new MockResponse(
-                    SC_OK,
-                    Headers.of("Content-Type", "application/json"),
-                    JWKSFactory.createInvalidJson()));
-        }
+            case INVALID_JSON:
+                return Optional.of(new MockResponse(
+                        SC_OK,
+                        Headers.of("Content-Type", "application/json"),
+                        JWKSFactory.createInvalidJson()));
 
-        if (returnEmptyJwks) {
-            return Optional.of(new MockResponse(
-                    SC_OK,
-                    Headers.of("Content-Type", "application/json"),
-                    JWKSFactory.createEmptyJwks()));
-        }
+            case EMPTY_JWKS:
+                return Optional.of(new MockResponse(
+                        SC_OK,
+                        Headers.of("Content-Type", "application/json"),
+                        JWKSFactory.createEmptyJwks()));
 
-        if (returnMissingFieldsJwk) {
-            return Optional.of(new MockResponse(
-                    SC_OK,
-                    Headers.of("Content-Type", "application/json"),
-                    JWKSFactory.createJwksWithMissingFields(JWKSFactory.DEFAULT_KEY_ID)));
-        }
+            case MISSING_FIELDS_JWK:
+                return Optional.of(new MockResponse(
+                        SC_OK,
+                        Headers.of("Content-Type", "application/json"),
+                        JWKSFactory.createJwksWithMissingFields(JWKSFactory.DEFAULT_KEY_ID)));
 
-        // Always generate a JWKS on the fly for the default key
-        if (currentKey.equals(PUBLIC_KEY_JWKS)) {
-            String jwks = generateJwksFromDynamicKey();
-            return Optional.of(new MockResponse(SC_OK, Headers.of("Content-Type", "application/json"), jwks));
-        } else {
-            // For other keys, use the file
-            return Optional.of(new MockResponse(SC_OK, Headers.of("Content-Type", "application/json"), FileLoaderUtility
-                    .toStringUnchecked(FileLoaderUtility.getLoaderForPath(currentKey))));
+            case DEFAULT:
+            default:
+                // Always generate a JWKS on the fly for the default key
+                if (currentKey.equals(PUBLIC_KEY_JWKS)) {
+                    String jwks = generateJwksFromDynamicKey();
+                    return Optional.of(new MockResponse(SC_OK, Headers.of("Content-Type", "application/json"), jwks));
+                } else {
+                    // For other keys, use the file
+                    return Optional.of(new MockResponse(SC_OK, Headers.of("Content-Type", "application/json"), FileLoaderUtility
+                            .toStringUnchecked(FileLoaderUtility.getLoaderForPath(currentKey))));
+                }
         }
     }
 
@@ -142,6 +180,36 @@ public class JwksResolveDispatcher implements ModuleDispatcherElement {
      */
     public void assertCallsAnswered(int expected) {
         assertEquals(expected, callCounter);
+    }
+
+    /**
+     * Enum representing the different response strategies for the JWKS resolver.
+     */
+    public enum ResponseStrategy {
+        /**
+         * Returns a normal JWKS response based on the current key.
+         */
+        DEFAULT,
+
+        /**
+         * Returns an HTTP 500 error response.
+         */
+        ERROR,
+
+        /**
+         * Returns invalid JSON content.
+         */
+        INVALID_JSON,
+
+        /**
+         * Returns an empty JWKS (valid JSON but no keys).
+         */
+        EMPTY_JWKS,
+
+        /**
+         * Returns a JWKS with missing required fields.
+         */
+        MISSING_FIELDS_JWK
     }
 
 

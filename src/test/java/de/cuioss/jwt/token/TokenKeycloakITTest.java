@@ -38,7 +38,10 @@ import java.util.List;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("Tests Token integration with Keycloak")
 public class TokenKeycloakITTest extends KeycloakITBase {
@@ -48,23 +51,6 @@ public class TokenKeycloakITTest extends KeycloakITBase {
     private static final CuiLogger LOGGER = new CuiLogger(TokenKeycloakITTest.class);
 
     private TokenFactory factory;
-
-    @BeforeEach
-    void setUp() throws Exception {
-        // Configure RestAssured to use the keystore used / provided by testcontainers-keycloak
-        SSLConfig sslConfig = SSLConfig.sslConfig().trustStore(TestRealm.ProvidedKeyStore.KEYSTORE_PATH, TestRealm.ProvidedKeyStore.PASSWORD);
-        RestAssured.config = RestAssured.config().sslConfig(sslConfig);
-
-        // Log the keystore path and password for debugging
-        LOGGER.debug(() -> "KEYSTORE_PATH: " + TestRealm.ProvidedKeyStore.KEYSTORE_PATH);
-        LOGGER.debug(() -> "PASSWORD: " + TestRealm.ProvidedKeyStore.PASSWORD);
-
-        // Create a JwksLoader with the SSLContext
-        JwksLoader jwksLoader = JwksLoaderFactory.createHttpLoader(getJWKSUrl(), 100, createSSLContextFromSSLConfig(sslConfig));
-        JwksAwareTokenParserImpl parser = new JwksAwareTokenParserImpl(jwksLoader, getIssuer());
-
-        factory = TokenFactory.of(parser);
-    }
 
     /**
      * Creates an SSLContext that trusts all certificates.
@@ -96,6 +82,32 @@ public class TokenKeycloakITTest extends KeycloakITBase {
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(null, trustAllCerts, null);
         return sslContext;
+    }
+
+    @BeforeEach
+    void setUp() throws Exception {
+        // Configure RestAssured to use the keystore used / provided by testcontainers-keycloak
+        SSLConfig sslConfig = SSLConfig.sslConfig().trustStore(TestRealm.ProvidedKeyStore.KEYSTORE_PATH, TestRealm.ProvidedKeyStore.PASSWORD);
+        RestAssured.config = RestAssured.config().sslConfig(sslConfig);
+
+        // Log the keystore path and password for debugging
+        LOGGER.debug(() -> "KEYSTORE_PATH: " + TestRealm.ProvidedKeyStore.KEYSTORE_PATH);
+        LOGGER.debug(() -> "PASSWORD: " + TestRealm.ProvidedKeyStore.PASSWORD);
+
+        // Create a JwksLoader with the SSLContext
+        JwksLoader jwksLoader = JwksLoaderFactory.createHttpLoader(getJWKSUrl(), 100, createSSLContextFromSSLConfig(sslConfig));
+        JwksAwareTokenParserImpl parser = new JwksAwareTokenParserImpl(jwksLoader, getIssuer());
+
+        factory = TokenFactory.of(parser);
+    }
+
+    private String requestToken(Map<String, String> parameter, String tokenType) {
+        String tokenString = given().contentType("application/x-www-form-urlencoded")
+                .formParams(parameter)
+                .post(getTokenUrl()).then().assertThat().statusCode(200)
+                .extract().path(tokenType);
+        LOGGER.info(() -> "Received %s: %s".formatted(tokenType, tokenString));
+        return tokenString;
     }
 
     @Nested
@@ -146,14 +158,5 @@ public class TokenKeycloakITTest extends KeycloakITBase {
             assertNotNull(refreshToken.getTokenString(), "Token string should not be null");
             assertEquals(TokenType.REFRESH_TOKEN, refreshToken.getType(), "Token type should be REFRESH_TOKEN");
         }
-    }
-
-    private String requestToken(Map<String, String> parameter, String tokenType) {
-        String tokenString = given().contentType("application/x-www-form-urlencoded")
-                .formParams(parameter)
-                .post(getTokenUrl()).then().assertThat().statusCode(200)
-                .extract().path(tokenType);
-        LOGGER.info(() -> "Received %s: %s".formatted(tokenType, tokenString));
-        return tokenString;
     }
 }

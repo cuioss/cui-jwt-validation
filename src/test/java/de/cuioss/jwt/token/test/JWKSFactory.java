@@ -74,7 +74,7 @@ public class JWKSFactory {
      * Creates a valid JWKS with a single key using the specified RSA public key.
      *
      * @param publicKey the RSA public key to use
-     * @param keyId the key ID to use
+     * @param keyId     the key ID to use
      * @return a valid JWKS JSON string
      */
     public static String createJwksFromRsaKey(RSAPublicKey publicKey, String keyId) {

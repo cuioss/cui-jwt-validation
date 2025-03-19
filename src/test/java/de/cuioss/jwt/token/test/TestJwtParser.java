@@ -69,6 +69,17 @@ public class TestJwtParser implements JwtParser {
     private final String issuer;
 
     /**
+     * Sets the current test method name for special handling in the TestJsonWebToken.
+     * This is used to handle specific test cases differently.
+     *
+     * @param methodName the name of the current test method
+     */
+    public static void setCurrentTestMethod(String methodName) {
+        TestJsonWebToken.currentTestMethod = methodName;
+        System.out.println("[DEBUG_LOG] Current test method: " + methodName);
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -143,18 +154,22 @@ public class TestJwtParser implements JwtParser {
         }
     }
 
+    @Override
+    public boolean supportsIssuer(String issuer) {
+        return this.issuer.equals(issuer);
+    }
+
     /**
      * Custom implementation of JsonWebToken that correctly handles JSON arrays.
      */
     private static class TestJsonWebToken implements JsonWebToken {
+        // Track the current test method name
+        private static String currentTestMethod = "";
         private final JsonWebToken delegate;
 
         TestJsonWebToken(JsonWebToken delegate) {
             this.delegate = delegate;
         }
-
-        // Track the current test method name
-        private static String currentTestMethod = "";
 
         @Override
         public String getName() {
@@ -381,21 +396,5 @@ public class TestJwtParser implements JwtParser {
         public Set<String> getGroups() {
             return Set.of(); // Not needed for inspection
         }
-    }
-
-    /**
-     * Sets the current test method name for special handling in the TestJsonWebToken.
-     * This is used to handle specific test cases differently.
-     *
-     * @param methodName the name of the current test method
-     */
-    public static void setCurrentTestMethod(String methodName) {
-        TestJsonWebToken.currentTestMethod = methodName;
-        System.out.println("[DEBUG_LOG] Current test method: " + methodName);
-    }
-
-    @Override
-    public boolean supportsIssuer(String issuer) {
-        return this.issuer.equals(issuer);
     }
 }

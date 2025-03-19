@@ -30,8 +30,12 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.OffsetDateTime;
 
-import static de.cuioss.jwt.token.test.TestTokenProducer.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static de.cuioss.jwt.token.test.TestTokenProducer.SOME_SCOPES;
+import static de.cuioss.jwt.token.test.TestTokenProducer.validSignedJWTWithClaims;
+import static de.cuioss.jwt.token.test.TestTokenProducer.validSignedJWTWithNotBefore;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @EnableTestLogger
 @DisplayName("Tests ParsedToken functionality")

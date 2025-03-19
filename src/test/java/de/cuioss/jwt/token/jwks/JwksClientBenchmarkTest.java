@@ -48,15 +48,12 @@ public class JwksClientBenchmarkTest implements MockWebServerHolder {
     private static final String TEST_KID = JWKSFactory.DEFAULT_KEY_ID;
     private static final int WARMUP_ITERATIONS = 10;
     private static final int BENCHMARK_ITERATIONS = 100;
-
+    private final JwksResolveDispatcher testDispatcher = new JwksResolveDispatcher();
     @Setter
     private MockWebServer mockWebServer;
-
     private JwksLoader jwksLoader;
     private String jwksEndpoint;
     private JwksResolveDispatcher jwksDispatcher;
-
-    private final JwksResolveDispatcher testDispatcher = new JwksResolveDispatcher();
 
     @Override
     public mockwebserver3.Dispatcher getDispatcher() {

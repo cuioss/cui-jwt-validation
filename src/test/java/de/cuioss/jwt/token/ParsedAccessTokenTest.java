@@ -26,8 +26,15 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
-import static de.cuioss.jwt.token.test.TestTokenProducer.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static de.cuioss.jwt.token.test.TestTokenProducer.SOME_NAME;
+import static de.cuioss.jwt.token.test.TestTokenProducer.SOME_ROLES;
+import static de.cuioss.jwt.token.test.TestTokenProducer.SOME_SCOPES;
+import static de.cuioss.jwt.token.test.TestTokenProducer.getDefaultTokenParser;
+import static de.cuioss.jwt.token.test.TestTokenProducer.validSignedEmptyJWT;
+import static de.cuioss.jwt.token.test.TestTokenProducer.validSignedJWTWithClaims;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @EnableTestLogger
 @DisplayName("Tests ParsedAccessToken functionality")

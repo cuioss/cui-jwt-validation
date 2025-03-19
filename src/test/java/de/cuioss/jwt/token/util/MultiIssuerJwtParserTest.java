@@ -27,9 +27,13 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-import static de.cuioss.jwt.token.test.TestTokenProducer.*;
+import static de.cuioss.jwt.token.test.TestTokenProducer.ISSUER;
+import static de.cuioss.jwt.token.test.TestTokenProducer.SOME_SCOPES;
+import static de.cuioss.jwt.token.test.TestTokenProducer.validSignedJWTWithClaims;
 import static de.cuioss.test.juli.LogAsserts.assertLogMessagePresentContaining;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @EnableTestLogger
 @DisplayName("Tests MultiIssuerJwtParser functionality")

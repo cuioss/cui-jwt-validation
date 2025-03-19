@@ -38,8 +38,13 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-import static de.cuioss.jwt.token.test.TestTokenProducer.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static de.cuioss.jwt.token.test.TestTokenProducer.ISSUER;
+import static de.cuioss.jwt.token.test.TestTokenProducer.SOME_SCOPES;
+import static de.cuioss.jwt.token.test.TestTokenProducer.validSignedJWTWithClaims;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @EnableTestLogger(debug = JwksAwareTokenParserImpl.class, info = JwksAwareTokenParserImpl.class)
 @DisplayName("Tests JwksAwareTokenParserImpl functionality")
@@ -48,23 +53,56 @@ public class JwksAwareTokenParserImplTest {
     public static final int JWKS_REFRESH_INTERVAL = 60;
     private static final CuiLogger LOGGER = new CuiLogger(JwksAwareTokenParserImplTest.class);
 
+    public static JwksAwareTokenParserImpl getValidJWKSParserWithLocalJWKS() throws IOException {
+        // Create a dynamic JWKS with the current key pair
+        java.security.PublicKey publicKey = KeyMaterialHandler.getPublicKey();
+        java.security.interfaces.RSAPublicKey rsaKey = (java.security.interfaces.RSAPublicKey) publicKey;
+
+        // Create JWKS JSON with the default key ID
+        String jwks = JWKSFactory.createSingleJwk(JWKSFactory.DEFAULT_KEY_ID);
+
+        // Create a temporary file with the JWKS
+        java.nio.file.Path tempFile = java.nio.file.Files.createTempFile("test-jwks", ".json");
+        java.nio.file.Files.writeString(tempFile, jwks);
+
+        JwksLoader jwksLoader = JwksLoaderFactory.createFileLoader(tempFile.toAbsolutePath().toString());
+        return new JwksAwareTokenParserImpl(jwksLoader, ISSUER);
+    }
+
+    public static JwksAwareTokenParserImpl getInvalidJWKSParserWithWrongLocalJWKS() throws IOException {
+        // Generate a different key pair for testing
+        java.security.KeyPair keyPair = io.jsonwebtoken.security.Keys.keyPairFor(io.jsonwebtoken.SignatureAlgorithm.RS256);
+        java.security.interfaces.RSAPublicKey rsaKey = (java.security.interfaces.RSAPublicKey) keyPair.getPublic();
+
+        // Create JWKS JSON with the same key ID as in the token but different key material
+        String invalidJwks = JWKSFactory.createJwksFromRsaKey(rsaKey, JWKSFactory.DEFAULT_KEY_ID);
+
+        // Create a temporary file with the invalid JWKS
+        java.nio.file.Path tempFile = java.nio.file.Files.createTempFile("invalid-jwks", ".json");
+        java.nio.file.Files.writeString(tempFile, invalidJwks);
+
+        JwksLoader jwksLoader = JwksLoaderFactory.createFileLoader(tempFile.toAbsolutePath().toString());
+        return new JwksAwareTokenParserImpl(jwksLoader, ISSUER);
+    }
+
+    public static JwksAwareTokenParserImpl getInvalidValidJWKSParserWithLocalJWKSAndWrongIssuer() throws IOException {
+        JwksLoader jwksLoader = JwksLoaderFactory.createFileLoader(JwksResolveDispatcher.PUBLIC_KEY_JWKS);
+        return new JwksAwareTokenParserImpl(jwksLoader, TestTokenProducer.WRONG_ISSUER);
+    }
+
     @Nested
     @DisplayName("Remote JWKS Tests")
     @EnableTestLogger(debug = JwksAwareTokenParserImpl.class, info = JwksAwareTokenParserImpl.class)
     @EnableMockWebServer
     class RemoteJwksTests implements MockWebServerHolder {
 
+        private final JwksResolveDispatcher jwksResolveDispatcher = new JwksResolveDispatcher();
+        protected int mockserverPort;
         @Setter
         private MockWebServer mockWebServer;
-
         private JwksAwareTokenParserImpl tokenParser;
-
-        protected int mockserverPort;
-
-        private final JwksResolveDispatcher jwksResolveDispatcher = new JwksResolveDispatcher();
-
         @Getter
-        private CombinedDispatcher dispatcher = new CombinedDispatcher().addDispatcher(jwksResolveDispatcher);
+        private final CombinedDispatcher dispatcher = new CombinedDispatcher().addDispatcher(jwksResolveDispatcher);
         private String jwksEndpoint;
 
         @BeforeEach
@@ -151,42 +189,5 @@ public class JwksAwareTokenParserImplTest {
             assertEquals(token.get().getRawToken(), initialToken);
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.INFO, "Initializing JWKS lookup");
         }
-    }
-
-    public static JwksAwareTokenParserImpl getValidJWKSParserWithLocalJWKS() throws IOException {
-        // Create a dynamic JWKS with the current key pair
-        java.security.PublicKey publicKey = KeyMaterialHandler.getPublicKey();
-        java.security.interfaces.RSAPublicKey rsaKey = (java.security.interfaces.RSAPublicKey) publicKey;
-
-        // Create JWKS JSON with the default key ID
-        String jwks = JWKSFactory.createSingleJwk(JWKSFactory.DEFAULT_KEY_ID);
-
-        // Create a temporary file with the JWKS
-        java.nio.file.Path tempFile = java.nio.file.Files.createTempFile("test-jwks", ".json");
-        java.nio.file.Files.writeString(tempFile, jwks);
-
-        JwksLoader jwksLoader = JwksLoaderFactory.createFileLoader(tempFile.toAbsolutePath().toString());
-        return new JwksAwareTokenParserImpl(jwksLoader, ISSUER);
-    }
-
-    public static JwksAwareTokenParserImpl getInvalidJWKSParserWithWrongLocalJWKS() throws IOException {
-        // Generate a different key pair for testing
-        java.security.KeyPair keyPair = io.jsonwebtoken.security.Keys.keyPairFor(io.jsonwebtoken.SignatureAlgorithm.RS256);
-        java.security.interfaces.RSAPublicKey rsaKey = (java.security.interfaces.RSAPublicKey) keyPair.getPublic();
-
-        // Create JWKS JSON with the same key ID as in the token but different key material
-        String invalidJwks = JWKSFactory.createJwksFromRsaKey(rsaKey, JWKSFactory.DEFAULT_KEY_ID);
-
-        // Create a temporary file with the invalid JWKS
-        java.nio.file.Path tempFile = java.nio.file.Files.createTempFile("invalid-jwks", ".json");
-        java.nio.file.Files.writeString(tempFile, invalidJwks);
-
-        JwksLoader jwksLoader = JwksLoaderFactory.createFileLoader(tempFile.toAbsolutePath().toString());
-        return new JwksAwareTokenParserImpl(jwksLoader, ISSUER);
-    }
-
-    public static JwksAwareTokenParserImpl getInvalidValidJWKSParserWithLocalJWKSAndWrongIssuer() throws IOException {
-        JwksLoader jwksLoader = JwksLoaderFactory.createFileLoader(JwksResolveDispatcher.PUBLIC_KEY_JWKS);
-        return new JwksAwareTokenParserImpl(jwksLoader, TestTokenProducer.WRONG_ISSUER);
     }
 }

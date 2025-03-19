@@ -26,7 +26,10 @@ import org.junit.jupiter.api.Test;
 import java.security.Key;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @EnableTestLogger(debug = {JWKSKeyLoader.class, JwksLoaderFactory.class})
 @DisplayName("Tests in-memory JWKSKeyLoader functionality")
