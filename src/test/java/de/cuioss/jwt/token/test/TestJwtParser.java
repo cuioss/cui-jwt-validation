@@ -25,6 +25,7 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
+import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
@@ -194,10 +195,10 @@ public class TestJwtParser implements JwtParser {
                 }
 
                 // For all other tests, return the hardcoded roles array
-                jakarta.json.JsonArrayBuilder arrayBuilder = jakarta.json.Json.createArrayBuilder();
-                arrayBuilder.add(jakarta.json.Json.createValue("reader"));
-                arrayBuilder.add(jakarta.json.Json.createValue("writer"));
-                arrayBuilder.add(jakarta.json.Json.createValue("gambler"));
+                JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+                arrayBuilder.add(Json.createValue("reader"));
+                arrayBuilder.add(Json.createValue("writer"));
+                arrayBuilder.add(Json.createValue("gambler"));
                 JsonArray rolesArray = arrayBuilder.build();
                 System.out.println("[DEBUG_LOG] Created roles array: " + rolesArray);
                 return (T) rolesArray;

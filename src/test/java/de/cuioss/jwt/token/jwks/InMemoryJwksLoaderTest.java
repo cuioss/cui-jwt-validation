@@ -35,18 +35,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @DisplayName("Tests in-memory JWKSKeyLoader functionality")
 class InMemoryJwksLoaderTest {
 
-    private static final String TEST_KID = JWKSFactory.DEFAULT_KEY_ID;
-
     private JwksLoader inMemoryJwksLoader;
-    private String validJwksContent;
 
     @BeforeEach
     void setUp() {
-        // Create valid JWKS content for testing
-        validJwksContent = JWKSFactory.createDefaultJwks();
-
         // Create the InMemoryJwksLoader with the valid content
-        inMemoryJwksLoader = JwksLoaderFactory.createInMemoryLoader(validJwksContent);
+        inMemoryJwksLoader = JwksLoaderFactory.createInMemoryLoader(JWKSFactory.createDefaultJwks());
     }
 
 
@@ -54,7 +48,7 @@ class InMemoryJwksLoaderTest {
     @DisplayName("Should load and parse JWKS from string")
     void shouldLoadAndParseJwksFromString() {
         // When
-        Optional<Key> key = inMemoryJwksLoader.getKey(TEST_KID);
+        Optional<Key> key = inMemoryJwksLoader.getKey(JWKSFactory.DEFAULT_KEY_ID);
 
         // Then
         assertTrue(key.isPresent(), "Key should be present");
@@ -101,7 +95,7 @@ class InMemoryJwksLoaderTest {
         JwksLoader invalidJwksLoader = JwksLoaderFactory.createInMemoryLoader(invalidJwksContent);
 
         // When
-        Optional<Key> key = invalidJwksLoader.getKey(TEST_KID);
+        Optional<Key> key = invalidJwksLoader.getKey(JWKSFactory.DEFAULT_KEY_ID);
 
         // Then
         assertFalse(key.isPresent(), "Key should not be present when JWKS is invalid");
@@ -112,11 +106,11 @@ class InMemoryJwksLoaderTest {
     @DisplayName("Should handle missing required fields in JWK")
     void shouldHandleMissingRequiredFieldsInJwk() {
         // Given
-        String missingFieldsJwksContent = JWKSFactory.createJwksWithMissingFields(TEST_KID);
+        String missingFieldsJwksContent = JWKSFactory.createJwksWithMissingFields(JWKSFactory.DEFAULT_KEY_ID);
         JwksLoader missingFieldsJwksLoader = JwksLoaderFactory.createInMemoryLoader(missingFieldsJwksContent);
 
         // When
-        Optional<Key> key = missingFieldsJwksLoader.getKey(TEST_KID);
+        Optional<Key> key = missingFieldsJwksLoader.getKey(JWKSFactory.DEFAULT_KEY_ID);
 
         // Then
         assertFalse(key.isPresent(), "Key should not be present when JWK is missing required fields");
@@ -127,7 +121,7 @@ class InMemoryJwksLoaderTest {
     @DisplayName("Should update keys when refreshed with new data")
     void shouldUpdateKeysWhenRefreshedWithNewData() {
         // Given
-        Optional<Key> initialKey = inMemoryJwksLoader.getKey(TEST_KID);
+        Optional<Key> initialKey = inMemoryJwksLoader.getKey(JWKSFactory.DEFAULT_KEY_ID);
         assertTrue(initialKey.isPresent(), "Initial key should be present");
 
         // When - create a new loader with updated content
@@ -135,7 +129,7 @@ class InMemoryJwksLoaderTest {
         JwksLoader updatedLoader = JwksLoaderFactory.createInMemoryLoader(updatedJwksContent);
 
         // Then - verify the new loader has the updated key
-        Optional<Key> oldKey = updatedLoader.getKey(TEST_KID);
+        Optional<Key> oldKey = updatedLoader.getKey(JWKSFactory.DEFAULT_KEY_ID);
         assertFalse(oldKey.isPresent(), "Old key should not be present in the new loader");
 
         Optional<Key> newKey = updatedLoader.getKey("updated-key-id");
@@ -153,7 +147,7 @@ class InMemoryJwksLoaderTest {
 
         // Then
         assertFalse(keySet.isEmpty(), "KeySet should not be empty");
-        assertTrue(keySet.contains(TEST_KID), "KeySet should contain the test key ID");
+        assertTrue(keySet.contains(JWKSFactory.DEFAULT_KEY_ID), "KeySet should contain the test key ID");
         assertEquals(1, keySet.size(), "KeySet should contain exactly one key");
     }
 
@@ -168,7 +162,7 @@ class InMemoryJwksLoaderTest {
 
         // Then
         assertInstanceOf(JWKSKeyLoader.class, loader, "Loader should be an instance of JWKSKeyLoader");
-        Optional<Key> key = loader.getKey(TEST_KID);
+        Optional<Key> key = loader.getKey(JWKSFactory.DEFAULT_KEY_ID);
         assertTrue(key.isPresent(), "Key should be present");
     }
 }

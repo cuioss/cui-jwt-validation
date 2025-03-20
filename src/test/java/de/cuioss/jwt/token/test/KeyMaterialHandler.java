@@ -15,15 +15,25 @@
  */
 package de.cuioss.jwt.token.test;
 
+import de.cuioss.jwt.token.jwks.JwksLoader;
+import de.cuioss.jwt.token.jwks.JwksLoaderFactory;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonReader;
 
+import java.io.StringReader;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyFactory;
+import java.security.KeyPair;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
-import org.junit.jupiter.api.io.TempDir;
+import java.security.spec.RSAPublicKeySpec;
+import java.util.Base64;
 
 /**
  * Handles key material for JWT token testing.
@@ -92,7 +102,7 @@ public class KeyMaterialHandler {
 
     // Key pair for signing and verifying tokens
     private static PrivateKey privateKey;
-    private static java.security.PublicKey publicKey;
+    private static PublicKey publicKey;
 
     // Static initializer to generate a key pair for testing
     static {
@@ -103,8 +113,8 @@ public class KeyMaterialHandler {
 
             // Load the public key from the JWKS file
             String jwksContent = new String(Files.readAllBytes(Path.of(PUBLIC_KEY_JWKS)));
-            jakarta.json.JsonReader reader = jakarta.json.Json.createReader(new java.io.StringReader(jwksContent));
-            jakarta.json.JsonObject jwks = reader.readObject();
+            JsonReader reader = Json.createReader(new StringReader(jwksContent));
+            JsonObject jwks = reader.readObject();
             reader.close();
 
             // Extract the modulus and exponent
@@ -112,21 +122,21 @@ public class KeyMaterialHandler {
             String exponentBase64 = jwks.getString("e");
 
             // Decode from Base64
-            byte[] modulusBytes = java.util.Base64.getUrlDecoder().decode(modulusBase64);
-            byte[] exponentBytes = java.util.Base64.getUrlDecoder().decode(exponentBase64);
+            byte[] modulusBytes = Base64.getUrlDecoder().decode(modulusBase64);
+            byte[] exponentBytes = Base64.getUrlDecoder().decode(exponentBase64);
 
             // Convert to BigInteger
-            java.math.BigInteger modulus = new java.math.BigInteger(1, modulusBytes);
-            java.math.BigInteger exponent = new java.math.BigInteger(1, exponentBytes);
+            BigInteger modulus = new BigInteger(1, modulusBytes);
+            BigInteger exponent = new BigInteger(1, exponentBytes);
 
             // Create RSA public key
-            java.security.spec.RSAPublicKeySpec spec = new java.security.spec.RSAPublicKeySpec(modulus, exponent);
+            RSAPublicKeySpec spec = new RSAPublicKeySpec(modulus, exponent);
             KeyFactory factory = KeyFactory.getInstance("RSA");
             publicKey = factory.generatePublic(spec);
         } catch (Exception e) {
             // Fall back to generating a new key pair if loading fails
             try {
-                java.security.KeyPair keyPair = Keys.keyPairFor(SignatureAlgorithm.RS256);
+                KeyPair keyPair = Keys.keyPairFor(SignatureAlgorithm.RS256);
                 privateKey = keyPair.getPrivate();
                 publicKey = keyPair.getPublic();
             } catch (Exception ex) {
@@ -164,7 +174,7 @@ public class KeyMaterialHandler {
      *
      * @return the default public key
      */
-    public static java.security.PublicKey getDefaultPublicKey() {
+    public static PublicKey getDefaultPublicKey() {
         return publicKey;
     }
 
@@ -211,8 +221,8 @@ public class KeyMaterialHandler {
      *
      * @return a JwksLoader instance
      */
-    public static de.cuioss.jwt.token.jwks.JwksLoader createDefaultJwksLoader() {
-        return de.cuioss.jwt.token.jwks.JwksLoaderFactory.createInMemoryLoader(getDefaultJwksContent());
+    public static JwksLoader createDefaultJwksLoader() {
+        return JwksLoaderFactory.createInMemoryLoader(getDefaultJwksContent());
     }
 
 
@@ -221,8 +231,8 @@ public class KeyMaterialHandler {
      *
      * @return a JwksLoader instance
      */
-    public static de.cuioss.jwt.token.jwks.JwksLoader createAlternativeJwksLoader() {
-        return de.cuioss.jwt.token.jwks.JwksLoaderFactory.createInMemoryLoader(getAlternativeJWKSContent());
+    public static JwksLoader createAlternativeJwksLoader() {
+        return JwksLoaderFactory.createInMemoryLoader(getAlternativeJWKSContent());
     }
 
 
@@ -236,13 +246,13 @@ public class KeyMaterialHandler {
      * @param jwksContent the JWKS content to write to the file
      * @return the path to the temporary file
      */
-    public static java.nio.file.Path createTemporaryJwksFile(String jwksContent) {
+    public static Path createTemporaryJwksFile(String jwksContent) {
         try {
             // Create a temporary directory using JUnit's approach
-            java.nio.file.Path tempDir = java.nio.file.Files.createTempDirectory("junit-temp-dir");
+            Path tempDir = Files.createTempDirectory("junit-temp-dir");
             // Create a file within the temporary directory
-            java.nio.file.Path tempFile = tempDir.resolve("test-jwks.json");
-            java.nio.file.Files.writeString(tempFile, jwksContent);
+            Path tempFile = tempDir.resolve("test-jwks.json");
+            Files.writeString(tempFile, jwksContent);
             // Register the directory for deletion on JVM exit
             tempDir.toFile().deleteOnExit();
             return tempFile;

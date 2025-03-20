@@ -24,7 +24,6 @@ import de.cuioss.test.mockwebserver.EnableMockWebServer;
 import de.cuioss.test.mockwebserver.URIBuilder;
 import de.cuioss.test.mockwebserver.dispatcher.ModuleDispatcher;
 import lombok.Getter;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,27 +41,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @EnableMockWebServer
 class HttpJwksLoaderTest {
 
-    private static final String JWKS_PATH = "/oidc/jwks.json";
     private static final int REFRESH_INTERVAL_SECONDS = 1; // Short interval for testing
     private static final String TEST_KID = JWKSFactory.DEFAULT_KEY_ID;
     @Getter
     private final JwksResolveDispatcher moduleDispatcher = new JwksResolveDispatcher();
-    private HttpJwksLoader httpJwksLoader;
-    private String jwksEndpoint;
-    private JwksResolveDispatcher jwksDispatcher;
+    private JwksLoader httpJwksLoader;
 
     @BeforeEach
-    @ModuleDispatcher
     void setUp(URIBuilder uriBuilder) {
-        jwksEndpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
-        jwksDispatcher = moduleDispatcher;
-        jwksDispatcher.setCallCounter(0);
-        httpJwksLoader = new HttpJwksLoader(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
-    }
-
-    @AfterEach
-    void tearDown() {
-        // No cleanup needed
+        String jwksEndpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
+        moduleDispatcher.setCallCounter(0);
+        httpJwksLoader = JwksLoaderFactory.createHttpLoader(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
     }
 
     @Test
@@ -73,7 +62,7 @@ class HttpJwksLoaderTest {
 
         // Then
         assertTrue(key.isPresent(), "Key should be present");
-        assertEquals(1, jwksDispatcher.getCallCounter(), "JWKS endpoint should be called once");
+        assertEquals(1, moduleDispatcher.getCallCounter(), "JWKS endpoint should be called once");
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Refreshing keys from JWKS endpoint");
     }
 
@@ -87,7 +76,7 @@ class HttpJwksLoaderTest {
         }
 
         // Then
-        assertEquals(1, jwksDispatcher.getCallCounter(), "JWKS endpoint should be called only once due to caching");
+        assertEquals(1, moduleDispatcher.getCallCounter(), "JWKS endpoint should be called only once due to caching");
     }
 
     @Test
@@ -95,15 +84,15 @@ class HttpJwksLoaderTest {
     void shouldRefreshKeysWhenKidNotFound() {
         // Given
         httpJwksLoader.getKey(TEST_KID); // Initial fetch
-        assertEquals(1, jwksDispatcher.getCallCounter());
+        assertEquals(1, moduleDispatcher.getCallCounter());
 
         // When
-        jwksDispatcher.returnEmptyJwks();
+        moduleDispatcher.returnEmptyJwks();
         Optional<Key> key = httpJwksLoader.getKey("unknown-kid");
 
         // Then
         assertFalse(key.isPresent(), "Key should not be present");
-        assertEquals(2, jwksDispatcher.getCallCounter(), "JWKS endpoint should be called again");
+        assertEquals(2, moduleDispatcher.getCallCounter(), "JWKS endpoint should be called again");
     }
 
     @Test
@@ -111,7 +100,7 @@ class HttpJwksLoaderTest {
     @ModuleDispatcher
     void shouldHandleServerErrors(URIBuilder uriBuilder) {
         // Given
-        jwksDispatcher.returnError();
+        moduleDispatcher.returnError();
 
         // Create a new loader that will encounter server error
         String endpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
@@ -130,7 +119,7 @@ class HttpJwksLoaderTest {
     @ModuleDispatcher
     void shouldHandleInvalidJwksFormat(URIBuilder uriBuilder) {
         // Given
-        jwksDispatcher.returnInvalidJson();
+        moduleDispatcher.returnInvalidJson();
 
         // Create a new loader with invalid JSON response
         String endpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
@@ -150,7 +139,7 @@ class HttpJwksLoaderTest {
     void shouldRefreshKeysWhenCreatingNewInstance(URIBuilder uriBuilder) {
         // Given
         httpJwksLoader.getKey(TEST_KID); // Initial fetch
-        assertEquals(1, jwksDispatcher.getCallCounter());
+        assertEquals(1, moduleDispatcher.getCallCounter());
 
         // When - create a new instance to force refresh
         String endpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
@@ -158,7 +147,7 @@ class HttpJwksLoaderTest {
         newLoader.getKey(TEST_KID);
 
         // Then - verify keys were refreshed
-        assertEquals(2, jwksDispatcher.getCallCounter(), "JWKS endpoint should be called again with new instance");
+        assertEquals(2, moduleDispatcher.getCallCounter(), "JWKS endpoint should be called again with new instance");
     }
 
     @Test
@@ -181,11 +170,11 @@ class HttpJwksLoaderTest {
 
         // When/Then
         assertThrows(IllegalArgumentException.class, () -> {
-            new HttpJwksLoader(endpoint, 0, null);
+            JwksLoaderFactory.createHttpLoader(endpoint, 0, null);
         }, "Should throw exception when refresh interval is zero");
 
         assertThrows(IllegalArgumentException.class, () -> {
-            new HttpJwksLoader(endpoint, -1, null);
+            JwksLoaderFactory.createHttpLoader(endpoint, -1, null);
         }, "Should throw exception when refresh interval is negative");
     }
 
@@ -194,7 +183,7 @@ class HttpJwksLoaderTest {
     @ModuleDispatcher
     void shouldHandleMissingRequiredFieldsInJwk(URIBuilder uriBuilder) {
         // Given
-        jwksDispatcher.returnMissingFieldsJwk();
+        moduleDispatcher.returnMissingFieldsJwk();
 
         // Create a new loader with JWK missing required fields
         String endpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
@@ -246,4 +235,5 @@ class HttpJwksLoaderTest {
         assertFalse(key.isPresent(), "Key should not be present when URL is invalid");
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to fetch JWKS from URL: invalid-url");
     }
+
 }

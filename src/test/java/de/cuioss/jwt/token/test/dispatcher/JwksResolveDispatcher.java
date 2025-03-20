@@ -26,6 +26,8 @@ import mockwebserver3.MockResponse;
 import mockwebserver3.RecordedRequest;
 import okhttp3.Headers;
 
+import java.security.PublicKey;
+import java.security.interfaces.RSAPublicKey;
 import java.util.Optional;
 import java.util.Set;
 
@@ -139,7 +141,7 @@ public class JwksResolveDispatcher implements ModuleDispatcherElement {
                     return Optional.of(new MockResponse(SC_OK, Headers.of("Content-Type", "application/json"), jwks));
                 } else {
                     // For other keys, use the KeyMaterialHandler
-                    return Optional.of(new MockResponse(SC_OK, Headers.of("Content-Type", "application/json"), 
+                    return Optional.of(new MockResponse(SC_OK, Headers.of("Content-Type", "application/json"),
                             KeyMaterialHandler.getAlternativeJWKSContent()));
                 }
         }
@@ -147,9 +149,9 @@ public class JwksResolveDispatcher implements ModuleDispatcherElement {
 
     private String generateJwksFromDynamicKey() {
         // Get the public key from the key pair
-        java.security.PublicKey publicKey = KeyMaterialHandler.getDefaultPublicKey();
+        PublicKey publicKey = KeyMaterialHandler.getDefaultPublicKey();
 
-        if (publicKey instanceof java.security.interfaces.RSAPublicKey rsaKey) {
+        if (publicKey instanceof RSAPublicKey rsaKey) {
 
             // Create JWKS JSON with the default key ID
             return JWKSFactory.createJwksFromRsaKey(rsaKey, JWKSFactory.DEFAULT_KEY_ID);

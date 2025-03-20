@@ -17,7 +17,6 @@ package de.cuioss.jwt.token;
 
 import de.cuioss.jwt.token.test.TestJwtParser;
 import de.cuioss.jwt.token.test.generator.TokenGenerators;
-import de.cuioss.test.generator.Generators;
 import de.cuioss.test.generator.TypedGenerator;
 import de.cuioss.test.generator.domain.EmailGenerator;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
@@ -28,8 +27,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
-import static de.cuioss.jwt.token.test.TestTokenProducer.SOME_NAME;
-import static de.cuioss.jwt.token.test.TestTokenProducer.SOME_ROLES;
 import static de.cuioss.jwt.token.test.TestTokenProducer.SOME_SCOPES;
 import static de.cuioss.jwt.token.test.TestTokenProducer.getDefaultTokenParser;
 import static de.cuioss.jwt.token.test.TestTokenProducer.validSignedEmptyJWT;

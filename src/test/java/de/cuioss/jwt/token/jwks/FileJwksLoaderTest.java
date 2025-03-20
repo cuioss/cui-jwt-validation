@@ -19,7 +19,6 @@ import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -56,11 +55,6 @@ class FileJwksLoaderTest {
 
         // Create the FileJwksLoader with the temporary file
         fileJwksLoader = JwksLoaderFactory.createFileLoader(jwksFilePath.toString());
-    }
-
-    @AfterEach
-    void tearDown() {
-        // No cleanup needed
     }
 
     @Test

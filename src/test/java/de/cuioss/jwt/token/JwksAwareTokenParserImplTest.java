@@ -18,9 +18,9 @@ package de.cuioss.jwt.token;
 import de.cuioss.jwt.token.jwks.JwksLoader;
 import de.cuioss.jwt.token.jwks.JwksLoaderFactory;
 import de.cuioss.jwt.token.test.JWKSFactory;
-import de.cuioss.jwt.token.test.dispatcher.JwksResolveDispatcher;
 import de.cuioss.jwt.token.test.KeyMaterialHandler;
 import de.cuioss.jwt.token.test.TestTokenProducer;
+import de.cuioss.jwt.token.test.dispatcher.JwksResolveDispatcher;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
@@ -37,6 +37,9 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.security.KeyPair;
+import java.security.interfaces.RSAPublicKey;
 
 import static de.cuioss.jwt.token.test.TestTokenProducer.ISSUER;
 import static de.cuioss.jwt.token.test.TestTokenProducer.SOME_SCOPES;
@@ -64,14 +67,14 @@ public class JwksAwareTokenParserImplTest {
 
     public static JwksAwareTokenParserImpl getInvalidJWKSParserWithWrongLocalJWKS() throws IOException {
         // Generate a different key pair for testing
-        java.security.KeyPair keyPair = io.jsonwebtoken.security.Keys.keyPairFor(io.jsonwebtoken.SignatureAlgorithm.RS256);
-        java.security.interfaces.RSAPublicKey rsaKey = (java.security.interfaces.RSAPublicKey) keyPair.getPublic();
+        KeyPair keyPair = io.jsonwebtoken.security.Keys.keyPairFor(io.jsonwebtoken.SignatureAlgorithm.RS256);
+        RSAPublicKey rsaKey = (RSAPublicKey) keyPair.getPublic();
 
         // Create JWKS JSON with the same key ID as in the token but different key material
         String invalidJwks = JWKSFactory.createJwksFromRsaKey(rsaKey, JWKSFactory.DEFAULT_KEY_ID);
 
         // Use KeyMaterialHandler to create a temporary file with the invalid JWKS
-        java.nio.file.Path tempFile = KeyMaterialHandler.createTemporaryJwksFile(invalidJwks);
+        Path tempFile = KeyMaterialHandler.createTemporaryJwksFile(invalidJwks);
 
         // Create a JwksLoader from the temporary file
         JwksLoader jwksLoader = JwksLoaderFactory.createInMemoryLoader(invalidJwks);

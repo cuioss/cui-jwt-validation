@@ -21,6 +21,8 @@ import lombok.NonNull;
 import lombok.experimental.UtilityClass;
 
 import javax.net.ssl.SSLContext;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
@@ -71,12 +73,12 @@ public class JwksLoaderFactory {
     public static JwksLoader createFileLoader(@NonNull String filePath) {
         LOGGER.debug("Resolving key loader for JWKS file: %s", filePath);
         try {
-            String jwksContent = new String(java.nio.file.Files.readAllBytes(Path.of(filePath)));
+            String jwksContent = new String(Files.readAllBytes(Path.of(filePath)));
             LOGGER.debug("Successfully read JWKS from file: %s", filePath);
             JWKSKeyLoader keyLoader = new JWKSKeyLoader(jwksContent);
             LOGGER.debug("Successfully loaded %s keys", keyLoader.keySet().size());
             return keyLoader;
-        } catch (java.io.IOException e) {
+        } catch (IOException e) {
             LOGGER.warn(e, JWTTokenLogMessages.WARN.FAILED_TO_READ_JWKS_FILE.format(filePath));
             return new JWKSKeyLoader("{}"); // Empty JWKS
         }
