@@ -41,7 +41,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ParsedAccessTokenTest {
 
     private static final String TEST_CONTEXT = "Test";
-    private static final String EXISTING_SCOPE = "email";
     private static final String DEFINITELY_NO_SCOPE = "Definitely No Scope";
     private static final CuiLogger LOGGER = new CuiLogger(ParsedAccessTokenTest.class);
 
@@ -232,6 +231,7 @@ class ParsedAccessTokenTest {
 
             var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, expectedEmail, getDefaultTokenParser());
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
+            assertTrue(parsedAccessToken.get().getEmail().isPresent(), "Email should be present");
             assertEquals(expectedEmail, parsedAccessToken.get().getEmail().get(), "Email should match");
         }
 

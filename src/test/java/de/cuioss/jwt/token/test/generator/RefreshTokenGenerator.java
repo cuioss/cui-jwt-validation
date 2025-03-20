@@ -48,13 +48,6 @@ public class RefreshTokenGenerator implements TypedGenerator<String> {
         this.scopeGenerator = new ScopeGenerator();
     }
 
-    /**
-     * Constructor with default mode (false).
-     */
-    public RefreshTokenGenerator() {
-        this(false);
-    }
-
     @Override
     public String next() {
         try {

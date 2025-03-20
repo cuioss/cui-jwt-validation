@@ -36,13 +36,6 @@ public class JWKSGenerator implements TypedGenerator<String> {
         this.useAlternativeMode = useAlternativeMode;
     }
 
-    /**
-     * Constructor with default mode (false).
-     */
-    public JWKSGenerator() {
-        this(false);
-    }
-
     @Override
     public String next() {
         if (useAlternativeMode) {

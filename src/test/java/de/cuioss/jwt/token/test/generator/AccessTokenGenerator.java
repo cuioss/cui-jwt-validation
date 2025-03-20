@@ -54,13 +54,6 @@ public class AccessTokenGenerator implements TypedGenerator<String> {
         this.emailGenerator = new EmailGenerator();
     }
 
-    /**
-     * Constructor with default mode (false).
-     */
-    public AccessTokenGenerator() {
-        this(false);
-    }
-
     @Override
     public String next() {
         try {

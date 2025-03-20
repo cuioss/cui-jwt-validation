@@ -40,6 +40,7 @@ import java.util.Base64;
  * Provides access to private and public keys used for signing and verifying tokens.
  * All access to key materials should be through this class, with no direct references to key files.
  */
+@SuppressWarnings("unused")
 public class KeyMaterialHandler {
 
     /**
@@ -58,11 +59,6 @@ public class KeyMaterialHandler {
     private static final String PUBLIC_KEY = BASE_PATH + "test-public-key.pub";
 
     /**
-     * Path to an alternative public key file.
-     */
-    private static final String PUBLIC_KEY_OTHER = BASE_PATH + "other-public-key.pub";
-
-    /**
      * Path to the JWKS file containing the public key.
      */
     private static final String PUBLIC_KEY_JWKS = BASE_PATH + "test-public-key.jwks";
@@ -74,7 +70,7 @@ public class KeyMaterialHandler {
 
     /**
      * Gets the path to the private key file.
-     * 
+     *
      * @return the path to the private key file
      */
     public static String getPrivateKeyPath() {
@@ -83,7 +79,7 @@ public class KeyMaterialHandler {
 
     /**
      * Gets the path to the public key file.
-     * 
+     *
      * @return the path to the public key file
      */
     public static String getPublicKeyPath() {
@@ -92,7 +88,7 @@ public class KeyMaterialHandler {
 
     /**
      * Gets the path to the JWKS file containing the public key.
-     * 
+     *
      * @return the path to the JWKS file
      */
     public static String getJwksPath() {
@@ -180,15 +176,6 @@ public class KeyMaterialHandler {
 
 
     /**
-     * Checks if dynamic key generation is being used.
-     *
-     * @return true if dynamic key generation is being used, false otherwise
-     */
-    public static boolean isDynamicKeyGeneration() {
-        return true; // We're always using dynamic key generation in this implementation
-    }
-
-    /**
      * Gets the JWKS content as a string for the default public key.
      *
      * @return the JWKS content as a string
@@ -239,7 +226,6 @@ public class KeyMaterialHandler {
     /**
      * Creates a temporary file with the given JWKS content.
      * This is useful for testing scenarios that require a file path.
-     * 
      * This method uses JUnit's approach for temporary files by creating a temporary directory
      * and then a file within that directory.
      *
