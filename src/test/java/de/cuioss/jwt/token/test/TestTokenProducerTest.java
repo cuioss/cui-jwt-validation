@@ -61,7 +61,7 @@ class TestTokenProducerTest {
 
         // Parse the token using JJWT
         Jws<Claims> parsedToken = Jwts.parserBuilder()
-                .setSigningKey(KeyMaterialHandler.getPrivateKey())
+                .setSigningKey(KeyMaterialHandler.getDefaultPrivateKey())
                 .build()
                 .parseClaimsJws(token);
 
@@ -78,7 +78,7 @@ class TestTokenProducerTest {
 
         // Parse the token using JJWT
         Jws<Claims> parsedToken = Jwts.parserBuilder()
-                .setSigningKey(KeyMaterialHandler.getPrivateKey())
+                .setSigningKey(KeyMaterialHandler.getDefaultPrivateKey())
                 .build()
                 .parseClaimsJws(token);
 
@@ -95,7 +95,7 @@ class TestTokenProducerTest {
 
         // Parse the token using JJWT
         Jws<Claims> parsedToken = Jwts.parserBuilder()
-                .setSigningKey(KeyMaterialHandler.getPrivateKey())
+                .setSigningKey(KeyMaterialHandler.getDefaultPrivateKey())
                 .build()
                 .parseClaimsJws(token);
 
@@ -113,7 +113,7 @@ class TestTokenProducerTest {
 
         // Parse the token using JJWT
         Jws<Claims> parsedToken = Jwts.parserBuilder()
-                .setSigningKey(KeyMaterialHandler.getPrivateKey())
+                .setSigningKey(KeyMaterialHandler.getDefaultPrivateKey())
                 .build()
                 .parseClaimsJws(token);
 
@@ -136,7 +136,7 @@ class TestTokenProducerTest {
 
         // Parse the token using JJWT
         Jws<Claims> parsedToken = Jwts.parserBuilder()
-                .setSigningKey(KeyMaterialHandler.getPrivateKey())
+                .setSigningKey(KeyMaterialHandler.getDefaultPrivateKey())
                 .build()
                 .parseClaimsJws(token);
 
@@ -156,7 +156,7 @@ class TestTokenProducerTest {
 
         // Parse the token using JJWT
         Jws<Claims> parsedToken = Jwts.parserBuilder()
-                .setSigningKey(KeyMaterialHandler.getPrivateKey())
+                .setSigningKey(KeyMaterialHandler.getDefaultPrivateKey())
                 .build()
                 .parseClaimsJws(token);
 
@@ -178,7 +178,7 @@ class TestTokenProducerTest {
 
         // Parse the token using JJWT directly
         Jws<Claims> parsedToken = Jwts.parserBuilder()
-                .setSigningKey(KeyMaterialHandler.getPrivateKey())
+                .setSigningKey(KeyMaterialHandler.getDefaultPrivateKey())
                 .build()
                 .parseClaimsJws(token);
 

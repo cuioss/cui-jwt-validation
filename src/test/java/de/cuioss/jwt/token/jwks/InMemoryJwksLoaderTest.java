@@ -43,7 +43,7 @@ class InMemoryJwksLoaderTest {
     @BeforeEach
     void setUp() {
         // Create valid JWKS content for testing
-        validJwksContent = JWKSFactory.createValidJwks();
+        validJwksContent = JWKSFactory.createDefaultJwks();
 
         // Create the InMemoryJwksLoader with the valid content
         inMemoryJwksLoader = JwksLoaderFactory.createInMemoryLoader(validJwksContent);
@@ -161,7 +161,7 @@ class InMemoryJwksLoaderTest {
     @DisplayName("Should create loader from factory method")
     void shouldCreateLoaderFromFactoryMethod() {
         // Given
-        String jwksContent = JWKSFactory.createValidJwks();
+        String jwksContent = JWKSFactory.createDefaultJwks();
 
         // When
         JwksLoader loader = JwksLoaderFactory.createInMemoryLoader(jwksContent);

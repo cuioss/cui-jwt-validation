@@ -51,7 +51,7 @@ class FileJwksLoaderTest {
     void setUp() throws IOException {
         // Create a temporary JWKS file for testing
         jwksFilePath = tempDir.resolve("jwks.json");
-        String jwksContent = JWKSFactory.createValidJwks();
+        String jwksContent = JWKSFactory.createDefaultJwks();
         Files.writeString(jwksFilePath, jwksContent);
 
         // Create the FileJwksLoader with the temporary file

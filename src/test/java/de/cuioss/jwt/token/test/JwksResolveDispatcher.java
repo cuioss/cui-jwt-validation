@@ -43,17 +43,15 @@ public class JwksResolveDispatcher implements ModuleDispatcherElement {
      * "/oidc/jwks.json"
      */
     public static final String LOCAL_PATH = "/oidc/jwks.json";
-    public static final String PUBLIC_KEY_JWKS = KeyMaterialHandler.PUBLIC_KEY_JWKS;
-    public static final String PUBLIC_KEY_OTHER_JWKS = KeyMaterialHandler.BASE_PATH + "other-public-key.jwks";
 
-    public String currentKey;
     @Getter
     @Setter
     private int callCounter = 0;
     private ResponseStrategy responseStrategy = ResponseStrategy.DEFAULT;
+    private boolean useAlternativeKey = false;
 
     public JwksResolveDispatcher() {
-        currentKey = PUBLIC_KEY_JWKS;
+        // No initialization needed
     }
 
     /**
@@ -135,20 +133,20 @@ public class JwksResolveDispatcher implements ModuleDispatcherElement {
             case DEFAULT:
             default:
                 // Always generate a JWKS on the fly for the default key
-                if (currentKey.equals(PUBLIC_KEY_JWKS)) {
+                if (!useAlternativeKey) {
                     String jwks = generateJwksFromDynamicKey();
                     return Optional.of(new MockResponse(SC_OK, Headers.of("Content-Type", "application/json"), jwks));
                 } else {
-                    // For other keys, use the file
-                    return Optional.of(new MockResponse(SC_OK, Headers.of("Content-Type", "application/json"), FileLoaderUtility
-                            .toStringUnchecked(FileLoaderUtility.getLoaderForPath(currentKey))));
+                    // For other keys, use the KeyMaterialHandler
+                    return Optional.of(new MockResponse(SC_OK, Headers.of("Content-Type", "application/json"), 
+                            KeyMaterialHandler.getAlternativeJWKSContent()));
                 }
         }
     }
 
     private String generateJwksFromDynamicKey() {
         // Get the public key from the key pair
-        java.security.PublicKey publicKey = KeyMaterialHandler.getPublicKey();
+        java.security.PublicKey publicKey = KeyMaterialHandler.getDefaultPublicKey();
 
         if (publicKey instanceof java.security.interfaces.RSAPublicKey rsaKey) {
 
@@ -160,7 +158,7 @@ public class JwksResolveDispatcher implements ModuleDispatcherElement {
     }
 
     public void switchToOtherPublicKey() {
-        currentKey = PUBLIC_KEY_OTHER_JWKS;
+        useAlternativeKey = true;
     }
 
     @Override

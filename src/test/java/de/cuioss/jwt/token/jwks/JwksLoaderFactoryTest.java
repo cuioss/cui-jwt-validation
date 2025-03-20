@@ -69,7 +69,7 @@ class JwksLoaderFactoryTest implements MockWebServerHolder {
 
         // Setup file path
         fileJwksPath = tempDir.resolve("jwks.json");
-        String jwksContent = JWKSFactory.createValidJwks();
+        String jwksContent = JWKSFactory.createDefaultJwks();
         Files.writeString(fileJwksPath, jwksContent);
     }
 

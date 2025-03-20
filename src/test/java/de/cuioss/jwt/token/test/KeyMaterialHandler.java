@@ -23,10 +23,12 @@ import java.nio.file.Path;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
+import org.junit.jupiter.api.io.TempDir;
 
 /**
  * Handles key material for JWT token testing.
  * Provides access to private and public keys used for signing and verifying tokens.
+ * All access to key materials should be through this class, with no direct references to key files.
  */
 public class KeyMaterialHandler {
 
@@ -38,22 +40,54 @@ public class KeyMaterialHandler {
     /**
      * Path to the private key file.
      */
-    public static final String PRIVATE_KEY = BASE_PATH + "test-private-key.pkcs8";
+    private static final String PRIVATE_KEY = BASE_PATH + "test-private-key.pkcs8";
 
     /**
      * Path to the public key file.
      */
-    public static final String PUBLIC_KEY = BASE_PATH + "test-public-key.pub";
+    private static final String PUBLIC_KEY = BASE_PATH + "test-public-key.pub";
 
     /**
      * Path to an alternative public key file.
      */
-    public static final String PUBLIC_KEY_OTHER = BASE_PATH + "other-public-key.pub";
+    private static final String PUBLIC_KEY_OTHER = BASE_PATH + "other-public-key.pub";
 
     /**
      * Path to the JWKS file containing the public key.
      */
-    public static final String PUBLIC_KEY_JWKS = BASE_PATH + "test-public-key.jwks";
+    private static final String PUBLIC_KEY_JWKS = BASE_PATH + "test-public-key.jwks";
+
+    /**
+     * Path to the JWKS file containing an alternative public key.
+     */
+    private static final String PUBLIC_KEY_OTHER_JWKS = BASE_PATH + "other-public-key.jwks";
+
+    /**
+     * Gets the path to the private key file.
+     * 
+     * @return the path to the private key file
+     */
+    public static String getPrivateKeyPath() {
+        return PRIVATE_KEY;
+    }
+
+    /**
+     * Gets the path to the public key file.
+     * 
+     * @return the path to the public key file
+     */
+    public static String getPublicKeyPath() {
+        return PUBLIC_KEY;
+    }
+
+    /**
+     * Gets the path to the JWKS file containing the public key.
+     * 
+     * @return the path to the JWKS file
+     */
+    public static String getJwksPath() {
+        return PUBLIC_KEY_JWKS;
+    }
 
 
     // Key pair for signing and verifying tokens
@@ -116,22 +150,24 @@ public class KeyMaterialHandler {
     }
 
     /**
-     * Gets the private key used for signing tokens.
+     * Gets the default private key used for signing tokens.
      *
-     * @return the private key
+     * @return the default private key
      */
-    public static PrivateKey getPrivateKey() {
+    public static PrivateKey getDefaultPrivateKey() {
         return privateKey;
     }
 
+
     /**
-     * Gets the public key used for verifying tokens.
+     * Gets the default public key used for verifying tokens.
      *
-     * @return the public key
+     * @return the default public key
      */
-    public static java.security.PublicKey getPublicKey() {
+    public static java.security.PublicKey getDefaultPublicKey() {
         return publicKey;
     }
+
 
     /**
      * Checks if dynamic key generation is being used.
@@ -140,5 +176,78 @@ public class KeyMaterialHandler {
      */
     public static boolean isDynamicKeyGeneration() {
         return true; // We're always using dynamic key generation in this implementation
+    }
+
+    /**
+     * Gets the JWKS content as a string for the default public key.
+     *
+     * @return the JWKS content as a string
+     */
+    public static String getDefaultJwksContent() {
+        try {
+            return new String(Files.readAllBytes(Path.of(PUBLIC_KEY_JWKS)));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to read JWKS file", e);
+        }
+    }
+
+
+    /**
+     * Gets the JWKS content as a string for the alternative public key.
+     *
+     * @return the JWKS content as a string
+     */
+    public static String getAlternativeJWKSContent() {
+        try {
+            return new String(Files.readAllBytes(Path.of(PUBLIC_KEY_OTHER_JWKS)));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to read alternative JWKS file", e);
+        }
+    }
+
+
+    /**
+     * Creates a JwksLoader for the default public key JWKS.
+     *
+     * @return a JwksLoader instance
+     */
+    public static de.cuioss.jwt.token.jwks.JwksLoader createDefaultJwksLoader() {
+        return de.cuioss.jwt.token.jwks.JwksLoaderFactory.createInMemoryLoader(getDefaultJwksContent());
+    }
+
+
+    /**
+     * Creates a JwksLoader for the alternative public key JWKS.
+     *
+     * @return a JwksLoader instance
+     */
+    public static de.cuioss.jwt.token.jwks.JwksLoader createAlternativeJwksLoader() {
+        return de.cuioss.jwt.token.jwks.JwksLoaderFactory.createInMemoryLoader(getAlternativeJWKSContent());
+    }
+
+
+    /**
+     * Creates a temporary file with the given JWKS content.
+     * This is useful for testing scenarios that require a file path.
+     * 
+     * This method uses JUnit's approach for temporary files by creating a temporary directory
+     * and then a file within that directory.
+     *
+     * @param jwksContent the JWKS content to write to the file
+     * @return the path to the temporary file
+     */
+    public static java.nio.file.Path createTemporaryJwksFile(String jwksContent) {
+        try {
+            // Create a temporary directory using JUnit's approach
+            java.nio.file.Path tempDir = java.nio.file.Files.createTempDirectory("junit-temp-dir");
+            // Create a file within the temporary directory
+            java.nio.file.Path tempFile = tempDir.resolve("test-jwks.json");
+            java.nio.file.Files.writeString(tempFile, jwksContent);
+            // Register the directory for deletion on JVM exit
+            tempDir.toFile().deleteOnExit();
+            return tempFile;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create temporary JWKS file", e);
+        }
     }
 }

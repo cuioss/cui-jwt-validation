@@ -45,16 +45,16 @@ public class JWKSFactory {
     public static final String DEFAULT_KEY_ID = "default-key-id";
 
     /**
-     * Test key ID used in most test cases.
+     * Alternative key ID used in most test cases.
      */
-    public static final String TEST_KEY_ID = "test-key-id";
+    public static final String ALTERNATIVE_KEY_ID = "test-key-id";
 
     /**
      * Creates a valid JWKS with a single key using the default key from KeyMaterialHandler.
      *
      * @return a valid JWKS JSON string
      */
-    public static String createValidJwks() {
+    public static String createDefaultJwks() {
         return createValidJwksWithKeyId(DEFAULT_KEY_ID);
     }
 
@@ -66,7 +66,7 @@ public class JWKSFactory {
      * @return a valid JWKS JSON string
      */
     public static String createValidJwksWithKeyId(String keyId) {
-        RSAPublicKey publicKey = (RSAPublicKey) KeyMaterialHandler.getPublicKey();
+        RSAPublicKey publicKey = (RSAPublicKey) KeyMaterialHandler.getDefaultPublicKey();
         return createJwksFromRsaKey(publicKey, keyId);
     }
 
@@ -105,7 +105,7 @@ public class JWKSFactory {
      * @return a valid JWK JSON string
      */
     public static String createSingleJwk(String keyId) {
-        RSAPublicKey publicKey = (RSAPublicKey) KeyMaterialHandler.getPublicKey();
+        RSAPublicKey publicKey = (RSAPublicKey) KeyMaterialHandler.getDefaultPublicKey();
 
         // Extract the modulus and exponent
         byte[] modulusBytes = publicKey.getModulus().toByteArray();
@@ -155,7 +155,7 @@ public class JWKSFactory {
      * @return a JWKS JSON string with no key ID
      */
     public static String createJwksWithNoKeyId() {
-        RSAPublicKey publicKey = (RSAPublicKey) KeyMaterialHandler.getPublicKey();
+        RSAPublicKey publicKey = (RSAPublicKey) KeyMaterialHandler.getDefaultPublicKey();
 
         // Extract the modulus and exponent
         byte[] modulusBytes = publicKey.getModulus().toByteArray();

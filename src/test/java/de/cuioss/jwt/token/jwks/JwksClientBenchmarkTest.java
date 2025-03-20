@@ -19,18 +19,18 @@ import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.jwt.token.test.JwksResolveDispatcher;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import de.cuioss.test.mockwebserver.EnableMockWebServer;
-import de.cuioss.test.mockwebserver.MockWebServerHolder;
-import de.cuioss.test.mockwebserver.dispatcher.CombinedDispatcher;
+import de.cuioss.test.mockwebserver.URIBuilder;
+import de.cuioss.test.mockwebserver.dispatcher.ModuleDispatcher;
+import de.cuioss.tools.concurrent.StopWatch;
 import de.cuioss.tools.logging.CuiLogger;
-import lombok.Setter;
-import mockwebserver3.MockWebServer;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import lombok.Getter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.security.Key;
+import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -41,88 +41,44 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @EnableTestLogger(debug = JwksLoaderFactory.class)
 @DisplayName("Benchmarks JwksClient performance")
 @EnableMockWebServer
-public class JwksClientBenchmarkTest implements MockWebServerHolder {
+class JwksClientBenchmarkTest {
 
     private static final CuiLogger LOGGER = new CuiLogger(JwksClientBenchmarkTest.class);
     private static final int REFRESH_INTERVAL_SECONDS = 60; // Longer interval for benchmarking
     private static final String TEST_KID = JWKSFactory.DEFAULT_KEY_ID;
     private static final int WARMUP_ITERATIONS = 10;
     private static final int BENCHMARK_ITERATIONS = 100;
-    private final JwksResolveDispatcher testDispatcher = new JwksResolveDispatcher();
-    @Setter
-    private MockWebServer mockWebServer;
-    private JwksLoader jwksLoader;
-    private String jwksEndpoint;
-    private JwksResolveDispatcher jwksDispatcher;
 
-    @Override
-    public mockwebserver3.Dispatcher getDispatcher() {
-        return new CombinedDispatcher().addDispatcher(testDispatcher);
-    }
+    @Getter
+    private final JwksResolveDispatcher moduleDispatcher = new JwksResolveDispatcher();
 
-    @BeforeEach
-    void setUp() {
-        int port = mockWebServer.getPort();
-        jwksEndpoint = "http://localhost:" + port + JwksResolveDispatcher.LOCAL_PATH;
-        jwksDispatcher = testDispatcher;
-        jwksLoader = JwksLoaderFactory.createHttpLoader(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
-    }
-
-    @AfterEach
-    void tearDown() {
-        // No cleanup needed
-    }
 
     @Test
     @DisplayName("Benchmark key retrieval performance")
-    void benchmarkKeyRetrieval() {
+    @ModuleDispatcher
+    void benchmarkKeyRetrieval(URIBuilder uriBuilder) {
+        var jwksEndpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
+        var jwksLoader = JwksLoaderFactory.createHttpLoader(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
+
         // Warm up
         for (int i = 0; i < WARMUP_ITERATIONS; i++) {
             jwksLoader.getKey(TEST_KID);
         }
 
         // Benchmark
-        long startTime = System.nanoTime();
+        StopWatch watch = StopWatch.createStarted();
         for (int i = 0; i < BENCHMARK_ITERATIONS; i++) {
             Optional<Key> key = jwksLoader.getKey(TEST_KID);
             assertTrue(key.isPresent(), "Key should be present");
         }
-        long endTime = System.nanoTime();
+        watch.stop();
 
-        long durationNanos = endTime - startTime;
-        double durationMillis = durationNanos / 1_000_000.0;
-        double avgOperationTimeMillis = durationMillis / BENCHMARK_ITERATIONS;
+        double avgOperationTimeMillis = (double) watch.elapsed(TimeUnit.MILLISECONDS) / BENCHMARK_ITERATIONS;
 
         LOGGER.info("Key retrieval benchmark results:");
-        LOGGER.info("Total time: %s ms", durationMillis);
+        LOGGER.info("Total time: %s ms", watch.toString());
         LOGGER.info("Average time per operation: %s ms", avgOperationTimeMillis);
         LOGGER.info("Operations per second: %s", (1000.0 / avgOperationTimeMillis));
     }
 
-    @Test
-    @DisplayName("Benchmark key loader creation performance")
-    void benchmarkKeyLoaderCreation() {
-        // Warm up
-        for (int i = 0; i < WARMUP_ITERATIONS; i++) {
-            JwksLoaderFactory.createHttpLoader(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
-        }
-
-        // Benchmark
-        long startTime = System.nanoTime();
-        for (int i = 0; i < BENCHMARK_ITERATIONS; i++) {
-            JwksLoader loader = JwksLoaderFactory.createHttpLoader(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
-            Optional<Key> key = loader.getKey(TEST_KID);
-            assertTrue(key.isPresent(), "Key should be present");
-        }
-        long endTime = System.nanoTime();
-
-        long durationNanos = endTime - startTime;
-        double durationMillis = durationNanos / 1_000_000.0;
-        double avgOperationTimeMillis = durationMillis / BENCHMARK_ITERATIONS;
-
-        LOGGER.info("Key loader creation benchmark results:");
-        LOGGER.info("Total time: %s ms", durationMillis);
-        LOGGER.info("Average time per operation: %s ms", avgOperationTimeMillis);
-        LOGGER.info("Operations per second: %s", (1000.0 / avgOperationTimeMillis));
-    }
 }

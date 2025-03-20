@@ -21,10 +21,9 @@ import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import de.cuioss.test.mockwebserver.EnableMockWebServer;
-import de.cuioss.test.mockwebserver.MockWebServerHolder;
-import de.cuioss.test.mockwebserver.dispatcher.CombinedDispatcher;
-import lombok.Setter;
-import mockwebserver3.MockWebServer;
+import de.cuioss.test.mockwebserver.URIBuilder;
+import de.cuioss.test.mockwebserver.dispatcher.ModuleDispatcher;
+import lombok.Getter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -41,28 +40,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @EnableTestLogger(debug = {HttpJwksLoader.class, JWKSKeyLoader.class})
 @DisplayName("Tests HttpJwksLoader functionality")
 @EnableMockWebServer
-class HttpJwksLoaderTest implements MockWebServerHolder {
+class HttpJwksLoaderTest {
 
     private static final String JWKS_PATH = "/oidc/jwks.json";
     private static final int REFRESH_INTERVAL_SECONDS = 1; // Short interval for testing
     private static final String TEST_KID = JWKSFactory.DEFAULT_KEY_ID;
-    private final JwksResolveDispatcher testDispatcher = new JwksResolveDispatcher();
-    @Setter
-    private MockWebServer mockWebServer;
+    @Getter
+    private final JwksResolveDispatcher moduleDispatcher = new JwksResolveDispatcher();
     private HttpJwksLoader httpJwksLoader;
     private String jwksEndpoint;
     private JwksResolveDispatcher jwksDispatcher;
 
-    @Override
-    public mockwebserver3.Dispatcher getDispatcher() {
-        return new CombinedDispatcher().addDispatcher(testDispatcher);
-    }
-
     @BeforeEach
-    void setUp() {
-        int port = mockWebServer.getPort();
-        jwksEndpoint = "http://localhost:" + port + JwksResolveDispatcher.LOCAL_PATH;
-        jwksDispatcher = testDispatcher;
+    @ModuleDispatcher
+    void setUp(URIBuilder uriBuilder) {
+        jwksEndpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
+        jwksDispatcher = moduleDispatcher;
         jwksDispatcher.setCallCounter(0);
         httpJwksLoader = new HttpJwksLoader(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
     }
@@ -115,12 +108,14 @@ class HttpJwksLoaderTest implements MockWebServerHolder {
 
     @Test
     @DisplayName("Should handle server errors")
-    void shouldHandleServerErrors() {
+    @ModuleDispatcher
+    void shouldHandleServerErrors(URIBuilder uriBuilder) {
         // Given
         jwksDispatcher.returnError();
 
         // Create a new loader that will encounter server error
-        HttpJwksLoader errorLoader = new HttpJwksLoader(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
+        String endpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
+        HttpJwksLoader errorLoader = new HttpJwksLoader(endpoint, REFRESH_INTERVAL_SECONDS, null);
 
         // When
         Optional<Key> key = errorLoader.getKey(TEST_KID);
@@ -132,12 +127,14 @@ class HttpJwksLoaderTest implements MockWebServerHolder {
 
     @Test
     @DisplayName("Should handle invalid JWKS format")
-    void shouldHandleInvalidJwksFormat() {
+    @ModuleDispatcher
+    void shouldHandleInvalidJwksFormat(URIBuilder uriBuilder) {
         // Given
         jwksDispatcher.returnInvalidJson();
 
         // Create a new loader with invalid JSON response
-        HttpJwksLoader invalidJsonLoader = new HttpJwksLoader(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
+        String endpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
+        HttpJwksLoader invalidJsonLoader = new HttpJwksLoader(endpoint, REFRESH_INTERVAL_SECONDS, null);
 
         // When
         Optional<Key> key = invalidJsonLoader.getKey(TEST_KID);
@@ -149,13 +146,15 @@ class HttpJwksLoaderTest implements MockWebServerHolder {
 
     @Test
     @DisplayName("Should refresh keys when creating a new instance")
-    void shouldRefreshKeysWhenCreatingNewInstance() {
+    @ModuleDispatcher
+    void shouldRefreshKeysWhenCreatingNewInstance(URIBuilder uriBuilder) {
         // Given
         httpJwksLoader.getKey(TEST_KID); // Initial fetch
         assertEquals(1, jwksDispatcher.getCallCounter());
 
         // When - create a new instance to force refresh
-        HttpJwksLoader newLoader = new HttpJwksLoader(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
+        String endpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
+        HttpJwksLoader newLoader = new HttpJwksLoader(endpoint, REFRESH_INTERVAL_SECONDS, null);
         newLoader.getKey(TEST_KID);
 
         // Then - verify keys were refreshed
@@ -175,25 +174,31 @@ class HttpJwksLoaderTest implements MockWebServerHolder {
 
     @Test
     @DisplayName("Should throw exception when refresh interval is invalid")
-    void shouldThrowExceptionWhenRefreshIntervalIsInvalid() {
+    @ModuleDispatcher
+    void shouldThrowExceptionWhenRefreshIntervalIsInvalid(URIBuilder uriBuilder) {
+        // Given
+        String endpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
+
         // When/Then
         assertThrows(IllegalArgumentException.class, () -> {
-            new HttpJwksLoader(jwksEndpoint, 0, null);
+            new HttpJwksLoader(endpoint, 0, null);
         }, "Should throw exception when refresh interval is zero");
 
         assertThrows(IllegalArgumentException.class, () -> {
-            new HttpJwksLoader(jwksEndpoint, -1, null);
+            new HttpJwksLoader(endpoint, -1, null);
         }, "Should throw exception when refresh interval is negative");
     }
 
     @Test
     @DisplayName("Should handle missing required fields in JWK")
-    void shouldHandleMissingRequiredFieldsInJwk() {
+    @ModuleDispatcher
+    void shouldHandleMissingRequiredFieldsInJwk(URIBuilder uriBuilder) {
         // Given
         jwksDispatcher.returnMissingFieldsJwk();
 
         // Create a new loader with JWK missing required fields
-        HttpJwksLoader missingFieldsLoader = new HttpJwksLoader(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
+        String endpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
+        HttpJwksLoader missingFieldsLoader = new HttpJwksLoader(endpoint, REFRESH_INTERVAL_SECONDS, null);
 
         // When
         Optional<Key> key = missingFieldsLoader.getKey(TEST_KID);

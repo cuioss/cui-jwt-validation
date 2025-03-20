@@ -54,18 +54,11 @@ public class JwksAwareTokenParserImplTest {
     private static final CuiLogger LOGGER = new CuiLogger(JwksAwareTokenParserImplTest.class);
 
     public static JwksAwareTokenParserImpl getValidJWKSParserWithLocalJWKS() throws IOException {
-        // Create a dynamic JWKS with the current key pair
-        java.security.PublicKey publicKey = KeyMaterialHandler.getPublicKey();
-        java.security.interfaces.RSAPublicKey rsaKey = (java.security.interfaces.RSAPublicKey) publicKey;
-
-        // Create JWKS JSON with the default key ID
+        // Create a JWKS with the default key ID that matches the one used in the token
         String jwks = JWKSFactory.createSingleJwk(JWKSFactory.DEFAULT_KEY_ID);
 
-        // Create a temporary file with the JWKS
-        java.nio.file.Path tempFile = java.nio.file.Files.createTempFile("test-jwks", ".json");
-        java.nio.file.Files.writeString(tempFile, jwks);
-
-        JwksLoader jwksLoader = JwksLoaderFactory.createFileLoader(tempFile.toAbsolutePath().toString());
+        // Create a JwksLoader from the JWKS content
+        JwksLoader jwksLoader = JwksLoaderFactory.createInMemoryLoader(jwks);
         return new JwksAwareTokenParserImpl(jwksLoader, ISSUER);
     }
 
@@ -77,16 +70,17 @@ public class JwksAwareTokenParserImplTest {
         // Create JWKS JSON with the same key ID as in the token but different key material
         String invalidJwks = JWKSFactory.createJwksFromRsaKey(rsaKey, JWKSFactory.DEFAULT_KEY_ID);
 
-        // Create a temporary file with the invalid JWKS
-        java.nio.file.Path tempFile = java.nio.file.Files.createTempFile("invalid-jwks", ".json");
-        java.nio.file.Files.writeString(tempFile, invalidJwks);
+        // Use KeyMaterialHandler to create a temporary file with the invalid JWKS
+        java.nio.file.Path tempFile = KeyMaterialHandler.createTemporaryJwksFile(invalidJwks);
 
-        JwksLoader jwksLoader = JwksLoaderFactory.createFileLoader(tempFile.toAbsolutePath().toString());
+        // Create a JwksLoader from the temporary file
+        JwksLoader jwksLoader = JwksLoaderFactory.createInMemoryLoader(invalidJwks);
         return new JwksAwareTokenParserImpl(jwksLoader, ISSUER);
     }
 
     public static JwksAwareTokenParserImpl getInvalidValidJWKSParserWithLocalJWKSAndWrongIssuer() throws IOException {
-        JwksLoader jwksLoader = JwksLoaderFactory.createFileLoader(JwksResolveDispatcher.PUBLIC_KEY_JWKS);
+        // Use KeyMaterialHandler to create a JwksLoader with the default key
+        JwksLoader jwksLoader = KeyMaterialHandler.createDefaultJwksLoader();
         return new JwksAwareTokenParserImpl(jwksLoader, TestTokenProducer.WRONG_ISSUER);
     }
 

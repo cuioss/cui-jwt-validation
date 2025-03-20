@@ -36,7 +36,7 @@ class KeyMaterialHandlerTest {
 
     @Test
     void shouldProvidePrivateKey() {
-        PrivateKey privateKey = KeyMaterialHandler.getPrivateKey();
+        PrivateKey privateKey = KeyMaterialHandler.getDefaultPrivateKey();
         assertNotNull(privateKey);
         assertEquals("RSA", privateKey.getAlgorithm());
     }
@@ -47,7 +47,7 @@ class KeyMaterialHandlerTest {
     @Test
     void shouldSignAndVerifyToken() {
         // Get the private key
-        PrivateKey privateKey = KeyMaterialHandler.getPrivateKey();
+        PrivateKey privateKey = KeyMaterialHandler.getDefaultPrivateKey();
 
         // Create and sign a token
         String token = Jwts.builder()
@@ -73,9 +73,9 @@ class KeyMaterialHandlerTest {
     void shouldVerifyResourcePaths() {
         // Verify that all resource paths exist
         assertTrue(Files.exists(Path.of(KeyMaterialHandler.BASE_PATH)));
-        assertTrue(Files.exists(Path.of(KeyMaterialHandler.PRIVATE_KEY)));
-        assertTrue(Files.exists(Path.of(KeyMaterialHandler.PUBLIC_KEY)));
-        assertTrue(Files.exists(Path.of(KeyMaterialHandler.PUBLIC_KEY_JWKS)));
+        assertTrue(Files.exists(Path.of(KeyMaterialHandler.getPrivateKeyPath())));
+        assertTrue(Files.exists(Path.of(KeyMaterialHandler.getPublicKeyPath())));
+        assertTrue(Files.exists(Path.of(KeyMaterialHandler.getJwksPath())));
         assertTrue(Files.exists(Path.of(TestTokenProducer.SOME_SCOPES)));
         assertTrue(Files.exists(Path.of(TestTokenProducer.REFRESH_TOKEN)));
         assertTrue(Files.exists(Path.of(TestTokenProducer.SOME_ROLES)));

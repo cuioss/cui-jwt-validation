@@ -138,7 +138,7 @@ public class TestTokenProducer {
                     .setIssuedAt(Date.from(Instant.now()))
                     .setExpiration(Date.from(Instant.now().plusSeconds(3600))) // Set expiration to 1 hour from now
                     .setHeaderParam("kid", "default-key-id") // Add key ID to header
-                    .signWith(KeyMaterialHandler.getPrivateKey(), SignatureAlgorithm.RS256);
+                    .signWith(KeyMaterialHandler.getDefaultPrivateKey(), SignatureAlgorithm.RS256);
 
             // Add claims from file if provided
             if (claimsPath != null) {
@@ -155,7 +155,7 @@ public class TestTokenProducer {
         return Jwts.builder()
                 .setIssuer(ISSUER)
                 .setSubject(SUBJECT)
-                .signWith(KeyMaterialHandler.getPrivateKey(), SignatureAlgorithm.RS256)
+                .signWith(KeyMaterialHandler.getDefaultPrivateKey(), SignatureAlgorithm.RS256)
                 .compact();
     }
 
@@ -164,7 +164,7 @@ public class TestTokenProducer {
             JwtBuilder builder = Jwts.builder()
                     .setIssuer(ISSUER)
                     .setSubject(subject)
-                    .signWith(KeyMaterialHandler.getPrivateKey(), SignatureAlgorithm.RS256);
+                    .signWith(KeyMaterialHandler.getDefaultPrivateKey(), SignatureAlgorithm.RS256);
 
             // Add claims from file if provided
             if (claimsPath != null) {
@@ -184,7 +184,7 @@ public class TestTokenProducer {
                     .setSubject(SUBJECT)
                     .setIssuedAt(Date.from(OffsetDateTime.ofInstant(expireAt, ZoneId.systemDefault()).minusMinutes(5).toInstant()))
                     .setExpiration(Date.from(expireAt))
-                    .signWith(KeyMaterialHandler.getPrivateKey(), SignatureAlgorithm.RS256);
+                    .signWith(KeyMaterialHandler.getDefaultPrivateKey(), SignatureAlgorithm.RS256);
 
             // Add claims from file
             addClaims(builder, SOME_SCOPES);
@@ -209,7 +209,7 @@ public class TestTokenProducer {
                     .setIssuedAt(Date.from(OffsetDateTime.ofInstant(notBefore, ZoneId.systemDefault()).minusMinutes(5).toInstant()))
                     .setExpiration(Date.from(OffsetDateTime.ofInstant(notBefore, ZoneId.systemDefault()).plusMinutes(10).toInstant()))
                     .claim("nbf", notBefore.getEpochSecond())
-                    .signWith(KeyMaterialHandler.getPrivateKey(), SignatureAlgorithm.RS256);
+                    .signWith(KeyMaterialHandler.getDefaultPrivateKey(), SignatureAlgorithm.RS256);
 
             // Add claims from file
             addClaims(builder, SOME_SCOPES);
@@ -227,7 +227,7 @@ public class TestTokenProducer {
 
         // Parse the token using JJWT
         Jws<Claims> parsedToken = Jwts.parserBuilder()
-                .setSigningKey(KeyMaterialHandler.getPrivateKey())
+                .setSigningKey(KeyMaterialHandler.getDefaultPrivateKey())
                 .build()
                 .parseClaimsJws(token);
 
