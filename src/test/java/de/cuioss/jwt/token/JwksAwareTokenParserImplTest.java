@@ -18,7 +18,7 @@ package de.cuioss.jwt.token;
 import de.cuioss.jwt.token.jwks.JwksLoader;
 import de.cuioss.jwt.token.jwks.JwksLoaderFactory;
 import de.cuioss.jwt.token.test.JWKSFactory;
-import de.cuioss.jwt.token.test.JwksResolveDispatcher;
+import de.cuioss.jwt.token.test.dispatcher.JwksResolveDispatcher;
 import de.cuioss.jwt.token.test.KeyMaterialHandler;
 import de.cuioss.jwt.token.test.TestTokenProducer;
 import de.cuioss.test.juli.LogAsserts;

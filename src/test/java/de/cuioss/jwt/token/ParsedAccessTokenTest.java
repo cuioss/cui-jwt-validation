@@ -64,7 +64,7 @@ class ParsedAccessTokenTest {
             var parsedAccessToken = retrievedToken.get();
 
             assertEquals(initialToken, parsedAccessToken.getTokenString(), "Token string should match");
-            assertTrue(parsedAccessToken.getScopes().size() > 0, "Should have scopes");
+            assertFalse(parsedAccessToken.getScopes().isEmpty(), "Should have scopes");
             assertTrue(parsedAccessToken.getScopes().contains("openid"), "Should contain openid scope");
             assertFalse(parsedAccessToken.getScopes().contains(DEFINITELY_NO_SCOPE), "Should not contain invalid scope");
 

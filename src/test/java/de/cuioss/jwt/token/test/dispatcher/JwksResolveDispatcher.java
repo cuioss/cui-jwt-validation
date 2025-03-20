@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.cuioss.jwt.token.test;
+package de.cuioss.jwt.token.test.dispatcher;
 
+import de.cuioss.jwt.token.test.JWKSFactory;
+import de.cuioss.jwt.token.test.KeyMaterialHandler;
 import de.cuioss.test.mockwebserver.dispatcher.HttpMethodMapper;
 import de.cuioss.test.mockwebserver.dispatcher.ModuleDispatcherElement;
-import de.cuioss.tools.io.FileLoaderUtility;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;

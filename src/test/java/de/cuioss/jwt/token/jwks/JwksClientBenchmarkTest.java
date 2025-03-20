@@ -16,7 +16,7 @@
 package de.cuioss.jwt.token.jwks;
 
 import de.cuioss.jwt.token.test.JWKSFactory;
-import de.cuioss.jwt.token.test.JwksResolveDispatcher;
+import de.cuioss.jwt.token.test.dispatcher.JwksResolveDispatcher;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import de.cuioss.test.mockwebserver.EnableMockWebServer;
 import de.cuioss.test.mockwebserver.URIBuilder;
@@ -28,7 +28,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.security.Key;
-import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
