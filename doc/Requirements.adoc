@@ -296,12 +296,15 @@ The library must have comprehensive unit tests with at least 80% code coverage, 
 [#CUI-JWT-12.3]
 ==== CUI-JWT-12.3: Integration Testing
 
-Integration tests must verify compatibility with common identity providers:
+Integration tests must verify compatibility with Keycloak as the identity provider:
 
-* Keycloak
-* Auth0
-* Azure AD
-* Custom JWKS endpoints
+* Parse access tokens from Keycloak
+* Parse ID tokens from Keycloak
+* Parse refresh tokens from Keycloak
+* Validate tokens against Keycloak JWKS endpoint
+* Handle token expiration and validation
+
+Note: The implementation uses a standard library for parsing JWT tokens, which ensures compatibility with other identity providers (Auth0, Azure AD, etc.) without requiring specific integration tests for each one.
 
 [#CUI-JWT-12.4]
 ==== CUI-JWT-12.4: Performance Testing

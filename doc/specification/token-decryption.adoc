@@ -1,0 +1,114 @@
+= JWT Token Handling Token Decryption
+:toc:
+:toclevels: 3
+:toc-title: Table of Contents
+:sectnums:
+
+link:../Specification.adoc[Back to Main Specification]
+
+== Overview
+_See Requirement link:../Requirements.adoc#CUI-JWT-1.4[CUI-JWT-1.4: Token Decryption (Optional - Future Version)]_
+
+This document provides detailed specifications for the token decryption support in the JWT token handling library. Token decryption support is marked as optional for a future version in the requirements.
+
+== JWE Token Structure
+
+The current implementation supports JWS (JSON Web Signature) tokens but lacks support for JWE (JSON Web Encryption) tokens. JWE tokens have a different structure than JWS tokens, consisting of five parts instead of three:
+
+1. JOSE Header (Base64URL-encoded)
+2. JWE Encrypted Key (Base64URL-encoded)
+3. JWE Initialization Vector (Base64URL-encoded)
+4. JWE Ciphertext (Base64URL-encoded)
+5. JWE Authentication Tag (Base64URL-encoded)
+
+== Implementation Requirements
+
+=== Parser Modifications
+
+==== NonValidatingJwtParser Extensions
+
+The `NonValidatingJwtParser` class needs to be extended to recognize and handle JWE tokens:
+
+* Add detection logic to identify JWE vs JWS tokens (based on number of parts and header content)
+* Implement JWE token parsing without decryption for inspection purposes
+* Update size validation to account for JWE token structure
+
+==== JweParser Interface
+
+A new `JweParser` interface and implementation should be created for decrypting JWE tokens:
+
+* Support required JWE encryption algorithms (A128CBC-HS256, A256CBC-HS512, etc.)
+* Support required key management algorithms (RSA-OAEP, ECDH-ES, etc.)
+* Implement content encryption key (CEK) decryption
+* Implement payload decryption and authentication
+
+=== Data Model Extensions
+
+==== DecodedJwt Extensions
+
+The `DecodedJwt` class needs to be extended to support JWE structure:
+
+* Add fields for JWE-specific parts (encrypted key, initialization vector, ciphertext, authentication tag)
+* Update constructors and methods to handle JWE tokens
+* Add methods to access JWE-specific information
+
+==== DecryptedJwt Class
+
+A new `DecryptedJwt` class should be created to represent a decrypted JWE token:
+
+* Include methods to access the decrypted payload
+* Maintain the original encrypted parts for reference
+
+=== Key Management Extensions
+
+==== JwksLoader Extensions
+
+The `JwksLoader` interface needs to be extended to support encryption keys:
+
+* Add support for loading encryption keys from JWKS endpoints
+* Implement key identification for encryption keys
+* Add methods to retrieve appropriate keys for decryption
+
+==== Key Resolution for Decryption
+
+Implement key resolution for decryption:
+
+* Support "kid" header parameter for key identification
+* Support "alg" header parameter for algorithm selection
+* Support "enc" header parameter for content encryption algorithm
+
+=== Security Considerations
+
+==== Secure Handling of Decryption Keys
+
+Implement secure handling of decryption keys:
+
+* Ensure private keys are properly protected
+* Implement key rotation support for decryption keys
+
+==== JWE-specific Security Requirements
+
+Add validation for JWE-specific security requirements:
+
+* Validate encryption algorithms against allowed list
+* Implement proper authentication tag validation
+* Add protection against padding oracle attacks
+
+=== Testing Requirements
+
+==== JWE Functionality Tests
+
+Create comprehensive tests for JWE functionality:
+
+* Test parsing of JWE tokens
+* Test decryption of JWE tokens with various algorithms
+* Test handling of malformed JWE tokens
+* Test error cases and edge conditions
+
+==== JWE Security Tests
+
+Add security tests specific to JWE:
+
+* Test against known vulnerabilities in JWE implementations
+* Test algorithm downgrade protection
+* Test key confusion attack prevention

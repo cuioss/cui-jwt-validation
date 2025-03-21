@@ -45,27 +45,27 @@ The signature validation implementation will:
 
 1. Extract the algorithm from the token header
 2. Verify that the algorithm is in the list of supported algorithms
-3. Retrieve the appropriate key from the `KeyManager`
+3. Retrieve the appropriate key from the `JwksLoader`
 4. Validate the token signature using the JJWT library
 
 [source,java]
 ----
 private boolean validateSignature(String token, Key key, String algorithm) {
     LOGGER.debug("Validating signature with algorithm %s", algorithm);
-    
+
     try {
         // Verify algorithm is supported
         if (!isSupportedAlgorithm(algorithm)) {
             LOGGER.warn(WARN.ALGORITHM_NOT_SUPPORTED.format(algorithm));
             return false;
         }
-        
+
         // Validate signature
         Jwts.parserBuilder()
             .setSigningKey(key)
             .build()
             .parseClaimsJws(token);
-            
+
         return true;
     } catch (SignatureException e) {
         LOGGER.warn(e, WARN.INVALID_SIGNATURE.format());
@@ -97,12 +97,12 @@ The token size validation implementation will:
 ----
 private boolean validateTokenSize(String token) {
     LOGGER.debug("Validating token size");
-    
+
     if (token.length() > MAX_TOKEN_SIZE) {
         LOGGER.warn(WARN.TOKEN_TOO_LARGE.format(token.length(), MAX_TOKEN_SIZE));
         return false;
     }
-    
+
     return true;
 }
 ----
@@ -124,17 +124,17 @@ The safe parsing implementation will:
 ----
 private Claims extractClaims(String token) {
     LOGGER.debug("Extracting claims from token");
-    
+
     try {
         // Split token into parts
         String[] parts = token.split("\\.");
         if (parts.length != 3) {
             throw new JwtException("Invalid token format");
         }
-        
+
         // Decode payload
         byte[] payload = Base64.getUrlDecoder().decode(parts[1]);
-        
+
         // Parse payload as JSON using secure parser
         return Jwts.parserBuilder()
             .build()
@@ -171,35 +171,35 @@ The claims validation implementation will:
 ----
 private boolean validateClaims(Claims claims) {
     LOGGER.debug("Validating claims");
-    
+
     try {
         // Validate required claims
         if (claims.getIssuer() == null) {
             LOGGER.warn(WARN.MISSING_CLAIM.format("iss"));
             return false;
         }
-        
+
         if (claims.getSubject() == null) {
             LOGGER.warn(WARN.MISSING_CLAIM.format("sub"));
             return false;
         }
-        
+
         if (claims.getExpiration() == null) {
             LOGGER.warn(WARN.MISSING_CLAIM.format("exp"));
             return false;
         }
-        
+
         if (claims.getIssuedAt() == null) {
             LOGGER.warn(WARN.MISSING_CLAIM.format("iat"));
             return false;
         }
-        
+
         // Validate expiration
         if (claims.getExpiration().before(new Date())) {
             LOGGER.warn(WARN.TOKEN_EXPIRED.format(claims.getIssuer()));
             return false;
         }
-        
+
         return true;
     } catch (Exception e) {
         LOGGER.error(e, ERROR.CLAIMS_VALIDATION_FAILED.format(e.getMessage()));
@@ -225,11 +225,11 @@ The secure communication implementation will:
 ----
 private HttpClient createSecureHttpClient() {
     LOGGER.debug("Creating secure HTTP client");
-    
+
     try {
         SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
         sslContext.init(null, null, null);
-        
+
         return HttpClient.newBuilder()
             .sslContext(sslContext)
             .connectTimeout(Duration.ofSeconds(10))
@@ -258,7 +258,7 @@ The cryptographic agility implementation will:
 ----
 private List<String> getPreferredAlgorithms() {
     LOGGER.debug("Getting preferred algorithms");
-    
+
     // Order algorithms by preference
     return Arrays.asList(
         "ES512", // Most preferred

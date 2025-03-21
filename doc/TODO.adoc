@@ -1,83 +1,258 @@
-= TODO List for JWT Token Handling Migration
+= JWT Token Handling TODO List
 :toc:
 :toclevels: 3
 :toc-title: Table of Contents
 :sectnums:
 
-== Migration from SmallRye JWT to JJWT
+== Overview
 
-This document outlines the tasks required to migrate from SmallRye JWT to JJWT (https://github.com/jwtk/jjwt).
+This document lists the actionable tasks that need to be completed to fully implement the JWT token handling library according to the specifications.
 
-=== Documentation Tasks
+== Implementation Tasks
 
-* [ ] Derive requirements and specifications document
-* [ ] Refine requirements and specifications document
-* [ ] Update README.adoc with new implementation details
-* [ ] Update LogMessages.md with any new log messages
+=== Core Components
 
-=== Code Migration Tasks
+==== JwksClient Implementation
+_See Requirement CUI-JWT-4.1: JWKS Endpoint Support in link:Requirements.adoc[Requirements]_
 
-* [ ] Replace SmallRye JWT with JJWT (https://github.com/jwtk/jjwt)
-** [ ] Add JJWT dependencies to pom.xml
-** [ ] Remove SmallRye JWT dependencies from pom.xml
+* [x] Update the specification to use JwksLoaderFactory instead of JwksClient to match the implementation
+* [x] Implement a dedicated JwksClient class as mentioned in the original specification
+* _Note: The JwksClient class now handles HTTP communication with JWKS endpoints, while JwksLoader and JwksLoaderFactory handle key management_
 
-=== Interface Preservation
+==== KeyManager Implementation
+_See Requirement CUI-JWT-4: Key Management in link:Requirements.adoc[Requirements]_
 
-* [ ] Ensure ParsedToken and derived classes remain unchanged
-** [ ] ParsedToken
-** [ ] ParsedAccessToken
-** [ ] ParsedIdToken
-** [ ] ParsedRefreshToken
-* [ ] Maintain TokenFactory interface and functionality
-** [ ] Ensure all public methods continue to work as before
-** [ ] Update internal implementation to use JJWT
+* [x] Update the specification to use JwksLoader instead of KeyManager to match the implementation
+* [x] Implement a dedicated KeyManager interface and JwksKeyManager class as mentioned in the original specification
+* _Note: The KeyManager interface and JwksKeyManager class now provide a dedicated API for key management, while JwksLoader and JwksLoaderFactory still provide the original functionality_
 
-=== Implementation Changes
+==== Token Decryption Support
+_See Requirement CUI-JWT-1.4: Token Decryption in link:Requirements.adoc[Requirements] and link:specification/token-decryption.adoc[Token Decryption Specification]_
 
-* [ ] Replace JwksAwareTokenParser with a more abstract configuration structure
-** [ ] Design new configuration structure
-** [ ] Implement new configuration structure
-** [ ] Update documentation for new configuration approach
-* [ ] Implement JWKS client if JJWT does not provide one
-** [ ] Research JJWT JWKS capabilities
-** [ ] Design JWKS client if needed
-** [ ] Implement JWKS client with caching and refresh capabilities
-** [ ] Add tests for JWKS client
+* [x] Create a specification document for token decryption support
+* [ ] Implement support for decrypting JWT tokens (JWE) as defined in RFC 7516
+* _Note: This is marked as optional for a future version in the requirements_
+
+The detailed specification for token decryption support has been moved to a separate document: link:specification/token-decryption.adoc[Token Decryption Specification]
 
 === Testing
+_See link:specification/testing.adoc#_compliance_with_cui_testing_standards[Compliance with CUI Testing Standards]_
 
-* [ ] Ensure all existing tests pass with new implementation
-** [ ] JwksAwareTokenParserTest (or its replacement)
-** [ ] ParsedAccessTokenTest
-** [ ] ParsedIdTokenTest
-** [ ] ParsedRefreshTokenTest
-** [ ] ParsedTokenTest
-** [ ] TokenFactoryTest
-** [ ] TokenKeycloakITTest
-* [ ] Add tests for new components
+==== Test Coverage Improvements
+_See link:specification/testing.adoc#_test_coverage_gaps[Test Coverage Gaps]_
 
-=== Quality Assurance
+* [ ] Implement test coverage reporting in the build process
+* [ ] Ensure all public methods have corresponding unit tests
+* [ ] Set up coverage thresholds in the build to enforce minimum 80% line coverage
 
-* [ ] Verify logging follows CUI standards
-* [ ] Run Sonar analysis
-* [ ] Fix any code quality issues
-* [ ] Ensure 80% minimum code coverage
+==== Test Structure and Organization
+_See link:specification/testing.adoc#_test_organization_gaps[Test Organization Gaps] and link:specification/testing.adoc#_test_clarity_gaps[Test Clarity Gaps]_
 
-=== Performance Testing
+* [ ] Establish consistent test naming conventions
+* [ ] Document and enforce the Arrange-Act-Assert pattern in all tests
+* [ ] Establish a consistent structure for test classes
+* [ ] Define naming conventions for test methods
+* [ ] Group related tests in the same test class
 
-* [ ] Benchmark token parsing performance
-* [ ] Benchmark token validation performance
-* [ ] Compare results with previous implementation
+==== Test Data Management
+_See link:specification/testing.adoc#_test_data_gaps[Test Data Gaps]_
 
-=== Security Review
+* [ ] Create reusable test data generators
+* [ ] Implement test data builders for complex objects
+* [ ] Document best practices for test data management
 
-* [ ] Review JJWT security features
-* [ ] Ensure all security requirements are met
-* [ ] Verify proper key handling and rotation
-* [ ] Check for any security vulnerabilities
+==== Assertion Improvements
+_See link:specification/testing.adoc#_assertion_gaps[Assertion Gaps]_
 
-=== Final Steps
+* [ ] Document best practices for assertions
+* [ ] Ensure all assertions include meaningful error messages
+* [ ] Use appropriate assertion methods for different scenarios
 
-* [ ] Update version number
-* [ ] Create release notes
-* [ ] Tag release in git
+==== Unit Testing
+_See link:specification/testing.adoc#_unit_testing[Unit Testing Specification]_
+
+* [ ] Implement comprehensive unit tests as specified in the testing documentation:
+  * [ ] Token parsing tests
+  * [ ] Key management tests
+  * [ ] Multi-issuer tests
+  * [ ] Error handling tests
+  * [ ] Edge cases (malformed tokens, expired tokens, etc.)
+
+==== Security Testing
+_See Requirement CUI-JWT-12.1: Security Testing in link:Requirements.adoc[Requirements]_
+
+* [ ] Add more comprehensive security testing according to OWASP JWT Security Cheat Sheet
+* [ ] Implement tests for:
+  * [ ] Token validation bypass
+  * [ ] Algorithm confusion attacks
+  * [ ] Key disclosure vulnerabilities
+  * [ ] Signature verification bypass
+  * [ ] Token cracking resistance
+
+==== Performance Testing
+_See Requirement CUI-JWT-9: Performance in link:Requirements.adoc[Requirements]_
+
+* [ ] Implement performance tests to verify:
+  * [ ] Token parsing performance (at least 1000 tokens per second)
+  * [ ] Token validation performance (at least 500 tokens per second)
+  * [ ] Key retrieval and caching performance (no more than 100ms overhead per new key)
+
+==== Integration Testing
+_See link:specification/testing.adoc#_integration_testing_with_testcontainers[Integration Testing with TestContainers Specification]_
+
+* [ ] Ensure Keycloak integration tests are comprehensive and cover all test cases:
+  * [ ] Parse access tokens from Keycloak
+  * [ ] Parse ID tokens from Keycloak
+  * [ ] Parse refresh tokens from Keycloak
+  * [ ] Validate tokens against Keycloak JWKS endpoint
+  * [ ] Handle token expiration and validation
+
+==== Logging Tests
+_See link:specification/testing.adoc#_logging_tests[Logging Tests Specification]_
+
+* [ ] Implement comprehensive logging tests as specified in the testing documentation:
+  * [ ] Success scenario logging tests
+  * [ ] Error scenario logging tests
+  * [ ] Use cui-test-juli-logger for testing
+  * [ ] Test coverage for INFO/WARN/ERROR/FATAL logs
+
+==== Test Maintenance
+_See link:specification/testing.adoc#_test_maintenance_gaps[Test Maintenance Gaps]_
+
+* [ ] Establish guidelines for test maintenance
+* [ ] Implement CI/CD checks to prevent merging code with failing tests
+* [ ] Document the process for updating tests when production code changes
+
+==== Test Independence
+_See link:specification/testing.adoc#_test_independence_gaps[Test Independence Gaps]_
+
+* [ ] Review existing tests for independence issues
+* [ ] Add guidelines for ensuring test independence
+* [ ] Implement proper test cleanup mechanisms, especially for integration tests
+
+=== Security
+
+==== Token Size Limits
+_See Requirement CUI-JWT-8.1: Token Size Limits in link:Requirements.adoc[Requirements]_
+
+* [ ] Implement token size limits to prevent denial of service attacks
+* [ ] Maximum token size should be 8KB as recommended by OAuth 2.0 JWT BCP Section 3.11
+* _Note: Current implementation in NonValidatingJwtParser uses 16KB instead of 8KB_
+
+==== Access Token Functionality
+_See Requirement CUI-JWT-2.2: Access Token Functionality in link:Requirements.adoc[Requirements]_
+
+* [x] Implement scope-based authorization (scope claim) as defined in RFC 6749
+* [x] Implement role-based authorization (roles or groups claims)
+* [ ] Enhance resource access information beyond scopes and roles
+* _Note: Current implementation in ParsedAccessToken.java provides scope and role management, but could be enhanced with more specific resource access functionality_
+
+==== ID Token Functionality
+_See Requirement CUI-JWT-2.3: ID Token Functionality in link:Requirements.adoc[Requirements]_
+
+* [x] Implement basic ID token parsing and validation
+* [x] Implement email claim access
+* [ ] Implement comprehensive user identity information (name, preferred_username, etc.)
+* [ ] Implement authentication context information (auth_time, acr, amr, etc.)
+* _Note: Current implementation in ParsedIdToken.java provides basic functionality but lacks comprehensive user identity and authentication context information_
+
+==== Refresh Token Functionality
+_See Requirement CUI-JWT-2.4: Refresh Token Functionality in link:Requirements.adoc[Requirements]_
+
+* [x] Implement basic refresh token representation
+* [ ] Implement token refresh capabilities as defined in RFC 6749
+* [ ] Implement token lifecycle management
+* _Note: Current implementation in ParsedRefreshToken.java provides a minimal implementation that treats refresh tokens as opaque strings_
+
+==== Multi-Issuer Support
+_See Requirement CUI-JWT-3: Multi-Issuer Support in link:Requirements.adoc[Requirements]_
+
+* [x] Implement issuer configuration for multiple token issuers
+* [x] Implement automatic issuer selection based on token content
+* [x] Implement validation that tokens come from trusted issuers
+* _Note: Fully implemented in MultiIssuerJwtParser.java_
+
+==== Token Parsing Methods
+_See Requirement CUI-JWT-5.1: Token Parsing Methods in link:Requirements.adoc[Requirements]_
+
+* [x] Implement methods for parsing access tokens
+* [x] Implement methods for parsing ID tokens
+* [x] Implement methods for parsing refresh tokens
+* _Note: Fully implemented in TokenFactory.java_
+
+==== Multiple Parser Support
+_See Requirement CUI-JWT-5.2: Multiple Parser Support in link:Requirements.adoc[Requirements]_
+
+* [x] Implement support for multiple token parsers
+* [x] Implement automatic parser selection based on token characteristics
+* _Note: Fully implemented in TokenFactory.java using MultiIssuerJwtParser_
+
+==== Configuration Flexibility
+_See Requirement CUI-JWT-6.1: Configuration Flexibility in link:Requirements.adoc[Requirements]_
+
+* [x] Implement flexible configuration mechanism for token validation
+* [x] Support different validation settings for different token types and issuers
+* _Note: Implemented in JwksAwareTokenParserImpl.java and related classes_
+
+==== Thread Safety
+_See Requirement CUI-JWT-10.1: Thread Safety in link:Requirements.adoc[Requirements]_
+
+* [x] Implement thread-safe token parsing and validation
+* [x] Use immutable objects and thread-safe operations
+* [x] Avoid shared mutable state
+* _Note: Implemented throughout the codebase, with explicit thread-safety documentation in JwksAwareTokenParserImpl.java_
+
+==== Error Handling
+_See Requirement CUI-JWT-10.2: Error Handling in link:Requirements.adoc[Requirements]_
+
+* [x] Implement graceful error handling for token parsing and validation
+* [x] Provide meaningful error messages
+* [x] Use Optional returns for methods that might fail
+* _Note: Implemented in JwksAwareTokenParserImpl.java and other classes_
+
+==== Claims Validation
+_See Requirement CUI-JWT-8.4: Claims Validation in link:Requirements.adoc[Requirements]_
+
+* [ ] Implement comprehensive validation for required claims as specified in RFC 7519:
+  * [ ] Subject (sub)
+  * [ ] Expiration time (exp)
+  * [ ] Issued at (iat)
+  * [ ] Not before time (nbf)
+* _Note: Current implementation only validates the issuer claim_
+
+==== Secure Communication
+_See Requirement CUI-JWT-8.3: Secure Communication in link:Requirements.adoc[Requirements]_
+
+* [ ] Enforce TLS 1.2 or higher for key retrieval as recommended by NIST SP 800-52 Rev. 2
+* _Note: Current implementation allows any TLS version or relies on VM defaults_
+
+==== Cryptographic Agility
+_See Requirement CUI-JWT-8.5: Cryptographic Agility in link:Requirements.adoc[Requirements]_
+
+* [ ] Implement support for algorithm upgrades without breaking changes
+* [ ] Add preferred algorithm ordering to enable graceful migration to stronger algorithms
+
+==== Algorithm Validation
+_See Requirement CUI-JWT-1.3: Signature Validation in link:Requirements.adoc[Requirements]_
+
+* [ ] Implement explicit checks for supported/rejected algorithms
+* [ ] Reject tokens with unsupported algorithms (HS256, HS384, HS512, None)
+
+=== Logging
+
+==== Security Event Logging
+_See Requirement CUI-JWT-7.3: Security Events in link:Requirements.adoc[Requirements]_
+
+* [ ] Implement logging for security-relevant events as recommended by RFC 8417:
+  * [ ] Token validation failures
+  * [ ] Key rotation events
+  * [ ] Configuration changes
+  * [ ] Suspicious token usage patterns
+
+== Documentation Tasks
+
+=== Update Specification
+
+* [x] Update the specification to match the actual implementation naming (JwksLoader, JwksLoaderFactory, MultiIssuerJwtParser)
+* [ ] Ensure all implementation classes are properly documented with references to the requirements they implement
+* [ ] Update class and method Javadoc to include references to the requirements

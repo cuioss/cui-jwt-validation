@@ -104,7 +104,7 @@ public interface JwtParser {
 The `JwtParser` implementation will:
 
 1. Parse the token using JJWT library
-2. Validate the token signature using keys from the `KeyManager`
+2. Validate the token signature using keys from the `JwksLoader`
 3. Validate required claims (issuer, expiration, etc.)
 4. Return the parsed token as a `Jws<Claims>` object
 
@@ -115,7 +115,7 @@ The JwtParser interface is implemented by link:../../src/main/java/de/cuioss/jwt
 public class JwksAwareTokenParserImpl implements JwtParser {
     private static final CuiLogger LOGGER = new CuiLogger(JwksAwareTokenParserImpl.class);
     private final JwtParser jwtParser;
-    private final JwksClient jwksClient;
+    private final JwksLoader jwksLoader;
     private final String issuer;
 
     @Override
@@ -210,94 +210,68 @@ public class MultiIssuerTokenParser implements JwtParser {
 }
 ----
 
-=== KeyManager
+=== JwksLoader
 _See Requirement link:../Requirements.adoc#CUI-JWT-4[CUI-JWT-4: Key Management]_
 
-The `KeyManager` handles the retrieval, caching, and rotation of cryptographic keys used for token validation.
+The `JwksLoader` interface handles the retrieval, caching, and rotation of cryptographic keys used for token validation.
 
-==== JwksClient
-
-The JwksClient is implemented in link:../../src/main/java/de/cuioss/jwt/token/jwks/JwksClient.java[JwksClient.java] and provides functionality for fetching and caching JSON Web Keys (JWK) from a JWKS endpoint.
+The JwksLoader interface is implemented in link:../../src/main/java/de/cuioss/jwt/token/jwks/JwksLoader.java[JwksLoader.java] and defines the contract for loading JSON Web Keys (JWK) from various sources.
 
 ==== Interface Definition
 
 [source,java]
 ----
-public interface KeyManager {
-    Optional<Key> getKey(String keyId, String algorithm);
-    void refreshKeys();
+public interface JwksLoader {
+    Optional<Key> getKey(String kid);
+    Optional<Key> getFirstKey();
+    Set<String> keySet();
 }
 ----
 
 ==== Implementation Details
 
-The `KeyManager` implementation will:
+The library provides several implementations of the JwksLoader interface:
 
-1. Fetch keys from JWKS endpoints
-2. Cache keys for performance
-3. Refresh keys periodically
-4. Validate key algorithm compatibility
+1. `HttpJwksLoader` - Loads JWKS from an HTTP endpoint with caching and automatic refresh
+2. `JWKSKeyLoader` - Loads JWKS from a string content (used internally by other loaders)
+
+The `HttpJwksLoader` implementation handles:
+
+1. HTTP communication with JWKS endpoints
+2. Caching keys for performance
+3. Refreshing keys periodically
+4. Error handling for HTTP communication
 
 [source,java]
 ----
-public class JwksKeyManager implements KeyManager {
-    private static final CuiLogger LOGGER = new CuiLogger(JwksKeyManager.class);
-    private final JwksClient jwksClient;
-    private final Map<String, Key> keyCache = new ConcurrentHashMap<>();
-    private final long refreshIntervalSeconds;
-    private volatile long lastRefreshTime;
+public class HttpJwksLoader implements JwksLoader {
+    private static final CuiLogger LOGGER = new CuiLogger(HttpJwksLoader.class);
+    private final URI jwksUri;
+    private final int refreshIntervalSeconds;
+    private final LoadingCache<String, JWKSKeyLoader> jwksCache;
+    private final HttpClient httpClient;
 
     @Override
-    public Optional<Key> getKey(String keyId, String algorithm) {
-        LOGGER.debug("Getting key with ID %s for algorithm %s", keyId, algorithm);
-
-        // Check if refresh is needed
-        if (isRefreshNeeded()) {
-            try {
-                refreshKeys();
-            } catch (Exception e) {
-                LOGGER.error(e, ERROR.KEY_REFRESH_FAILED.format(jwksClient.getEndpointUrl()));
-            }
-        }
-
-        // Get key from cache
-        Key key = keyCache.get(keyId);
-        if (key == null) {
-            LOGGER.debug("Key not found in cache: %s", keyId);
+    public Optional<Key> getKey(String kid) {
+        if (MoreStrings.isEmpty(kid)) {
+            LOGGER.debug("Key ID is null or empty");
             return Optional.empty();
         }
 
-        // Verify algorithm matches
-        if (!isAlgorithmCompatible(key, algorithm)) {
-            LOGGER.warn(WARN.ALGORITHM_MISMATCH.format(keyId, algorithm));
-            return Optional.empty();
+        // First try to get the key from the current loader
+        Optional<Key> key = resolve().getKey(kid);
+
+        // If key not found, force a refresh and try again
+        if (key.isEmpty()) {
+            LOGGER.debug("Key with ID %s not found, refreshing keys", kid);
+            jwksCache.invalidate(CACHE_KEY);
+            key = resolve().getKey(kid);
         }
 
-        return Optional.of(key);
+        return key;
     }
 
-    @Override
-    public void refreshKeys() {
-        LOGGER.debug("Refreshing keys from JWKS endpoint");
-
-        try {
-            Map<String, PublicKey> keys = jwksClient.getKeys();
-
-            // Update cache
-            keyCache.clear();
-            keyCache.putAll(keys);
-
-            lastRefreshTime = System.currentTimeMillis();
-            LOGGER.info(INFO.KEYS_REFRESHED.format(jwksClient.getEndpointUrl()));
-        } catch (Exception e) {
-            LOGGER.error(e, ERROR.KEY_RETRIEVAL_FAILED.format(jwksClient.getEndpointUrl()));
-            throw new KeyManagementException("Failed to refresh keys", e);
-        }
-    }
-
-    private boolean isRefreshNeeded() {
-        return System.currentTimeMillis() - lastRefreshTime > refreshIntervalSeconds * 1000;
-    }
+    // Other methods implementation...
 }
 ----
 
