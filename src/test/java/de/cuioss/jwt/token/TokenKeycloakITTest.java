@@ -98,7 +98,9 @@ public class TokenKeycloakITTest extends KeycloakITBase {
         JwksLoader jwksLoader = JwksLoaderFactory.createHttpLoader(getJWKSUrl(), 100, createSSLContextFromSSLConfig(sslConfig));
         JwksAwareTokenParserImpl parser = new JwksAwareTokenParserImpl(jwksLoader, getIssuer());
 
-        factory = TokenFactory.of(parser);
+        factory = TokenFactory.builder()
+                .addParser(parser)
+                .build();
     }
 
     private String requestToken(Map<String, String> parameter, String tokenType) {

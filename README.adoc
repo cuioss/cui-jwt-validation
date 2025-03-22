@@ -53,7 +53,10 @@ The link:src/main/java/de/cuioss/portal/authentication/token/TokenFactory.java[T
 [source, java]
 ----
 // Create a factory with multiple token parsers
-TokenFactory factory = TokenFactory.of(parser1, parser2);
+TokenFactory factory = TokenFactory.builder()
+        .addParser(parser1)
+        .addParser(parser2)
+        .build();
 
 // Create and validate tokens
 Optional<ParsedAccessToken> accessToken = factory.createAccessToken(tokenString);
@@ -100,7 +103,10 @@ JwksAwareTokenParser issuer2Parser = JwksAwareTokenParser.builder()
     .build();
 
 // Create a factory supporting both issuers
-TokenFactory multiIssuerFactory = TokenFactory.of(issuer1Parser, issuer2Parser);
+TokenFactory multiIssuerFactory = TokenFactory.builder()
+        .addParser(issuer1Parser)
+        .addParser(issuer2Parser)
+        .build();
 ----
 
 == Token Types

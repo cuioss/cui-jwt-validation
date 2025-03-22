@@ -105,7 +105,11 @@ The `JwtParser` implementation will:
 
 1. Parse the token using JJWT library
 2. Validate the token signature using keys from the `JwksLoader`
-3. Validate required claims (issuer, expiration, etc.)
+3. Validate required claims:
+   * Issuer (iss) - Validated in JwksAwareTokenParserImpl using requireIssuer()
+   * Expiration time (exp) - Validated implicitly by JJWT parser and explicitly in ParsedToken.isExpired()
+   * Not before time (nbf) - Validated implicitly by JJWT parser and accessible via ParsedToken.getNotBeforeTime()
+   * Audience (aud) - Currently not validated (see TODO.adoc)
 4. Return the parsed token as a `Jws<Claims>` object
 
 The JwtParser interface is implemented by link:../../src/main/java/de/cuioss/jwt/token/JwksAwareTokenParserImpl.java[JwksAwareTokenParserImpl.java], which provides JWKS-aware token parsing and validation.

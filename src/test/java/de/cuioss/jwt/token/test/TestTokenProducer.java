@@ -220,6 +220,32 @@ public class TestTokenProducer {
         }
     }
 
+    /**
+     * Creates a valid signed JWT with a specific "Issued At" (iat) time and a "JWT ID" (jti) claim
+     *
+     * @param issuedAt the instant representing the "Issued At" time
+     * @param tokenId the JWT ID to set
+     * @return a signed JWT token string with the iat and jti claims set
+     */
+    public static String validSignedJWTWithIssuedAtAndTokenId(Instant issuedAt, String tokenId) {
+        try {
+            JwtBuilder builder = Jwts.builder()
+                    .setIssuer(ISSUER)
+                    .setSubject(SUBJECT)
+                    .setIssuedAt(Date.from(issuedAt))
+                    .setId(tokenId)
+                    .setExpiration(Date.from(issuedAt.plusSeconds(3600))) // 1 hour expiration
+                    .signWith(KeyMaterialHandler.getDefaultPrivateKey(), SignatureAlgorithm.RS256);
+
+            // Add claims from file
+            addClaims(builder, SOME_SCOPES);
+
+            return builder.compact();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create JWT", e);
+        }
+    }
+
     @Test
     void shouldCreateScopesAndClaims() {
         String token = validSignedJWTWithClaims(SOME_SCOPES);

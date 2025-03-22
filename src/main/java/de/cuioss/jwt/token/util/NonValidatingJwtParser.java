@@ -70,15 +70,15 @@ public class NonValidatingJwtParser {
 
     /**
      * Default maximum size of a JWT token in bytes to prevent overflow attacks.
-     * 16KB should be more than enough for any reasonable JWT token.
+     * 8KB as recommended by OAuth 2.0 JWT BCP Section 3.11.
      */
-    public static final int DEFAULT_MAX_TOKEN_SIZE = 16 * 1024;
+    public static final int DEFAULT_MAX_TOKEN_SIZE = 8 * 1024;
 
     /**
      * Default maximum size of decoded JSON payload in bytes.
-     * 16KB should be more than enough for any reasonable JWT claims.
+     * 8KB as recommended by OAuth 2.0 JWT BCP Section 3.11.
      */
-    public static final int DEFAULT_MAX_PAYLOAD_SIZE = 16 * 1024;
+    public static final int DEFAULT_MAX_PAYLOAD_SIZE = 8 * 1024;
 
     /**
      * Maximum size of a JWT token in bytes to prevent overflow attacks.

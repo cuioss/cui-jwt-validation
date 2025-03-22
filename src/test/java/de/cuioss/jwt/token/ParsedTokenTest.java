@@ -28,12 +28,15 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 
 import static de.cuioss.jwt.token.test.TestTokenProducer.SOME_SCOPES;
 import static de.cuioss.jwt.token.test.TestTokenProducer.validSignedJWTWithClaims;
 import static de.cuioss.jwt.token.test.TestTokenProducer.validSignedJWTWithNotBefore;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -181,6 +184,48 @@ class ParsedTokenTest {
             var token = ParsedAccessToken.fromTokenString(initialToken, TestTokenProducer.getDefaultTokenParser());
             assertFalse(token.isPresent(), "Token should not be present for valid input");
 
+        }
+    }
+
+    @Nested
+    @DisplayName("Issued At Time and Token ID Tests")
+    class IssuedAtAndTokenIdTests {
+
+        @Test
+        @DisplayName("Should correctly retrieve issued at time")
+        void shouldRetrieveIssuedAtTime() {
+            // Create a token with a specific issued at time (5 minutes ago)
+            Instant issuedAt = Instant.now().minusSeconds(300);
+            String tokenId = "test-token-id-" + System.currentTimeMillis();
+            String initialToken = TestTokenProducer.validSignedJWTWithIssuedAtAndTokenId(issuedAt, tokenId);
+
+            var token = ParsedAccessToken.fromTokenString(initialToken, TestTokenProducer.getDefaultTokenParser());
+            assertTrue(token.isPresent(), "Token should be present for valid input");
+
+            // Verify the issued at time is correctly retrieved
+            OffsetDateTime expectedIssuedAt = OffsetDateTime.ofInstant(issuedAt, ZoneId.systemDefault());
+            OffsetDateTime actualIssuedAt = token.get().getIssuedAtTime();
+
+            // Check that the times are within 1 second of each other (to account for any precision loss)
+            long timeDifferenceSeconds = Math.abs(expectedIssuedAt.toEpochSecond() - actualIssuedAt.toEpochSecond());
+            assertTrue(timeDifferenceSeconds <= 1, 
+                "Issued at time should match the expected time (within 1 second). Expected: " + 
+                expectedIssuedAt + ", Actual: " + actualIssuedAt);
+        }
+
+        @Test
+        @DisplayName("Should correctly retrieve token ID")
+        void shouldRetrieveTokenId() {
+            // Create a token with a specific token ID
+            Instant issuedAt = Instant.now();
+            String tokenId = "test-token-id-" + System.currentTimeMillis();
+            String initialToken = TestTokenProducer.validSignedJWTWithIssuedAtAndTokenId(issuedAt, tokenId);
+
+            var token = ParsedAccessToken.fromTokenString(initialToken, TestTokenProducer.getDefaultTokenParser());
+            assertTrue(token.isPresent(), "Token should be present for valid input");
+
+            // Verify the token ID is correctly retrieved
+            assertEquals(tokenId, token.get().getTokenId(), "Token ID should match the expected value");
         }
     }
 }

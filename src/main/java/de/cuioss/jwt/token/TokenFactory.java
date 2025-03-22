@@ -35,11 +35,26 @@ import java.util.Optional;
  *   <li>Automatic parser selection based on token characteristics</li>
  *   <li>Creation of typed token instances ({@link ParsedAccessToken}, {@link ParsedIdToken}, {@link ParsedRefreshToken})</li>
  *   <li>Thread-safe token creation and validation</li>
+ *   <li>Configurable token size limits</li>
  * </ul>
  * <p>
- * Usage example:
+ * Basic usage example:
  * <pre>
- * TokenFactory factory = TokenFactory.of(parser1, parser2);
+ * TokenFactory factory = TokenFactory.builder()
+ *     .addParser(parser1)
+ *     .addParser(parser2)
+ *     .build();
+ * Optional&lt;ParsedAccessToken&gt; token = factory.createAccessToken(tokenString);
+ * </pre>
+ * <p>
+ * Advanced usage with custom token size limits:
+ * <pre>
+ * TokenFactory factory = TokenFactory.builder()
+ *     .addParser(parser1)
+ *     .addParser(parser2)
+ *     .maxTokenSize(8 * 1024)  // 8KB
+ *     .maxPayloadSize(4 * 1024)  // 4KB
+ *     .build();
  * Optional&lt;ParsedAccessToken&gt; token = factory.createAccessToken(tokenString);
  * </pre>
  * <p>
@@ -55,21 +70,90 @@ public class TokenFactory {
 
     private final MultiIssuerJwtParser tokenParser;
 
+
     /**
-     * Creates a new token factory using the given parser.
+     * Creates a new builder for {@link TokenFactory}
      *
-     * @param tokenParser The parser to use for token validation, must not be null
-     * @return A new TokenFactory instance
+     * @return a new {@link Builder} instance
      */
-    public static TokenFactory of(@NonNull JwksAwareTokenParserImpl... tokenParser) {
-        Preconditions.checkArgument(tokenParser.length > 0, "tokenParser must be set");
-        var builder = MultiIssuerJwtParser.builder();
-        for (JwksAwareTokenParserImpl parser : tokenParser) {
-            builder.addParser(parser);
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /**
+     * Builder for {@link TokenFactory}
+     */
+    public static class Builder {
+        private final java.util.List<JwksAwareTokenParserImpl> parsers = new java.util.ArrayList<>();
+        private Integer maxTokenSize;
+        private Integer maxPayloadSize;
+
+        /**
+         * Adds a parser for a specific issuer
+         *
+         * @param parser the parser for that issuer
+         * @return this builder instance
+         */
+        public Builder addParser(@NonNull JwksAwareTokenParserImpl parser) {
+            parsers.add(parser);
+            return this;
         }
-        var factory = new TokenFactory(builder.build());
-        LOGGER.debug("Created TokenFactory with %s parser(s)", tokenParser.length);
-        return factory;
+
+        /**
+         * Sets the maximum token size in bytes
+         *
+         * @param maxTokenSize the maximum token size in bytes
+         * @return this builder instance
+         */
+        public Builder maxTokenSize(int maxTokenSize) {
+            this.maxTokenSize = maxTokenSize;
+            return this;
+        }
+
+        /**
+         * Sets the maximum payload size in bytes
+         *
+         * @param maxPayloadSize the maximum payload size in bytes
+         * @return this builder instance
+         */
+        public Builder maxPayloadSize(int maxPayloadSize) {
+            this.maxPayloadSize = maxPayloadSize;
+            return this;
+        }
+
+        /**
+         * Builds the {@link TokenFactory}
+         *
+         * @return a new instance of {@link TokenFactory}
+         */
+        public TokenFactory build() {
+            Preconditions.checkArgument(!parsers.isEmpty(), "At least one parser must be added");
+
+            // Create MultiIssuerJwtParser builder
+            MultiIssuerJwtParser.Builder multiIssuerBuilder = MultiIssuerJwtParser.builder();
+
+            // Configure token size limits if provided
+            if (maxTokenSize != null || maxPayloadSize != null) {
+                multiIssuerBuilder.configureInspectionParser(builder -> {
+                    if (maxTokenSize != null) {
+                        builder.maxTokenSize(maxTokenSize);
+                    }
+                    if (maxPayloadSize != null) {
+                        builder.maxPayloadSize(maxPayloadSize);
+                    }
+                });
+            }
+
+            // Add parsers
+            for (JwksAwareTokenParserImpl parser : parsers) {
+                multiIssuerBuilder.addParser(parser);
+            }
+
+            // Build MultiIssuerJwtParser and TokenFactory
+            var factory = new TokenFactory(multiIssuerBuilder.build());
+            LOGGER.debug("Created TokenFactory with %s parser(s)", parsers.size());
+            return factory;
+        }
     }
 
     /**

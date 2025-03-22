@@ -149,4 +149,25 @@ public abstract class ParsedToken {
         return notBeforeTime.map(aLong -> OffsetDateTime
                 .ofInstant(Instant.ofEpochSecond(aLong), ZoneId.systemDefault()));
     }
+
+    /**
+     * Returns the "Issued At" time from the token.
+     * The "iat" (issued at) claim identifies the time at which the JWT was issued.
+     * 
+     * @return the {@link OffsetDateTime} representation of the "Issued At" time
+     */
+    public OffsetDateTime getIssuedAtTime() {
+        return OffsetDateTime
+                .ofInstant(Instant.ofEpochSecond(jsonWebToken.getIssuedAtTime()), ZoneId.systemDefault());
+    }
+
+    /**
+     * Returns the JWT ID from the token.
+     * The "jti" (JWT ID) claim provides a unique identifier for the JWT.
+     * 
+     * @return the JWT ID string
+     */
+    public String getTokenId() {
+        return jsonWebToken.getTokenID();
+    }
 }

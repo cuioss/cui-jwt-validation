@@ -112,14 +112,6 @@ public class TokenFactory {
         return new Builder();
     }
 
-    // Factory method for simple creation
-    public static TokenFactory of(JwksAwareTokenParserImpl... tokenParser) {
-        Builder builder = builder();
-        for (JwksAwareTokenParserImpl parser : tokenParser) {
-            builder.addParser(parser);
-        }
-        return builder.build();
-    }
 
     // Existing methods...
 }
@@ -189,7 +181,10 @@ public class MultiIssuerJwtParser {
 [source,java]
 ----
 // Create TokenFactory with default token size limits
-TokenFactory factory = TokenFactory.of(parser1, parser2);
+TokenFactory factory = TokenFactory.builder()
+    .addParser(parser1)
+    .addParser(parser2)
+    .build();
 ----
 
 === Advanced Usage with Custom Token Size Limits

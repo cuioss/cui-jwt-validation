@@ -74,8 +74,29 @@ public class MultiIssuerJwtParser {
      *                       {@link JwtParser} instances as values. Must not be null.
      */
     public MultiIssuerJwtParser(@NonNull Map<String, JwtParser> issuerToParser) {
+        this(issuerToParser, null);
+    }
+
+    /**
+     * Constructor taking a map of issuer URLs to their corresponding parsers and a configurator
+     * for the inspection parser.
+     *
+     * @param issuerToParser Map containing issuer URLs as keys and their corresponding
+     *                       {@link JwtParser} instances as values. Must not be null.
+     * @param inspectionParserConfigurator Optional configurator for the NonValidatingJwtParser builder
+     */
+    public MultiIssuerJwtParser(
+            @NonNull Map<String, JwtParser> issuerToParser,
+            java.util.function.Consumer<NonValidatingJwtParser.NonValidatingJwtParserBuilder> inspectionParserConfigurator) {
         this.issuerToParser = new HashMap<>(issuerToParser);
-        this.inspectionParser = NonValidatingJwtParser.builder().build();
+
+        // Create the inspection parser with custom configuration if provided
+        NonValidatingJwtParser.NonValidatingJwtParserBuilder builder = NonValidatingJwtParser.builder();
+        if (inspectionParserConfigurator != null) {
+            inspectionParserConfigurator.accept(builder);
+        }
+        this.inspectionParser = builder.build();
+
         LOGGER.debug("Initialized MultiIssuerJwtParser with %s parser(s)", issuerToParser.size());
     }
 
@@ -133,6 +154,7 @@ public class MultiIssuerJwtParser {
      */
     public static class Builder {
         private final Map<String, JwtParser> issuerToParser = new HashMap<>();
+        private java.util.function.Consumer<NonValidatingJwtParser.NonValidatingJwtParserBuilder> inspectionParserConfigurator;
 
         /**
          * Adds a parser for a specific issuer
@@ -147,12 +169,24 @@ public class MultiIssuerJwtParser {
         }
 
         /**
+         * Configures the inspection parser used for extracting issuer information.
+         *
+         * @param configurator a consumer that configures the NonValidatingJwtParser builder
+         * @return this builder instance
+         */
+        public Builder configureInspectionParser(
+                java.util.function.Consumer<NonValidatingJwtParser.NonValidatingJwtParserBuilder> configurator) {
+            this.inspectionParserConfigurator = configurator;
+            return this;
+        }
+
+        /**
          * Builds the {@link MultiIssuerJwtParser}
          *
          * @return a new instance of {@link MultiIssuerJwtParser}
          */
         public MultiIssuerJwtParser build() {
-            return new MultiIssuerJwtParser(issuerToParser);
+            return new MultiIssuerJwtParser(issuerToParser, inspectionParserConfigurator);
         }
     }
 }
