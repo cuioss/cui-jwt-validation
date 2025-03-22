@@ -14,7 +14,7 @@ This document provides detailed specifications for the technical components of t
 == Component Specifications
 
 === TokenFactory
-_See Requirement link:../Requirements.adoc#CUI-JWT-2[CUI-JWT-2: Token Creation and Management]_
+_See Requirement link:../Requirements.adoc#CUI-JWT-2[CUI-JWT-2: Token Representation]_
 
 The `TokenFactory` is the primary entry point for applications using the library. It provides methods for creating and validating different types of tokens (access, ID, refresh) while handling the complexity of token parsing and validation.
 
@@ -135,10 +135,10 @@ public class JwksAwareTokenParserImpl implements JwtParser {
 }
 ----
 
-=== MultiIssuerTokenParser
+=== MultiIssuerJwtParser
 _See Requirement link:../Requirements.adoc#CUI-JWT-3[CUI-JWT-3: Multi-Issuer Support]_
 
-The `MultiIssuerTokenParser` manages multiple JWT token parsers for different token issuers in a multi-tenant environment. It inspects JWT tokens, determines their issuer, and selects the appropriate parser.
+The `MultiIssuerJwtParser` manages multiple JWT token parsers for different token issuers in a multi-tenant environment. It inspects JWT tokens, determines their issuer, and selects the appropriate parser.
 
 This component is implemented in link:../../src/main/java/de/cuioss/jwt/token/util/MultiIssuerJwtParser.java[MultiIssuerJwtParser.java].
 
@@ -152,8 +152,8 @@ The `MultiIssuerTokenParser` will:
 
 [source,java]
 ----
-public class MultiIssuerTokenParser implements JwtParser {
-    private static final CuiLogger LOGGER = new CuiLogger(MultiIssuerTokenParser.class);
+public class MultiIssuerJwtParser implements JwtParser {
+    private static final CuiLogger LOGGER = new CuiLogger(MultiIssuerJwtParser.class);
     private final List<JwtParser> parsers;
     private final JwtParser defaultParser;
 

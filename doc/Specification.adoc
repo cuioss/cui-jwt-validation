@@ -129,14 +129,14 @@ The library supports tokens from multiple issuers through issuer configuration, 
 This functionality is implemented in link:../src/main/java/de/cuioss/jwt/token/util/MultiIssuerJwtParser.java[MultiIssuerJwtParser.java].
 
 === Security Measures
-_See Requirement CUI-JWT-8: Security Requirements in link:Requirements.adoc[Requirements]_
+_See Requirement CUI-JWT-8: Security in link:Requirements.adoc[Requirements]_
 
 The implementation includes security measures such as algorithm restrictions, key length requirements, and claim validation.
 
 This functionality is implemented in link:../src/main/java/de/cuioss/jwt/token/JwksAwareTokenParserImpl.java[JwksAwareTokenParserImpl.java].
 
 === Logging
-_See Requirement CUI-JWT-7: Logging Requirements in link:Requirements.adoc[Requirements]_
+_See Requirement CUI-JWT-7: Logging in link:Requirements.adoc[Requirements]_
 
 The implementation follows the CUI logging standards.
 
@@ -144,7 +144,7 @@ This functionality is implemented throughout the codebase using the CuiLogger cl
 
 
 == Testing Strategy
-_See Requirement CUI-JWT-5: Testing Requirements in link:Requirements.adoc[Requirements]_
+_See Requirement CUI-JWT-12: Testing and Quality Assurance in link:Requirements.adoc[Requirements]_
 
 The testing strategy includes unit testing, integration testing, security testing, and performance testing.
 

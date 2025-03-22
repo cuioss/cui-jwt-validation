@@ -7,108 +7,63 @@
 link:../Specification.adoc[Back to Main Specification]
 
 == Overview
-_See Requirement link:../Requirements.adoc#CUI-JWT-5[CUI-JWT-5: Testing Requirements]_
+_See Requirement link:../Requirements.adoc#CUI-JWT-12[CUI-JWT-12: Testing and Quality Assurance]_
 
 This document provides detailed specifications for testing the JWT token handling library.
 
 == Compliance with CUI Testing Standards
 
-This section outlines how the JWT token handling library testing should comply with the https://github.com/cuioss/cui-llm-rules/blob/main/standards/testing/core-standards.adoc[CUI Testing Core Standards].
+This section outlines how the JWT token handling library testing should comply with the CUI Testing Standards:
 
-=== Current Gaps and Implementation Plan
+* https://github.com/cuioss/cui-llm-rules/blob/main/standards/testing/core-standards.adoc[CUI Testing Core Standards]
+* https://github.com/cuioss/cui-llm-rules/blob/main/standards/testing/quality-standards.adoc[CUI Quality Standards and Testing Framework]
 
-The following gaps have been identified between the current testing implementation and the CUI Testing Core Standards:
+=== Summary of CUI Testing Core Standards
 
-==== Test Coverage Gaps
+The CUI Testing Core Standards define the following key principles:
 
-* *Gap*: No explicit coverage target defined (CUI standard requires 80% line coverage)
-* *Gap*: No explicit requirement for all public methods to have unit tests
-* *Plan*: 
-  ** Implement test coverage reporting in the build process
-  ** Ensure all public methods have corresponding unit tests
-  ** Set up coverage thresholds in the build to enforce minimum 80% line coverage
+==== Core Testing Principles
+* *Test Coverage*: All public methods must have unit tests, with at least 80% line coverage
+* *Test Independence*: Tests must be independent, not rely on execution order, and clean up after themselves
+* *Test Clarity*: Tests should follow the Arrange-Act-Assert pattern and clearly describe what is being tested
+* *Test Maintenance*: Tests must be maintained alongside production code and fixed promptly when failing
 
-==== Test Independence Gaps
+==== Test Types
+* *Unit Tests*: Focus on testing a single unit of code in isolation with mocked dependencies
+* *Integration Tests*: Test interaction between components, may use real dependencies
+* *System Tests*: Test the entire system as a whole, verifying end-to-end functionality
 
-* *Gap*: No explicit guidelines for test independence
-* *Gap*: No requirements for tests to clean up after themselves
-* *Plan*:
-  ** Review existing tests for independence issues
-  ** Add guidelines for ensuring test independence
-  ** Implement proper test cleanup mechanisms, especially for integration tests
+==== Best Practices
+* *Test Organization*: Group related tests, use descriptive names, follow consistent conventions
+* *Test Data*: Use meaningful test data, avoid hardcoded values, consider edge cases
+* *Assertions*: Use specific assertions with meaningful error messages
 
-==== Test Clarity Gaps
+=== Summary of CUI Quality Standards and Testing Framework
 
-* *Gap*: No explicit guidelines for test naming
-* *Gap*: No explicit mention of the Arrange-Act-Assert pattern
-* *Plan*:
-  ** Establish consistent test naming conventions
-  ** Document and enforce the Arrange-Act-Assert pattern in all tests
-  ** Add examples of well-structured tests
+The CUI Quality Standards and Testing Framework defines:
 
-==== Test Maintenance Gaps
+==== Core Testing Standards
+* *Test Structure*: Follow AAA pattern, one logical assertion per test, clear naming
+* *Coverage Requirements*: Minimum 80% line and branch coverage, critical paths must have 100% coverage
+* *Testing Tools*: Use JUnit 5, CUI testing utilities (cui-test-generator, cui-test-value-objects, etc.)
 
-* *Gap*: No guidelines for maintaining tests alongside production code
-* *Gap*: No requirements for promptly fixing failing tests
-* *Plan*:
-  ** Establish guidelines for test maintenance
-  ** Implement CI/CD checks to prevent merging code with failing tests
-  ** Document the process for updating tests when production code changes
+==== Quality Verification
+* *Quality Analysis Tools*: SonarCloud, JUnit, mutation testing, code reviews
+* *Quality Metrics*: Code coverage, duplication, complexity, issue density, technical debt
+* *Parameterized Tests Best Practices*: Minimum 3 test cases, descriptive method names, clear documentation
+* *Performance*: Fast test execution, efficient resource usage, parallel execution where possible
+* *Review Process*: Regular reviews after major features, before PRs, during code review
 
-==== Test Organization Gaps
+==== Success Criteria
+* *Test Coverage*: All coverage requirements met, critical paths fully covered
+* *Quality Analysis*: All quality gates passed, new issues addressed
+* *Security*: No critical vulnerabilities, security hotspots reviewed
 
-* *Gap*: No guidelines for organizing tests
-* *Gap*: No conventions for test method naming
-* *Plan*:
-  ** Establish a consistent structure for test classes
-  ** Define naming conventions for test methods
-  ** Group related tests in the same test class
-
-==== Test Data Gaps
-
-* *Gap*: No guidelines for test data management
-* *Gap*: No recommendations for avoiding hardcoded values
-* *Plan*:
-  ** Create reusable test data generators
-  ** Implement test data builders for complex objects
-  ** Document best practices for test data management
-
-==== Assertion Gaps
-
-* *Gap*: No guidelines for using specific assertions
-* *Gap*: No requirements for meaningful error messages
-* *Plan*:
-  ** Document best practices for assertions
-  ** Ensure all assertions include meaningful error messages
-  ** Use appropriate assertion methods for different scenarios
-
-=== Production Code Considerations
-
-While implementing the testing improvements outlined above, it's important to note that no production code should be modified unless absolutely necessary. The focus should be on enhancing the test suite and documentation without changing the core functionality.
-
-However, during the testing improvements, some potential needs for production code changes might be identified:
-
-1. *Testability Improvements*: Some classes might need minor refactoring to improve testability, such as:
-   * Adding interfaces for better mocking
-   * Extracting complex methods into smaller, more testable units
-   * Adding package-private methods for testing purposes
-
-2. *Logging Enhancements*: To support comprehensive logging tests, production code might need:
-   * Consistent use of logging levels
-   * Structured log messages with proper identifiers
-   * Appropriate error handling with logging
-
-3. *Performance Considerations*: To meet performance testing requirements, some optimizations might be needed:
-   * Improved caching mechanisms
-   * More efficient algorithms
-   * Better resource management
-
-Any such changes should be discussed with the team and implemented separately from the testing improvements, following proper change management procedures.
 
 == Testing Strategy
 
 === Unit Testing
-_See Requirement link:../Requirements.adoc#CUI-JWT-5.1[CUI-JWT-5.1: Unit Testing]_
+_See Requirement link:../Requirements.adoc#CUI-JWT-12.2[CUI-JWT-12.2: Unit Testing]_
 
 Unit tests will cover:
 
@@ -189,7 +144,7 @@ void shouldReturnEmptyForInvalidSignature() {
 ----
 
 === Integration Testing with TestContainers
-_See Requirement link:../Requirements.adoc#CUI-JWT-5.2[CUI-JWT-5.2: Integration Testing]_
+_See Requirement link:../Requirements.adoc#CUI-JWT-12.3[CUI-JWT-12.3: Integration Testing]_
 
 Integration tests will verify compatibility with identity providers (IDPs) that can be instrumented using TestContainers. Currently, Keycloak is the primary IDP that can be easily tested with TestContainers.
 
@@ -223,7 +178,7 @@ The `KeycloakITBase` class from the `cui-test-keycloak-integration` library prov
 * Helper methods for token requests and validation
 
 === Security Testing
-_See Requirement link:../Requirements.adoc#CUI-JWT-8[CUI-JWT-8: Security Requirements]_
+_See Requirement link:../Requirements.adoc#CUI-JWT-8[CUI-JWT-8: Security]_
 
 Security tests will include:
 
@@ -281,7 +236,7 @@ void shouldRejectAlgorithmSwitching() {
 ----
 
 === Performance Testing
-_See Requirement link:../Requirements.adoc#CUI-JWT-5.3[CUI-JWT-5.3: Performance Testing]_
+_See Requirement link:../Requirements.adoc#CUI-JWT-12.4[CUI-JWT-12.4: Performance Testing]_
 
 Performance tests will verify:
 
@@ -332,7 +287,7 @@ void shouldMeetTokenParsingPerformanceRequirements() {
 ----
 
 === Logging Tests
-_See Requirement link:../Requirements.adoc#CUI-JWT-7[CUI-JWT-7: Logging Requirements]_
+_See Requirement link:../Requirements.adoc#CUI-JWT-7[CUI-JWT-7: Logging]_
 
 Logging tests will follow CUI logging test requirements:
 
@@ -401,3 +356,85 @@ void shouldLogKeyRetrievalFailure() {
         JwtTokenLogMessages.ERROR.KEY_RETRIEVAL_FAILED.resolveIdentifierString());
 }
 ----
+
+=== Compliance Testing
+_See Requirement link:../Requirements.adoc#CUI-JWT-12.6[CUI-JWT-12.6: Compliance Testing]_
+
+Compliance tests verify that the implementation adheres to the standards and best practices defined in various specifications. To ensure consistency and traceability, compliance test classes should follow a specific naming convention and include references to the requirements they verify.
+
+==== Test Class Naming Convention
+
+Compliance test classes should be named according to the following pattern:
+
+`<Standard><Feature>ComplianceTest`
+
+Where:
+* `<Standard>` is the identifier of the standard or specification (e.g., RFC7519, OAuth2)
+* `<Feature>` is the specific feature or aspect being tested (e.g., JWT, TokenValidation)
+
+This naming convention makes it clear which standard is being tested for compliance and helps with organizing and discovering tests.
+
+==== Proposed Test Classes
+
+Based on the requirements in CUI-JWT-12.6, the following compliance test classes should be implemented:
+
+* `RFC7519JWTComplianceTest` - Tests compliance with the JWT specification defined in RFC 7519
+* `OpenIDConnectComplianceTest` - Tests compliance with OpenID Connect Certification requirements
+* `OAuth2JWTBestPracticesComplianceTest` - Tests compliance with OAuth 2.0 JWT Best Current Practices
+
+==== Requirement Referencing
+
+Within each compliance test class, tests should include references to the specific requirements they verify. This can be done through:
+
+1. Class-level documentation that lists all requirements covered by the test class
+2. Method-level documentation that specifies which requirement(s) each test method verifies
+3. Assertions that include requirement identifiers in failure messages
+
+==== Example Implementation
+
+[source,java]
+----
+/**
+ * Tests compliance with RFC 7519 JWT specification.
+ * 
+ * Covers requirements:
+ * - CUI-JWT-1.1: Token Structure
+ * - CUI-JWT-1.3: Signature Validation
+ * - CUI-JWT-8.4: Claims Validation
+ */
+public class RFC7519JWTComplianceTest {
+
+    /**
+     * Verifies compliance with RFC 7519 Section 4.1.1 - "iss" (Issuer) Claim
+     * Requirement: CUI-JWT-8.4: Claims Validation
+     */
+    @Test
+    void shouldValidateIssuerClaim() {
+        // Test implementation
+        // ...
+
+        // Assertion includes reference to requirement
+        assertTrue(result, "Token issuer validation failed - violates CUI-JWT-8.4");
+    }
+
+    /**
+     * Verifies compliance with RFC 7519 Section 4.1.4 - "exp" (Expiration Time) Claim
+     * Requirement: CUI-JWT-8.4: Claims Validation
+     */
+    @Test
+    void shouldValidateExpirationClaim() {
+        // Test implementation
+        // ...
+
+        // Assertion includes reference to requirement
+        assertTrue(result, "Token expiration validation failed - violates CUI-JWT-8.4");
+    }
+}
+----
+
+This approach ensures that:
+
+1. Test classes are consistently named based on the standards they verify
+2. Each test is clearly linked to the requirements it validates
+3. It's easy to trace from requirements to tests and vice versa
+4. Test failure messages provide context about which requirements are violated

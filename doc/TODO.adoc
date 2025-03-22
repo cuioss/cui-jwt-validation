@@ -12,6 +12,25 @@ This document lists the actionable tasks that need to be completed to fully impl
 
 === Core Components
 
+==== Token Structure and Types
+_See Requirement CUI-JWT-1.1: Token Structure and CUI-JWT-1.2: Token Types in link:Requirements.adoc[Requirements]_
+
+* [ ] Verify support for standard JWT token structure with header, payload, and signature
+* [ ] Ensure proper handling of different token types (access, ID, refresh)
+* _Note: Basic token structure and types are implemented in ParsedToken.java and its subclasses, but should be verified against RFC 7519 requirements_
+
+==== Base Token Functionality
+_See Requirement CUI-JWT-2.1: Base Token Functionality in link:Requirements.adoc[Requirements]_
+
+* [ ] Implement comprehensive access to token claims as defined in RFC 7519:
+  * [ ] Expiration checking (exp claim)
+  * [ ] Issuer information (iss claim)
+  * [ ] Subject information (sub claim)
+  * [ ] Issued at time (iat claim)
+  * [ ] Not before time (nbf claim)
+  * [ ] JWT ID (jti claim)
+* _Note: Some of these claims are already implemented in ParsedToken.java, but should be verified for completeness_
+
 ==== JwksClient Implementation
 _See Requirement CUI-JWT-4.1: JWKS Endpoint Support in link:Requirements.adoc[Requirements]_
 
@@ -25,6 +44,27 @@ _See Requirement CUI-JWT-4: Key Management in link:Requirements.adoc[Requirement
 * [x] Update the specification to use JwksLoader instead of KeyManager to match the implementation
 * [x] Implement a dedicated KeyManager interface and JwksKeyManager class as mentioned in the original specification
 * _Note: The KeyManager interface and JwksKeyManager class now provide a dedicated API for key management, while JwksLoader and JwksLoaderFactory still provide the original functionality_
+
+==== Key Caching and Rotation
+_See Requirement CUI-JWT-4.2: Key Caching and CUI-JWT-4.3: Key Rotation in link:Requirements.adoc[Requirements]_
+
+* [ ] Implement key caching with configurable cache expiration
+* [ ] Implement automatic key rotation based on configurable refresh intervals
+* _Note: Basic caching and rotation may be implemented in HttpJwksLoader.java, but should be verified against requirements_
+
+==== Local Key Support
+_See Requirement CUI-JWT-4.4: Local Key Support in link:Requirements.adoc[Requirements]_
+
+* [ ] Implement support for local key configuration for testing or offline scenarios
+* _Note: This may be partially implemented in FileJwksLoader.java or InMemoryJwksLoader.java, but should be verified against requirements_
+
+==== Token Size Validation
+_See Requirement CUI-JWT-8.1: Token Size Limits in link:Requirements.adoc[Requirements] and link:specification/token-size-validation.adoc[Token Size Validation Specification]_
+
+* [ ] Implement a builder pattern for TokenFactory to allow passing token size parameters to NonValidatingJwtParser
+* [ ] Update MultiIssuerJwtParser to support configuring the NonValidatingJwtParser
+* _Note: The implementation should follow the specification in link:specification/token-size-validation.adoc[Token Size Validation Specification]_
+* _Important: As this is the first version of the library, there is no need for backward compatibility considerations_
 
 ==== Token Decryption Support
 _See Requirement CUI-JWT-1.4: Token Decryption in link:Requirements.adoc[Requirements] and link:specification/token-decryption.adoc[Token Decryption Specification]_
@@ -130,6 +170,24 @@ _See link:specification/testing.adoc#_test_independence_gaps[Test Independence G
 * [ ] Add guidelines for ensuring test independence
 * [ ] Implement proper test cleanup mechanisms, especially for integration tests
 
+==== Vulnerability Scanning
+_See Requirement CUI-JWT-12.5: Vulnerability Scanning in link:Requirements.adoc[Requirements]_
+
+* [ ] Implement regular vulnerability scanning using:
+  * [ ] OWASP Dependency Check for third-party dependencies
+  * [ ] Static Application Security Testing (SAST) tools
+  * [ ] Fuzz testing for input validation
+* _Note: These scans should be integrated into the CI/CD pipeline_
+
+==== Compliance Testing
+_See Requirement CUI-JWT-12.6: Compliance Testing in link:Requirements.adoc[Requirements]_
+
+* [ ] Implement tests to verify compliance with:
+  * [ ] OpenID Connect Certification requirements
+  * [ ] RFC 7519 JWT specification
+  * [ ] OAuth 2.0 JWT Best Current Practices
+* _Note: Compliance tests should verify that the implementation adheres to the standards and best practices_
+
 === Security
 
 ==== Token Size Limits
@@ -138,6 +196,15 @@ _See Requirement CUI-JWT-8.1: Token Size Limits in link:Requirements.adoc[Requir
 * [ ] Implement token size limits to prevent denial of service attacks
 * [ ] Maximum token size should be 8KB as recommended by OAuth 2.0 JWT BCP Section 3.11
 * _Note: Current implementation in NonValidatingJwtParser uses 16KB instead of 8KB_
+
+==== Safe Parsing
+_See Requirement CUI-JWT-8.2: Safe Parsing in link:Requirements.adoc[Requirements]_
+
+* [ ] Implement safe parsing practices to prevent security vulnerabilities:
+  * [ ] Protection against JSON parsing attacks
+  * [ ] Protection against injection attacks
+  * [ ] Protection against deserialization vulnerabilities
+* _Note: The implementation should follow OWASP Top 10 guidelines, particularly A8:2021-Software and Data Integrity Failures_
 
 ==== Access Token Functionality
 _See Requirement CUI-JWT-2.2: Access Token Functionality in link:Requirements.adoc[Requirements]_
@@ -239,6 +306,25 @@ _See Requirement CUI-JWT-1.3: Signature Validation in link:Requirements.adoc[Req
 * [ ] Reject tokens with unsupported algorithms (HS256, HS384, HS512, None)
 
 === Logging
+
+==== Log Levels
+_See Requirement CUI-JWT-7.1: Log Levels in link:Requirements.adoc[Requirements]_
+
+* [ ] Implement different log levels for different types of events:
+  * [ ] ERROR: Authentication failures, token validation errors
+  * [ ] WARN: Suspicious activities, token format issues
+  * [ ] INFO: Successful token validations, key rotations
+  * [ ] DEBUG: Detailed token processing information
+  * [ ] TRACE: Highly detailed debugging information
+* _Note: The implementation should follow CUI logging standards_
+
+==== Log Content
+_See Requirement CUI-JWT-7.2: Log Content in link:Requirements.adoc[Requirements]_
+
+* [ ] Ensure log messages include relevant information for troubleshooting without exposing sensitive data:
+  * [ ] Include: timestamps, event types, source components, outcome (success/failure)
+  * [ ] Exclude: full tokens, private keys, passwords
+* _Note: The implementation should follow OWASP Logging Cheat Sheet recommendations_
 
 ==== Security Event Logging
 _See Requirement CUI-JWT-7.3: Security Events in link:Requirements.adoc[Requirements]_
