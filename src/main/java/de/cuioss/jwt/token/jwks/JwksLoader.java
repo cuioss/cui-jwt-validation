@@ -16,6 +16,7 @@
 package de.cuioss.jwt.token.jwks;
 
 import java.security.Key;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -23,6 +24,11 @@ import java.util.Set;
  * Interface for loading JSON Web Keys (JWK) from a JWKS source.
  * <p>
  * Implementations can load keys from different sources like HTTP endpoints or files.
+ * <p>
+ * This interface supports cryptographic agility by providing methods to get keys
+ * along with their algorithm information.
+ * <p>
+ * Implements requirement: {@code CUI-JWT-8.5: Cryptographic Agility}
  * 
  * @author Oliver Wolff
  */
@@ -32,16 +38,23 @@ public interface JwksLoader {
      * Gets a key by its ID.
      *
      * @param kid the key ID
-     * @return an Optional containing the key if found, empty otherwise
+     * @return an Optional containing the key info if found, empty otherwise
      */
-    Optional<Key> getKey(String kid);
+    Optional<KeyInfo> getKeyInfo(String kid);
 
     /**
      * Gets the first available key.
      *
-     * @return an Optional containing the first key if available, empty otherwise
+     * @return an Optional containing the first key info if available, empty otherwise
      */
-    Optional<Key> getFirstKey();
+    Optional<KeyInfo> getFirstKeyInfo();
+
+    /**
+     * Gets all available keys with their algorithms.
+     *
+     * @return a List containing all available key infos
+     */
+    List<KeyInfo> getAllKeyInfos();
 
     /**
      * Gets the set of all available key IDs.

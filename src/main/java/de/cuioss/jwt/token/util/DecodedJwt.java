@@ -37,6 +37,7 @@ public class DecodedJwt {
     private final String signature;
     private final String issuer;
     private final String kid;
+    private final String alg;
     @Getter
     private final String[] parts;
     @Getter
@@ -63,6 +64,9 @@ public class DecodedJwt {
 
         // Extract kid from header if present
         this.kid = header != null && header.containsKey("kid") ? header.getString("kid") : null;
+
+        // Extract alg from header if present
+        this.alg = header != null && header.containsKey("alg") ? header.getString("alg") : null;
     }
 
     /**
@@ -108,5 +112,14 @@ public class DecodedJwt {
      */
     public Optional<String> getKid() {
         return Optional.ofNullable(kid);
+    }
+
+    /**
+     * Gets the alg (algorithm) from the JWT token header.
+     *
+     * @return an Optional containing the algorithm if present
+     */
+    public Optional<String> getAlg() {
+        return Optional.ofNullable(alg);
     }
 }

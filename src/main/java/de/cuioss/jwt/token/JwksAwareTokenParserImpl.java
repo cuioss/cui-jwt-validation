@@ -18,6 +18,8 @@ package de.cuioss.jwt.token;
 import de.cuioss.jwt.token.adapter.JsonWebToken;
 import de.cuioss.jwt.token.adapter.JwtAdapter;
 import de.cuioss.jwt.token.jwks.JwksLoader;
+import de.cuioss.jwt.token.jwks.KeyInfo;
+import de.cuioss.jwt.token.security.AlgorithmPreferences;
 import de.cuioss.jwt.token.util.DecodedJwt;
 import de.cuioss.jwt.token.util.NonValidatingJwtParser;
 import de.cuioss.tools.logging.CuiLogger;
@@ -32,7 +34,9 @@ import lombok.NonNull;
 import lombok.ToString;
 
 import java.security.Key;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static de.cuioss.jwt.token.JWTTokenLogMessages.INFO;
 import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
@@ -80,6 +84,7 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
     private final JwtParser jwtParser;
     private final JwksLoader jwksLoader;
     private final ClaimValidator claimValidator;
+    private final AlgorithmPreferences algorithmPreferences;
 
     @Getter
     private final String issuer;
@@ -91,8 +96,21 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
      * @param issuer     the issuer, must not be null
      */
     public JwksAwareTokenParserImpl(@NonNull JwksLoader jwksLoader, @NonNull String issuer) {
+        this(jwksLoader, issuer, new AlgorithmPreferences());
+    }
+
+    /**
+     * Constructor for JwksAwareTokenParserImpl with custom algorithm preferences.
+     *
+     * @param jwksLoader           the JWKS loader, must not be null
+     * @param issuer               the issuer, must not be null
+     * @param algorithmPreferences the algorithm preferences, must not be null
+     */
+    public JwksAwareTokenParserImpl(@NonNull JwksLoader jwksLoader, @NonNull String issuer, 
+                                   @NonNull AlgorithmPreferences algorithmPreferences) {
         this.jwksLoader = jwksLoader;
         this.issuer = issuer;
+        this.algorithmPreferences = algorithmPreferences;
         this.jwtParser = Jwts.parserBuilder()
                 .setAllowedClockSkewSeconds(30)
                 .requireIssuer(issuer)
@@ -128,31 +146,69 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
 
             // Extract the header and get the key ID if present
             Optional<String> kidOption = decodedJwt.get().getKid();
+            Optional<String> algOption = decodedJwt.get().getAlg();
 
-            Optional<Key> key;
+            // Get the algorithm from the token header if present
+            String requestedAlg = algOption.orElse("RS256"); // Default to RS256 if not specified
+            LOGGER.debug("Token requests algorithm: %s", requestedAlg);
+
+            // Check if the algorithm is supported
+            if (!algorithmPreferences.isSupported(requestedAlg)) {
+                LOGGER.warn(WARN.UNSUPPORTED_ALGORITHM.format(requestedAlg));
+                return Optional.empty();
+            }
+
+            Optional<KeyInfo> keyInfo;
             if (kidOption.isPresent()) {
                 // Get the key from the JWKS loader using the key ID
                 String kid = kidOption.get();
-                key = jwksLoader.getKey(kid);
-                if (key.isEmpty()) {
+                keyInfo = jwksLoader.getKeyInfo(kid);
+                if (keyInfo.isEmpty()) {
                     LOGGER.warn(WARN.KEY_NOT_FOUND.format(kid));
                     return Optional.empty();
                 }
             } else {
-                // If no key ID is present, try all available keys
-                LOGGER.debug("No key ID found in token header, trying all available keys");
-                key = jwksLoader.getFirstKey();
-                if (key.isEmpty()) {
+                // If no key ID is present, try to find a key with the requested algorithm
+                LOGGER.debug("No key ID found in token header, trying to find a key with algorithm: %s", requestedAlg);
+
+                // Get all available keys
+                List<KeyInfo> availableKeys = jwksLoader.getAllKeyInfos();
+                if (availableKeys.isEmpty()) {
                     LOGGER.warn(WARN.NO_KEYS_AVAILABLE::format);
+                    return Optional.empty();
+                }
+
+                // Filter keys by algorithm
+                List<String> availableAlgorithms = availableKeys.stream()
+                        .map(KeyInfo::getAlgorithm)
+                        .collect(Collectors.toList());
+
+                // Get the most preferred algorithm that is available
+                Optional<String> preferredAlg = algorithmPreferences.getMostPreferredAlgorithm(availableAlgorithms);
+                if (preferredAlg.isEmpty()) {
+                    LOGGER.warn(WARN.NO_SUPPORTED_ALGORITHM::format);
+                    return Optional.empty();
+                }
+
+                // Find a key with the preferred algorithm
+                keyInfo = availableKeys.stream()
+                        .filter(k -> preferredAlg.get().equals(k.getAlgorithm()))
+                        .findFirst();
+
+                if (keyInfo.isEmpty()) {
+                    LOGGER.warn(WARN.NO_KEY_FOR_ALGORITHM.format(preferredAlg.get()));
                     return Optional.empty();
                 }
             }
 
             // Create a new JwtParser with the signing key and parse the token
-            LOGGER.debug("Using key with algorithm: %s", key.get().getAlgorithm());
+            Key key = keyInfo.get().getKey();
+            String algorithm = keyInfo.get().getAlgorithm();
+            LOGGER.debug("Using key with algorithm: %s", algorithm);
+
             try {
                 Jws<Claims> jws = Jwts.parserBuilder()
-                        .setSigningKey(key.get())
+                        .setSigningKey(key)
                         .build()
                         .parseClaimsJws(token);
 

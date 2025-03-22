@@ -238,4 +238,96 @@ class NonValidatingJwtParserTest {
             assertEquals(VALID_TOKEN, result.get().getRawToken(), "Raw token should match the original token");
         }
     }
+
+    @Nested
+    @DisplayName("Security Measures Tests")
+    class SecurityMeasuresTest {
+
+        @Test
+        @DisplayName("Should respect JSON depth limits")
+        void shouldRespectJsonDepthLimits() {
+            // Create a deeply nested JSON structure that exceeds the max depth
+            StringBuilder nestedJson = new StringBuilder("{");
+            for (int i = 0; i < NonValidatingJwtParser.DEFAULT_MAX_DEPTH + 1; i++) {
+                nestedJson.append("\"level").append(i).append("\":{");
+            }
+            // Close all the nested objects
+            for (int i = 0; i < NonValidatingJwtParser.DEFAULT_MAX_DEPTH + 1; i++) {
+                nestedJson.append("}");
+            }
+
+            String encodedNestedJson = Base64.getUrlEncoder().encodeToString(nestedJson.toString().getBytes(StandardCharsets.UTF_8));
+            String tokenWithDeepJson = encodedNestedJson + "." + ENCODED_PAYLOAD + "." + ENCODED_SIGNATURE;
+
+            Optional<DecodedJwt> result = parser.decode(tokenWithDeepJson);
+            assertFalse(result.isPresent(), "Should not decode a token with JSON exceeding max depth");
+        }
+
+        @Test
+        @DisplayName("Should handle large JSON arrays")
+        void shouldHandleLargeJsonArrays() {
+            // Create a JSON with a large array
+            StringBuilder largeArrayJson = new StringBuilder("{\"array\":[");
+            for (int i = 0; i < NonValidatingJwtParser.DEFAULT_MAX_ARRAY_SIZE - 1; i++) {
+                if (i > 0) {
+                    largeArrayJson.append(",");
+                }
+                largeArrayJson.append("\"item").append(i).append("\"");
+            }
+            largeArrayJson.append("]}");
+
+            String encodedLargeArrayJson = Base64.getUrlEncoder().encodeToString(largeArrayJson.toString().getBytes(StandardCharsets.UTF_8));
+            String tokenWithLargeArray = encodedLargeArrayJson + "." + ENCODED_PAYLOAD + "." + ENCODED_SIGNATURE;
+
+            Optional<DecodedJwt> result = parser.decode(tokenWithLargeArray);
+            assertTrue(result.isPresent(), "Should decode a token with large JSON array within limits");
+
+            // Verify the array was parsed correctly
+            assertTrue(result.get().getHeader().isPresent(), "Header should be present");
+            JsonObject header = result.get().getHeader().get();
+            assertTrue(header.containsKey("array"), "Array should be present in header");
+        }
+
+        @Test
+        @DisplayName("Should handle large JSON strings")
+        void shouldHandleLargeJsonStrings() {
+            // Create a JSON with a large string
+            StringBuilder largeString = new StringBuilder();
+            for (int i = 0; i < NonValidatingJwtParser.DEFAULT_MAX_STRING_SIZE - 100; i++) {
+                largeString.append("a");
+            }
+            String largeStringJson = "{\"largeString\":\"" + largeString + "\"}";
+
+            String encodedLargeStringJson = Base64.getUrlEncoder().encodeToString(largeStringJson.getBytes(StandardCharsets.UTF_8));
+            String tokenWithLargeString = encodedLargeStringJson + "." + ENCODED_PAYLOAD + "." + ENCODED_SIGNATURE;
+
+            Optional<DecodedJwt> result = parser.decode(tokenWithLargeString);
+            assertTrue(result.isPresent(), "Should decode a token with large JSON string within limits");
+
+            // Verify the string was parsed correctly
+            assertTrue(result.get().getHeader().isPresent(), "Header should be present");
+            JsonObject header = result.get().getHeader().get();
+            assertTrue(header.containsKey("largeString"), "Large string should be present in header");
+        }
+
+        @Test
+        @DisplayName("Should use cached JsonReaderFactory")
+        void shouldUseCachedJsonReaderFactory() {
+            // This test verifies that the JsonReaderFactory is cached and reused
+            // We can't directly test the caching behavior, but we can verify that
+            // the parser works correctly after the JsonReaderFactory is created
+
+            // First decode should create and cache the JsonReaderFactory
+            Optional<DecodedJwt> result1 = parser.decode(VALID_TOKEN);
+            assertTrue(result1.isPresent(), "First decode should succeed");
+
+            // Second decode should use the cached JsonReaderFactory
+            Optional<DecodedJwt> result2 = parser.decode(VALID_TOKEN);
+            assertTrue(result2.isPresent(), "Second decode should succeed");
+
+            // Both results should be equal
+            assertEquals(result1.get().getRawToken(), result2.get().getRawToken(), 
+                    "Both decodes should produce the same result");
+        }
+    }
 }

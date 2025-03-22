@@ -48,7 +48,7 @@ class InMemoryJwksLoaderTest {
     @DisplayName("Should load and parse JWKS from string")
     void shouldLoadAndParseJwksFromString() {
         // When
-        Optional<Key> key = inMemoryJwksLoader.getKey(JWKSFactory.DEFAULT_KEY_ID);
+        Optional<Key> key = inMemoryJwksLoader.getKeyInfo(JWKSFactory.DEFAULT_KEY_ID).map(KeyInfo::getKey);
 
         // Then
         assertTrue(key.isPresent(), "Key should be present");
@@ -60,7 +60,7 @@ class InMemoryJwksLoaderTest {
     @DisplayName("Should return empty when kid is null")
     void shouldReturnEmptyWhenKidIsNull() {
         // When
-        Optional<Key> key = inMemoryJwksLoader.getKey(null);
+        Optional<Key> key = inMemoryJwksLoader.getKeyInfo(null).map(KeyInfo::getKey);
 
         // Then
         assertFalse(key.isPresent(), "Key should not be present when kid is null");
@@ -71,7 +71,7 @@ class InMemoryJwksLoaderTest {
     @DisplayName("Should return empty when kid is not found")
     void shouldReturnEmptyWhenKidNotFound() {
         // When
-        Optional<Key> key = inMemoryJwksLoader.getKey("unknown-kid");
+        Optional<Key> key = inMemoryJwksLoader.getKeyInfo("unknown-kid").map(KeyInfo::getKey);
 
         // Then
         assertFalse(key.isPresent(), "Key should not be present when kid is not found");
@@ -81,7 +81,7 @@ class InMemoryJwksLoaderTest {
     @DisplayName("Should get first key when available")
     void shouldGetFirstKeyWhenAvailable() {
         // When
-        Optional<Key> key = inMemoryJwksLoader.getFirstKey();
+        Optional<Key> key = inMemoryJwksLoader.getFirstKeyInfo().map(KeyInfo::getKey);
 
         // Then
         assertTrue(key.isPresent(), "First key should be present");
@@ -95,7 +95,7 @@ class InMemoryJwksLoaderTest {
         JwksLoader invalidJwksLoader = JwksLoaderFactory.createInMemoryLoader(invalidJwksContent);
 
         // When
-        Optional<Key> key = invalidJwksLoader.getKey(JWKSFactory.DEFAULT_KEY_ID);
+        Optional<Key> key = invalidJwksLoader.getKeyInfo(JWKSFactory.DEFAULT_KEY_ID).map(KeyInfo::getKey);
 
         // Then
         assertFalse(key.isPresent(), "Key should not be present when JWKS is invalid");
@@ -110,7 +110,7 @@ class InMemoryJwksLoaderTest {
         JwksLoader missingFieldsJwksLoader = JwksLoaderFactory.createInMemoryLoader(missingFieldsJwksContent);
 
         // When
-        Optional<Key> key = missingFieldsJwksLoader.getKey(JWKSFactory.DEFAULT_KEY_ID);
+        Optional<Key> key = missingFieldsJwksLoader.getKeyInfo(JWKSFactory.DEFAULT_KEY_ID).map(KeyInfo::getKey);
 
         // Then
         assertFalse(key.isPresent(), "Key should not be present when JWK is missing required fields");
@@ -121,7 +121,7 @@ class InMemoryJwksLoaderTest {
     @DisplayName("Should update keys when refreshed with new data")
     void shouldUpdateKeysWhenRefreshedWithNewData() {
         // Given
-        Optional<Key> initialKey = inMemoryJwksLoader.getKey(JWKSFactory.DEFAULT_KEY_ID);
+        Optional<Key> initialKey = inMemoryJwksLoader.getKeyInfo(JWKSFactory.DEFAULT_KEY_ID).map(KeyInfo::getKey);
         assertTrue(initialKey.isPresent(), "Initial key should be present");
 
         // When - create a new loader with updated content
@@ -129,10 +129,10 @@ class InMemoryJwksLoaderTest {
         JwksLoader updatedLoader = JwksLoaderFactory.createInMemoryLoader(updatedJwksContent);
 
         // Then - verify the new loader has the updated key
-        Optional<Key> oldKey = updatedLoader.getKey(JWKSFactory.DEFAULT_KEY_ID);
+        Optional<Key> oldKey = updatedLoader.getKeyInfo(JWKSFactory.DEFAULT_KEY_ID).map(KeyInfo::getKey);
         assertFalse(oldKey.isPresent(), "Old key should not be present in the new loader");
 
-        Optional<Key> newKey = updatedLoader.getKey("updated-key-id");
+        Optional<Key> newKey = updatedLoader.getKeyInfo("updated-key-id").map(KeyInfo::getKey);
         assertTrue(newKey.isPresent(), "New key should be present in the new loader");
     }
 
@@ -162,7 +162,7 @@ class InMemoryJwksLoaderTest {
 
         // Then
         assertInstanceOf(JWKSKeyLoader.class, loader, "Loader should be an instance of JWKSKeyLoader");
-        Optional<Key> key = loader.getKey(JWKSFactory.DEFAULT_KEY_ID);
+        Optional<Key> key = loader.getKeyInfo(JWKSFactory.DEFAULT_KEY_ID).map(KeyInfo::getKey);
         assertTrue(key.isPresent(), "Key should be present");
     }
 }

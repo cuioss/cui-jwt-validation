@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.Key;
 import java.util.Optional;
+import de.cuioss.jwt.token.jwks.KeyInfo;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -61,10 +62,10 @@ class FileJwksLoaderTest {
     @DisplayName("Should load and parse JWKS from file")
     void shouldLoadAndParseJwks() {
         // When
-        Optional<Key> key = fileJwksLoader.getKey(TEST_KID);
+        Optional<KeyInfo> keyInfo = fileJwksLoader.getKeyInfo(TEST_KID);
 
         // Then
-        assertTrue(key.isPresent(), "Key should be present");
+        assertTrue(keyInfo.isPresent(), "Key info should be present");
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Resolving key loader for JWKS file");
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Successfully loaded");
     }
@@ -73,10 +74,10 @@ class FileJwksLoaderTest {
     @DisplayName("Should return empty when kid is null")
     void shouldReturnEmptyWhenKidIsNull() {
         // When
-        Optional<Key> key = fileJwksLoader.getKey(null);
+        Optional<KeyInfo> keyInfo = fileJwksLoader.getKeyInfo(null);
 
         // Then
-        assertFalse(key.isPresent(), "Key should not be present when kid is null");
+        assertFalse(keyInfo.isPresent(), "Key info should not be present when kid is null");
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Key ID is null");
     }
 
@@ -84,20 +85,20 @@ class FileJwksLoaderTest {
     @DisplayName("Should return empty when kid is not found")
     void shouldReturnEmptyWhenKidNotFound() {
         // When
-        Optional<Key> key = fileJwksLoader.getKey("unknown-kid");
+        Optional<KeyInfo> keyInfo = fileJwksLoader.getKeyInfo("unknown-kid");
 
         // Then
-        assertFalse(key.isPresent(), "Key should not be present when kid is not found");
+        assertFalse(keyInfo.isPresent(), "Key info should not be present when kid is not found");
     }
 
     @Test
     @DisplayName("Should get first key when available")
     void shouldGetFirstKeyWhenAvailable() {
         // When
-        Optional<Key> key = fileJwksLoader.getFirstKey();
+        Optional<KeyInfo> keyInfo = fileJwksLoader.getFirstKeyInfo();
 
         // Then
-        assertTrue(key.isPresent(), "First key should be present");
+        assertTrue(keyInfo.isPresent(), "First key info should be present");
     }
 
     @Test
@@ -107,10 +108,10 @@ class FileJwksLoaderTest {
         JwksLoader nonExistentFileLoader = JwksLoaderFactory.createFileLoader(tempDir.resolve("non-existent.json").toString());
 
         // When
-        Optional<Key> key = nonExistentFileLoader.getKey(TEST_KID);
+        Optional<KeyInfo> keyInfo = nonExistentFileLoader.getKeyInfo(TEST_KID);
 
         // Then
-        assertFalse(key.isPresent(), "Key should not be present when file is not found");
+        assertFalse(keyInfo.isPresent(), "Key info should not be present when file is not found");
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to read JWKS from file");
 
         // No cleanup needed
@@ -125,10 +126,10 @@ class FileJwksLoaderTest {
         JwksLoader invalidJwksLoader = JwksLoaderFactory.createFileLoader(invalidJwksPath.toString());
 
         // When
-        Optional<Key> key = invalidJwksLoader.getKey(TEST_KID);
+        Optional<KeyInfo> keyInfo = invalidJwksLoader.getKeyInfo(TEST_KID);
 
         // Then
-        assertFalse(key.isPresent(), "Key should not be present when JWKS is invalid");
+        assertFalse(keyInfo.isPresent(), "Key info should not be present when JWKS is invalid");
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to parse JWKS JSON");
 
         // No cleanup needed
@@ -144,10 +145,10 @@ class FileJwksLoaderTest {
         JwksLoader missingFieldsJwksLoader = JwksLoaderFactory.createFileLoader(missingFieldsJwksPath.toString());
 
         // When
-        Optional<Key> key = missingFieldsJwksLoader.getKey(TEST_KID);
+        Optional<KeyInfo> keyInfo = missingFieldsJwksLoader.getKeyInfo(TEST_KID);
 
         // Then
-        assertFalse(key.isPresent(), "Key should not be present when JWK is missing required fields");
+        assertFalse(keyInfo.isPresent(), "Key info should not be present when JWK is missing required fields");
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to parse RSA key");
 
         // No cleanup needed
@@ -157,8 +158,8 @@ class FileJwksLoaderTest {
     @DisplayName("Should refresh keys when file is updated")
     void shouldRefreshKeysWhenFileIsUpdated() throws IOException {
         // Given
-        Optional<Key> initialKey = fileJwksLoader.getKey(TEST_KID);
-        assertTrue(initialKey.isPresent(), "Initial key should be present");
+        Optional<KeyInfo> initialKeyInfo = fileJwksLoader.getKeyInfo(TEST_KID);
+        assertTrue(initialKeyInfo.isPresent(), "Initial key info should be present");
 
         // When - update the file with new content
         String updatedJwksContent = JWKSFactory.createValidJwksWithKeyId("updated-key-id");
@@ -168,11 +169,11 @@ class FileJwksLoaderTest {
         JwksLoader newLoader = JwksLoaderFactory.createFileLoader(jwksFilePath.toString());
 
         // Then - verify the old key is no longer available and the new key is
-        Optional<Key> oldKey = newLoader.getKey(TEST_KID);
-        assertFalse(oldKey.isPresent(), "Old key should no longer be present");
+        Optional<KeyInfo> oldKeyInfo = newLoader.getKeyInfo(TEST_KID);
+        assertFalse(oldKeyInfo.isPresent(), "Old key info should no longer be present");
 
-        Optional<Key> newKey = newLoader.getKey("updated-key-id");
-        assertTrue(newKey.isPresent(), "New key should be present");
+        Optional<KeyInfo> newKeyInfo = newLoader.getKeyInfo("updated-key-id");
+        assertTrue(newKeyInfo.isPresent(), "New key info should be present");
     }
 
     @Test

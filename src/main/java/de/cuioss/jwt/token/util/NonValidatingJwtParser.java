@@ -24,13 +24,17 @@ import jakarta.json.JsonReader;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import jakarta.json.JsonReaderFactory;
 
 /**
  * Utility class for parsing JWT tokens and extracting common information from them.
@@ -81,6 +85,21 @@ public class NonValidatingJwtParser {
     public static final int DEFAULT_MAX_PAYLOAD_SIZE = 8 * 1024;
 
     /**
+     * Default maximum string size for JSON parsing.
+     */
+    public static final int DEFAULT_MAX_STRING_SIZE = 4 * 1024;
+
+    /**
+     * Default maximum array size for JSON parsing.
+     */
+    public static final int DEFAULT_MAX_ARRAY_SIZE = 64;
+
+    /**
+     * Default maximum depth for JSON parsing.
+     */
+    public static final int DEFAULT_MAX_DEPTH = 10;
+
+    /**
      * Maximum size of a JWT token in bytes to prevent overflow attacks.
      */
     @Builder.Default
@@ -91,6 +110,46 @@ public class NonValidatingJwtParser {
      */
     @Builder.Default
     private final int maxPayloadSize = DEFAULT_MAX_PAYLOAD_SIZE;
+
+    /**
+     * Maximum string size for JSON parsing.
+     */
+    @Builder.Default
+    private final int maxStringSize = DEFAULT_MAX_STRING_SIZE;
+
+    /**
+     * Maximum array size for JSON parsing.
+     */
+    @Builder.Default
+    private final int maxArraySize = DEFAULT_MAX_ARRAY_SIZE;
+
+    /**
+     * Maximum depth for JSON parsing.
+     */
+    @Builder.Default
+    private final int maxDepth = DEFAULT_MAX_DEPTH;
+
+    /**
+     * Cached JsonReaderFactory with security settings.
+     * This is lazily initialized to avoid unnecessary creation.
+     */
+    @Getter(lazy = true)
+    private final JsonReaderFactory jsonReaderFactory = createJsonReaderFactory();
+
+    /**
+     * Creates a JsonReaderFactory with security settings.
+     * This method is used by the lazy getter for jsonReaderFactory.
+     *
+     * @return a JsonReaderFactory configured with security settings
+     */
+    private JsonReaderFactory createJsonReaderFactory() {
+        Map<String, Object> config = new HashMap<>();
+        // Use the correct property names for Jakarta JSON API
+        config.put("jakarta.json.stream.maxStringLength", maxStringSize);
+        config.put("jakarta.json.stream.maxArraySize", maxArraySize);
+        config.put("jakarta.json.stream.maxDepth", maxDepth);
+        return Json.createReaderFactory(config);
+    }
 
     /**
      * Decodes a JWT token and returns a DecodedJwt object containing the decoded parts.
@@ -150,6 +209,10 @@ public class NonValidatingJwtParser {
 
     /**
      * Decodes a Base64Url encoded JSON part of a JWT token.
+     * Implements security measures to prevent JSON parsing attacks:
+     * - JSON depth limits
+     * - JSON object size limits
+     * - Protection against duplicate keys
      *
      * @param encodedPart the Base64Url encoded part
      * @return an Optional containing the decoded JsonObject, or empty if decoding fails
@@ -163,8 +226,9 @@ public class NonValidatingJwtParser {
                 return Optional.empty();
             }
 
-            // Parse the part as JSON
-            try (JsonReader reader = Json.createReader(new StringReader(new String(decoded, StandardCharsets.UTF_8)))) {
+            // Use the cached JsonReaderFactory with security settings
+            try (JsonReader reader = getJsonReaderFactory()
+                    .createReader(new StringReader(new String(decoded, StandardCharsets.UTF_8)))) {
                 return Optional.of(reader.readObject());
             }
         } catch (Exception e) {

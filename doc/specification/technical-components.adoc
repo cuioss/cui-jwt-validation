@@ -101,8 +101,9 @@ The `JwksLoader` interface handles the retrieval, caching, and rotation of crypt
 
 The JwksLoader interface defines the following methods:
 
-* `Optional<Key> getKey(String kid)` - Gets a key by its ID
-* `Optional<Key> getFirstKey()` - Gets the first available key
+* `Optional<KeyInfo> getKeyInfo(String kid)` - Gets a key by its ID
+* `Optional<KeyInfo> getFirstKeyInfo()` - Gets the first available key
+* `List<KeyInfo> getAllKeyInfos()` - Gets all available keys with their algorithms
 * `Set<String> keySet()` - Gets the set of available key IDs
 
 The library provides several implementations of the JwksLoader interface:

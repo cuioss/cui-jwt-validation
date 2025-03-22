@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.token.jwks;
 
+import de.cuioss.jwt.token.security.JwkKeyHandler;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
 import jakarta.json.Json;
@@ -26,18 +27,16 @@ import lombok.NonNull;
 import lombok.ToString;
 
 import java.io.StringReader;
-import java.math.BigInteger;
 import java.security.Key;
-import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.RSAPublicKeySpec;
-import java.util.Base64;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Pattern;
 
 import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
 
@@ -45,6 +44,11 @@ import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
  * Implementation of {@link JwksLoader} that loads JWKS from a string content.
  * <p>
  * This implementation is useful when the JWKS content is already available as a string.
+ * <p>
+ * This implementation supports cryptographic agility by handling multiple key types
+ * and algorithms, including RSA, EC, and RSA-PSS.
+ * <p>
+ * Implements requirement: {@code CUI-JWT-8.5: Cryptographic Agility}
  * 
  * @author Oliver Wolff
  */
@@ -54,9 +58,9 @@ public class JWKSKeyLoader implements JwksLoader {
 
     private static final CuiLogger LOGGER = new CuiLogger(JWKSKeyLoader.class);
     private static final String RSA_KEY_TYPE = "RSA";
-    private static final Pattern BASE64_URL_PATTERN = Pattern.compile("^[A-Za-z0-9\\-_]*=*$");
+    private static final String EC_KEY_TYPE = "EC";
 
-    private final Map<String, Key> keyMap;
+    private final Map<String, KeyInfo> keyInfoMap;
 
     /**
      * Creates a new JWKSKeyLoader with the specified JWKS content.
@@ -64,17 +68,17 @@ public class JWKSKeyLoader implements JwksLoader {
      * @param jwksContent the JWKS content as a string, must not be null
      */
     public JWKSKeyLoader(@NonNull String jwksContent) {
-        keyMap = parseJwks(jwksContent);
+        keyInfoMap = parseJwks(jwksContent);
     }
 
     /**
      * Parse JWKS content and extract keys.
      *
      * @param jwksContent the JWKS content as a string
-     * @return a map of key IDs to keys
+     * @return a map of key IDs to key infos
      */
-    private Map<String, Key> parseJwks(String jwksContent) {
-        Map<String, Key> result = new ConcurrentHashMap<>();
+    private Map<String, KeyInfo> parseJwks(String jwksContent) {
+        Map<String, KeyInfo> result = new ConcurrentHashMap<>();
 
         try (JsonReader reader = Json.createReader(new StringReader(jwksContent))) {
             JsonObject jwks = reader.readObject();
@@ -93,7 +97,7 @@ public class JWKSKeyLoader implements JwksLoader {
      * @param jwks the JSON Web Key Set object
      * @param result the map to store the extracted keys
      */
-    private void parseJsonWebKeySet(JsonObject jwks, Map<String, Key> result) {
+    private void parseJsonWebKeySet(JsonObject jwks, Map<String, KeyInfo> result) {
         // Check if this is a JWKS with a "keys" array or a single key
         if (jwks.containsKey("keys")) {
             parseStandardJwks(jwks, result);
@@ -111,7 +115,7 @@ public class JWKSKeyLoader implements JwksLoader {
      * @param jwks the JWKS object
      * @param result the map to store the extracted keys
      */
-    private void parseStandardJwks(JsonObject jwks, Map<String, Key> result) {
+    private void parseStandardJwks(JsonObject jwks, Map<String, KeyInfo> result) {
         JsonArray keysArray = jwks.getJsonArray("keys");
         if (keysArray != null) {
             for (int i = 0; i < keysArray.size(); i++) {
@@ -121,108 +125,75 @@ public class JWKSKeyLoader implements JwksLoader {
         }
     }
 
-    private void processKey(JsonObject jwk, Map<String, Key> result) {
+    /**
+     * Process a single JWK and add it to the result map.
+     *
+     * @param jwk the JWK object
+     * @param result the map to store the extracted key
+     */
+    private void processKey(JsonObject jwk, Map<String, KeyInfo> result) {
         if (!jwk.containsKey("kty")) {
             LOGGER.warn(WARN.JWK_MISSING_KTY::format);
             return;
         }
 
         String kty = jwk.getString("kty");
-
-        // Generate a key ID if not present
         String kid = jwk.containsKey("kid") ? jwk.getString("kid") : "default-key-id";
+        String alg = jwk.containsKey("alg") ? jwk.getString("alg") : null;
 
-        if (RSA_KEY_TYPE.equals(kty)) {
-            try {
-                Key publicKey = parseRsaKey(jwk);
-                result.put(kid, publicKey);
-                LOGGER.debug("Parsed RSA key with ID: %s", kid);
-            } catch (Exception e) {
-                LOGGER.warn(e, WARN.RSA_KEY_PARSE_FAILED.format(kid, e.getMessage()));
+        try {
+            if (RSA_KEY_TYPE.equals(kty)) {
+                Key publicKey = JwkKeyHandler.parseRsaKey(jwk);
+                // Determine algorithm if not specified
+                if (alg == null) {
+                    alg = "RS256"; // Default to RS256 if not specified
+                }
+                result.put(kid, new KeyInfo(publicKey, alg));
+                LOGGER.debug("Parsed RSA key with ID: %s and algorithm: %s", kid, alg);
+            } else if (EC_KEY_TYPE.equals(kty)) {
+                Key publicKey = JwkKeyHandler.parseEcKey(jwk);
+                // Determine algorithm if not specified
+                if (alg == null) {
+                    // Determine algorithm based on curve
+                    String curve = jwk.getString("crv", "P-256");
+                    alg = JwkKeyHandler.determineEcAlgorithm(curve);
+                }
+                result.put(kid, new KeyInfo(publicKey, alg));
+                LOGGER.debug("Parsed EC key with ID: %s and algorithm: %s", kid, alg);
+            } else {
+                LOGGER.debug("Unsupported key type: %s for key ID: %s", kty, kid);
             }
-        } else {
-            LOGGER.debug("Unsupported key type: %s for key ID: %s", kty, kid);
+        } catch (Exception e) {
+            LOGGER.warn(e, WARN.RSA_KEY_PARSE_FAILED.format(kid, e.getMessage()));
         }
-    }
-
-    private Key parseRsaKey(JsonObject jwk) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        validateRsaKeyFields(jwk);
-
-        // Get the modulus and exponent
-        String modulusBase64 = jwk.getString("n");
-        String exponentBase64 = jwk.getString("e");
-
-        // Decode from Base64
-        byte[] modulusBytes = Base64.getUrlDecoder().decode(modulusBase64);
-        byte[] exponentBytes = Base64.getUrlDecoder().decode(exponentBase64);
-
-        // Convert to BigInteger
-        BigInteger modulus = new BigInteger(1, modulusBytes);
-        BigInteger exponent = new BigInteger(1, exponentBytes);
-
-        // Create RSA public key
-        RSAPublicKeySpec spec = new RSAPublicKeySpec(modulus, exponent);
-        KeyFactory factory = KeyFactory.getInstance(RSA_KEY_TYPE);
-        return factory.generatePublic(spec);
-    }
-
-    /**
-     * Validates that the RSA key has all required fields and that they are properly formatted.
-     *
-     * @param jwk the JWK object
-     * @throws InvalidKeySpecException if the JWK is missing required fields or has invalid values
-     */
-    private void validateRsaKeyFields(JsonObject jwk) throws InvalidKeySpecException {
-        // Check if required fields exist
-        if (!jwk.containsKey("n") || !jwk.containsKey("e")) {
-            throw new InvalidKeySpecException("JWK is missing required fields 'n' or 'e'");
-        }
-
-        // Get the modulus and exponent
-        String modulusBase64 = jwk.getString("n");
-        String exponentBase64 = jwk.getString("e");
-
-        // Validate Base64 format
-        if (!isValidBase64UrlEncoded(modulusBase64)) {
-            throw new InvalidKeySpecException("Invalid Base64 URL encoded value for 'n'");
-        }
-
-        if (!isValidBase64UrlEncoded(exponentBase64)) {
-            throw new InvalidKeySpecException("Invalid Base64 URL encoded value for 'e'");
-        }
-    }
-
-    /**
-     * Validates if a string is a valid Base64 URL encoded value.
-     *
-     * @param value the string to validate
-     * @return true if the string is a valid Base64 URL encoded value, false otherwise
-     */
-    private boolean isValidBase64UrlEncoded(String value) {
-        return !MoreStrings.isEmpty(value) && BASE64_URL_PATTERN.matcher(value).matches();
     }
 
     @Override
-    public Optional<Key> getKey(String kid) {
+    public Optional<KeyInfo> getKeyInfo(String kid) {
         if (MoreStrings.isBlank(kid)) {
             LOGGER.debug("Key ID is null or empty");
             return Optional.empty();
         }
 
-        return Optional.ofNullable(keyMap.get(kid));
+        return Optional.ofNullable(keyInfoMap.get(kid));
     }
 
     @Override
-    public Optional<Key> getFirstKey() {
-        if (keyMap.isEmpty()) {
+    public Optional<KeyInfo> getFirstKeyInfo() {
+        if (keyInfoMap.isEmpty()) {
             return Optional.empty();
         }
-        // Return the first key in the map
-        return Optional.of(keyMap.values().iterator().next());
+        // Return the first key info in the map
+        return Optional.of(keyInfoMap.values().iterator().next());
+    }
+
+    @Override
+    public List<KeyInfo> getAllKeyInfos() {
+        return new ArrayList<>(keyInfoMap.values());
     }
 
     @Override
     public Set<String> keySet() {
-        return keyMap.keySet();
+        return keyInfoMap.keySet();
     }
 }

@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 
 import java.security.Key;
 import java.util.Optional;
+import de.cuioss.jwt.token.jwks.KeyInfo;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -58,10 +59,10 @@ class HttpJwksLoaderTest {
     @DisplayName("Should fetch and parse JWKS from remote endpoint")
     void shouldFetchAndParseJwks() {
         // When
-        Optional<Key> key = httpJwksLoader.getKey(TEST_KID);
+        Optional<KeyInfo> keyInfo = httpJwksLoader.getKeyInfo(TEST_KID);
 
         // Then
-        assertTrue(key.isPresent(), "Key should be present");
+        assertTrue(keyInfo.isPresent(), "Key info should be present");
         assertEquals(1, moduleDispatcher.getCallCounter(), "JWKS endpoint should be called once");
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Refreshing keys from JWKS endpoint");
     }
@@ -71,8 +72,8 @@ class HttpJwksLoaderTest {
     void shouldCacheKeys() {
         // When
         for (int i = 0; i < 5; i++) {
-            Optional<Key> key = httpJwksLoader.getKey(TEST_KID);
-            assertTrue(key.isPresent(), "Key should be present on call " + i);
+            Optional<KeyInfo> keyInfo = httpJwksLoader.getKeyInfo(TEST_KID);
+            assertTrue(keyInfo.isPresent(), "Key info should be present on call " + i);
         }
 
         // Then
@@ -83,15 +84,15 @@ class HttpJwksLoaderTest {
     @DisplayName("Should refresh keys when kid not found")
     void shouldRefreshKeysWhenKidNotFound() {
         // Given
-        httpJwksLoader.getKey(TEST_KID); // Initial fetch
+        httpJwksLoader.getKeyInfo(TEST_KID); // Initial fetch
         assertEquals(1, moduleDispatcher.getCallCounter());
 
         // When
         moduleDispatcher.returnEmptyJwks();
-        Optional<Key> key = httpJwksLoader.getKey("unknown-kid");
+        Optional<KeyInfo> keyInfo = httpJwksLoader.getKeyInfo("unknown-kid");
 
         // Then
-        assertFalse(key.isPresent(), "Key should not be present");
+        assertFalse(keyInfo.isPresent(), "Key info should not be present");
         assertEquals(2, moduleDispatcher.getCallCounter(), "JWKS endpoint should be called again");
     }
 
@@ -107,10 +108,10 @@ class HttpJwksLoaderTest {
         HttpJwksLoader errorLoader = new HttpJwksLoader(endpoint, REFRESH_INTERVAL_SECONDS, null);
 
         // When
-        Optional<Key> key = errorLoader.getKey(TEST_KID);
+        Optional<KeyInfo> keyInfo = errorLoader.getKeyInfo(TEST_KID);
 
         // Then
-        assertFalse(key.isPresent(), "Key should not be present when server returns error");
+        assertFalse(keyInfo.isPresent(), "Key info should not be present when server returns error");
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to fetch JWKS");
     }
 
@@ -126,10 +127,10 @@ class HttpJwksLoaderTest {
         HttpJwksLoader invalidJsonLoader = new HttpJwksLoader(endpoint, REFRESH_INTERVAL_SECONDS, null);
 
         // When
-        Optional<Key> key = invalidJsonLoader.getKey(TEST_KID);
+        Optional<KeyInfo> keyInfo = invalidJsonLoader.getKeyInfo(TEST_KID);
 
         // Then
-        assertFalse(key.isPresent(), "Key should not be present when JWKS is invalid");
+        assertFalse(keyInfo.isPresent(), "Key info should not be present when JWKS is invalid");
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to parse JWKS JSON");
     }
 
@@ -138,13 +139,13 @@ class HttpJwksLoaderTest {
     @ModuleDispatcher
     void shouldRefreshKeysWhenCreatingNewInstance(URIBuilder uriBuilder) {
         // Given
-        httpJwksLoader.getKey(TEST_KID); // Initial fetch
+        httpJwksLoader.getKeyInfo(TEST_KID); // Initial fetch
         assertEquals(1, moduleDispatcher.getCallCounter());
 
         // When - create a new instance to force refresh
         String endpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
         HttpJwksLoader newLoader = new HttpJwksLoader(endpoint, REFRESH_INTERVAL_SECONDS, null);
-        newLoader.getKey(TEST_KID);
+        newLoader.getKeyInfo(TEST_KID);
 
         // Then - verify keys were refreshed
         assertEquals(2, moduleDispatcher.getCallCounter(), "JWKS endpoint should be called again with new instance");
@@ -154,10 +155,10 @@ class HttpJwksLoaderTest {
     @DisplayName("Should return empty when kid is null")
     void shouldReturnEmptyWhenKidIsNull() {
         // When
-        Optional<Key> key = httpJwksLoader.getKey(null);
+        Optional<KeyInfo> keyInfo = httpJwksLoader.getKeyInfo(null);
 
         // Then
-        assertFalse(key.isPresent(), "Key should not be present when kid is null");
+        assertFalse(keyInfo.isPresent(), "Key info should not be present when kid is null");
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Key ID is null");
     }
 
@@ -190,10 +191,10 @@ class HttpJwksLoaderTest {
         HttpJwksLoader missingFieldsLoader = new HttpJwksLoader(endpoint, REFRESH_INTERVAL_SECONDS, null);
 
         // When
-        Optional<Key> key = missingFieldsLoader.getKey(TEST_KID);
+        Optional<KeyInfo> keyInfo = missingFieldsLoader.getKeyInfo(TEST_KID);
 
         // Then
-        assertFalse(key.isPresent(), "Key should not be present when JWK is missing required fields");
+        assertFalse(keyInfo.isPresent(), "Key info should not be present when JWK is missing required fields");
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to parse RSA key");
     }
 
@@ -201,10 +202,10 @@ class HttpJwksLoaderTest {
     @DisplayName("Should get first key when available")
     void shouldGetFirstKeyWhenAvailable() {
         // When
-        Optional<Key> key = httpJwksLoader.getFirstKey();
+        Optional<KeyInfo> keyInfo = httpJwksLoader.getFirstKeyInfo();
 
         // Then
-        assertTrue(key.isPresent(), "First key should be present");
+        assertTrue(keyInfo.isPresent(), "First key info should be present");
     }
 
     @Test
@@ -229,10 +230,10 @@ class HttpJwksLoaderTest {
         HttpJwksLoader invalidUrlLoader = new HttpJwksLoader("invalid-url", REFRESH_INTERVAL_SECONDS, null);
 
         // When
-        Optional<Key> key = invalidUrlLoader.getKey(TEST_KID);
+        Optional<KeyInfo> keyInfo = invalidUrlLoader.getKeyInfo(TEST_KID);
 
         // Then
-        assertFalse(key.isPresent(), "Key should not be present when URL is invalid");
+        assertFalse(keyInfo.isPresent(), "Key info should not be present when URL is invalid");
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to fetch JWKS from URL: invalid-url");
     }
 

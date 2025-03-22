@@ -75,13 +75,13 @@ Refer to the implementation and associated JavaDoc for detailed behavior.
 === Safe Parsing
 _See Requirement link:../Requirements.adoc#CUI-JWT-8.2[CUI-JWT-8.2: Safe Parsing]_
 
-==== Status: PARTIALLY IMPLEMENTED
+==== Status: IMPLEMENTED
 
-This specification has been partially implemented in the following classes:
+This specification has been implemented in the following classes:
 
 * link:../src/main/java/de/cuioss/jwt/token/util/NonValidatingJwtParser.java[NonValidatingJwtParser]
 
-The `NonValidatingJwtParser` class already implements several safe parsing features:
+The `NonValidatingJwtParser` class implements comprehensive safe parsing features:
 
 1. Token size validation to prevent memory exhaustion attacks
 2. Payload size validation for JSON parsing
@@ -91,46 +91,36 @@ The `NonValidatingJwtParser` class already implements several safe parsing featu
 6. Format validation (checking for correct number of parts)
 7. Comprehensive error handling with appropriate logging
 8. Proper resource management (using try-with-resources for JsonReader)
+9. JSON depth limits to prevent stack overflow attacks
+10. JSON object size limits to prevent memory exhaustion
+11. Protection against duplicate keys in JSON objects
+12. Input sanitization for untrusted data
+13. Enhanced validation of token structure and content
 
 ==== Implementation Details
 
-To complete the safe parsing implementation, the `NonValidatingJwtParser` should be extended with:
+The safe parsing implementation in `NonValidatingJwtParser` uses the Jakarta JSON API with security configuration to prevent various parsing attacks. The implementation:
 
-1. Additional protection against JSON parsing attacks:
-   * JSON depth limits
-   * JSON object size limits
-   * Protection against duplicate keys
-2. Input sanitization for untrusted data
-3. Stronger validation of token structure and content
+1. Enforces maximum token size (8KB by default)
+2. Enforces maximum payload size (8KB by default)
+3. Limits JSON string size (4KB by default)
+4. Limits JSON array size (64 elements by default)
+5. Limits JSON parsing depth (10 levels by default)
+6. Uses standard Base64 decoding with proper error handling
+7. Validates token format before parsing
+8. Implements comprehensive error handling and logging
+9. Uses a cached JsonReaderFactory (with Lombok @Getter(lazy=true)) for improved performance and security
 
-[source,java]
-----
-private Optional<JsonObject> decodeJsonPart(String encodedPart) {
-    try {
-        byte[] decoded = Base64.getUrlDecoder().decode(encodedPart);
+The implementation is verified by the following tests:
 
-        if (decoded.length > maxPayloadSize) {
-            LOGGER.warn(JWTTokenLogMessages.WARN.DECODED_PART_SIZE_EXCEEDED.format(maxPayloadSize));
-            return Optional.empty();
-        }
+* link:../src/test/java/de/cuioss/jwt/token/util/NonValidatingJwtParserTest.java[NonValidatingJwtParserTest] - Comprehensive tests for the NonValidatingJwtParser class, including:
+** Token size validation tests
+** JSON depth limit tests
+** Large JSON array handling tests
+** Large JSON string handling tests
+** JsonReaderFactory caching tests
 
-        // Configure JSON parser with security settings
-        Map<String, Object> config = new HashMap<>();
-        config.put("jakarta.json.stream.maxStringSize", maxStringSize);
-        config.put("jakarta.json.stream.maxArraySize", maxArraySize);
-        config.put("jakarta.json.stream.maxDepth", maxDepth);
-
-        // Parse the part as JSON with security settings
-        try (JsonReader reader = Json.createReaderFactory(config)
-                .createReader(new StringReader(new String(decoded, StandardCharsets.UTF_8)))) {
-            return Optional.of(reader.readObject());
-        }
-    } catch (Exception e) {
-        LOGGER.warn(e, JWTTokenLogMessages.WARN.FAILED_TO_DECODE_PART.format(e.getMessage()));
-        return Optional.empty();
-    }
-}
-----
+These security measures protect against common attacks such as memory exhaustion, stack overflow, and malformed input attacks.
 
 === Claims Validation
 _See Requirement link:../Requirements.adoc#CUI-JWT-8.4[CUI-JWT-8.4: Claims Validation]_
@@ -166,71 +156,84 @@ Refer to the implementation and associated JavaDoc for detailed behavior.
 === Secure Communication
 _See Requirement link:../Requirements.adoc#CUI-JWT-8.3[CUI-JWT-8.3: Secure Communication]_
 
-==== Status: NOT IMPLEMENTED
+==== Status: IMPLEMENTED
 
-The library needs to enforce secure communication for key retrieval by requiring TLS 1.2 or higher.
+This specification has been implemented in the following classes:
+
+* link:../src/main/java/de/cuioss/jwt/token/jwks/HttpJwksLoader.java[HttpJwksLoader]
+* link:../src/main/java/de/cuioss/jwt/token/jwks/TlsVersions.java[TlsVersions]
+
+The library enforces secure communication for key retrieval by requiring TLS 1.2 or higher.
 
 ==== Implementation Details
 
-The secure communication implementation will:
+The secure communication implementation:
 
-1. Configure the HTTP client to use TLS 1.2 or higher
-2. Verify SSL/TLS certificates
-3. Implement connection timeouts to prevent hanging connections
+1. Defines allowed and forbidden TLS versions in the `TlsVersions` class
+2. Validates provided SSL contexts to ensure they use secure protocols
+3. Creates secure SSL contexts with TLS 1.2 when none is provided
+4. Implements connection timeouts to prevent hanging connections
+5. Provides proper error handling and logging for SSL/TLS-related operations
 
-[source,java]
-----
-private HttpClient createSecureHttpClient() {
-    LOGGER.debug("Creating secure HTTP client");
+The implementation uses a dedicated `TlsVersions` utility class that defines constants for secure TLS versions (TLSv1.2, TLSv1.3) and explicitly rejects insecure versions (TLSv1.0, TLSv1.1, SSLv3).
 
-    try {
-        SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
-        sslContext.init(null, null, null);
-
-        return HttpClient.newBuilder()
-            .sslContext(sslContext)
-            .connectTimeout(Duration.ofSeconds(10))
-            .build();
-    } catch (Exception e) {
-        LOGGER.error(e, ERROR.HTTP_CLIENT_CREATION_FAILED.format(e.getMessage()));
-        throw new RuntimeException("Failed to create secure HTTP client", e);
-    }
-}
-----
-
-Note: The current implementation allows any TLS version or relies on VM defaults.
+The implementation is verified by integration tests that connect to a Keycloak server using HTTPS.
 
 === Cryptographic Agility
 _See Requirement link:../Requirements.adoc#CUI-JWT-8.5[CUI-JWT-8.5: Cryptographic Agility]_
 
-==== Status: NOT IMPLEMENTED
+==== Status: IMPLEMENTED
 
-The library needs to implement support for algorithm upgrades without breaking changes to enable cryptographic agility.
+This specification has been implemented in the following classes:
+
+* link:../src/main/java/de/cuioss/jwt/token/security/AlgorithmPreferences.java[AlgorithmPreferences]
+* link:../src/main/java/de/cuioss/jwt/token/security/JwkKeyHandler.java[JwkKeyHandler]
+* link:../src/main/java/de/cuioss/jwt/token/jwks/KeyInfo.java[KeyInfo]
+* link:../src/main/java/de/cuioss/jwt/token/jwks/JwksLoader.java[JwksLoader]
+* link:../src/main/java/de/cuioss/jwt/token/jwks/JWKSKeyLoader.java[JWKSKeyLoader]
+* link:../src/main/java/de/cuioss/jwt/token/JwksAwareTokenParserImpl.java[JwksAwareTokenParserImpl]
+
+The implementation enables cryptographic agility by:
+
+1. Supporting multiple signature algorithms (RSA, ECDSA, RSA-PSS)
+2. Allowing configuration of preferred algorithms
+3. Supporting key rotation and algorithm migration
+4. Storing algorithm information with keys
+5. Selecting keys based on algorithm preferences
+6. Isolating low-level cryptographic operations into a dedicated handler class
 
 ==== Implementation Details
 
-The cryptographic agility implementation will:
+After analyzing several alternatives for improving the key handling operations, a hybrid approach was implemented:
 
-1. Support multiple signature algorithms
-2. Allow configuration of preferred algorithms
-3. Support key rotation and algorithm migration
+1. The low-level key handling code was isolated into a separate `JwkKeyHandler` class within the security package
+2. JRE-provided methods were used where possible to improve the implementation
+3. This approach maintains minimal dependencies while improving code organization and maintainability
 
-[source,java]
-----
-private List<String> getPreferredAlgorithms() {
-    LOGGER.debug("Getting preferred algorithms");
+The cryptographic agility implementation:
 
-    // Order algorithms by preference
-    return Arrays.asList(
-        "ES512", // Most preferred
-        "ES384",
-        "ES256",
-        "PS512",
-        "PS384",
-        "PS256",
-        "RS512",
-        "RS384",
-        "RS256"  // Least preferred
-    );
-}
-----
+1. Defines a `KeyInfo` class that stores both a key and its algorithm
+2. Provides an `AlgorithmPreferences` class to manage algorithm preferences
+3. Updates the `JwksLoader` interface to use `KeyInfo` instead of just `Key`
+4. Enhances `JWKSKeyLoader` to support multiple key types and algorithms
+5. Introduces `JwkKeyHandler` to isolate low-level cryptographic operations
+6. Modifies `JwksAwareTokenParserImpl` to select keys based on algorithm preferences
+
+The `JwkKeyHandler` class provides methods for:
+
+1. Parsing and validating RSA keys from JWK format
+2. Parsing and validating EC keys from JWK format
+3. Validating Base64 URL encoded values
+4. Determining EC algorithms based on curve names
+
+The `AlgorithmPreferences` class defines the default order of preferred algorithms
+
+The implementation is verified by the following tests:
+
+* link:../src/test/java/de/cuioss/jwt/token/security/JwkKeyHandlerTest.java[JwkKeyHandlerTest] - Comprehensive tests for the JwkKeyHandler class, including:
+** Parsing and validation of RSA keys
+** Validation of EC key fields
+** Base64 URL encoding validation
+** Security tests for potential attacks
+* link:../src/test/java/de/cuioss/jwt/token/jwks/InMemoryJwksLoaderTest.java[InMemoryJwksLoaderTest] - Tests for the JWKSKeyLoader with in-memory JWKS
+* link:../src/test/java/de/cuioss/jwt/token/jwks/JwksClientBenchmarkTest.java[JwksClientBenchmarkTest] - Performance tests for key retrieval

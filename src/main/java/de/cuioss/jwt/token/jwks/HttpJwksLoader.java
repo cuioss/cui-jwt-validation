@@ -31,9 +31,11 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.security.Key;
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static de.cuioss.jwt.token.JWTTokenLogMessages.DEBUG;
 import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
 
 /**
@@ -76,8 +78,8 @@ public class HttpJwksLoader implements JwksLoader {
         // Initial JWKS content fetch to populate cache
         jwksCache.get(CACHE_KEY);
 
-        LOGGER.debug("Initialized HttpJwksLoader with URL: %s, refresh interval: %s seconds",
-                jwksUri.toString(), refreshIntervalSeconds);
+        LOGGER.debug(DEBUG.INITIALIZED_JWKS_LOADER.format(
+                jwksUri.toString(), refreshIntervalSeconds));
     }
 
     /**
@@ -111,17 +113,44 @@ public class HttpJwksLoader implements JwksLoader {
 
     /**
      * Creates an HTTP client with the specified SSL context.
+     * If no SSL context is provided, a secure one (TLS 1.2+) will be created.
+     * If an SSL context is provided, it will be validated to ensure it uses a secure protocol.
      *
-     * @param sslContext the SSL context to use, or null to use the default
+     * @param sslContext the SSL context to use, or null to use a secure default
      * @return the HTTP client
      */
     private HttpClient createHttpClient(SSLContext sslContext) {
         HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECONDS));
 
-        if (sslContext != null) {
-            httpClientBuilder.sslContext(sslContext);
-            LOGGER.debug("Using provided SSL context");
+        try {
+            if (sslContext != null) {
+                // Validate the provided SSL context
+                String protocol = sslContext.getProtocol();
+                LOGGER.debug(DEBUG.SSL_CONTEXT_PROTOCOL.format(protocol));
+
+                // Check if the protocol is secure (TLS 1.2 or higher)
+                if (TlsVersions.isSecureTlsVersion(protocol)) {
+                    httpClientBuilder.sslContext(sslContext);
+                    LOGGER.debug(DEBUG.USING_SSL_CONTEXT.format(protocol));
+                } else {
+                    LOGGER.warn(WARN.INSECURE_SSL_PROTOCOL.format(protocol));
+                    httpClientBuilder.sslContext(TlsVersions.createSecureSSLContext());
+                    LOGGER.debug(DEBUG.CREATED_SECURE_CONTEXT.format(TlsVersions.DEFAULT_TLS_VERSION));
+                }
+            } else {
+                httpClientBuilder.sslContext(TlsVersions.createSecureSSLContext());
+                LOGGER.debug(DEBUG.NO_SSL_CONTEXT.format(TlsVersions.DEFAULT_TLS_VERSION));
+            }
+        } catch (Exception e) {
+            LOGGER.warn(e, WARN.SSL_CONTEXT_CONFIG_FAILED.format(e.getMessage()));
+            // If we can't create a secure context, use the default (which might not be secure)
+            if (sslContext != null) {
+                httpClientBuilder.sslContext(sslContext);
+                LOGGER.debug(DEBUG.FALLBACK_SSL_CONTEXT.format());
+            } else {
+                LOGGER.debug(DEBUG.DEFAULT_SSL_CONTEXT.format());
+            }
         }
 
         return httpClientBuilder.build();
@@ -134,7 +163,7 @@ public class HttpJwksLoader implements JwksLoader {
      * @return a JWKSKeyLoader instance with the current JWKS content
      */
     public JWKSKeyLoader resolve() {
-        LOGGER.debug("Resolving key loader for JWKS endpoint: %s", jwksUri.toString());
+        LOGGER.debug(DEBUG.RESOLVING_KEY_LOADER.format(jwksUri.toString()));
 
         try {
             // Get the current JWKSKeyLoader from cache, which will trigger a refresh if needed
@@ -154,7 +183,7 @@ public class HttpJwksLoader implements JwksLoader {
      * @return a JWKSKeyLoader instance with the current JWKS content, or an empty one if an error occurs
      */
     private JWKSKeyLoader loadJwksKeyLoader(String key) {
-        LOGGER.debug("Refreshing keys from JWKS endpoint: %s", jwksUri.toString());
+        LOGGER.debug(DEBUG.REFRESHING_KEYS.format(jwksUri.toString()));
 
         try {
             HttpRequest request = HttpRequest.newBuilder()
@@ -170,7 +199,7 @@ public class HttpJwksLoader implements JwksLoader {
             }
 
             String jwksContent = response.body();
-            LOGGER.debug("Successfully fetched JWKS from URL: %s", jwksUri.toString());
+            LOGGER.debug(DEBUG.FETCHED_JWKS.format(jwksUri.toString()));
             return new JWKSKeyLoader(jwksContent);
         } catch (InterruptedException e) {
             LOGGER.warn(e, WARN.FAILED_TO_FETCH_JWKS.format(jwksUri.toString()));
@@ -185,29 +214,35 @@ public class HttpJwksLoader implements JwksLoader {
 
 
     @Override
-    public Optional<Key> getKey(String kid) {
+    public Optional<KeyInfo> getKeyInfo(String kid) {
         if (MoreStrings.isEmpty(kid)) {
-            LOGGER.debug("Key ID is null or empty");
+            LOGGER.debug(DEBUG.KEY_ID_EMPTY.format());
             return Optional.empty();
         }
 
-        // First try to get the key from the current loader
-        Optional<Key> key = resolve().getKey(kid);
+        // First try to get the key info from the current loader
+        Optional<KeyInfo> keyInfo = resolve().getKeyInfo(kid);
 
-        // If key not found, force a refresh and try again
-        if (key.isEmpty()) {
-            LOGGER.debug("Key with ID %s not found, refreshing keys", kid);
+        // If key info not found, force a refresh and try again
+        if (keyInfo.isEmpty()) {
+            LOGGER.debug(DEBUG.KEY_NOT_FOUND_REFRESHING.format(kid));
             jwksCache.invalidate(CACHE_KEY);
-            key = resolve().getKey(kid);
+            keyInfo = resolve().getKeyInfo(kid);
         }
 
-        return key;
+        return keyInfo;
     }
 
     @Override
-    public Optional<Key> getFirstKey() {
-        return resolve().getFirstKey();
+    public Optional<KeyInfo> getFirstKeyInfo() {
+        return resolve().getFirstKeyInfo();
     }
+
+    @Override
+    public List<KeyInfo> getAllKeyInfos() {
+        return resolve().getAllKeyInfos();
+    }
+
 
     @Override
     public Set<String> keySet() {

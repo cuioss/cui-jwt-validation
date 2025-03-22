@@ -100,8 +100,7 @@ public class SignatureValidationTest {
         // Assert that the token is rejected
         assertFalse(parsedToken.isPresent(), "Token signed with HS256 should be rejected");
         // Check for the actual log message that indicates algorithm rejection
-        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Unable to parse token due to ParseException");
-        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "HS256");
+        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Unsupported algorithm: HS256");
     }
 
     @Test
@@ -116,8 +115,7 @@ public class SignatureValidationTest {
         // Assert that the token is rejected
         assertFalse(parsedToken.isPresent(), "Token signed with HS384 should be rejected");
         // Check for the actual log message that indicates algorithm rejection
-        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Unable to parse token due to ParseException");
-        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "HS384");
+        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Unsupported algorithm: HS384");
     }
 
     @Test
@@ -132,8 +130,7 @@ public class SignatureValidationTest {
         // Assert that the token is rejected
         assertFalse(parsedToken.isPresent(), "Token signed with HS512 should be rejected");
         // Check for the actual log message that indicates algorithm rejection
-        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Unable to parse token due to ParseException");
-        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "HS512");
+        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Unsupported algorithm: HS512");
     }
 
     @Test

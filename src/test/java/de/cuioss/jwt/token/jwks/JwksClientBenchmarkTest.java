@@ -61,13 +61,13 @@ class JwksClientBenchmarkTest {
 
         // Warm up
         for (int i = 0; i < WARMUP_ITERATIONS; i++) {
-            jwksLoader.getKey(TEST_KID);
+            jwksLoader.getKeyInfo(TEST_KID).map(KeyInfo::getKey);
         }
 
         // Benchmark
         StopWatch watch = StopWatch.createStarted();
         for (int i = 0; i < BENCHMARK_ITERATIONS; i++) {
-            Optional<Key> key = jwksLoader.getKey(TEST_KID);
+            Optional<Key> key = jwksLoader.getKeyInfo(TEST_KID).map(KeyInfo::getKey);
             assertTrue(key.isPresent(), "Key should be present");
         }
         watch.stop();
