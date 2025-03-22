@@ -79,6 +79,7 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
 
     private final JwtParser jwtParser;
     private final JwksLoader jwksLoader;
+    private final ClaimValidator claimValidator;
 
     @Getter
     private final String issuer;
@@ -97,6 +98,7 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
                 .requireIssuer(issuer)
                 .build();
         this.tokenParser = NonValidatingJwtParser.builder().build();
+        this.claimValidator = new ClaimValidator(issuer);
 
         // Log the initialization
         LOGGER.info(INFO.CONFIGURED_JWKS.format(
@@ -154,10 +156,8 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
                         .build()
                         .parseClaimsJws(token);
 
-                // Verify the issuer
-                String tokenIssuer = jws.getBody().getIssuer();
-                if (!issuer.equals(tokenIssuer)) {
-                    LOGGER.warn(WARN.ISSUER_MISMATCH.format(tokenIssuer, issuer));
+                // Validate all required claims
+                if (!claimValidator.validateClaims(jws)) {
                     return Optional.empty();
                 }
 

@@ -16,327 +16,125 @@ This document provides detailed specifications for the technical components of t
 === TokenFactory
 _See Requirement link:../Requirements.adoc#CUI-JWT-2[CUI-JWT-2: Token Representation]_
 
+==== Status: IMPLEMENTED
+
+This specification has been implemented in the following classes:
+
+* link:../src/main/java/de/cuioss/jwt/token/TokenFactory.java[TokenFactory] (interface)
+* link:../src/main/java/de/cuioss/jwt/token/TokenFactoryImpl.java[TokenFactoryImpl] (implementation)
+
 The `TokenFactory` is the primary entry point for applications using the library. It provides methods for creating and validating different types of tokens (access, ID, refresh) while handling the complexity of token parsing and validation.
 
 ==== Interface Definition
 
-[source,java]
-----
-public interface TokenFactory {
-    Optional<ParsedToken> createToken(String tokenString);
-    Optional<ParsedAccessToken> createAccessToken(String tokenString);
-    Optional<ParsedIdToken> createIdToken(String tokenString);
-    Optional<ParsedRefreshToken> createRefreshToken(String tokenString);
-}
-----
+The TokenFactory interface defines the following methods:
 
-==== Implementation Details
+* `Optional<ParsedToken> createToken(String tokenString)` - Creates a generic token from a token string
+* `Optional<ParsedAccessToken> createAccessToken(String tokenString)` - Creates an access token from a token string
+* `Optional<ParsedIdToken> createIdToken(String tokenString)` - Creates an ID token from a token string
+* `Optional<ParsedRefreshToken> createRefreshToken(String tokenString)` - Creates a refresh token from a token string
 
-The `TokenFactory` implementation will:
+The implementation uses the `MultiIssuerTokenParser` to parse and validate tokens, creates the appropriate token type based on the token content, and handles exceptions by returning empty optionals for invalid tokens.
 
-1. Use the `MultiIssuerTokenParser` to parse and validate tokens
-2. Create the appropriate token type based on the token content
-3. Handle exceptions and return empty optionals for invalid tokens
-
-The TokenFactory implementation is available in link:../../src/main/java/de/cuioss/jwt/token/TokenFactoryImpl.java[TokenFactoryImpl.java].
-
-[source,java]
-----
-public class TokenFactoryImpl implements TokenFactory {
-    private static final CuiLogger LOGGER = new CuiLogger(TokenFactoryImpl.class);
-    private final JwtParser tokenParser;
-
-    @Override
-    public Optional<ParsedToken> createToken(String tokenString) {
-        LOGGER.debug("Creating token from string");
-
-        try {
-            Optional<Jws<Claims>> jws = tokenParser.parseToken(tokenString);
-
-            if (jws.isEmpty()) {
-                return Optional.empty();
-            }
-
-            Claims claims = jws.get().getBody();
-            TokenType tokenType = determineTokenType(claims);
-
-            switch (tokenType) {
-                case ACCESS:
-                    return Optional.of(new ParsedAccessTokenImpl(jws.get()));
-                case ID:
-                    return Optional.of(new ParsedIdTokenImpl(jws.get()));
-                case REFRESH:
-                    return Optional.of(new ParsedRefreshTokenImpl(jws.get()));
-                default:
-                    LOGGER.warn(WARN.UNKNOWN_TOKEN_TYPE.format(tokenType));
-                    return Optional.empty();
-            }
-        } catch (Exception e) {
-            LOGGER.error(e, ERROR.TOKEN_CREATION_FAILED.format(e.getMessage()));
-            return Optional.empty();
-        }
-    }
-
-    // Other methods implementation...
-}
-----
+Refer to the implementation and associated JavaDoc for detailed behavior.
 
 === JwtParser
 _See Requirement link:../Requirements.adoc#CUI-JWT-1.3[CUI-JWT-1.3: Signature Validation]_
 
-The `JwtParser` interface defines the contract for JWT token parsing and validation. It replaces the current `JwksAwareTokenParser` with a more abstract configuration structure.
+==== Status: IMPLEMENTED
+
+This specification has been implemented in the following classes:
+
+* link:../src/main/java/de/cuioss/jwt/token/JwtParser.java[JwtParser] (interface)
+* link:../src/main/java/de/cuioss/jwt/token/JwksAwareTokenParserImpl.java[JwksAwareTokenParserImpl] (implementation)
+
+The `JwtParser` interface defines the contract for JWT token parsing and validation. It provides an abstract configuration structure for token parsing and validation.
 
 ==== Interface Definition
 
-The JwtParser interface is implemented in link:../../src/main/java/de/cuioss/jwt/token/JwtParser.java[JwtParser.java].
+The JwtParser interface defines the following methods:
 
-[source,java]
-----
-public interface JwtParser {
-    Optional<Jws<Claims>> parseToken(String token) throws JwtException;
-    boolean supportsIssuer(String issuer);
-    String getIssuer();
-}
-----
+* `Optional<Jws<Claims>> parseToken(String token) throws JwtException` - Parses and validates a JWT token
+* `boolean supportsIssuer(String issuer)` - Checks if this parser supports a specific issuer
+* `String getIssuer()` - Returns the issuer supported by this parser
 
-==== Implementation Details
+The implementation parses the token using the JJWT library, validates the token signature using keys from the `JwksLoader`, validates required claims (issuer, expiration time, not before time), and returns the parsed token as a `Jws<Claims>` object.
 
-The `JwtParser` implementation will:
+Note: Audience (aud) claim validation is currently not implemented (see TODO.adoc).
 
-1. Parse the token using JJWT library
-2. Validate the token signature using keys from the `JwksLoader`
-3. Validate required claims:
-   * Issuer (iss) - Validated in JwksAwareTokenParserImpl using requireIssuer()
-   * Expiration time (exp) - Validated implicitly by JJWT parser and explicitly in ParsedToken.isExpired()
-   * Not before time (nbf) - Validated implicitly by JJWT parser and accessible via ParsedToken.getNotBeforeTime()
-   * Audience (aud) - Currently not validated (see TODO.adoc)
-4. Return the parsed token as a `Jws<Claims>` object
-
-The JwtParser interface is implemented by link:../../src/main/java/de/cuioss/jwt/token/JwksAwareTokenParserImpl.java[JwksAwareTokenParserImpl.java], which provides JWKS-aware token parsing and validation.
-
-[source,java]
-----
-public class JwksAwareTokenParserImpl implements JwtParser {
-    private static final CuiLogger LOGGER = new CuiLogger(JwksAwareTokenParserImpl.class);
-    private final JwtParser jwtParser;
-    private final JwksLoader jwksLoader;
-    private final String issuer;
-
-    @Override
-    public Optional<Jws<Claims>> parseToken(String token) throws JwtException {
-        // Implementation details...
-    }
-
-    @Override
-    public boolean supportsIssuer(String issuer) {
-        return this.issuer.equals(issuer);
-    }
-
-    @Override
-    public String getIssuer() {
-        return issuer;
-    }
-}
-----
+Refer to the implementation and associated JavaDoc for detailed behavior.
 
 === MultiIssuerJwtParser
 _See Requirement link:../Requirements.adoc#CUI-JWT-3[CUI-JWT-3: Multi-Issuer Support]_
 
-The `MultiIssuerJwtParser` manages multiple JWT token parsers for different token issuers in a multi-tenant environment. It inspects JWT tokens, determines their issuer, and selects the appropriate parser.
+==== Status: IMPLEMENTED
 
-This component is implemented in link:../../src/main/java/de/cuioss/jwt/token/util/MultiIssuerJwtParser.java[MultiIssuerJwtParser.java].
+This specification has been implemented in the following classes:
+
+* link:../src/main/java/de/cuioss/jwt/token/util/MultiIssuerJwtParser.java[MultiIssuerJwtParser]
+
+The `MultiIssuerJwtParser` manages multiple JWT token parsers for different token issuers in a multi-tenant environment. It inspects JWT tokens, determines their issuer, and selects the appropriate parser.
 
 ==== Implementation Details
 
-The `MultiIssuerTokenParser` will:
+The implementation extracts the issuer claim from the token without validating the signature, selects the appropriate parser based on the issuer, and delegates token parsing and validation to the selected parser.
 
-1. Extract the issuer claim from the token without validating the signature
-2. Select the appropriate parser based on the issuer
-3. Delegate token parsing and validation to the selected parser
+The class provides methods for adding parsers for different issuers and configuring a default parser for tokens with unknown issuers.
 
-[source,java]
-----
-public class MultiIssuerJwtParser implements JwtParser {
-    private static final CuiLogger LOGGER = new CuiLogger(MultiIssuerJwtParser.class);
-    private final List<JwtParser> parsers;
-    private final JwtParser defaultParser;
-
-    @Override
-    public Optional<Jws<Claims>> parseToken(String token) throws JwtException {
-        LOGGER.debug("Parsing token with multi-issuer parser");
-
-        try {
-            // Extract issuer without validating signature
-            String issuer = extractIssuerWithoutValidation(token);
-            LOGGER.debug("Extracted issuer: %s", issuer);
-
-            // Find parser for issuer
-            JwtParser parser = findParserForIssuer(issuer);
-
-            if (parser == null) {
-                LOGGER.warn(WARN.NO_PARSER_FOR_ISSUER.format(issuer));
-                return Optional.empty();
-            }
-
-            // Delegate to selected parser
-            return parser.parseToken(token);
-        } catch (Exception e) {
-            LOGGER.error(e, ERROR.TOKEN_PARSING_FAILED.format(e.getMessage()));
-            throw new JwtException("Failed to parse token", e);
-        }
-    }
-
-    private JwtParser findParserForIssuer(String issuer) {
-        return parsers.stream()
-                .filter(parser -> parser.supportsIssuer(issuer))
-                .findFirst()
-                .orElse(defaultParser);
-    }
-
-    private String extractIssuerWithoutValidation(String token) {
-        // Split token into parts
-        String[] parts = token.split("\\.");
-        if (parts.length != 3) {
-            throw new JwtException("Invalid token format");
-        }
-
-        // Decode payload
-        String payload = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
-
-        // Parse payload as JSON
-        try {
-            JsonObject json = Json.createReader(new StringReader(payload)).readObject();
-            return json.getString("iss");
-        } catch (Exception e) {
-            throw new JwtException("Failed to extract issuer", e);
-        }
-    }
-}
-----
+Refer to the implementation and associated JavaDoc for detailed behavior.
 
 === JwksLoader
 _See Requirement link:../Requirements.adoc#CUI-JWT-4[CUI-JWT-4: Key Management]_
 
-The `JwksLoader` interface handles the retrieval, caching, and rotation of cryptographic keys used for token validation.
+==== Status: IMPLEMENTED
 
-The JwksLoader interface is implemented in link:../../src/main/java/de/cuioss/jwt/token/jwks/JwksLoader.java[JwksLoader.java] and defines the contract for loading JSON Web Keys (JWK) from various sources.
+This specification has been implemented in the following classes:
+
+* link:../src/main/java/de/cuioss/jwt/token/jwks/JwksLoader.java[JwksLoader] (interface)
+* link:../src/main/java/de/cuioss/jwt/token/jwks/HttpJwksLoader.java[HttpJwksLoader] (implementation)
+* link:../src/main/java/de/cuioss/jwt/token/jwks/JWKSKeyLoader.java[JWKSKeyLoader] (implementation)
+* link:../src/main/java/de/cuioss/jwt/token/jwks/JwksLoaderFactory.java[JwksLoaderFactory] (factory)
+
+The `JwksLoader` interface handles the retrieval, caching, and rotation of cryptographic keys used for token validation.
 
 ==== Interface Definition
 
-[source,java]
-----
-public interface JwksLoader {
-    Optional<Key> getKey(String kid);
-    Optional<Key> getFirstKey();
-    Set<String> keySet();
-}
-----
+The JwksLoader interface defines the following methods:
 
-==== Implementation Details
+* `Optional<Key> getKey(String kid)` - Gets a key by its ID
+* `Optional<Key> getFirstKey()` - Gets the first available key
+* `Set<String> keySet()` - Gets the set of available key IDs
 
 The library provides several implementations of the JwksLoader interface:
 
 1. `HttpJwksLoader` - Loads JWKS from an HTTP endpoint with caching and automatic refresh
 2. `JWKSKeyLoader` - Loads JWKS from a string content (used internally by other loaders)
 
-The `HttpJwksLoader` implementation handles:
+The implementations handle HTTP communication with JWKS endpoints, caching keys for performance, refreshing keys periodically, and error handling for HTTP communication.
 
-1. HTTP communication with JWKS endpoints
-2. Caching keys for performance
-3. Refreshing keys periodically
-4. Error handling for HTTP communication
-
-[source,java]
-----
-public class HttpJwksLoader implements JwksLoader {
-    private static final CuiLogger LOGGER = new CuiLogger(HttpJwksLoader.class);
-    private final URI jwksUri;
-    private final int refreshIntervalSeconds;
-    private final LoadingCache<String, JWKSKeyLoader> jwksCache;
-    private final HttpClient httpClient;
-
-    @Override
-    public Optional<Key> getKey(String kid) {
-        if (MoreStrings.isEmpty(kid)) {
-            LOGGER.debug("Key ID is null or empty");
-            return Optional.empty();
-        }
-
-        // First try to get the key from the current loader
-        Optional<Key> key = resolve().getKey(kid);
-
-        // If key not found, force a refresh and try again
-        if (key.isEmpty()) {
-            LOGGER.debug("Key with ID %s not found, refreshing keys", kid);
-            jwksCache.invalidate(CACHE_KEY);
-            key = resolve().getKey(kid);
-        }
-
-        return key;
-    }
-
-    // Other methods implementation...
-}
-----
+Refer to the implementation and associated JavaDoc for detailed behavior.
 
 === ParsedToken
 _See Requirement link:../Requirements.adoc#CUI-JWT-1.2[CUI-JWT-1.2: Token Types]_
 
-The `ParsedToken` is an abstract base class for parsed JWT token representations. It provides common functionality for working with JWT tokens.
+==== Status: IMPLEMENTED
 
-This component is implemented in link:../../src/main/java/de/cuioss/jwt/token/ParsedToken.java[ParsedToken.java].
+This specification has been implemented in the following classes:
+
+* link:../src/main/java/de/cuioss/jwt/token/ParsedToken.java[ParsedToken] (abstract base class)
+* link:../src/main/java/de/cuioss/jwt/token/ParsedAccessToken.java[ParsedAccessToken] (interface)
+* link:../src/main/java/de/cuioss/jwt/token/ParsedIdToken.java[ParsedIdToken] (interface)
+* link:../src/main/java/de/cuioss/jwt/token/ParsedRefreshToken.java[ParsedRefreshToken] (interface)
+
+The `ParsedToken` is an abstract base class for parsed JWT token representations. It provides common functionality for working with JWT tokens.
 
 ==== Class Hierarchy
 
 * `ParsedToken` - Base class for all token types
-  * `ParsedAccessToken` - Represents an OAuth 2.0 access token, implemented in link:../../src/main/java/de/cuioss/jwt/token/ParsedAccessToken.java[ParsedAccessToken.java]
-  * `ParsedIdToken` - Represents an OpenID Connect ID token, implemented in link:../../src/main/java/de/cuioss/jwt/token/ParsedIdToken.java[ParsedIdToken.java]
-  * `ParsedRefreshToken` - Represents an OAuth 2.0 refresh token, implemented in link:../../src/main/java/de/cuioss/jwt/token/ParsedRefreshToken.java[ParsedRefreshToken.java]
+  * `ParsedAccessToken` - Represents an OAuth 2.0 access token
+  * `ParsedIdToken` - Represents an OpenID Connect ID token
+  * `ParsedRefreshToken` - Represents an OAuth 2.0 refresh token
 
-==== Implementation Details
+The implementation provides access to common JWT claims (issuer, subject, expiration time, issued at, audience, token ID), provides type-specific functionality for different token types, and validates token claims based on token type.
 
-The `ParsedToken` implementation will:
-
-1. Provide access to common JWT claims
-2. Provide type-specific functionality for different token types
-3. Validate token claims based on token type
-
-[source,java]
-----
-public abstract class ParsedToken {
-    private final Jws<Claims> jws;
-
-    public String getIssuer() {
-        return jws.getBody().getIssuer();
-    }
-
-    public String getSubject() {
-        return jws.getBody().getSubject();
-    }
-
-    public Date getExpirationTime() {
-        return jws.getBody().getExpiration();
-    }
-
-    public Date getIssuedAt() {
-        return jws.getBody().getIssuedAt();
-    }
-
-    public List<String> getAudience() {
-        return jws.getBody().getAudience();
-    }
-
-    public String getTokenId() {
-        return jws.getBody().getId();
-    }
-
-    public <T> T getClaim(String name, Class<T> clazz) {
-        return jws.getBody().get(name, clazz);
-    }
-
-    public boolean isExpired() {
-        Date expiration = getExpirationTime();
-        return expiration != null && expiration.before(new Date());
-    }
-}
-----
+Refer to the implementation and associated JavaDoc for detailed behavior.

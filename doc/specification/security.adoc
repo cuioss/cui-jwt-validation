@@ -16,6 +16,21 @@ This document provides detailed specifications for the security aspects of the J
 === Signature Validation
 _See Requirement link:../Requirements.adoc#CUI-JWT-1.3[CUI-JWT-1.3: Signature Validation]_
 
+==== Status: IMPLEMENTED
+
+This specification has been implemented in the following classes:
+
+* link:../src/main/java/de/cuioss/jwt/token/JwksAwareTokenParserImpl.java[JwksAwareTokenParserImpl]
+* link:../src/main/java/de/cuioss/jwt/token/JwtParser.java[JwtParser]
+
+The implementation is verified by the following tests:
+
+* link:../src/test/java/de/cuioss/jwt/token/SignatureValidationTest.java[SignatureValidationTest] - Comprehensive tests for signature validation, including:
+** Validation of tokens with supported algorithms (RS256)
+** Rejection of tokens with unsupported algorithms (HS256, HS384, HS512, none)
+** Protection against algorithm confusion attacks
+* link:../src/test/java/de/cuioss/jwt/token/JwksAwareTokenParserImplTest.java[JwksAwareTokenParserImplTest] - Tests for the JwksAwareTokenParserImpl class
+
 The library supports the following signature algorithms as specified in the requirements:
 
 ==== Supported Algorithms
@@ -39,110 +54,80 @@ The following algorithms are explicitly rejected for security reasons:
 * HS512 (HMAC using SHA-512)
 * None (Unsecured JWT)
 
-==== Implementation Details
-
-The signature validation implementation will:
-
-1. Extract the algorithm from the token header
-2. Verify that the algorithm is in the list of supported algorithms
-3. Retrieve the appropriate key from the `JwksLoader`
-4. Validate the token signature using the JJWT library
-
-[source,java]
-----
-private boolean validateSignature(String token, Key key, String algorithm) {
-    LOGGER.debug("Validating signature with algorithm %s", algorithm);
-
-    try {
-        // Verify algorithm is supported
-        if (!isSupportedAlgorithm(algorithm)) {
-            LOGGER.warn(WARN.ALGORITHM_NOT_SUPPORTED.format(algorithm));
-            return false;
-        }
-
-        // Validate signature
-        Jwts.parserBuilder()
-            .setSigningKey(key)
-            .build()
-            .parseClaimsJws(token);
-
-        return true;
-    } catch (SignatureException e) {
-        LOGGER.warn(e, WARN.INVALID_SIGNATURE.format());
-        return false;
-    } catch (Exception e) {
-        LOGGER.error(e, ERROR.SIGNATURE_VALIDATION_FAILED.format(e.getMessage()));
-        return false;
-    }
-}
-
-private boolean isSupportedAlgorithm(String algorithm) {
-    return SUPPORTED_ALGORITHMS.contains(algorithm);
-}
-----
+Refer to the implementation and associated JavaDoc for detailed behavior.
 
 === Token Size Limits
 _See Requirement link:../Requirements.adoc#CUI-JWT-8.1[CUI-JWT-8.1: Token Size Limits]_
 
+==== Status: IMPLEMENTED
+
+This specification has been implemented in the following classes:
+
+* link:../src/main/java/de/cuioss/jwt/token/util/NonValidatingJwtParser.java[NonValidatingJwtParser]
+* link:../src/main/java/de/cuioss/jwt/token/TokenFactory.java[TokenFactory]
+
 To prevent denial of service attacks, the library enforces a maximum token size of 8KB.
 
-==== Implementation Details
+The implementation checks the token size before parsing and rejects tokens larger than the configured limit. The default limit is set to 8KB as recommended by OAuth 2.0 JWT BCP Section 3.11.
 
-The token size validation implementation will:
-
-1. Check the token size before parsing
-2. Reject tokens larger than 8KB
-
-[source,java]
-----
-private boolean validateTokenSize(String token) {
-    LOGGER.debug("Validating token size");
-
-    if (token.length() > MAX_TOKEN_SIZE) {
-        LOGGER.warn(WARN.TOKEN_TOO_LARGE.format(token.length(), MAX_TOKEN_SIZE));
-        return false;
-    }
-
-    return true;
-}
-----
+Refer to the implementation and associated JavaDoc for detailed behavior.
 
 === Safe Parsing
 _See Requirement link:../Requirements.adoc#CUI-JWT-8.2[CUI-JWT-8.2: Safe Parsing]_
 
-The library implements safe parsing to protect against JSON parsing attacks, injection attacks, and deserialization vulnerabilities.
+==== Status: PARTIALLY IMPLEMENTED
+
+This specification has been partially implemented in the following classes:
+
+* link:../src/main/java/de/cuioss/jwt/token/util/NonValidatingJwtParser.java[NonValidatingJwtParser]
+
+The `NonValidatingJwtParser` class already implements several safe parsing features:
+
+1. Token size validation to prevent memory exhaustion attacks
+2. Payload size validation for JSON parsing
+3. Standard Base64 decoding for JWT parts
+4. Proper character encoding handling (using StandardCharsets.UTF_8)
+5. Input validation (checking for empty tokens)
+6. Format validation (checking for correct number of parts)
+7. Comprehensive error handling with appropriate logging
+8. Proper resource management (using try-with-resources for JsonReader)
 
 ==== Implementation Details
 
-The safe parsing implementation will:
+To complete the safe parsing implementation, the `NonValidatingJwtParser` should be extended with:
 
-1. Use the JJWT library's safe parsing mechanisms
-2. Implement additional validation for untrusted input
-3. Use a secure JSON parser for extracting claims
+1. Additional protection against JSON parsing attacks:
+   * JSON depth limits
+   * JSON object size limits
+   * Protection against duplicate keys
+2. Input sanitization for untrusted data
+3. Stronger validation of token structure and content
 
 [source,java]
 ----
-private Claims extractClaims(String token) {
-    LOGGER.debug("Extracting claims from token");
-
+private Optional<JsonObject> decodeJsonPart(String encodedPart) {
     try {
-        // Split token into parts
-        String[] parts = token.split("\\.");
-        if (parts.length != 3) {
-            throw new JwtException("Invalid token format");
+        byte[] decoded = Base64.getUrlDecoder().decode(encodedPart);
+
+        if (decoded.length > maxPayloadSize) {
+            LOGGER.warn(JWTTokenLogMessages.WARN.DECODED_PART_SIZE_EXCEEDED.format(maxPayloadSize));
+            return Optional.empty();
         }
 
-        // Decode payload
-        byte[] payload = Base64.getUrlDecoder().decode(parts[1]);
+        // Configure JSON parser with security settings
+        Map<String, Object> config = new HashMap<>();
+        config.put("jakarta.json.stream.maxStringSize", maxStringSize);
+        config.put("jakarta.json.stream.maxArraySize", maxArraySize);
+        config.put("jakarta.json.stream.maxDepth", maxDepth);
 
-        // Parse payload as JSON using secure parser
-        return Jwts.parserBuilder()
-            .build()
-            .parseClaimsJwt(parts[0] + "." + parts[1] + ".")
-            .getBody();
+        // Parse the part as JSON with security settings
+        try (JsonReader reader = Json.createReaderFactory(config)
+                .createReader(new StringReader(new String(decoded, StandardCharsets.UTF_8)))) {
+            return Optional.of(reader.readObject());
+        }
     } catch (Exception e) {
-        LOGGER.error(e, ERROR.CLAIMS_EXTRACTION_FAILED.format(e.getMessage()));
-        throw new JwtException("Failed to extract claims", e);
+        LOGGER.warn(e, JWTTokenLogMessages.WARN.FAILED_TO_DECODE_PART.format(e.getMessage()));
+        return Optional.empty();
     }
 }
 ----
@@ -150,7 +135,14 @@ private Claims extractClaims(String token) {
 === Claims Validation
 _See Requirement link:../Requirements.adoc#CUI-JWT-8.4[CUI-JWT-8.4: Claims Validation]_
 
-The library validates standard JWT claims as defined in RFC 7519.
+==== Status: IMPLEMENTED
+
+This specification has been implemented in the following classes:
+
+* link:../src/main/java/de/cuioss/jwt/token/ClaimValidator.java[ClaimValidator]
+* link:../src/main/java/de/cuioss/jwt/token/JwksAwareTokenParserImpl.java[JwksAwareTokenParserImpl]
+
+The library implements comprehensive validation for standard JWT claims as defined in RFC 7519.
 
 ==== Required Claims
 
@@ -161,57 +153,22 @@ The library validates standard JWT claims as defined in RFC 7519.
 
 ==== Implementation Details
 
-The claims validation implementation will:
+The claims validation implementation:
 
-1. Verify that required claims are present
-2. Validate claim values according to RFC 7519
-3. Implement additional validation for specific token types
+1. Verifies that required claims are present
+2. Validates claim values according to RFC 7519
+3. Implements additional validation for specific token types
 
-[source,java]
-----
-private boolean validateClaims(Claims claims) {
-    LOGGER.debug("Validating claims");
+The implementation uses a package-private `ClaimValidator` class that is instantiated by the `JwksAwareTokenParserImpl` and used during token parsing to validate all required claims.
 
-    try {
-        // Validate required claims
-        if (claims.getIssuer() == null) {
-            LOGGER.warn(WARN.MISSING_CLAIM.format("iss"));
-            return false;
-        }
-
-        if (claims.getSubject() == null) {
-            LOGGER.warn(WARN.MISSING_CLAIM.format("sub"));
-            return false;
-        }
-
-        if (claims.getExpiration() == null) {
-            LOGGER.warn(WARN.MISSING_CLAIM.format("exp"));
-            return false;
-        }
-
-        if (claims.getIssuedAt() == null) {
-            LOGGER.warn(WARN.MISSING_CLAIM.format("iat"));
-            return false;
-        }
-
-        // Validate expiration
-        if (claims.getExpiration().before(new Date())) {
-            LOGGER.warn(WARN.TOKEN_EXPIRED.format(claims.getIssuer()));
-            return false;
-        }
-
-        return true;
-    } catch (Exception e) {
-        LOGGER.error(e, ERROR.CLAIMS_VALIDATION_FAILED.format(e.getMessage()));
-        return false;
-    }
-}
-----
+Refer to the implementation and associated JavaDoc for detailed behavior.
 
 === Secure Communication
 _See Requirement link:../Requirements.adoc#CUI-JWT-8.3[CUI-JWT-8.3: Secure Communication]_
 
-The library enforces secure communication for key retrieval by requiring TLS 1.2 or higher.
+==== Status: NOT IMPLEMENTED
+
+The library needs to enforce secure communication for key retrieval by requiring TLS 1.2 or higher.
 
 ==== Implementation Details
 
@@ -241,10 +198,14 @@ private HttpClient createSecureHttpClient() {
 }
 ----
 
+Note: The current implementation allows any TLS version or relies on VM defaults.
+
 === Cryptographic Agility
 _See Requirement link:../Requirements.adoc#CUI-JWT-8.5[CUI-JWT-8.5: Cryptographic Agility]_
 
-The library supports algorithm upgrades without breaking changes to enable cryptographic agility.
+==== Status: NOT IMPLEMENTED
+
+The library needs to implement support for algorithm upgrades without breaking changes to enable cryptographic agility.
 
 ==== Implementation Details
 

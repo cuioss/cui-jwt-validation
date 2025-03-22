@@ -39,7 +39,7 @@ _See Requirement CUI-JWT-2.1: Base Token Functionality in link:Requirements.adoc
   * _Implemented in ParsedToken.java with getTokenId() method_
 * [ ] Implement audience validation (aud claim)
   * _Required by CUI-JWT-8.4: Claims Validation_
-  * _JsonWebToken interface has getAudience() method but validation is not implemented in JwksAwareTokenParserImpl_
+  * _JsonWebToken interface has getAudience() method but validation is not implemented in ClaimValidator_
 
 ==== Key Caching and Rotation
 _See Requirement CUI-JWT-4.2: Key Caching and CUI-JWT-4.3: Key Rotation in link:Requirements.adoc[Requirements]_
@@ -208,12 +208,13 @@ _See Requirement CUI-JWT-8.2: Safe Parsing in link:Requirements.adoc[Requirement
 ==== Claims Validation
 _See Requirement CUI-JWT-8.4: Claims Validation in link:Requirements.adoc[Requirements]_
 
-* [ ] Implement comprehensive validation for required claims as specified in RFC 7519:
-  * [ ] Subject (sub)
-  * [ ] Expiration time (exp)
-  * [ ] Issued at (iat)
+* [x] Implement comprehensive validation for required claims as specified in RFC 7519:
+  * [x] Subject (sub)
+  * [x] Expiration time (exp)
+  * [x] Issued at (iat)
   * [ ] Not before time (nbf)
-* _Note: Current implementation only validates the issuer claim_
+* _Note: Implemented in ClaimValidator.java and used by JwksAwareTokenParserImpl.java_
+* _Note: Audience validation is still pending implementation_
 
 ==== Secure Communication
 _See Requirement CUI-JWT-8.3: Secure Communication in link:Requirements.adoc[Requirements]_

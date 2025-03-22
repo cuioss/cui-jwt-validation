@@ -9,6 +9,8 @@ link:../Specification.adoc[Back to Main Specification]
 == Overview
 _See Requirement link:../Requirements.adoc#CUI-JWT-1.4[CUI-JWT-1.4: Token Decryption (Optional - Future Version)]_
 
+==== Status: NOT IMPLEMENTED
+
 This document provides detailed specifications for the token decryption support in the JWT token handling library. Token decryption support is marked as optional for a future version in the requirements.
 
 == JWE Token Structure

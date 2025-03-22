@@ -9,170 +9,44 @@ link:../Specification.adoc[Back to Main Specification]
 == Overview
 _See Requirement link:../Requirements.adoc#CUI-JWT-8.1[CUI-JWT-8.1: Token Size Limits]_
 
+==== Status: IMPLEMENTED
+
+This specification has been implemented in the following classes:
+
+* link:../src/main/java/de/cuioss/jwt/token/util/NonValidatingJwtParser.java[NonValidatingJwtParser]
+* link:../src/main/java/de/cuioss/jwt/token/TokenFactory.java[TokenFactory]
+* link:../src/main/java/de/cuioss/jwt/token/util/MultiIssuerJwtParser.java[MultiIssuerJwtParser]
+
 This document provides detailed specifications for enhancing the token size validation capabilities in the JWT token handling library. Specifically, it outlines how to implement a builder pattern for the `TokenFactory` class to allow passing token size parameters to the `NonValidatingJwtParser`.
 
-== Current Implementation
+== Implementation Details
 
 === NonValidatingJwtParser
 
-The `NonValidatingJwtParser` class currently implements token size validation with the following features:
+The `NonValidatingJwtParser` class implements token size validation with the following features:
 
-* Default maximum token size of 16KB (`DEFAULT_MAX_TOKEN_SIZE`)
-* Default maximum payload size of 16KB (`DEFAULT_MAX_PAYLOAD_SIZE`)
+* Default maximum token size of 8KB (`DEFAULT_MAX_TOKEN_SIZE`)
+* Default maximum payload size of 8KB (`DEFAULT_MAX_PAYLOAD_SIZE`)
 * Builder pattern using Lombok's `@Builder` annotation
 * Size validation in the `decode()` and `decodeJsonPart()` methods
 
 === TokenFactory
 
-The `TokenFactory` class currently:
+The `TokenFactory` class provides:
 
-* Provides a static factory method `of()` that takes one or more `JwksAwareTokenParserImpl` instances
-* Creates a `MultiIssuerJwtParser` using these parsers
-* Does not provide a way to configure token size limits
+* A builder pattern that allows configuring token size limits
+* Methods for adding parsers and configuring token size limits
+* Creation of a `MultiIssuerJwtParser` with the configured settings
 
 === MultiIssuerJwtParser
 
-The `MultiIssuerJwtParser` class currently:
+The `MultiIssuerJwtParser` class:
 
-* Creates a `NonValidatingJwtParser` instance with default settings in its constructor
+* Supports configuring the `NonValidatingJwtParser` instance through its builder
 * Uses this instance to extract the issuer from tokens without validating their signatures
-* Does not provide a way to configure token size limits for the `NonValidatingJwtParser`
+* Allows passing custom token size limits to the `NonValidatingJwtParser`
 
-== Proposed Changes
-
-=== TokenFactory Builder Pattern
-
-Replace the current static factory method `of()` with a builder pattern that allows configuring token size limits:
-
-[source,java]
-----
-public class TokenFactory {
-    // Existing fields...
-    private final MultiIssuerJwtParser tokenParser;
-
-    // Private constructor for builder
-    private TokenFactory(MultiIssuerJwtParser tokenParser) {
-        this.tokenParser = tokenParser;
-    }
-
-    // Builder class
-    public static class Builder {
-        private final List<JwksAwareTokenParserImpl> parsers = new ArrayList<>();
-        private Integer maxTokenSize;
-        private Integer maxPayloadSize;
-
-        // Add parser method
-        public Builder addParser(JwksAwareTokenParserImpl parser) {
-            parsers.add(parser);
-            return this;
-        }
-
-        // Configure token size limits
-        public Builder maxTokenSize(int maxTokenSize) {
-            this.maxTokenSize = maxTokenSize;
-            return this;
-        }
-
-        public Builder maxPayloadSize(int maxPayloadSize) {
-            this.maxPayloadSize = maxPayloadSize;
-            return this;
-        }
-
-        // Build method
-        public TokenFactory build() {
-            Preconditions.checkArgument(!parsers.isEmpty(), "At least one parser must be added");
-
-            // Create MultiIssuerJwtParser builder
-            MultiIssuerJwtParser.Builder multiIssuerBuilder = MultiIssuerJwtParser.builder();
-
-            // Configure token size limits if provided
-            if (maxTokenSize != null || maxPayloadSize != null) {
-                multiIssuerBuilder.configureInspectionParser(builder -> {
-                    if (maxTokenSize != null) {
-                        builder.maxTokenSize(maxTokenSize);
-                    }
-                    if (maxPayloadSize != null) {
-                        builder.maxPayloadSize(maxPayloadSize);
-                    }
-                });
-            }
-
-            // Add parsers
-            for (JwksAwareTokenParserImpl parser : parsers) {
-                multiIssuerBuilder.addParser(parser);
-            }
-
-            // Build MultiIssuerJwtParser and TokenFactory
-            return new TokenFactory(multiIssuerBuilder.build());
-        }
-    }
-
-    // Static method to create builder
-    public static Builder builder() {
-        return new Builder();
-    }
-
-
-    // Existing methods...
-}
-----
-
-=== MultiIssuerJwtParser Enhancements
-
-Enhance the `MultiIssuerJwtParser.Builder` class to allow configuring the `NonValidatingJwtParser`:
-
-[source,java]
-----
-public class MultiIssuerJwtParser {
-    // Existing fields...
-
-    public static class Builder {
-        private final Map<String, JwtParser> issuerToParser = new HashMap<>();
-        private Consumer<NonValidatingJwtParser.NonValidatingJwtParserBuilder> inspectionParserConfigurator;
-
-        // Existing methods...
-
-        /**
-         * Configures the inspection parser used for extracting issuer information.
-         *
-         * @param configurator a consumer that configures the NonValidatingJwtParser builder
-         * @return this builder instance
-         */
-        public Builder configureInspectionParser(
-                Consumer<NonValidatingJwtParser.NonValidatingJwtParserBuilder> configurator) {
-            this.inspectionParserConfigurator = configurator;
-            return this;
-        }
-
-        /**
-         * Builds the {@link MultiIssuerJwtParser}
-         *
-         * @return a new instance of {@link MultiIssuerJwtParser}
-         */
-        public MultiIssuerJwtParser build() {
-            return new MultiIssuerJwtParser(issuerToParser, inspectionParserConfigurator);
-        }
-    }
-
-    // Updated constructor
-    public MultiIssuerJwtParser(
-            @NonNull Map<String, JwtParser> issuerToParser,
-            Consumer<NonValidatingJwtParser.NonValidatingJwtParserBuilder> inspectionParserConfigurator) {
-        this.issuerToParser = new HashMap<>(issuerToParser);
-
-        // Create the inspection parser with custom configuration if provided
-        NonValidatingJwtParser.NonValidatingJwtParserBuilder builder = NonValidatingJwtParser.builder();
-        if (inspectionParserConfigurator != null) {
-            inspectionParserConfigurator.accept(builder);
-        }
-        this.inspectionParser = builder.build();
-
-        LOGGER.debug("Initialized MultiIssuerJwtParser with %s parser(s)", issuerToParser.size());
-    }
-
-    // Existing methods...
-}
-----
+Refer to the implementation and associated JavaDoc for detailed behavior.
 
 == Usage Examples
 
@@ -205,10 +79,10 @@ TokenFactory factory = TokenFactory.builder()
 
 === Default Values
 
-The default values should remain in the `NonValidatingJwtParser` class:
+The default values in the `NonValidatingJwtParser` class:
 
-* `DEFAULT_MAX_TOKEN_SIZE = 16 * 1024` (16KB)
-* `DEFAULT_MAX_PAYLOAD_SIZE = 16 * 1024` (16KB)
+* `DEFAULT_MAX_TOKEN_SIZE = 8 * 1024` (8KB)
+* `DEFAULT_MAX_PAYLOAD_SIZE = 8 * 1024` (8KB)
 
 === Thread Safety
 

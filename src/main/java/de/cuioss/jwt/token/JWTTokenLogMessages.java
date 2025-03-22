@@ -29,6 +29,15 @@ public final class JWTTokenLogMessages {
     private static final String PREFIX = "JWTToken";
 
     @UtilityClass
+    public static final class ERROR {
+        public static final LogRecord CLAIMS_VALIDATION_FAILED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(200)
+                .template("Claims validation failed: %s")
+                .build();
+    }
+
+    @UtilityClass
     public static final class INFO {
         public static final LogRecord CONFIGURED_JWKS = LogRecordModel.builder()
                 .prefix(PREFIX)
@@ -181,6 +190,18 @@ public final class JWTTokenLogMessages {
                 .prefix(PREFIX)
                 .identifier(123)
                 .template("Failed to read JWKS from file: %s")
+                .build();
+
+        public static final LogRecord MISSING_CLAIM = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(124)
+                .template("Token is missing required claim: %s")
+                .build();
+
+        public static final LogRecord TOKEN_EXPIRED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(125)
+                .template("Token from issuer '%s' has expired")
                 .build();
     }
 
