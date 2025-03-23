@@ -52,9 +52,10 @@ import java.util.Optional;
  * Note: The implementation is primarily tested with Keycloak tokens.
  * Some features may be specific to Keycloak's token format.
  * <p>
- * See specification: {@code doc/specification/technical-components.adoc#_parsedtoken}
- * <p>
  * Implements requirement: {@code CUI-JWT-1.2: Token Types}
+ * <p>
+ * For more details on the requirements, see the
+ * <a href="../../../../../../doc/specification/technical-components.adoc">Technical Components Specification</a>.
  *
  * @author Oliver Wolff
  */

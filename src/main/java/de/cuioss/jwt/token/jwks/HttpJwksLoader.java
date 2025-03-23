@@ -17,6 +17,7 @@ package de.cuioss.jwt.token.jwks;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
+import de.cuioss.jwt.token.security.SecureSSLContextProvider;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
 import lombok.EqualsAndHashCode;
@@ -29,7 +30,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.security.Key;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
@@ -41,6 +41,11 @@ import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
 /**
  * Implementation of {@link JwksLoader} that loads JWKS from an HTTP endpoint.
  * Uses Caffeine cache for caching keys.
+ * <p>
+ * Implements requirement: {@code CUI-JWT-8.3: Secure Communication}
+ * <p>
+ * For more details on the security aspects, see the
+ * <a href="../../../../../../../doc/specification/security.adoc">Security Specification</a>.
  *
  * @author Oliver Wolff
  */
@@ -53,6 +58,7 @@ public class HttpJwksLoader implements JwksLoader {
     private static final String EMPTY_JWKS = "{}";
     private static final String CACHE_KEY = "jwks";
     private static final int HTTP_OK = 200;
+    private static final int DEFAULT_REFRESH_INTERVAL_SECONDS = 300; // 5 minutes
 
     private final URI jwksUri;
     private final int refreshIntervalSeconds;
@@ -60,15 +66,15 @@ public class HttpJwksLoader implements JwksLoader {
     private final HttpClient httpClient;
 
     /**
-     * Creates a new HttpJwksLoader with the specified JWKS URL and refresh interval.
+     * Creates a new HttpJwksLoader with the specified parameters.
      *
      * @param jwksUrl                the URL of the JWKS endpoint
      * @param refreshIntervalSeconds the interval in seconds at which to refresh the keys
-     * @param sslContext             optional SSLContext for secure connections, if null the default SSLContext from VM configuration is used
+     * @param sslContext             the SSLContext for secure connections
      */
-    public HttpJwksLoader(@NonNull String jwksUrl, int refreshIntervalSeconds, SSLContext sslContext) {
+    private HttpJwksLoader(@NonNull String jwksUrl, int refreshIntervalSeconds, @NonNull SSLContext sslContext) {
         this.jwksUri = validateAndCreateUri(jwksUrl);
-        this.refreshIntervalSeconds = validateRefreshInterval(refreshIntervalSeconds);
+        this.refreshIntervalSeconds = refreshIntervalSeconds;
         this.httpClient = createHttpClient(sslContext);
         this.jwksCache = Caffeine.newBuilder()
                 .expireAfterWrite(Duration.ofSeconds(refreshIntervalSeconds))
@@ -80,6 +86,98 @@ public class HttpJwksLoader implements JwksLoader {
 
         LOGGER.debug(DEBUG.INITIALIZED_JWKS_LOADER.format(
                 jwksUri.toString(), refreshIntervalSeconds));
+    }
+
+    /**
+     * Builder for creating HttpJwksLoader instances.
+     */
+    public static class Builder {
+        private String jwksUrl;
+        private int refreshIntervalSeconds;
+        private SSLContext sslContext;
+        private SecureSSLContextProvider secureSSLContextProvider;
+
+        /**
+         * Sets the JWKS URL.
+         *
+         * @param jwksUrl the URL of the JWKS endpoint
+         * @return this builder instance
+         */
+        public Builder withJwksUrl(@NonNull String jwksUrl) {
+            this.jwksUrl = jwksUrl;
+            return this;
+        }
+
+        /**
+         * Sets the refresh interval in seconds.
+         *
+         * @param refreshIntervalSeconds the interval in seconds at which to refresh the keys
+         * @return this builder instance
+         */
+        public Builder withRefreshInterval(int refreshIntervalSeconds) {
+            this.refreshIntervalSeconds = refreshIntervalSeconds;
+            return this;
+        }
+
+        /**
+         * Sets the SSL context.
+         *
+         * @param sslContext the SSL context to use
+         * @return this builder instance
+         */
+        public Builder withSslContext(SSLContext sslContext) {
+            this.sslContext = sslContext;
+            return this;
+        }
+
+        /**
+         * Sets the TLS versions configuration.
+         *
+         * @param secureSSLContextProvider the TLS versions configuration to use
+         * @return this builder instance
+         */
+        public Builder withTlsVersions(SecureSSLContextProvider secureSSLContextProvider) {
+            this.secureSSLContextProvider = secureSSLContextProvider;
+            return this;
+        }
+
+        /**
+         * Builds a new HttpJwksLoader instance with the configured parameters.
+         * If refreshIntervalSeconds is 0, the default value of 300 seconds (5 minutes) will be used.
+         * If secureSSLContextProvider is null, a default instance will be created.
+         * The method creates the correct SSLContext using the TLSVersions configuration.
+         *
+         * @return a new HttpJwksLoader instance
+         * @throws IllegalArgumentException if jwksUrl is null or empty, or if refreshIntervalSeconds is negative
+         */
+        public HttpJwksLoader build() {
+            if (jwksUrl == null || jwksUrl.isEmpty()) {
+                throw new IllegalArgumentException("JWKS URL must not be null or empty");
+            }
+            if (refreshIntervalSeconds < 0) {
+                throw new IllegalArgumentException("Refresh interval must not be negative");
+            }
+
+            // Use default refresh interval if none is specified
+            int actualRefreshInterval = refreshIntervalSeconds == 0 ? DEFAULT_REFRESH_INTERVAL_SECONDS : refreshIntervalSeconds;
+
+            // Create default SecureSSLContextProvider instance if none is provided
+            SecureSSLContextProvider actualSecureSSLContextProvider = secureSSLContextProvider != null ? secureSSLContextProvider : new SecureSSLContextProvider();
+
+            // Get or create a secure SSLContext using the SecureSSLContextProvider configuration
+            SSLContext secureContext = actualSecureSSLContextProvider.getOrCreateSecureSSLContext(sslContext);
+
+            return new HttpJwksLoader(jwksUrl, actualRefreshInterval, secureContext);
+        }
+    }
+
+    /**
+     * Creates a new builder for HttpJwksLoader.
+     *
+     * @return a new builder instance
+     */
+    public static Builder builder() {
+        return new Builder();
     }
 
     /**
@@ -97,61 +195,20 @@ public class HttpJwksLoader implements JwksLoader {
         }
     }
 
-    /**
-     * Validates the refresh interval.
-     *
-     * @param refreshIntervalSeconds the refresh interval in seconds
-     * @return the validated refresh interval
-     * @throws IllegalArgumentException if the refresh interval is not positive
-     */
-    private int validateRefreshInterval(int refreshIntervalSeconds) {
-        if (refreshIntervalSeconds <= 0) {
-            throw new IllegalArgumentException("Refresh interval must be greater than zero");
-        }
-        return refreshIntervalSeconds;
-    }
 
     /**
      * Creates an HTTP client with the specified SSL context.
-     * If no SSL context is provided, a secure one (TLS 1.2+) will be created.
-     * If an SSL context is provided, it will be validated to ensure it uses a secure protocol.
+     * The SSL context is guaranteed to be non-null and secure as it's created in the build method.
      *
-     * @param sslContext the SSL context to use, or null to use a secure default
+     * @param sslContext the SSL context to use
      * @return the HTTP client
      */
-    private HttpClient createHttpClient(SSLContext sslContext) {
+    private HttpClient createHttpClient(@NonNull SSLContext sslContext) {
         HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECONDS));
+                .connectTimeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECONDS))
+                .sslContext(sslContext);
 
-        try {
-            if (sslContext != null) {
-                // Validate the provided SSL context
-                String protocol = sslContext.getProtocol();
-                LOGGER.debug(DEBUG.SSL_CONTEXT_PROTOCOL.format(protocol));
-
-                // Check if the protocol is secure (TLS 1.2 or higher)
-                if (TlsVersions.isSecureTlsVersion(protocol)) {
-                    httpClientBuilder.sslContext(sslContext);
-                    LOGGER.debug(DEBUG.USING_SSL_CONTEXT.format(protocol));
-                } else {
-                    LOGGER.warn(WARN.INSECURE_SSL_PROTOCOL.format(protocol));
-                    httpClientBuilder.sslContext(TlsVersions.createSecureSSLContext());
-                    LOGGER.debug(DEBUG.CREATED_SECURE_CONTEXT.format(TlsVersions.DEFAULT_TLS_VERSION));
-                }
-            } else {
-                httpClientBuilder.sslContext(TlsVersions.createSecureSSLContext());
-                LOGGER.debug(DEBUG.NO_SSL_CONTEXT.format(TlsVersions.DEFAULT_TLS_VERSION));
-            }
-        } catch (Exception e) {
-            LOGGER.warn(e, WARN.SSL_CONTEXT_CONFIG_FAILED.format(e.getMessage()));
-            // If we can't create a secure context, use the default (which might not be secure)
-            if (sslContext != null) {
-                httpClientBuilder.sslContext(sslContext);
-                LOGGER.debug(DEBUG.FALLBACK_SSL_CONTEXT.format());
-            } else {
-                LOGGER.debug(DEBUG.DEFAULT_SSL_CONTEXT.format());
-            }
-        }
+        LOGGER.debug(DEBUG.USING_SSL_CONTEXT.format(sslContext.getProtocol()));
 
         return httpClientBuilder.build();
     }

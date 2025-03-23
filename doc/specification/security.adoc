@@ -18,12 +18,12 @@ _See Requirement link:../Requirements.adoc#CUI-JWT-1.3[CUI-JWT-1.3: Signature Va
 
 ==== Status: IMPLEMENTED
 
-This specification has been implemented in the following classes:
+The following classes implement this specification:
 
 * link:../src/main/java/de/cuioss/jwt/token/JwksAwareTokenParserImpl.java[JwksAwareTokenParserImpl]
 * link:../src/main/java/de/cuioss/jwt/token/JwtParser.java[JwtParser]
 
-The implementation is verified by the following tests:
+The following tests verify the implementation:
 
 * link:../src/test/java/de/cuioss/jwt/token/SignatureValidationTest.java[SignatureValidationTest] - Comprehensive tests for signature validation, including:
 ** Validation of tokens with supported algorithms (RS256)
@@ -61,14 +61,14 @@ _See Requirement link:../Requirements.adoc#CUI-JWT-8.1[CUI-JWT-8.1: Token Size L
 
 ==== Status: IMPLEMENTED
 
-This specification has been implemented in the following classes:
+The following classes implement this specification:
 
 * link:../src/main/java/de/cuioss/jwt/token/util/NonValidatingJwtParser.java[NonValidatingJwtParser]
 * link:../src/main/java/de/cuioss/jwt/token/TokenFactory.java[TokenFactory]
 
 To prevent denial of service attacks, the library enforces a maximum token size of 8KB.
 
-The implementation checks the token size before parsing and rejects tokens larger than the configured limit. The default limit is set to 8KB as recommended by OAuth 2.0 JWT BCP Section 3.11.
+Token size is checked before parsing and tokens larger than the configured limit are rejected. The default limit is set to 8KB as recommended by OAuth 2.0 JWT BCP Section 3.11.
 
 Refer to the implementation and associated JavaDoc for detailed behavior.
 
@@ -77,41 +77,15 @@ _See Requirement link:../Requirements.adoc#CUI-JWT-8.2[CUI-JWT-8.2: Safe Parsing
 
 ==== Status: IMPLEMENTED
 
-This specification has been implemented in the following classes:
+The following classes implement this specification:
 
 * link:../src/main/java/de/cuioss/jwt/token/util/NonValidatingJwtParser.java[NonValidatingJwtParser]
 
-The `NonValidatingJwtParser` class implements comprehensive safe parsing features:
+The `NonValidatingJwtParser` class provides comprehensive safe parsing features to protect against common attacks such as memory exhaustion, stack overflow, and malformed input attacks.
 
-1. Token size validation to prevent memory exhaustion attacks
-2. Payload size validation for JSON parsing
-3. Standard Base64 decoding for JWT parts
-4. Proper character encoding handling (using StandardCharsets.UTF_8)
-5. Input validation (checking for empty tokens)
-6. Format validation (checking for correct number of parts)
-7. Comprehensive error handling with appropriate logging
-8. Proper resource management (using try-with-resources for JsonReader)
-9. JSON depth limits to prevent stack overflow attacks
-10. JSON object size limits to prevent memory exhaustion
-11. Protection against duplicate keys in JSON objects
-12. Input sanitization for untrusted data
-13. Enhanced validation of token structure and content
+For implementation details, see the JavaDoc of the link:../src/main/java/de/cuioss/jwt/token/util/NonValidatingJwtParser.java[NonValidatingJwtParser] class.
 
-==== Implementation Details
-
-The safe parsing implementation in `NonValidatingJwtParser` uses the Jakarta JSON API with security configuration to prevent various parsing attacks. The implementation:
-
-1. Enforces maximum token size (8KB by default)
-2. Enforces maximum payload size (8KB by default)
-3. Limits JSON string size (4KB by default)
-4. Limits JSON array size (64 elements by default)
-5. Limits JSON parsing depth (10 levels by default)
-6. Uses standard Base64 decoding with proper error handling
-7. Validates token format before parsing
-8. Implements comprehensive error handling and logging
-9. Uses a cached JsonReaderFactory (with Lombok @Getter(lazy=true)) for improved performance and security
-
-The implementation is verified by the following tests:
+The following tests verify the implementation:
 
 * link:../src/test/java/de/cuioss/jwt/token/util/NonValidatingJwtParserTest.java[NonValidatingJwtParserTest] - Comprehensive tests for the NonValidatingJwtParser class, including:
 ** Token size validation tests
@@ -127,12 +101,12 @@ _See Requirement link:../Requirements.adoc#CUI-JWT-8.4[CUI-JWT-8.4: Claims Valid
 
 ==== Status: IMPLEMENTED
 
-This specification has been implemented in the following classes:
+The following classes implement this specification:
 
 * link:../src/main/java/de/cuioss/jwt/token/ClaimValidator.java[ClaimValidator]
 * link:../src/main/java/de/cuioss/jwt/token/JwksAwareTokenParserImpl.java[JwksAwareTokenParserImpl]
 
-The library implements comprehensive validation for standard JWT claims as defined in RFC 7519.
+The library provides comprehensive validation for standard JWT claims as defined in RFC 7519.
 
 ==== Required Claims
 
@@ -141,50 +115,30 @@ The library implements comprehensive validation for standard JWT claims as defin
 * Expiration Time (exp)
 * Issued At (iat)
 
-==== Implementation Details
-
-The claims validation implementation:
-
-1. Verifies that required claims are present
-2. Validates claim values according to RFC 7519
-3. Implements additional validation for specific token types
-
-The implementation uses a package-private `ClaimValidator` class that is instantiated by the `JwksAwareTokenParserImpl` and used during token parsing to validate all required claims.
-
-Refer to the implementation and associated JavaDoc for detailed behavior.
+For implementation details, see the JavaDoc of the link:../src/main/java/de/cuioss/jwt/token/ClaimValidator.java[ClaimValidator] and link:../src/main/java/de/cuioss/jwt/token/JwksAwareTokenParserImpl.java[JwksAwareTokenParserImpl] classes.
 
 === Secure Communication
 _See Requirement link:../Requirements.adoc#CUI-JWT-8.3[CUI-JWT-8.3: Secure Communication]_
 
 ==== Status: IMPLEMENTED
 
-This specification has been implemented in the following classes:
+The following classes implement this specification:
 
 * link:../src/main/java/de/cuioss/jwt/token/jwks/HttpJwksLoader.java[HttpJwksLoader]
-* link:../src/main/java/de/cuioss/jwt/token/jwks/TlsVersions.java[TlsVersions]
+* link:../src/main/java/de/cuioss/jwt/token/security/SecureSSLContextProvider.java[SecureSSLContextProvider]
 
-The library enforces secure communication for key retrieval by requiring TLS 1.2 or higher.
+The library ensures secure communication for key retrieval by requiring TLS 1.2 or higher by default. The `SecureSSLContextProvider` class is an instance class that allows configuration of the minimum TLS version to be used. The `HttpJwksLoader` uses a builder pattern for creation, with the `SecureSSLContextProvider` instance as an optional parameter.
 
-==== Implementation Details
+For implementation details, see the JavaDoc of the link:../src/main/java/de/cuioss/jwt/token/jwks/HttpJwksLoader.java[HttpJwksLoader] and link:../src/main/java/de/cuioss/jwt/token/security/SecureSSLContextProvider.java[SecureSSLContextProvider] classes.
 
-The secure communication implementation:
-
-1. Defines allowed and forbidden TLS versions in the `TlsVersions` class
-2. Validates provided SSL contexts to ensure they use secure protocols
-3. Creates secure SSL contexts with TLS 1.2 when none is provided
-4. Implements connection timeouts to prevent hanging connections
-5. Provides proper error handling and logging for SSL/TLS-related operations
-
-The implementation uses a dedicated `TlsVersions` utility class that defines constants for secure TLS versions (TLSv1.2, TLSv1.3) and explicitly rejects insecure versions (TLSv1.0, TLSv1.1, SSLv3).
-
-The implementation is verified by integration tests that connect to a Keycloak server using HTTPS.
+Integration tests verify the implementation by connecting to a Keycloak server using HTTPS.
 
 === Cryptographic Agility
 _See Requirement link:../Requirements.adoc#CUI-JWT-8.5[CUI-JWT-8.5: Cryptographic Agility]_
 
 ==== Status: IMPLEMENTED
 
-This specification has been implemented in the following classes:
+The following classes implement this specification:
 
 * link:../src/main/java/de/cuioss/jwt/token/security/AlgorithmPreferences.java[AlgorithmPreferences]
 * link:../src/main/java/de/cuioss/jwt/token/security/JwkKeyHandler.java[JwkKeyHandler]
@@ -193,42 +147,25 @@ This specification has been implemented in the following classes:
 * link:../src/main/java/de/cuioss/jwt/token/jwks/JWKSKeyLoader.java[JWKSKeyLoader]
 * link:../src/main/java/de/cuioss/jwt/token/JwksAwareTokenParserImpl.java[JwksAwareTokenParserImpl]
 
-The implementation enables cryptographic agility by:
+The cryptographic agility features include:
 
-1. Supporting multiple signature algorithms (RSA, ECDSA, RSA-PSS)
-2. Allowing configuration of preferred algorithms
-3. Supporting key rotation and algorithm migration
-4. Storing algorithm information with keys
-5. Selecting keys based on algorithm preferences
-6. Isolating low-level cryptographic operations into a dedicated handler class
+1. Support for multiple signature algorithms (RSA, ECDSA, RSA-PSS)
+2. Configuration of preferred algorithms
+3. Key rotation and algorithm migration capabilities
+4. Storage of algorithm information with keys
+5. Selection of keys based on algorithm preferences
+6. Isolation of low-level cryptographic operations in a dedicated handler class
 
-==== Implementation Details
+For implementation details, see the JavaDoc of the following classes:
 
-After analyzing several alternatives for improving the key handling operations, a hybrid approach was implemented:
+* link:../src/main/java/de/cuioss/jwt/token/security/AlgorithmPreferences.java[AlgorithmPreferences]
+* link:../src/main/java/de/cuioss/jwt/token/security/JwkKeyHandler.java[JwkKeyHandler]
+* link:../src/main/java/de/cuioss/jwt/token/jwks/KeyInfo.java[KeyInfo]
+* link:../src/main/java/de/cuioss/jwt/token/jwks/JwksLoader.java[JwksLoader]
+* link:../src/main/java/de/cuioss/jwt/token/jwks/JWKSKeyLoader.java[JWKSKeyLoader]
+* link:../src/main/java/de/cuioss/jwt/token/JwksAwareTokenParserImpl.java[JwksAwareTokenParserImpl]
 
-1. The low-level key handling code was isolated into a separate `JwkKeyHandler` class within the security package
-2. JRE-provided methods were used where possible to improve the implementation
-3. This approach maintains minimal dependencies while improving code organization and maintainability
-
-The cryptographic agility implementation:
-
-1. Defines a `KeyInfo` class that stores both a key and its algorithm
-2. Provides an `AlgorithmPreferences` class to manage algorithm preferences
-3. Updates the `JwksLoader` interface to use `KeyInfo` instead of just `Key`
-4. Enhances `JWKSKeyLoader` to support multiple key types and algorithms
-5. Introduces `JwkKeyHandler` to isolate low-level cryptographic operations
-6. Modifies `JwksAwareTokenParserImpl` to select keys based on algorithm preferences
-
-The `JwkKeyHandler` class provides methods for:
-
-1. Parsing and validating RSA keys from JWK format
-2. Parsing and validating EC keys from JWK format
-3. Validating Base64 URL encoded values
-4. Determining EC algorithms based on curve names
-
-The `AlgorithmPreferences` class defines the default order of preferred algorithms
-
-The implementation is verified by the following tests:
+The following tests verify the implementation:
 
 * link:../src/test/java/de/cuioss/jwt/token/security/JwkKeyHandlerTest.java[JwkKeyHandlerTest] - Comprehensive tests for the JwkKeyHandler class, including:
 ** Parsing and validation of RSA keys

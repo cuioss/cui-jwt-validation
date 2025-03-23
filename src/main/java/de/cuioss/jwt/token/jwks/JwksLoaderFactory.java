@@ -61,7 +61,11 @@ public class JwksLoaderFactory {
      * @return an instance of JwksLoader
      */
     public static JwksLoader createHttpLoader(@NonNull String jwksUrl, int refreshIntervalSeconds, SSLContext sslContext) {
-        return new HttpJwksLoader(jwksUrl, refreshIntervalSeconds, sslContext);
+        return HttpJwksLoader.builder()
+                .withJwksUrl(jwksUrl)
+                .withRefreshInterval(refreshIntervalSeconds)
+                .withSslContext(sslContext)
+                .build();
     }
 
     /**

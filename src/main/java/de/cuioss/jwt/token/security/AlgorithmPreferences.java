@@ -32,6 +32,9 @@ import java.util.Optional;
  * and supporting algorithm migration.
  * <p>
  * Implements requirement: {@code CUI-JWT-8.5: Cryptographic Agility}
+ * <p>
+ * For more details on the security aspects, see the
+ * <a href="../../../../../../../doc/specification/security.adoc">Security Specification</a>.
  *
  * @author Oliver Wolff
  */

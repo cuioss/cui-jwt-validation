@@ -52,9 +52,10 @@ import java.util.Optional;
  * The class uses {@link NonValidatingJwtParser} internally for initial token inspection
  * to determine the issuer before selecting the appropriate validating parser.
  * <p>
- * See specification: {@code doc/specification/technical-components.adoc#_multiissuertokenparser}
- * <p>
  * Implements requirement: {@code CUI-JWT-3: Multi-Issuer Support}
+ * <p>
+ * For more details on the requirements, see the
+ * <a href="../../../../../../../doc/specification/technical-components.adoc">Technical Components Specification</a>.
  *
  * @author Oliver Wolff
  */

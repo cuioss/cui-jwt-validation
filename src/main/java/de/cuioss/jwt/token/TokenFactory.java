@@ -60,6 +60,11 @@ import java.util.Optional;
  * <p>
  * The factory uses {@link MultiIssuerJwtParser} internally to manage multiple token parsers
  * and select the appropriate one based on the token's issuer and format.
+ * <p>
+ * Implements requirement: {@code CUI-JWT-2: Token Representation}
+ * <p>
+ * For more details on the requirements, see the
+ * <a href="../../../../../../../doc/specification/technical-components.adoc">Technical Components Specification</a>.
  *
  * @author Oliver Wolff
  */

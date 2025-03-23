@@ -42,9 +42,10 @@ import java.util.Optional;
  *   <li>Key management</li>
  * </ul>
  * <p>
- * See specification: {@code doc/specification/technical-components.adoc#_jwtparser}
- * <p>
  * Implements requirement: {@code CUI-JWT-1.3: Signature Validation}
+ * <p>
+ * For more details on the requirements, see the
+ * <a href="../../../../../../doc/specification/technical-components.adoc">Technical Components Specification</a>.
  *
  * @author Oliver Wolff
  */

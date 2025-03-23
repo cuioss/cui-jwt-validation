@@ -34,6 +34,7 @@ import de.cuioss.jwt.token.jwks.KeyInfo;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -105,7 +106,10 @@ class HttpJwksLoaderTest {
 
         // Create a new loader that will encounter server error
         String endpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
-        HttpJwksLoader errorLoader = new HttpJwksLoader(endpoint, REFRESH_INTERVAL_SECONDS, null);
+        HttpJwksLoader errorLoader = HttpJwksLoader.builder()
+                .withJwksUrl(endpoint)
+                .withRefreshInterval(REFRESH_INTERVAL_SECONDS)
+                .build();
 
         // When
         Optional<KeyInfo> keyInfo = errorLoader.getKeyInfo(TEST_KID);
@@ -124,7 +128,10 @@ class HttpJwksLoaderTest {
 
         // Create a new loader with invalid JSON response
         String endpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
-        HttpJwksLoader invalidJsonLoader = new HttpJwksLoader(endpoint, REFRESH_INTERVAL_SECONDS, null);
+        HttpJwksLoader invalidJsonLoader = HttpJwksLoader.builder()
+                .withJwksUrl(endpoint)
+                .withRefreshInterval(REFRESH_INTERVAL_SECONDS)
+                .build();
 
         // When
         Optional<KeyInfo> keyInfo = invalidJsonLoader.getKeyInfo(TEST_KID);
@@ -144,7 +151,10 @@ class HttpJwksLoaderTest {
 
         // When - create a new instance to force refresh
         String endpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
-        HttpJwksLoader newLoader = new HttpJwksLoader(endpoint, REFRESH_INTERVAL_SECONDS, null);
+        HttpJwksLoader newLoader = HttpJwksLoader.builder()
+                .withJwksUrl(endpoint)
+                .withRefreshInterval(REFRESH_INTERVAL_SECONDS)
+                .build();
         newLoader.getKeyInfo(TEST_KID);
 
         // Then - verify keys were refreshed
@@ -163,20 +173,33 @@ class HttpJwksLoaderTest {
     }
 
     @Test
-    @DisplayName("Should throw exception when refresh interval is invalid")
+    @DisplayName("Should throw exception when refresh interval is negative")
     @ModuleDispatcher
-    void shouldThrowExceptionWhenRefreshIntervalIsInvalid(URIBuilder uriBuilder) {
+    void shouldThrowExceptionWhenRefreshIntervalIsNegative(URIBuilder uriBuilder) {
         // Given
         String endpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
 
         // When/Then
         assertThrows(IllegalArgumentException.class, () -> {
-            JwksLoaderFactory.createHttpLoader(endpoint, 0, null);
-        }, "Should throw exception when refresh interval is zero");
-
-        assertThrows(IllegalArgumentException.class, () -> {
             JwksLoaderFactory.createHttpLoader(endpoint, -1, null);
         }, "Should throw exception when refresh interval is negative");
+    }
+
+    @Test
+    @DisplayName("Should use default refresh interval when zero is provided")
+    @ModuleDispatcher
+    void shouldUseDefaultRefreshIntervalWhenZeroIsProvided(URIBuilder uriBuilder) {
+        // Given
+        String endpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
+
+        // When
+        HttpJwksLoader loader = HttpJwksLoader.builder()
+                .withJwksUrl(endpoint)
+                .withRefreshInterval(0)
+                .build();
+
+        // Then - no exception should be thrown, and the loader should be created with the default refresh interval
+        assertNotNull(loader, "Loader should be created with default refresh interval");
     }
 
     @Test
@@ -188,7 +211,10 @@ class HttpJwksLoaderTest {
 
         // Create a new loader with JWK missing required fields
         String endpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
-        HttpJwksLoader missingFieldsLoader = new HttpJwksLoader(endpoint, REFRESH_INTERVAL_SECONDS, null);
+        HttpJwksLoader missingFieldsLoader = HttpJwksLoader.builder()
+                .withJwksUrl(endpoint)
+                .withRefreshInterval(REFRESH_INTERVAL_SECONDS)
+                .build();
 
         // When
         Optional<KeyInfo> keyInfo = missingFieldsLoader.getKeyInfo(TEST_KID);
@@ -227,7 +253,10 @@ class HttpJwksLoaderTest {
     @DisplayName("Should handle invalid URL")
     void shouldHandleInvalidUrl() {
         // Given
-        HttpJwksLoader invalidUrlLoader = new HttpJwksLoader("invalid-url", REFRESH_INTERVAL_SECONDS, null);
+        HttpJwksLoader invalidUrlLoader = HttpJwksLoader.builder()
+                .withJwksUrl("invalid-url")
+                .withRefreshInterval(REFRESH_INTERVAL_SECONDS)
+                .build();
 
         // When
         Optional<KeyInfo> keyInfo = invalidUrlLoader.getKeyInfo(TEST_KID);

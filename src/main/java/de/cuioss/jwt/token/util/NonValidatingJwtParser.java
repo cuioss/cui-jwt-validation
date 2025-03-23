@@ -61,6 +61,11 @@ import jakarta.json.JsonReaderFactory;
  *     jwt.getKid().ifPresent(kid -> System.out.println("Kid: " + kid));
  * });
  * </pre>
+ * <p>
+ * Implements requirements: {@code CUI-JWT-8.1: Token Size Limits} and {@code CUI-JWT-8.2: Safe Parsing}
+ * <p>
+ * For more details on the security aspects, see the
+ * <a href="../../../../../../../doc/specification/security.adoc">Security Specification</a>.
  *
  * @author Oliver Wolff
  */

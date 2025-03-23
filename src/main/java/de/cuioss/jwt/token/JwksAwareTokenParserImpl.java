@@ -68,9 +68,13 @@ import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
  * This implementation is thread-safe and handles automatic key rotation
  * based on the configured refresh interval.
  * <p>
- * See specification: {@code doc/specification/technical-components.adoc#_jwtparser}
- * <p>
  * Implements requirement: {@code CUI-JWT-1.3: Signature Validation}
+ * <p>
+ * For more details on the requirements, see the
+ * <a href="../../../../../../doc/specification/technical-components.adoc">Technical Components Specification</a>.
+ * <p>
+ * For more details on the security aspects, see the
+ * <a href="../../../../../../doc/specification/security.adoc">Security Specification</a>.
  *
  * @author Oliver Wolff
  */
