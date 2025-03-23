@@ -37,7 +37,10 @@ import java.util.Optional;
  * <p>
  * Usage example:
  * <pre>
- * Optional&lt;ParsedIdToken&gt; token = ParsedIdToken.fromTokenString(tokenString, parser);
+ * TokenFactory factory = TokenFactory.builder()
+ *     .addParser(parser)
+ *     .build();
+ * Optional&lt;ParsedIdToken&gt; token = factory.createIdToken(tokenString);
  * token.flatMap(ParsedIdToken::getEmail).ifPresent(email -> {
  *     // Process user's email
  * });
@@ -51,25 +54,14 @@ public class ParsedIdToken extends ParsedToken {
 
     private static final CuiLogger LOGGER = new CuiLogger(ParsedIdToken.class);
 
-    private ParsedIdToken(JsonWebToken jsonWebToken) {
-        super(jsonWebToken);
-    }
-
     /**
-     * @param tokenString to be passed
-     * @param tokenParser to be passed
-     * @return an {@link ParsedIdToken} if given Token can be parsed correctly,
-     * otherwise {@link Optional#empty()}
+     * Creates a new {@link ParsedIdToken} from the given JsonWebToken.
+     *
+     * @param jsonWebToken The JsonWebToken to wrap, must not be null
      */
-    public static Optional<ParsedIdToken> fromTokenString(String tokenString, JwtParser tokenParser) {
-        LOGGER.debug("Creating ID token from token string");
-        Optional<JsonWebToken> rawToken = jsonWebTokenFrom(tokenString, tokenParser, LOGGER);
-        if (rawToken.isEmpty()) {
-            LOGGER.debug("Failed to create ID token from string");
-            return Optional.empty();
-        }
+    public ParsedIdToken(JsonWebToken jsonWebToken) {
+        super(jsonWebToken);
         LOGGER.debug("Successfully created ID token");
-        return rawToken.map(ParsedIdToken::new);
     }
 
     /**

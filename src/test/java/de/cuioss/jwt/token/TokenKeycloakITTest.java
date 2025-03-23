@@ -38,10 +38,7 @@ import java.util.List;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("Tests Token integration with Keycloak")
 public class TokenKeycloakITTest extends KeycloakITBase {
@@ -154,11 +151,11 @@ public class TokenKeycloakITTest extends KeycloakITBase {
         @DisplayName("Should handle valid refresh token")
         void shouldHandleValidRefreshToken() {
             var tokenString = requestToken(parameterForScopedToken(SCOPES), TokenTypes.REFRESH);
-            var refreshToken = ParsedRefreshToken.fromTokenString(tokenString);
-
-            assertFalse(refreshToken.isEmpty(), "Refresh token should be present");
-            assertNotNull(refreshToken.getTokenString(), "Token string should not be null");
-            assertEquals(TokenType.REFRESH_TOKEN, refreshToken.getType(), "Token type should be REFRESH_TOKEN");
+            var refreshToken = factory.createRefreshToken(tokenString);
+            assertTrue(refreshToken.isPresent(), "Refresh token should be present");
+            assertFalse(refreshToken.get().isEmpty(), "Refresh token should be present");
+            assertNotNull(refreshToken.get().getTokenString(), "Token string should not be null");
+            assertEquals(TokenType.REFRESH_TOKEN, refreshToken.get().getType(), "Token type should be REFRESH_TOKEN");
         }
     }
 }

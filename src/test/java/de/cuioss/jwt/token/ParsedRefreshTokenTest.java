@@ -33,7 +33,7 @@ class ParsedRefreshTokenTest implements ShouldBeSerializable<ParsedRefreshToken>
 
     @Override
     public ParsedRefreshToken getUnderTest() {
-        return ParsedRefreshToken.fromTokenString(validSignedJWTWithClaims(REFRESH_TOKEN));
+        return new ParsedRefreshToken(validSignedJWTWithClaims(REFRESH_TOKEN));
     }
 
     @Nested
@@ -44,7 +44,7 @@ class ParsedRefreshTokenTest implements ShouldBeSerializable<ParsedRefreshToken>
         @DisplayName("Should handle valid token")
         void shouldHandleValidToken() {
             String initialToken = validSignedJWTWithClaims(REFRESH_TOKEN);
-            var parsedRefreshToken = ParsedRefreshToken.fromTokenString(initialToken);
+            var parsedRefreshToken = new ParsedRefreshToken(initialToken);
 
             assertEquals(initialToken, parsedRefreshToken.getTokenString(), "Token string should match original");
             assertFalse(parsedRefreshToken.isEmpty(), "Token should be present");
@@ -54,7 +54,7 @@ class ParsedRefreshTokenTest implements ShouldBeSerializable<ParsedRefreshToken>
         @Test
         @DisplayName("Should handle invalid token")
         void shouldHandleInvalidToken() {
-            var parsedRefreshToken = ParsedRefreshToken.fromTokenString("invalid-token");
+            var parsedRefreshToken = new ParsedRefreshToken("invalid-token");
             assertFalse(parsedRefreshToken.isEmpty(), "Invalid token should still be wrapped");
             assertEquals("invalid-token", parsedRefreshToken.getTokenString(), "Token string should match original");
         }

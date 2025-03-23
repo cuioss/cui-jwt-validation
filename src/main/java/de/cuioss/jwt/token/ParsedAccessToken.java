@@ -23,14 +23,9 @@ import de.cuioss.tools.string.Splitter;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonString;
 import lombok.EqualsAndHashCode;
-import lombok.NonNull;
 import lombok.ToString;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 import static java.util.stream.Collectors.toSet;
 
@@ -56,7 +51,10 @@ import static java.util.stream.Collectors.toSet;
  * <p>
  * Usage example:
  * <pre>
- * Optional&lt;ParsedAccessToken&gt; token = ParsedAccessToken.fromTokenString(tokenString, parser);
+ * TokenFactory factory = TokenFactory.builder()
+ *     .addParser(parser)
+ *     .build();
+ * Optional&lt;ParsedAccessToken&gt; token = factory.createAccessToken(tokenString);
  * if (token.isPresent() &amp;&amp; token.get().providesScopes(requiredScopes)) {
  *     // Token is valid and has required scopes
  * }
@@ -82,43 +80,12 @@ public class ParsedAccessToken extends ParsedToken {
     private static final String CLAIM_NAME_ROLES = "roles";
 
     /**
-     * @param tokenString to be parsed
-     * @param tokenParser the actual parser to be used
-     * @return an {@link ParsedAccessToken} if given Token can be parsed correctly,
-     * {@code Optional#empty()} otherwise.
+     * Creates a new {@link ParsedAccessToken} from the given JsonWebToken and email.
+     *
+     * @param jsonWebToken The JsonWebToken to wrap, must not be null
+     * @param email The email address associated with this token, may be null
      */
-    public static Optional<ParsedAccessToken> fromTokenString(String tokenString, @NonNull JwtParser tokenParser) {
-        return fromTokenString(tokenString, null, tokenParser);
-    }
-
-    /**
-     * @param tokenString to be parsed
-     * @param email       email address or null
-     * @param tokenParser the actual parser to be used
-     * @return an {@link ParsedAccessToken} if given Token can be parsed correctly,
-     * {@code Optional#empty()} otherwise.
-     */
-    public static Optional<ParsedAccessToken> fromTokenString(String tokenString, String email, JwtParser tokenParser) {
-        var rawToken = jsonWebTokenFrom(tokenString, tokenParser, LOGGER);
-
-        if (rawToken.isPresent()) {
-            // Check if the token has a "not before" claim that is more than 60 seconds in the future
-            Long notBeforeTime = rawToken.get().getClaim(de.cuioss.jwt.token.adapter.Claims.NOT_BEFORE);
-            if (notBeforeTime != null) {
-                long currentTime = java.time.Instant.now().getEpochSecond();
-                if (notBeforeTime > currentTime + 60) {
-                    LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_NBF_FUTURE::format);
-                    return Optional.empty();
-                }
-            }
-
-            return Optional.of(new ParsedAccessToken(rawToken.get(), email));
-        }
-
-        return Optional.empty();
-    }
-
-    private ParsedAccessToken(JsonWebToken jsonWebToken, String email) {
+    public ParsedAccessToken(JsonWebToken jsonWebToken, String email) {
         super(jsonWebToken);
         this.email = email;
     }
@@ -194,21 +161,37 @@ public class ParsedAccessToken extends ParsedToken {
     public Set<String> getRoles() {
         LOGGER.debug("Retrieving roles from token");
         if (!jsonWebToken.containsClaim(CLAIM_NAME_ROLES)) {
-            LOGGER.debug("[DEBUG_LOG] No roles claim found in token, containsClaim returned false");
+            LOGGER.debug("No roles claim found in token, containsClaim returned false");
             return Set.of();
         }
 
         var roles = jsonWebToken.getClaim(CLAIM_NAME_ROLES);
-        LOGGER.debug("[DEBUG_LOG] Roles claim value: %s (type: %s)", roles, roles != null ? roles.getClass().getName() : "null");
+        LOGGER.debug("Roles claim value: %s (type: %s)", roles, roles != null ? roles.getClass().getName() : "null");
 
         if (roles instanceof JsonArray array) {
             var result = array.getValuesAs(JsonString.class).stream()
                     .map(JsonString::getString)
                     .collect(toSet());
-            LOGGER.debug("[DEBUG_LOG] Found roles in token: %s", result);
+            LOGGER.debug("Found roles in token as JsonArray: %s", result);
+            return result;
+        } else if (roles instanceof Set<?> set) {
+            // Handle the case where roles is a Set<String> (as in AccessTokenGenerator)
+            var result = set.stream()
+                    .filter(String.class::isInstance)
+                    .map(String.class::cast)
+                    .collect(toSet());
+            LOGGER.debug("Found roles in token as Set: %s", result);
+            return result;
+        } else if (roles instanceof java.util.Collection<?> collection) {
+            // Handle the case where roles is any other Collection type
+            var result = collection.stream()
+                    .filter(String.class::isInstance)
+                    .map(String.class::cast)
+                    .collect(toSet());
+            LOGGER.debug("Found roles in token as Collection: %s", result);
             return result;
         }
-        LOGGER.debug("[DEBUG_LOG] Roles claim is not a JSON array");
+        LOGGER.debug("Roles claim is not a JsonArray, Set, or Collection");
         return Set.of();
     }
 

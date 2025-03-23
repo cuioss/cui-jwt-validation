@@ -28,14 +28,7 @@ import lombok.ToString;
 
 import java.io.StringReader;
 import java.security.Key;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;

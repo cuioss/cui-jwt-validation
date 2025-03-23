@@ -155,6 +155,9 @@ public class TestTokenProducer {
         return Jwts.builder()
                 .setIssuer(ISSUER)
                 .setSubject(SUBJECT)
+                .setIssuedAt(Date.from(Instant.now()))
+                .setExpiration(Date.from(Instant.now().plusSeconds(3600))) // 1 hour expiration
+                .setHeaderParam("kid", "default-key-id") // Add key ID to header
                 .signWith(KeyMaterialHandler.getDefaultPrivateKey(), SignatureAlgorithm.RS256)
                 .compact();
     }
@@ -203,12 +206,17 @@ public class TestTokenProducer {
      */
     public static String validSignedJWTWithNotBefore(Instant notBefore) {
         try {
+            // Always set the expiration time to 1 hour in the future from now,
+            // regardless of the notBefore time, to ensure the token is not expired
+            Instant expirationTime = Instant.now().plusSeconds(3600);
+
             JwtBuilder builder = Jwts.builder()
                     .setIssuer(ISSUER)
                     .setSubject(SUBJECT)
-                    .setIssuedAt(Date.from(OffsetDateTime.ofInstant(notBefore, ZoneId.systemDefault()).minusMinutes(5).toInstant()))
-                    .setExpiration(Date.from(OffsetDateTime.ofInstant(notBefore, ZoneId.systemDefault()).plusMinutes(10).toInstant()))
+                    .setIssuedAt(Date.from(Instant.now().minusSeconds(300))) // 5 minutes ago
+                    .setExpiration(Date.from(expirationTime))
                     .claim("nbf", notBefore.getEpochSecond())
+                    .setHeaderParam("kid", "default-key-id") // Add key ID to header
                     .signWith(KeyMaterialHandler.getDefaultPrivateKey(), SignatureAlgorithm.RS256);
 
             // Add claims from file

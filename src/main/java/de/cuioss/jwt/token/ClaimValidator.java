@@ -1,3 +1,18 @@
+/*
+ * Copyright 2023 the original author or authors.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * https://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package de.cuioss.jwt.token;
 
 import de.cuioss.tools.logging.CuiLogger;
@@ -6,6 +21,7 @@ import io.jsonwebtoken.Jws;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 
+import java.time.Instant;
 import java.util.Date;
 
 import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
@@ -64,6 +80,11 @@ class ClaimValidator {
 
             // Validate issued at time
             if (!validateIssuedAt(claims)) {
+                return false;
+            }
+
+            // Validate not before time
+            if (!validateNotBefore(claims)) {
                 return false;
             }
 
@@ -141,6 +162,38 @@ class ClaimValidator {
             LOGGER.warn(WARN.MISSING_CLAIM.format("iat"));
             return false;
         }
+        return true;
+    }
+
+    /**
+     * Validates the "not before time" claim.
+     * <p>
+     * The "nbf" (not before) claim identifies the time before which the JWT must not be accepted for processing.
+     * This claim is optional, so if it's not present, the validation passes.
+     * <p>
+     * If the claim is present, this method checks if the token's not-before time is more than 60 seconds
+     * in the future.
+     * If it is, the token is considered invalid.
+     *
+     * @param claims the JWT claims
+     * @return true if "the not before" time is valid or not present, false otherwise
+     */
+    private boolean validateNotBefore(Claims claims) {
+        Date notBefore = claims.getNotBefore();
+        if (notBefore == null) {
+            // Not before claim is optional, so if it's not present, validation passes
+            return true;
+        }
+
+        // Check if the token has a "not before" claim that is more than 60 seconds in the future
+        long currentTime = Instant.now().getEpochSecond();
+        long notBeforeTime = notBefore.getTime() / 1000; // Convert milliseconds to seconds
+
+        if (notBeforeTime > currentTime + 60) {
+            LOGGER.warn(WARN.TOKEN_NBF_FUTURE::format);
+            return false;
+        }
+
         return true;
     }
 }

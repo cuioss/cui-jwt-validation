@@ -41,6 +41,26 @@ _See Requirement CUI-JWT-2.1: Base Token Functionality in link:Requirements.adoc
   * _Required by CUI-JWT-8.4: Claims Validation_
   * _JsonWebToken interface has getAudience() method but validation is not implemented in ClaimValidator_
 
+==== ParsedToken / TokenFactory Improvements
+_New improvements for better separation of concerns and code maintainability_
+
+* [x] Refactor token creation to move JsonWebToken creation to TokenFactory:
+  * [x] Modify TokenFactory to create JsonWebToken instances:
+    * [x] Add a new method `createJsonWebToken(String tokenString, JwtParser parser)` that returns Optional<JsonWebToken>
+    * [x] Move the token parsing logic from ParsedToken.jsonWebTokenFrom to this new method
+    * [x] Maintain the same logging behavior, especially WARN-level logs
+
+  * [x] Update ParsedToken and its subclasses:
+    * [x] Make the constructors in ParsedAccessToken, ParsedIdToken, and ParsedRefreshToken public
+    * [x] Remove the static factory methods (fromTokenString) from these classes
+    * [x] Update TokenFactory methods to use the new public constructors
+
+  * [x] Move NOT_BEFORE claim validation from ParsedAccessToken to ClaimValidator:
+    * [x] Add a new method `validateNotBefore(Claims claims)` to ClaimValidator
+    * [x] Implement the same validation logic as in ParsedAccessToken (checking if NOT_BEFORE is more than 60 seconds in the future)
+    * [x] Update the validateClaims method to call the new validateNotBefore method
+    * [x] Remove the NOT_BEFORE validation from ParsedAccessToken.fromTokenString
+
 ==== Key Caching and Rotation
 _See Requirement CUI-JWT-4.2: Key Caching and CUI-JWT-4.3: Key Rotation in link:Requirements.adoc[Requirements]_
 
@@ -50,6 +70,30 @@ _See Requirement CUI-JWT-4.2: Key Caching and CUI-JWT-4.3: Key Rotation in link:
 * [x] Implement automatic key rotation based on configurable refresh intervals
   * _Implemented in HttpJwksLoader.java with refreshIntervalSeconds parameter_
   * _See link:../src/main/java/de/cuioss/jwt/token/jwks/HttpJwksLoader.java[HttpJwksLoader.java]_
+
+==== HttpJwksLoader Improvements
+_New improvements for better performance and reliability_
+
+* [ ] Enhance JWKSKeyLoader to support caching and content comparison:
+  * [ ] Add originalString field to store the original JWKS content
+  * [ ] Add etag field to store the ETag value from HTTP responses
+  * [ ] Add isNotEmpty() method to check if the loader contains valid keys
+  * [ ] Update equals/hashCode to consider the new fields
+  * [ ] Update constructor to accept the etag parameter
+
+* [ ] Enhance HttpJwksLoader to improve performance and reliability:
+  * [ ] Add lastValidResult field to store the last valid JWKSKeyLoader instance
+  * [ ] Modify loadJwksKeyLoader to implement HTTP 304 "Not Modified" handling:
+    * [ ] Store the ETag from successful responses
+    * [ ] Include the ETag in subsequent requests using the If-None-Match header
+    * [ ] Handle 304 responses by returning the previously cached result
+  * [ ] Implement content-based caching:
+    * [ ] Return the previously created JWKSKeyLoader if the content hasn't changed
+    * [ ] Only create a new JWKSKeyLoader if the content has actually changed
+  * [ ] Implement fallback to last valid result:
+    * [ ] If a new request fails but there's a valid cached result, return the cached result
+    * [ ] Log a warning when falling back to the cached result
+    * [ ] Only return an empty result if there's no valid cached result
 
 ==== Local Key Support
 _See Requirement CUI-JWT-4.4: Local Key Support in link:Requirements.adoc[Requirements]_
@@ -82,7 +126,6 @@ _See Requirement CUI-JWT-1.4: Token Decryption in link:Requirements.adoc[Require
   * _Note: This is marked as optional for a future version in the requirements_
 
 === Testing
-_See link:specification/testing.adoc#_compliance_with_cui_testing_standards[Compliance with CUI Testing Standards]_
 
 ==== Test Coverage Improvements
 _See link:specification/testing.adoc#_summary_of_cui_testing_core_standards[Summary of CUI Testing Core Standards]_
@@ -212,107 +255,6 @@ _See Requirement CUI-JWT-8.4: Claims Validation in link:Requirements.adoc[Requir
   * [x] Subject (sub)
   * [x] Expiration time (exp)
   * [x] Issued at (iat)
-  * [ ] Not before time (nbf)
+  * [x] Not before time (nbf)
 * _Note: Implemented in ClaimValidator.java and used by JwksAwareTokenParserImpl.java_
 * _Note: Audience validation is still pending implementation_
-
-==== Secure Communication
-_See Requirement CUI-JWT-8.3: Secure Communication in link:Requirements.adoc[Requirements]_
-
-* [ ] Enforce TLS 1.2 or higher for key retrieval as recommended by NIST SP 800-52 Rev. 2
-* _Note: Current implementation allows any TLS version or relies on VM defaults_
-
-==== Cryptographic Agility
-_See Requirement CUI-JWT-8.5: Cryptographic Agility in link:Requirements.adoc[Requirements]_
-
-* [ ] Implement support for algorithm upgrades without breaking changes
-* [ ] Add preferred algorithm ordering to enable graceful migration to stronger algorithms
-
-==== Algorithm Validation
-_See Requirement CUI-JWT-1.3: Signature Validation in link:Requirements.adoc[Requirements]_
-
-* [ ] Implement explicit checks for supported/rejected algorithms
-* [ ] Reject tokens with unsupported algorithms (HS256, HS384, HS512, None)
-
-==== Token Functionality Enhancements
-
-===== Access Token Functionality
-_See Requirement CUI-JWT-2.2: Access Token Functionality in link:Requirements.adoc[Requirements]_
-
-* [x] Implement scope-based authorization (scope claim) as defined in RFC 6749
-  * _Implemented in ParsedAccessToken.java with getScopes() and providesScopes() methods_
-* [x] Implement role-based authorization (roles or groups claims)
-  * _Implemented in ParsedAccessToken.java with getRoles() and hasRole() methods_
-* [ ] Enhance resource access information beyond scopes and roles
-  * _Current implementation provides scope and role management, but could be enhanced with more specific resource access functionality_
-
-===== ID Token Functionality
-_See Requirement CUI-JWT-2.3: ID Token Functionality in link:Requirements.adoc[Requirements]_
-
-* [x] Implement basic ID token parsing and validation
-  * _Implemented in ParsedIdToken.java_
-* [x] Implement email claim access
-  * _Implemented in ParsedIdToken.java with getEmail() method_
-* [ ] Implement comprehensive user identity information (name, preferred_username, etc.)
-  * _Missing implementation for accessing user identity claims_
-* [ ] Implement authentication context information (auth_time, acr, amr, etc.)
-  * _Missing implementation for accessing authentication context claims_
-
-===== Refresh Token Functionality
-_See Requirement CUI-JWT-2.4: Refresh Token Functionality in link:Requirements.adoc[Requirements]_
-
-* [x] Implement basic refresh token representation
-  * _Implemented in ParsedRefreshToken.java_
-* [ ] Implement token refresh capabilities as defined in RFC 6749
-  * _Missing implementation for token refresh capabilities_
-* [ ] Implement token lifecycle management
-  * _Missing implementation for token lifecycle management_
-
-=== Logging
-
-==== Log Levels
-_See Requirement CUI-JWT-7.1: Log Levels in link:Requirements.adoc[Requirements]_
-
-* [x] Implement ERROR level logging for authentication failures and token validation errors
-  * _Implemented throughout the codebase using CuiLogger_
-* [x] Implement WARN level logging for suspicious activities and token format issues
-  * _Implemented throughout the codebase using CuiLogger_
-* [x] Implement INFO level logging for successful token validations and key rotations
-  * _Implemented throughout the codebase using CuiLogger_
-* [x] Implement DEBUG level logging for detailed token processing information
-  * _Implemented throughout the codebase using CuiLogger_
-* [x] Implement TRACE level logging for highly detailed debugging information
-  * _Implemented throughout the codebase using CuiLogger_
-
-==== Log Content
-_See Requirement CUI-JWT-7.2: Log Content in link:Requirements.adoc[Requirements]_
-
-* [x] Include timestamps, event types, source components, and outcome in log messages
-  * _Implemented throughout the codebase using CuiLogger_
-* [x] Exclude sensitive data such as full tokens, private keys, and passwords from log messages
-  * _Implemented throughout the codebase, with token strings only logged at TRACE level_
-* [ ] Review log messages to ensure they follow OWASP Logging Cheat Sheet recommendations
-  * _Some log messages may need to be reviewed for compliance with OWASP recommendations_
-
-==== Security Event Logging
-_See Requirement CUI-JWT-7.3: Security Events in link:Requirements.adoc[Requirements]_
-
-* [x] Implement logging for token validation failures
-  * _Implemented in JwksAwareTokenParserImpl.java_
-* [x] Implement logging for key rotation events
-  * _Implemented in HttpJwksLoader.java_
-* [ ] Implement logging for configuration changes
-  * _Missing implementation for logging configuration changes_
-* [ ] Implement logging for suspicious token usage patterns
-  * _Missing implementation for logging suspicious token usage patterns_
-
-== Documentation Tasks
-
-=== Update Specification and Javadoc
-
-* [x] Update the specification to match the actual implementation naming (JwksLoader, JwksLoaderFactory, MultiIssuerJwtParser)
-  * _Implemented in Specification.adoc and related files_
-* [ ] Ensure all implementation classes are properly documented with references to the requirements they implement
-  * _Some classes have proper references to requirements, but others need to be updated_
-* [ ] Update class and method Javadoc to include references to the requirements
-  * _Some classes have proper references to requirements, but others need to be updated_

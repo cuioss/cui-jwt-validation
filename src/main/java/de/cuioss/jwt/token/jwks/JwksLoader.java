@@ -15,7 +15,6 @@
  */
 package de.cuioss.jwt.token.jwks;
 
-import java.security.Key;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;

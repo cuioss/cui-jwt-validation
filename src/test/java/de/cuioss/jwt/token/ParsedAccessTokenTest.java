@@ -21,20 +21,16 @@ import de.cuioss.test.generator.TypedGenerator;
 import de.cuioss.test.generator.domain.EmailGenerator;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import de.cuioss.tools.logging.CuiLogger;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.util.Set;
 
-import static de.cuioss.jwt.token.test.TestTokenProducer.SOME_SCOPES;
-import static de.cuioss.jwt.token.test.TestTokenProducer.getDefaultTokenParser;
-import static de.cuioss.jwt.token.test.TestTokenProducer.validSignedEmptyJWT;
-import static de.cuioss.jwt.token.test.TestTokenProducer.validSignedJWTWithClaims;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static de.cuioss.jwt.token.test.TestTokenProducer.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 @EnableTestLogger
 @DisplayName("Tests ParsedAccessToken functionality")
@@ -43,6 +39,15 @@ class ParsedAccessTokenTest {
     private static final String TEST_CONTEXT = "Test";
     private static final String DEFINITELY_NO_SCOPE = "Definitely No Scope";
     private static final CuiLogger LOGGER = new CuiLogger(ParsedAccessTokenTest.class);
+
+    private TokenFactory tokenFactory;
+
+    @BeforeEach
+    void setUp() throws IOException {
+        tokenFactory = TokenFactory.builder()
+                .addParser(JwksAwareTokenParserImplTest.getValidJWKSParserWithLocalJWKS())
+                .build();
+    }
 
     @Nested
     @DisplayName("Token Scope Tests")
@@ -54,7 +59,7 @@ class ParsedAccessTokenTest {
             // Use TokenGenerators to generate an access token
             TypedGenerator<String> accessTokenGenerator = TokenGenerators.accessTokens();
             String initialToken = accessTokenGenerator.next();
-            var retrievedToken = ParsedAccessToken.fromTokenString(initialToken, getDefaultTokenParser());
+            var retrievedToken = tokenFactory.createAccessToken(initialToken);
 
             assertTrue(retrievedToken.isPresent(), "Token should be present");
             var parsedAccessToken = retrievedToken.get();
@@ -95,7 +100,7 @@ class ParsedAccessTokenTest {
         void shouldHandleMissingScopes() {
             // For this test, we still need a token without scopes, so we'll keep using validSignedEmptyJWT
             String initialToken = validSignedEmptyJWT();
-            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, getDefaultTokenParser());
+            var parsedAccessToken = tokenFactory.createAccessToken(initialToken);
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
             assertTrue(parsedAccessToken.get().getScopes().isEmpty(), "Scopes should be empty");
         }
@@ -111,7 +116,7 @@ class ParsedAccessTokenTest {
             // Use TokenGenerators to generate an access token with roles
             TypedGenerator<String> accessTokenGenerator = TokenGenerators.accessTokens();
             String initialToken = accessTokenGenerator.next();
-            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, getDefaultTokenParser());
+            var parsedAccessToken = tokenFactory.createAccessToken(initialToken);
 
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
             // Since we don't know which roles are in the token, we'll check that there are roles
@@ -128,7 +133,7 @@ class ParsedAccessTokenTest {
             // Use TokenGenerators to generate an access token with roles
             TypedGenerator<String> accessTokenGenerator = TokenGenerators.accessTokens();
             String initialToken = accessTokenGenerator.next();
-            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, getDefaultTokenParser());
+            var parsedAccessToken = tokenFactory.createAccessToken(initialToken);
 
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
             assertFalse(parsedAccessToken.get().hasRole(DEFINITELY_NO_SCOPE), "Should not have non-existent role");
@@ -141,11 +146,11 @@ class ParsedAccessTokenTest {
             // For this test, we need a token without roles, so we'll keep using validSignedJWTWithClaims(SOME_SCOPES)
             // The AccessTokenGenerator always includes roles, so we can't use it here
             String initialToken = validSignedJWTWithClaims(SOME_SCOPES);
-            System.out.println("[DEBUG_LOG] Token for shouldHandleNoRoles: " + initialToken);
-            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, getDefaultTokenParser());
+            System.out.println("Token for shouldHandleNoRoles: " + initialToken);
+            var parsedAccessToken = tokenFactory.createAccessToken(initialToken);
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
-            System.out.println("[DEBUG_LOG] Roles: " + parsedAccessToken.get().getRoles());
-            System.out.println("[DEBUG_LOG] Roles isEmpty: " + parsedAccessToken.get().getRoles().isEmpty());
+            System.out.println("Roles: " + parsedAccessToken.get().getRoles());
+            System.out.println("Roles isEmpty: " + parsedAccessToken.get().getRoles().isEmpty());
             assertTrue(parsedAccessToken.get().getRoles().isEmpty(), "Roles should be empty");
         }
 
@@ -155,7 +160,7 @@ class ParsedAccessTokenTest {
             // Use TokenGenerators to generate an access token with roles
             TypedGenerator<String> accessTokenGenerator = TokenGenerators.accessTokens();
             String initialToken = accessTokenGenerator.next();
-            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, getDefaultTokenParser());
+            var parsedAccessToken = tokenFactory.createAccessToken(initialToken);
 
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
 
@@ -183,7 +188,7 @@ class ParsedAccessTokenTest {
             // Use TokenGenerators to generate an access token with roles
             TypedGenerator<String> accessTokenGenerator = TokenGenerators.accessTokens();
             String initialToken = accessTokenGenerator.next();
-            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, getDefaultTokenParser());
+            var parsedAccessToken = tokenFactory.createAccessToken(initialToken);
 
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
 
@@ -208,7 +213,7 @@ class ParsedAccessTokenTest {
             TypedGenerator<String> accessTokenGenerator = TokenGenerators.accessTokens();
             String initialToken = accessTokenGenerator.next();
 
-            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, getDefaultTokenParser());
+            var parsedAccessToken = tokenFactory.createAccessToken(initialToken);
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
             assertNotNull(parsedAccessToken.get().getSubjectId(), "Subject ID should not be null");
             assertFalse(parsedAccessToken.get().getSubjectId().isEmpty(), "Subject ID should not be empty");
@@ -228,8 +233,7 @@ class ParsedAccessTokenTest {
 
             // The token already has an email, but we'll override it with a custom one
             String expectedEmail = new EmailGenerator().next();
-
-            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, expectedEmail, getDefaultTokenParser());
+            var parsedAccessToken = tokenFactory.createAccessToken(initialToken, expectedEmail);
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
             assertTrue(parsedAccessToken.get().getEmail().isPresent(), "Email should be present");
             assertEquals(expectedEmail, parsedAccessToken.get().getEmail().get(), "Email should match");
@@ -243,7 +247,7 @@ class ParsedAccessTokenTest {
             String initialToken = accessTokenGenerator.next();
 
             // We're not providing an email to fromTokenString, so it should use the one from the token
-            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, getDefaultTokenParser());
+             var parsedAccessToken = tokenFactory.createAccessToken(initialToken);
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
             assertTrue(parsedAccessToken.get().getEmail().isPresent(), "Email should be present");
             assertNotNull(parsedAccessToken.get().getEmail().get(), "Email should not be null");
@@ -261,7 +265,7 @@ class ParsedAccessTokenTest {
             TypedGenerator<String> idTokenGenerator = TokenGenerators.idTokens();
             String initialToken = idTokenGenerator.next();
 
-            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, getDefaultTokenParser());
+            var parsedAccessToken = tokenFactory.createAccessToken(initialToken);
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
             assertTrue(parsedAccessToken.get().getName().isPresent(), "Name should be present");
             assertNotNull(parsedAccessToken.get().getName().get(), "Name should not be null");
@@ -274,7 +278,7 @@ class ParsedAccessTokenTest {
             TypedGenerator<String> accessTokenGenerator = TokenGenerators.accessTokens();
             String initialToken = accessTokenGenerator.next();
 
-            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, getDefaultTokenParser());
+            var parsedAccessToken = tokenFactory.createAccessToken(initialToken);
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
             assertFalse(parsedAccessToken.get().getName().isPresent(), "Name should not be present");
         }
@@ -286,7 +290,7 @@ class ParsedAccessTokenTest {
             TypedGenerator<String> idTokenGenerator = TokenGenerators.idTokens();
             String initialToken = idTokenGenerator.next();
 
-            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, getDefaultTokenParser());
+            var parsedAccessToken = tokenFactory.createAccessToken(initialToken);
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
             assertTrue(parsedAccessToken.get().getPreferredUsername().isPresent(), "Preferred username should be present");
             assertNotNull(parsedAccessToken.get().getPreferredUsername().get(), "Preferred username should not be null");
@@ -299,7 +303,7 @@ class ParsedAccessTokenTest {
             TypedGenerator<String> accessTokenGenerator = TokenGenerators.accessTokens();
             String initialToken = accessTokenGenerator.next();
 
-            var parsedAccessToken = ParsedAccessToken.fromTokenString(initialToken, getDefaultTokenParser());
+            var parsedAccessToken = tokenFactory.createAccessToken(initialToken);
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
             assertFalse(parsedAccessToken.get().getPreferredUsername().isPresent(),
                     "Preferred username should not be present");

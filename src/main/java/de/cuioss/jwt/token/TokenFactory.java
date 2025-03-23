@@ -15,9 +15,12 @@
  */
 package de.cuioss.jwt.token;
 
+import de.cuioss.jwt.token.adapter.JsonWebToken;
 import de.cuioss.jwt.token.util.MultiIssuerJwtParser;
 import de.cuioss.tools.base.Preconditions;
 import de.cuioss.tools.logging.CuiLogger;
+import de.cuioss.tools.string.MoreStrings;
+import io.jsonwebtoken.JwtException;
 import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -162,6 +165,29 @@ public class TokenFactory {
     }
 
     /**
+     * Creates a JsonWebToken from the given token string using the appropriate parser.
+     * This method handles token validation and parsing errors.
+     *
+     * @param tokenString The token string to parse, must not be null
+     * @param parser      The parser to use for parsing the token
+     * @return An Optional containing the parsed JsonWebToken, or empty if parsing failed
+     */
+    private Optional<JsonWebToken> createJsonWebToken(String tokenString, JwtParser parser) {
+        LOGGER.trace("Parsing token '%s'", tokenString);
+        if (MoreStrings.isBlank(tokenString)) {
+            LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
+            return Optional.empty();
+        }
+        try {
+            return parser.parse(tokenString);
+        } catch (JwtException e) {
+            LOGGER.warn(e, JWTTokenLogMessages.WARN.COULD_NOT_PARSE_TOKEN.format(e.getMessage()));
+            LOGGER.trace("Offending token '%s'", tokenString);
+            return Optional.empty();
+        }
+    }
+
+    /**
      * Creates an access token from the given token string.
      *
      * @param tokenString The token string to parse, must not be null
@@ -169,10 +195,38 @@ public class TokenFactory {
      */
     public Optional<ParsedAccessToken> createAccessToken(@NonNull String tokenString) {
         LOGGER.debug("Creating access token");
+        if (MoreStrings.isBlank(tokenString)) {
+            LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
+            return Optional.empty();
+        }
         var parser = tokenParser.getParserForToken(tokenString);
         if (parser.isPresent()) {
             LOGGER.debug("Found parser for token, attempting to create access token");
-            return ParsedAccessToken.fromTokenString(tokenString, parser.get());
+            return createJsonWebToken(tokenString, parser.get())
+                    .map(jwt -> new ParsedAccessToken(jwt, null));
+        }
+        LOGGER.debug("No suitable parser found for token");
+        return Optional.empty();
+    }
+
+    /**
+     * Creates an access token from the given token string with an associated email.
+     *
+     * @param tokenString The token string to parse, must not be null
+     * @param email       The email address associated with this token, may be null
+     * @return The parsed access token, which may be empty if the token is invalid or no parser is found
+     */
+    public Optional<ParsedAccessToken> createAccessToken(@NonNull String tokenString, String email) {
+        LOGGER.debug("Creating access token with email");
+        if (MoreStrings.isBlank(tokenString)) {
+            LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
+            return Optional.empty();
+        }
+        var parser = tokenParser.getParserForToken(tokenString);
+        if (parser.isPresent()) {
+            LOGGER.debug("Found parser for token, attempting to create access token with email");
+            return createJsonWebToken(tokenString, parser.get())
+                    .map(jwt -> new ParsedAccessToken(jwt, email));
         }
         LOGGER.debug("No suitable parser found for token");
         return Optional.empty();
@@ -186,10 +240,15 @@ public class TokenFactory {
      */
     public Optional<ParsedIdToken> createIdToken(@NonNull String tokenString) {
         LOGGER.debug("Creating ID token");
+        if (MoreStrings.isBlank(tokenString)) {
+            LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
+            return Optional.empty();
+        }
         var parser = tokenParser.getParserForToken(tokenString);
         if (parser.isPresent()) {
             LOGGER.debug("Found parser for token, attempting to create ID token");
-            return ParsedIdToken.fromTokenString(tokenString, parser.get());
+            return createJsonWebToken(tokenString, parser.get())
+                    .map(ParsedIdToken::new);
         }
         LOGGER.debug("No suitable parser found for token");
         return Optional.empty();
@@ -206,7 +265,7 @@ public class TokenFactory {
         return tokenParser.getParserForToken(tokenString)
                 .map(parser -> {
                     LOGGER.debug("Found parser for token, creating refresh token");
-                    return ParsedRefreshToken.fromTokenString(tokenString);
+                    return new ParsedRefreshToken(tokenString);
                 });
     }
 }

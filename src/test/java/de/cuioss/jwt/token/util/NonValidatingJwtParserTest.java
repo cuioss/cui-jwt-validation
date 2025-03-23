@@ -32,10 +32,7 @@ import java.util.Base64;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test for {@link NonValidatingJwtParser}
@@ -326,7 +323,7 @@ class NonValidatingJwtParserTest {
             assertTrue(result2.isPresent(), "Second decode should succeed");
 
             // Both results should be equal
-            assertEquals(result1.get().getRawToken(), result2.get().getRawToken(), 
+            assertEquals(result1.get().getRawToken(), result2.get().getRawToken(),
                     "Both decodes should produce the same result");
         }
     }

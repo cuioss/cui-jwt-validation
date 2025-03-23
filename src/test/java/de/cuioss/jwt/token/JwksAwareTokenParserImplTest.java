@@ -27,7 +27,6 @@ import de.cuioss.test.juli.junit5.EnableTestLogger;
 import de.cuioss.test.mockwebserver.EnableMockWebServer;
 import de.cuioss.test.mockwebserver.URIBuilder;
 import de.cuioss.test.mockwebserver.dispatcher.ModuleDispatcher;
-import de.cuioss.tools.logging.CuiLogger;
 import lombok.Getter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -37,24 +36,27 @@ import org.junit.jupiter.api.Test;
 import java.security.KeyPair;
 import java.security.interfaces.RSAPublicKey;
 
-import static de.cuioss.jwt.token.test.TestTokenProducer.ISSUER;
-import static de.cuioss.jwt.token.test.TestTokenProducer.SOME_SCOPES;
-import static de.cuioss.jwt.token.test.TestTokenProducer.validSignedJWTWithClaims;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static de.cuioss.jwt.token.test.TestTokenProducer.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 @EnableTestLogger(debug = JwksAwareTokenParserImpl.class, info = JwksAwareTokenParserImpl.class)
 @DisplayName("Tests JwksAwareTokenParserImpl functionality")
 public class JwksAwareTokenParserImplTest {
 
     public static final int JWKS_REFRESH_INTERVAL = 60;
-    private static final CuiLogger LOGGER = new CuiLogger(JwksAwareTokenParserImplTest.class);
 
     public static JwksAwareTokenParserImpl getValidJWKSParserWithLocalJWKS() {
         // Create a JWKS with the default key ID that matches the one used in the token
         String jwks = JWKSFactory.createSingleJwk(JWKSFactory.DEFAULT_KEY_ID);
+
+        // Create a JwksLoader from the JWKS content
+        JwksLoader jwksLoader = JwksLoaderFactory.createInMemoryLoader(jwks);
+        return new JwksAwareTokenParserImpl(jwksLoader, ISSUER);
+    }
+
+    public static JwksAwareTokenParserImpl getValidJWKSParserWithAlternativeLocalJWKS() {
+        // Create a JWKS with the default key ID that matches the one used in the token
+        String jwks = JWKSFactory.createSingleJwk(JWKSFactory.ALTERNATIVE_KEY_ID);
 
         // Create a JwksLoader from the JWKS content
         JwksLoader jwksLoader = JwksLoaderFactory.createInMemoryLoader(jwks);
@@ -100,10 +102,11 @@ public class JwksAwareTokenParserImplTest {
         void shouldResolveFromRemote(URIBuilder uriBuilder) {
             String initialToken = validSignedJWTWithClaims(SOME_SCOPES);
             var tokenParser = retrieveValidTokenParser(uriBuilder);
-            var jsonWebToken = assertDoesNotThrow(() -> ParsedToken.jsonWebTokenFrom(initialToken, tokenParser, LOGGER));
+            var tokenFactory = TokenFactory.builder().addParser(tokenParser).build();
+            var jsonWebToken = assertDoesNotThrow(() -> tokenFactory.createAccessToken(initialToken));
 
             assertTrue(jsonWebToken.isPresent());
-            assertEquals(jsonWebToken.get().getRawToken(), initialToken);
+            assertEquals(jsonWebToken.get().getTokenString(), initialToken);
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.INFO, "Initializing JWKS lookup");
         }
 
@@ -113,8 +116,9 @@ public class JwksAwareTokenParserImplTest {
             var jwksEndpoint = uriBuilder.addPathSegment(moduleDispatcher.getBaseUrl()).buildAsString();
             JwksLoader jwksLoader = JwksLoaderFactory.createHttpLoader(jwksEndpoint, JWKS_REFRESH_INTERVAL, null);
             var tokenParser = new JwksAwareTokenParserImpl(jwksLoader, "Wrong Issuer");
+            var tokenFactory = TokenFactory.builder().addParser(tokenParser).build();
             String initialToken = validSignedJWTWithClaims(SOME_SCOPES);
-            var jsonWebToken = assertDoesNotThrow(() -> ParsedToken.jsonWebTokenFrom(initialToken, tokenParser, LOGGER));
+            var jsonWebToken = assertDoesNotThrow(() -> tokenFactory.createAccessToken(initialToken));
 
             assertFalse(jsonWebToken.isPresent());
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.INFO, "Initializing JWKS lookup");
@@ -125,9 +129,9 @@ public class JwksAwareTokenParserImplTest {
         void shouldFailFromRemoteWithInvalidJWKS(URIBuilder uriBuilder) {
             moduleDispatcher.switchToOtherPublicKey();
             var tokenParser = retrieveValidTokenParser(uriBuilder);
-
+            var tokenFactory = TokenFactory.builder().addParser(tokenParser).build();
             String initialToken = validSignedJWTWithClaims(SOME_SCOPES);
-            var jsonWebToken = assertDoesNotThrow(() -> ParsedToken.jsonWebTokenFrom(initialToken, tokenParser, LOGGER));
+            var jsonWebToken = assertDoesNotThrow(() -> tokenFactory.createAccessToken(initialToken));
 
             assertFalse(jsonWebToken.isPresent());
         }
@@ -137,8 +141,9 @@ public class JwksAwareTokenParserImplTest {
         void shouldCacheMultipleCalls(URIBuilder uriBuilder) {
             JwksAwareTokenParserImpl tokenParser = retrieveValidTokenParser(uriBuilder);
             String initialToken = validSignedJWTWithClaims(SOME_SCOPES);
+            var tokenFactory = TokenFactory.builder().addParser(tokenParser).build();
             for (int i = 0; i < 100; i++) {
-                var jsonWebToken = ParsedToken.jsonWebTokenFrom(initialToken, tokenParser, LOGGER);
+                var jsonWebToken = tokenFactory.createAccessToken(initialToken);
                 assertTrue(jsonWebToken.isPresent());
             }
             // For some reason, there are always at least 2 calls, instead of expected one call. No
@@ -146,7 +151,7 @@ public class JwksAwareTokenParserImplTest {
             assertTrue(moduleDispatcher.getCallCounter() < 3);
 
             for (int i = 0; i < 100; i++) {
-                var jsonWebToken = assertDoesNotThrow(() -> ParsedToken.jsonWebTokenFrom(initialToken, tokenParser, LOGGER));
+                var jsonWebToken = assertDoesNotThrow(() -> tokenFactory.createAccessToken(initialToken));
                 assertTrue(jsonWebToken.isPresent());
             }
             assertTrue(moduleDispatcher.getCallCounter() < 3);
@@ -169,9 +174,10 @@ public class JwksAwareTokenParserImplTest {
         @DisplayName("Should consume local JWKS")
         void shouldConsumeJWKSDirectly() {
             String initialToken = validSignedJWTWithClaims(SOME_SCOPES);
-            var token = ParsedToken.jsonWebTokenFrom(initialToken, getValidJWKSParserWithLocalJWKS(), LOGGER);
+            var tokenFactory = TokenFactory.builder().addParser(getValidJWKSParserWithLocalJWKS()).build();
+            var token = tokenFactory.createRefreshToken(initialToken);
             assertTrue(token.isPresent());
-            assertEquals(token.get().getRawToken(), initialToken);
+            assertEquals(token.get().getTokenString(), initialToken);
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.INFO, "Initializing JWKS lookup");
         }
     }

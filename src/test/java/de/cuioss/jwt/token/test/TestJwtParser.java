@@ -23,12 +23,7 @@ import de.cuioss.tools.string.MoreStrings;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonArrayBuilder;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonString;
-import jakarta.json.JsonValue;
+import jakarta.json.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -36,11 +31,7 @@ import lombok.ToString;
 
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A non-validating JWT parser for testing purposes.
@@ -77,7 +68,7 @@ public class TestJwtParser implements JwtParser {
      */
     public static void setCurrentTestMethod(String methodName) {
         TestJsonWebToken.currentTestMethod = methodName;
-        System.out.println("[DEBUG_LOG] Current test method: " + methodName);
+        System.out.println("Current test method: " + methodName);
     }
 
     /**
@@ -190,7 +181,7 @@ public class TestJwtParser implements JwtParser {
                 // Special case for the test "shouldHandleNoRoles"
                 // This test specifically checks that a token with SOME_SCOPES has no roles
                 if (currentTestMethod.equals("shouldHandleNoRoles")) {
-                    System.out.println("[DEBUG_LOG] Returning null for roles claim (in shouldHandleNoRoles test)");
+                    System.out.println("Returning null for roles claim (in shouldHandleNoRoles test)");
                     return null;
                 }
 
@@ -200,13 +191,13 @@ public class TestJwtParser implements JwtParser {
                 arrayBuilder.add(Json.createValue("writer"));
                 arrayBuilder.add(Json.createValue("gambler"));
                 JsonArray rolesArray = arrayBuilder.build();
-                System.out.println("[DEBUG_LOG] Created roles array: " + rolesArray);
+                System.out.println("Created roles array: " + rolesArray);
                 return (T) rolesArray;
             }
 
             // For all other claims, delegate to the wrapped JsonWebToken
             T result = delegate.getClaim(claimName);
-            System.out.println("[DEBUG_LOG] Claim " + claimName + " = " + result);
+            System.out.println("Claim " + claimName + " = " + result);
             return result;
         }
 
@@ -221,23 +212,23 @@ public class TestJwtParser implements JwtParser {
 
                 // If we still couldn't get the raw token, return true by default
                 if (rawToken == null) {
-                    LOGGER.debug("[DEBUG_LOG] containsClaim(%s) = true (default, raw token not available)", claimName);
+                    LOGGER.debug("containsClaim(%s) = true (default, raw token not available)", claimName);
                     return true;
                 }
 
                 // Special case for the test "Should handle token without roles"
                 // This test specifically checks that a token with SOME_SCOPES has no roles
                 if (rawToken.contains("\"scope\"") && !rawToken.contains("\"roles\"")) {
-                    LOGGER.debug("[DEBUG_LOG] containsClaim(%s) = false (token has scopes but no roles)", claimName);
+                    LOGGER.debug("containsClaim(%s) = false (token has scopes but no roles)", claimName);
                     return false;
                 }
 
                 // For all other tests, return true for "roles" claim
-                LOGGER.debug("[DEBUG_LOG] containsClaim(%s) = true (forced for testing)", claimName);
+                LOGGER.debug("containsClaim(%s) = true (forced for testing)", claimName);
                 return true;
             }
             boolean result = delegate.containsClaim(claimName);
-            LOGGER.debug("[DEBUG_LOG] containsClaim(%s) = %s", claimName, result);
+            LOGGER.debug("containsClaim(%s) = %s", claimName, result);
             return result;
         }
 

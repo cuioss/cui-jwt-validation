@@ -15,36 +15,41 @@
  */
 package de.cuioss.jwt.token.test.generator;
 
-import de.cuioss.jwt.token.JwtParser;
-import de.cuioss.jwt.token.ParsedAccessToken;
-import de.cuioss.jwt.token.test.TestTokenProducer;
+import de.cuioss.jwt.token.JwksAwareTokenParserImplTest;
+import de.cuioss.jwt.token.TokenFactory;
 import de.cuioss.test.generator.TypedGenerator;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for the TokenGenerators factory and the generators it provides.
  */
 class TokenGeneratorsTest {
 
+    private TokenFactory tokenFactory;
+
+    @BeforeEach
+    void init() {
+        tokenFactory = TokenFactory.builder().addParser(JwksAwareTokenParserImplTest.getValidJWKSParserWithLocalJWKS()).build();
+    }
+
     @Test
     @DisplayName("Should generate valid access tokens")
     void shouldGenerateValidAccessTokens() {
         // Given
         TypedGenerator<String> generator = TokenGenerators.accessTokens();
-        JwtParser parser = TestTokenProducer.getDefaultTokenParser();
 
         // When
         String token = generator.next();
 
         // Then
         assertNotNull(token, "Token should not be null");
-        var parsedToken = ParsedAccessToken.fromTokenString(token, parser);
+        var parsedToken = tokenFactory.createAccessToken(token);
         assertTrue(parsedToken.isPresent(), "Token should be parseable");
     }
 
@@ -53,14 +58,13 @@ class TokenGeneratorsTest {
     void shouldGenerateValidIdTokens() {
         // Given
         TypedGenerator<String> generator = TokenGenerators.idTokens();
-        JwtParser parser = TestTokenProducer.getDefaultTokenParser();
 
         // When
         String token = generator.next();
 
         // Then
         assertNotNull(token, "Token should not be null");
-        var parsedToken = ParsedAccessToken.fromTokenString(token, parser);
+        var parsedToken = tokenFactory.createAccessToken(token);
         assertTrue(parsedToken.isPresent(), "Token should be parseable");
     }
 
@@ -69,14 +73,13 @@ class TokenGeneratorsTest {
     void shouldGenerateValidRefreshTokens() {
         // Given
         TypedGenerator<String> generator = TokenGenerators.refreshTokens();
-        JwtParser parser = TestTokenProducer.getDefaultTokenParser();
 
         // When
         String token = generator.next();
 
         // Then
         assertNotNull(token, "Token should not be null");
-        var parsedToken = ParsedAccessToken.fromTokenString(token, parser);
+        var parsedToken = tokenFactory.createAccessToken(token);
         assertTrue(parsedToken.isPresent(), "Token should be parseable");
     }
 
@@ -120,7 +123,7 @@ class TokenGeneratorsTest {
 
         // Then
         assertNotNull(roles, "Roles should not be null");
-        assertTrue(roles.size() > 0, "Roles should not be empty");
+        assertFalse(roles.isEmpty(), "Roles should not be empty");
     }
 
     @Test
@@ -134,7 +137,7 @@ class TokenGeneratorsTest {
 
         // Then
         assertNotNull(groups, "Groups should not be null");
-        assertTrue(groups.size() > 0, "Groups should not be empty");
+        assertFalse(groups.isEmpty(), "Groups should not be empty");
     }
 
     @Test
@@ -145,7 +148,6 @@ class TokenGeneratorsTest {
         TypedGenerator<String> idTokenGenerator = TokenGenerators.alternativeIdTokens();
         TypedGenerator<String> refreshTokenGenerator = TokenGenerators.alternativeRefreshTokens();
         TypedGenerator<String> jwksGenerator = TokenGenerators.alternativeJwks();
-        JwtParser parser = TestTokenProducer.getDefaultTokenParser();
 
         // When
         String accessToken = accessTokenGenerator.next();
@@ -159,10 +161,11 @@ class TokenGeneratorsTest {
         assertNotNull(refreshToken, "Refresh token should not be null");
         assertNotNull(jwks, "JWKS should not be null");
 
+        var alternativeTokenFactory = TokenFactory.builder().addParser(JwksAwareTokenParserImplTest.getValidJWKSParserWithAlternativeLocalJWKS()).build();
         // Verify tokens are parseable
-        assertTrue(ParsedAccessToken.fromTokenString(accessToken, parser).isPresent(), "Access token should be parseable");
-        assertTrue(ParsedAccessToken.fromTokenString(idToken, parser).isPresent(), "ID token should be parseable");
-        assertTrue(ParsedAccessToken.fromTokenString(refreshToken, parser).isPresent(), "Refresh token should be parseable");
+        assertTrue(alternativeTokenFactory.createAccessToken(accessToken).isPresent(), "Access token should be parseable");
+        assertTrue(alternativeTokenFactory.createIdToken(idToken).isPresent(), "ID token should be parseable");
+        assertTrue(alternativeTokenFactory.createRefreshToken(refreshToken).isPresent(), "Refresh token should be parseable");
 
         // Verify JWKS contains alternative key ID
         assertTrue(jwks.contains("test-key-id"), "JWKS should contain alternative key ID");

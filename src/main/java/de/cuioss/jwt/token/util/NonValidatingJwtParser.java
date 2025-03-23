@@ -21,6 +21,7 @@ import de.cuioss.tools.string.MoreStrings;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonReader;
+import jakarta.json.JsonReaderFactory;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -34,7 +35,6 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import jakarta.json.JsonReaderFactory;
 
 /**
  * Utility class for parsing JWT tokens and extracting common information from them.

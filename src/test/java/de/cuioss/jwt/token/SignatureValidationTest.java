@@ -15,13 +15,11 @@
  */
 package de.cuioss.jwt.token;
 
-import de.cuioss.jwt.token.jwks.JwksLoader;
 import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.jwt.token.test.KeyMaterialHandler;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
-import de.cuioss.tools.logging.CuiLogger;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -29,17 +27,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
-import java.security.KeyPair;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Date;
-import java.nio.charset.StandardCharsets;
 
-import static de.cuioss.jwt.token.test.TestTokenProducer.ISSUER;
-import static de.cuioss.jwt.token.test.TestTokenProducer.SOME_SCOPES;
-import static de.cuioss.jwt.token.test.TestTokenProducer.validSignedJWTWithClaims;
+import static de.cuioss.jwt.token.test.TestTokenProducer.*;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -49,15 +44,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @EnableTestLogger(debug = JwksAwareTokenParserImpl.class, info = JwksAwareTokenParserImpl.class)
 @DisplayName("Tests JWT Signature Validation")
-public class SignatureValidationTest {
+class SignatureValidationTest {
 
-    private static final CuiLogger LOGGER = new CuiLogger(SignatureValidationTest.class);
-    private JwksAwareTokenParserImpl tokenParser;
+    private TokenFactory tokenFactory;
 
     @BeforeEach
     void setUp() {
         // Use the helper method from JwksAwareTokenParserImplTest to create a valid parser
-        tokenParser = JwksAwareTokenParserImplTest.getValidJWKSParserWithLocalJWKS();
+        var tokenParser = JwksAwareTokenParserImplTest.getValidJWKSParserWithLocalJWKS();
+        tokenFactory = TokenFactory.builder().addParser(tokenParser).build();
     }
 
     @Test
@@ -67,7 +62,7 @@ public class SignatureValidationTest {
         String token = validSignedJWTWithClaims(SOME_SCOPES);
 
         // Parse and validate the token
-        var parsedToken = ParsedToken.jsonWebTokenFrom(token, tokenParser, LOGGER);
+        var parsedToken = tokenFactory.createAccessToken(token);
 
         // Assert that the token is valid
         assertTrue(parsedToken.isPresent(), "Token signed with RS256 should be valid");
@@ -80,7 +75,7 @@ public class SignatureValidationTest {
         String token = createUnsignedToken();
 
         // Parse and validate the token
-        var parsedToken = ParsedToken.jsonWebTokenFrom(token, tokenParser, LOGGER);
+        var parsedToken = tokenFactory.createAccessToken(token);
 
         // Assert that the token is rejected
         assertFalse(parsedToken.isPresent(), "Token with 'none' algorithm should be rejected");
@@ -95,7 +90,7 @@ public class SignatureValidationTest {
         String token = createTokenWithSymmetricAlgorithm(SignatureAlgorithm.HS256);
 
         // Parse and validate the token
-        var parsedToken = ParsedToken.jsonWebTokenFrom(token, tokenParser, LOGGER);
+        var parsedToken = tokenFactory.createAccessToken(token);
 
         // Assert that the token is rejected
         assertFalse(parsedToken.isPresent(), "Token signed with HS256 should be rejected");
@@ -110,7 +105,7 @@ public class SignatureValidationTest {
         String token = createTokenWithSymmetricAlgorithm(SignatureAlgorithm.HS384);
 
         // Parse and validate the token
-        var parsedToken = ParsedToken.jsonWebTokenFrom(token, tokenParser, LOGGER);
+        var parsedToken = tokenFactory.createAccessToken(token);
 
         // Assert that the token is rejected
         assertFalse(parsedToken.isPresent(), "Token signed with HS384 should be rejected");
@@ -125,7 +120,7 @@ public class SignatureValidationTest {
         String token = createTokenWithSymmetricAlgorithm(SignatureAlgorithm.HS512);
 
         // Parse and validate the token
-        var parsedToken = ParsedToken.jsonWebTokenFrom(token, tokenParser, LOGGER);
+        var parsedToken = tokenFactory.createAccessToken(token);
 
         // Assert that the token is rejected
         assertFalse(parsedToken.isPresent(), "Token signed with HS512 should be rejected");
@@ -141,7 +136,7 @@ public class SignatureValidationTest {
         String token = createAlgorithmConfusionToken();
 
         // Parse and validate the token
-        var parsedToken = ParsedToken.jsonWebTokenFrom(token, tokenParser, LOGGER);
+        var parsedToken = tokenFactory.createAccessToken(token);
 
         // Assert that the token is rejected
         assertFalse(parsedToken.isPresent(), "Token with algorithm confusion should be rejected");

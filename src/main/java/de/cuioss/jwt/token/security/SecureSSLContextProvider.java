@@ -19,18 +19,14 @@ import de.cuioss.tools.collect.CollectionLiterals;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.Getter;
 
-import static de.cuioss.jwt.token.JWTTokenLogMessages.DEBUG;
-import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
-
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
-import java.security.KeyManagementException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
+import java.security.*;
 import java.util.Set;
+
+import static de.cuioss.jwt.token.JWTTokenLogMessages.DEBUG;
+import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
 
 /**
  * Constants for TLS versions used in the application.

@@ -25,20 +25,46 @@ import java.util.Set;
  * <p>
  * The interface provides methods for accessing the standard JWT claims as defined in RFC 7519,
  * as well as additional methods for working with custom claims.
+ * <p>
+ * JWT claims can be categorized as follows:
+ * <ul>
+ *   <li><strong>Required by JWT spec (RFC 7519):</strong> None. All claims are optional per the spec.</li>
+ *   <li><strong>Required by this implementation:</strong> iss, sub, exp, iat</li>
+ *   <li><strong>Optional but validated if present:</strong> nbf</li>
+ *   <li><strong>Optional:</strong> jti, aud, groups, name</li>
+ * </ul>
+ * <p>
+ * Different token types have additional requirements:
+ * <ul>
+ *   <li><strong>Access Tokens (OAuth 2.0):</strong> Required: iss, sub, exp, iat. Optional: scope, roles, name, email, preferred_username</li>
+ *   <li><strong>ID Tokens (OpenID Connect):</strong> Required: iss, sub, exp, iat, aud. Optional: email</li>
+ *   <li><strong>Refresh Tokens:</strong> Treated as opaque strings in this implementation, no JWT validation</li>
+ * </ul>
  *
  * @author Oliver Wolff
+ * @see <a href="https://datatracker.ietf.org/doc/html/rfc7519">RFC 7519 - JSON Web Token (JWT)</a>
+ * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html">OpenID Connect Core 1.0</a>
+ * @see <a href="https://datatracker.ietf.org/doc/html/rfc6749">RFC 6749 - OAuth 2.0 Authorization Framework</a>
  */
 public interface JsonWebToken {
 
     /**
      * Returns the name of the JWT, which is the 'name' claim.
+     * <p>
+     * This claim is optional for all token types.
+     * <p>
+     * For ID tokens, this represents the end-user's full name as specified in OpenID Connect Core 1.0.
      *
      * @return the name of the JWT
+     * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims">OpenID Connect Core 1.0 - Standard Claims</a>
      */
     String getName();
 
     /**
      * Returns the set of claim names present in the JWT.
+     * <p>
+     * This method provides access to all claims in the token, including both standard
+     * claims defined in RFC 7519 and custom claims specific to the token issuer.
      *
      * @return the set of claim names
      */
@@ -46,6 +72,18 @@ public interface JsonWebToken {
 
     /**
      * Returns the value of the specified claim.
+     * <p>
+     * This method provides access to any claim in the token, including both standard
+     * claims defined in RFC 7519 and custom claims specific to the token issuer.
+     * <p>
+     * The return type is determined by the claim's value type in the JWT:
+     * <ul>
+     *   <li>String values for string claims</li>
+     *   <li>Number values for numeric claims</li>
+     *   <li>Boolean values for boolean claims</li>
+     *   <li>Map values for object claims</li>
+     *   <li>List values for array claims</li>
+     * </ul>
      *
      * @param claimName the name of the claim
      * @param <T> the type of the claim value
@@ -55,6 +93,9 @@ public interface JsonWebToken {
 
     /**
      * Checks if the token contains the specified claim.
+     * <p>
+     * This method can be used to verify the presence of both standard claims
+     * defined in RFC 7519 and custom claims specific to the token issuer.
      *
      * @param claimName the name of the claim
      * @return true if the token contains the claim, false otherwise
@@ -65,6 +106,9 @@ public interface JsonWebToken {
 
     /**
      * Returns the raw token string.
+     * <p>
+     * This method provides access to the original, encoded JWT string in the format:
+     * header.payload.signature
      *
      * @return the raw token string
      */
@@ -72,48 +116,91 @@ public interface JsonWebToken {
 
     /**
      * Returns the issuer of the JWT, which is the 'iss' claim.
+     * <p>
+     * This claim is required for all token types in this implementation.
+     * <p>
+     * The "iss" (issuer) claim identifies the principal that issued the JWT.
+     * The value is a case-sensitive string containing a StringOrURI value.
      *
      * @return the issuer of the JWT
+     * @see <a href="https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.1">RFC 7519 - 4.1.1. "iss" (Issuer) Claim</a>
      */
     String getIssuer();
 
     /**
      * Returns the subject of the JWT, which is the 'sub' claim.
+     * <p>
+     * This claim is required for all token types in this implementation.
+     * <p>
+     * The "sub" (subject) claim identifies the principal that is the subject of the JWT.
+     * The value is a case-sensitive string containing a StringOrURI value.
      *
      * @return the subject of the JWT
+     * @see <a href="https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.2">RFC 7519 - 4.1.2. "sub" (Subject) Claim</a>
      */
     String getSubject();
 
     /**
      * Returns the audience of the JWT, which is the 'aud' claim.
+     * <p>
+     * This claim is optional for Access Tokens but required for ID Tokens according to OpenID Connect Core 1.0.
+     * <p>
+     * The "aud" (audience) claim identifies the recipients that the JWT is intended for.
+     * The value is an array of case-sensitive strings, each containing a StringOrURI value.
      *
      * @return the audience of the JWT
+     * @see <a href="https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.3">RFC 7519 - 4.1.3. "aud" (Audience) Claim</a>
+     * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#IDToken">OpenID Connect Core 1.0 - ID Token</a>
      */
     Set<String> getAudience();
 
     /**
      * Returns the expiration time of the JWT, which is the 'exp' claim.
+     * <p>
+     * This claim is required for all token types in this implementation.
+     * <p>
+     * The "exp" (expiration time) claim identifies the expiration time on or after which
+     * the JWT MUST NOT be accepted for processing. The value is a NumericDate value.
      *
      * @return the expiration time of the JWT in seconds since the epoch
+     * @see <a href="https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.4">RFC 7519 - 4.1.4. "exp" (Expiration Time) Claim</a>
      */
     long getExpirationTime();
 
     /**
      * Returns the issued at time of the JWT, which is the 'iat' claim.
+     * <p>
+     * This claim is required for all token types in this implementation.
+     * <p>
+     * The "iat" (issued at) claim identifies the time at which the JWT was issued.
+     * The value is a NumericDate value.
      *
      * @return the issued at time of the JWT in seconds since the epoch
+     * @see <a href="https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.6">RFC 7519 - 4.1.6. "iat" (Issued At) Claim</a>
      */
     long getIssuedAtTime();
 
     /**
      * Returns the token ID of the JWT, which is the 'jti' claim.
+     * <p>
+     * This claim is optional for all token types.
+     * <p>
+     * The "jti" (JWT ID) claim provides a unique identifier for the JWT.
+     * The value is a case-sensitive string.
      *
      * @return the token ID of the JWT
+     * @see <a href="https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.7">RFC 7519 - 4.1.7. "jti" (JWT ID) Claim</a>
      */
     String getTokenID();
 
     /**
      * Returns the groups of the JWT, which is the 'groups' claim.
+     * <p>
+     * This claim is optional for all token types.
+     * <p>
+     * The "groups" claim is not defined in the JWT specification (RFC 7519) but is commonly used
+     * to represent the groups or roles that the subject belongs to. In this implementation,
+     * it's primarily used with Keycloak tokens.
      *
      * @return the groups of the JWT
      */
@@ -121,6 +208,12 @@ public interface JsonWebToken {
 
     /**
      * Returns the value of the specified claim as an Optional.
+     * <p>
+     * This is a convenience method that wraps {@link #getClaim(String)} in an Optional
+     * to provide a more modern API for handling potentially absent claims.
+     * <p>
+     * This method can be used to access any claim in the token, including both standard
+     * claims defined in RFC 7519 and custom claims specific to the token issuer.
      *
      * @param name the name of the claim
      * @param <T> the type of the claim value

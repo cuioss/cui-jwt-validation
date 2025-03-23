@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Adapter class that implements the JsonWebToken interface using JJWT's Jws&lt;Claims&gt;.
@@ -80,8 +81,11 @@ public class JwtAdapter implements JsonWebToken {
         if (audience == null) {
             return Collections.emptySet();
         }
-        if (audience instanceof List) {
-            return new HashSet<>((List<String>) audience);
+        if (audience instanceof List<?> list) {
+            return list.stream()
+                    .filter(String.class::isInstance)
+                    .map(String.class::cast)
+                    .collect(Collectors.toSet());
         }
         if (audience instanceof String string) {
             return Set.of(string);

@@ -17,17 +17,27 @@ package de.cuioss.jwt.token;
 
 import de.cuioss.jwt.token.test.TestTokenProducer;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.IOException;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 @EnableTestLogger
 @DisplayName("Tests ParsedIdToken functionality")
 class ParsedIdTokenTest {
+
+    private TokenFactory tokenFactory;
+
+    @BeforeEach
+    void setUp() throws IOException {
+        tokenFactory = TokenFactory.builder()
+                .addParser(JwksAwareTokenParserImplTest.getValidJWKSParserWithLocalJWKS())
+                .build();
+    }
 
 
     @Nested
@@ -39,7 +49,7 @@ class ParsedIdTokenTest {
         void shouldHandleValidToken() {
             String initialTokenString = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_ID_TOKEN);
 
-            var parsedIdToken = ParsedIdToken.fromTokenString(initialTokenString, TestTokenProducer.getDefaultTokenParser());
+            var parsedIdToken = tokenFactory.createIdToken(initialTokenString);
 
             assertTrue(parsedIdToken.isPresent(), "Token should be parsed successfully");
             assertEquals(initialTokenString, parsedIdToken.get().getTokenString(), "Token string should match original");
@@ -50,7 +60,7 @@ class ParsedIdTokenTest {
         @Test
         @DisplayName("Should handle invalid token")
         void shouldHandleInvalidToken() {
-            var parsedIdToken = ParsedIdToken.fromTokenString("invalid-token", TestTokenProducer.getDefaultTokenParser());
+            var parsedIdToken = tokenFactory.createIdToken("invalid-token");
             assertFalse(parsedIdToken.isPresent(), "Invalid token should not be parsed");
         }
     }
@@ -64,7 +74,7 @@ class ParsedIdTokenTest {
         void shouldHandleEmail() {
             String initialTokenString = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_ID_TOKEN);
 
-            var parsedIdToken = ParsedIdToken.fromTokenString(initialTokenString, TestTokenProducer.getDefaultTokenParser());
+            var parsedIdToken = tokenFactory.createIdToken(initialTokenString);
             assertTrue(parsedIdToken.isPresent(), "Token should be parsed successfully");
             assertTrue(parsedIdToken.get().getEmail().isPresent(), "Email should be present");
             assertEquals("hello@world.com", parsedIdToken.get().getEmail().get(), "Email should match expected value");

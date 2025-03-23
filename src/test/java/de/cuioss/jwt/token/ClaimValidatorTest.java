@@ -1,3 +1,18 @@
+/*
+ * Copyright 2023 the original author or authors.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * https://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package de.cuioss.jwt.token;
 
 import de.cuioss.jwt.token.test.TestTokenProducer;
@@ -13,7 +28,6 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -99,6 +113,66 @@ class ClaimValidatorTest {
         // Then the validation should pass for both token types
         assertTrue(accessResult, "Access token should be valid");
         assertTrue(idResult, "ID token should be valid");
+    }
+
+    @Test
+    @DisplayName("Should accept token without nbf claim")
+    void shouldAcceptTokenWithoutNbfClaim() {
+        // Given a token without nbf claim
+        String token = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_SCOPES);
+        Jws<Claims> jws = parseToken(token);
+
+        // When validating the claims
+        boolean result = validator.validateClaims(jws);
+
+        // Then the validation should pass
+        assertTrue(result, "Token without nbf claim should be valid");
+    }
+
+    @Test
+    @DisplayName("Should accept token with nbf claim in the past")
+    void shouldAcceptTokenWithNbfClaimInPast() {
+        // Given a token with nbf claim in the past
+        Instant pastTime = Instant.now().minus(1, ChronoUnit.HOURS);
+        String token = TestTokenProducer.validSignedJWTWithNotBefore(pastTime);
+        Jws<Claims> jws = parseToken(token);
+
+        // When validating the claims
+        boolean result = validator.validateClaims(jws);
+
+        // Then the validation should pass
+        assertTrue(result, "Token with nbf claim in the past should be valid");
+    }
+
+    @Test
+    @DisplayName("Should accept token with nbf claim in the future but within leeway")
+    void shouldAcceptTokenWithNbfClaimInFutureWithinLeeway() {
+        // Given a token with nbf claim in the future but within 60-second leeway
+        Instant futureTimeWithinLeeway = Instant.now().plus(30, ChronoUnit.SECONDS);
+        String token = TestTokenProducer.validSignedJWTWithNotBefore(futureTimeWithinLeeway);
+        Jws<Claims> jws = parseToken(token);
+
+        // When validating the claims
+        boolean result = validator.validateClaims(jws);
+
+        // Then the validation should pass
+        assertTrue(result, "Token with nbf claim in the future but within leeway should be valid");
+    }
+
+    @Test
+    @DisplayName("Should reject token with nbf claim too far in the future")
+    void shouldRejectTokenWithNbfClaimTooFarInFuture() {
+        // Given a token with nbf claim more than 60 seconds in the future
+        Instant futureTimeBeyondLeeway = Instant.now().plus(120, ChronoUnit.SECONDS);
+        String token = TestTokenProducer.validSignedJWTWithNotBefore(futureTimeBeyondLeeway);
+        Jws<Claims> jws = parseToken(token);
+
+        // When validating the claims
+        boolean result = validator.validateClaims(jws);
+
+        // Then the validation should fail
+        assertFalse(result, "Token with nbf claim too far in the future should be invalid");
+        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Token has a 'not before' claim that is more than 60 seconds in the future");
     }
 
     /**

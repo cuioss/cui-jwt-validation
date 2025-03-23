@@ -41,8 +41,11 @@ import java.io.Serializable;
  * <p>
  * Usage example:
  * <pre>
- * ParsedRefreshToken token = ParsedRefreshToken.fromTokenString(tokenString);
- * if (!token.isEmpty()) {
+ * TokenFactory factory = TokenFactory.builder()
+ *     .addParser(parser)
+ *     .build();
+ * Optional&lt;ParsedRefreshToken&gt; optionalToken = factory.createRefreshToken(tokenString);
+ * if (optionalToken.isPresent() && !optionalToken.get().isEmpty()) {
  *     // Use the token
  * }
  * </pre>
@@ -60,24 +63,19 @@ public class ParsedRefreshToken implements Serializable {
     @Getter
     private final String tokenString;
 
-    private ParsedRefreshToken(String tokenString) {
-        this.tokenString = tokenString;
-    }
-
     /**
      * Creates a new {@link ParsedRefreshToken} from the given token string.
      * <p>
-     * Note: This method does not validate the token's signature or format.
+     * Note: This constructor does not validate the token's signature or format.
      * It only wraps the string for type-safety purposes.
      *
      * @param tokenString The raw refresh token string, may be null or empty
-     * @return a new {@link ParsedRefreshToken} instance wrapping the given token
      */
-    public static ParsedRefreshToken fromTokenString(String tokenString) {
+    public ParsedRefreshToken(String tokenString) {
         if (MoreStrings.isEmpty(tokenString)) {
             LOGGER.debug("Creating refresh token from empty token string");
         }
-        return new ParsedRefreshToken(tokenString);
+        this.tokenString = tokenString;
     }
 
     /**

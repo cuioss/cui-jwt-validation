@@ -27,10 +27,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("Tests TokenFactory functionality")
 class TokenFactoryTest {
@@ -101,7 +98,7 @@ class TokenFactoryTest {
                     .setIssuer(TestTokenProducer.ISSUER)
                     .setSubject("test-subject")
                     .claim("large-claim", largePayload.toString())
-                    .signWith(de.cuioss.jwt.token.test.KeyMaterialHandler.getDefaultPrivateKey(), 
+                    .signWith(de.cuioss.jwt.token.test.KeyMaterialHandler.getDefaultPrivateKey(),
                             io.jsonwebtoken.SignatureAlgorithm.RS256)
                     .compact();
 

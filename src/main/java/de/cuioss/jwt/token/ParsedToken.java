@@ -17,9 +17,6 @@ package de.cuioss.jwt.token;
 
 import de.cuioss.jwt.token.adapter.Claims;
 import de.cuioss.jwt.token.adapter.JsonWebToken;
-import de.cuioss.tools.logging.CuiLogger;
-import de.cuioss.tools.string.MoreStrings;
-import io.jsonwebtoken.JwtException;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -68,21 +65,6 @@ public abstract class ParsedToken {
      */
     public String getTokenString() {
         return jsonWebToken.getRawToken();
-    }
-
-    protected static Optional<JsonWebToken> jsonWebTokenFrom(String tokenString, JwtParser tokenParser, CuiLogger givenLogger) {
-        givenLogger.trace("Parsing token '%s'", tokenString);
-        if (MoreStrings.isBlank(tokenString)) {
-            givenLogger.warn(JWTTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
-            return Optional.empty();
-        }
-        try {
-            return tokenParser.parse(tokenString);
-        } catch (JwtException e) {
-            givenLogger.warn(e, JWTTokenLogMessages.WARN.COULD_NOT_PARSE_TOKEN.format(e.getMessage()));
-            givenLogger.trace("Offending token '%s'", tokenString);
-            return Optional.empty();
-        }
     }
 
     @Getter
@@ -141,20 +123,31 @@ public abstract class ParsedToken {
      * Returns the "Not Before" time from the token if present.
      * The "nbf" (not before) claim identifies the time before which the JWT must not be accepted for processing.
      * This claim is optional, according to the JWT specification (RFC 7519).
-     * 
+     *
      * @return an {@link Optional} containing the {@link OffsetDateTime} representation of the "Not Before" time
-     *         if the claim is present, or an empty Optional if not
+     * if the claim is present, or an empty Optional if not
      */
     public Optional<OffsetDateTime> getNotBeforeTime() {
-        Optional<Long> notBeforeTime = jsonWebToken.claim(Claims.NOT_BEFORE);
-        return notBeforeTime.map(aLong -> OffsetDateTime
-                .ofInstant(Instant.ofEpochSecond(aLong), ZoneId.systemDefault()));
+        Optional<Object> notBeforeTime = jsonWebToken.claim(Claims.NOT_BEFORE);
+        return notBeforeTime.map(value -> {
+            long epochSecond;
+            if (value instanceof Long longValue) {
+                epochSecond = longValue;
+            } else if (value instanceof Integer integerValue) {
+                epochSecond = integerValue.longValue();
+            } else if (value instanceof Number number) {
+                epochSecond = number.longValue();
+            } else {
+                throw new IllegalArgumentException("Unexpected type for nbf claim: " + value.getClass().getName());
+            }
+            return OffsetDateTime.ofInstant(Instant.ofEpochSecond(epochSecond), ZoneId.systemDefault());
+        });
     }
 
     /**
      * Returns the "Issued At" time from the token.
      * The "iat" (issued at) claim identifies the time at which the JWT was issued.
-     * 
+     *
      * @return the {@link OffsetDateTime} representation of the "Issued At" time
      */
     public OffsetDateTime getIssuedAtTime() {
@@ -165,7 +158,7 @@ public abstract class ParsedToken {
     /**
      * Returns the JWT ID from the token.
      * The "jti" (JWT ID) claim provides a unique identifier for the JWT.
-     * 
+     *
      * @return the JWT ID string
      */
     public String getTokenId() {

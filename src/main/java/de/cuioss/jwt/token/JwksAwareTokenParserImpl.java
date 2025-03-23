@@ -110,8 +110,8 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
      * @param issuer               the issuer, must not be null
      * @param algorithmPreferences the algorithm preferences, must not be null
      */
-    public JwksAwareTokenParserImpl(@NonNull JwksLoader jwksLoader, @NonNull String issuer, 
-                                   @NonNull AlgorithmPreferences algorithmPreferences) {
+    public JwksAwareTokenParserImpl(@NonNull JwksLoader jwksLoader, @NonNull String issuer,
+            @NonNull AlgorithmPreferences algorithmPreferences) {
         this.jwksLoader = jwksLoader;
         this.issuer = issuer;
         this.algorithmPreferences = algorithmPreferences;

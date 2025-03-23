@@ -19,7 +19,6 @@ import de.cuioss.tools.logging.CuiLogger;
 import lombok.Getter;
 import lombok.NonNull;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -51,8 +50,7 @@ public class AlgorithmPreferences {
     /**
      * List of explicitly rejected algorithms for security reasons.
      */
-    private static final List<String> REJECTED_ALGORITHMS = Collections.unmodifiableList(
-            Arrays.asList("HS256", "HS384", "HS512", "none"));
+    private static final List<String> REJECTED_ALGORITHMS = List.of("HS256", "HS384", "HS512", "none");
 
     /**
      * Default constructor that initializes the preferred algorithms list with default values.
@@ -79,17 +77,7 @@ public class AlgorithmPreferences {
         LOGGER.debug("Getting default preferred algorithms");
 
         // Order algorithms by preference (most secure first)
-        return Collections.unmodifiableList(Arrays.asList(
-                "ES512", // Most preferred
-                "ES384",
-                "ES256",
-                "PS512",
-                "PS384",
-                "PS256",
-                "RS512",
-                "RS384",
-                "RS256"  // Least preferred
-        ));
+        return List.of("ES512", "ES384", "ES256", "PS512", "PS384", "PS256", "RS512", "RS384", "RS256");
     }
 
     /**
