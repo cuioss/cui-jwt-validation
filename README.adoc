@@ -68,6 +68,7 @@ Optional<ParsedIdToken> idToken = factory.createIdToken(tokenString);
 The link:src/main/java/de/cuioss/jwt/token/JwksAwareTokenParserImpl.java[JwksAwareTokenParserImpl] handles secure token validation using JWKS endpoints:
 
 * Automatic public key retrieval and caching
+* Advanced caching with HTTP 304 support, content-based caching, and fallback mechanisms
 * Configurable key refresh intervals
 * TLS support for secure key retrieval
 

@@ -71,29 +71,6 @@ _See Requirement CUI-JWT-4.2: Key Caching and CUI-JWT-4.3: Key Rotation in link:
   * _Implemented in HttpJwksLoader.java with refreshIntervalSeconds parameter_
   * _See link:../src/main/java/de/cuioss/jwt/token/jwks/HttpJwksLoader.java[HttpJwksLoader.java]_
 
-==== HttpJwksLoader Improvements
-_New improvements for better performance and reliability_
-
-* [ ] Enhance JWKSKeyLoader to support caching and content comparison:
-  * [ ] Add originalString field to store the original JWKS content
-  * [ ] Add etag field to store the ETag value from HTTP responses
-  * [ ] Add isNotEmpty() method to check if the loader contains valid keys
-  * [ ] Update equals/hashCode to consider the new fields
-  * [ ] Update constructor to accept the etag parameter
-
-* [ ] Enhance HttpJwksLoader to improve performance and reliability:
-  * [ ] Add lastValidResult field to store the last valid JWKSKeyLoader instance
-  * [ ] Modify loadJwksKeyLoader to implement HTTP 304 "Not Modified" handling:
-    * [ ] Store the ETag from successful responses
-    * [ ] Include the ETag in subsequent requests using the If-None-Match header
-    * [ ] Handle 304 responses by returning the previously cached result
-  * [ ] Implement content-based caching:
-    * [ ] Return the previously created JWKSKeyLoader if the content hasn't changed
-    * [ ] Only create a new JWKSKeyLoader if the content has actually changed
-  * [ ] Implement fallback to last valid result:
-    * [ ] If a new request fails but there's a valid cached result, return the cached result
-    * [ ] Log a warning when falling back to the cached result
-    * [ ] Only return an empty result if there's no valid cached result
 
 ==== Local Key Support
 _See Requirement CUI-JWT-4.4: Local Key Support in link:Requirements.adoc[Requirements]_

@@ -42,6 +42,13 @@ import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
  * Implementation of {@link JwksLoader} that loads JWKS from an HTTP endpoint.
  * Uses Caffeine cache for caching keys.
  * <p>
+ * This implementation includes several performance and reliability enhancements:
+ * <ul>
+ *   <li>HTTP 304 "Not Modified" handling: Uses the ETag header to avoid unnecessary downloads</li>
+ *   <li>Content-based caching: Only creates new key loaders when content actually changes</li>
+ *   <li>Fallback mechanism: Uses the last valid result if a new request fails</li>
+ * </ul>
+ * <p>
  * Implements requirement: {@code CUI-JWT-8.3: Secure Communication}
  * <p>
  * For more details on the security aspects, see the
@@ -54,7 +61,7 @@ import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
 public class HttpJwksLoader implements JwksLoader {
 
     private static final CuiLogger LOGGER = new CuiLogger(HttpJwksLoader.class);
-    private static final int DEFAULT_TIMEOUT_SECONDS = 10;
+    private static final int DEFAULT_REQUEST_TIMEOUT_SECONDS = 10;
     private static final String EMPTY_JWKS = "{}";
     private static final String CACHE_KEY = "jwks";
     private static final int HTTP_OK = 200;
@@ -64,6 +71,7 @@ public class HttpJwksLoader implements JwksLoader {
     private final int refreshIntervalSeconds;
     private final LoadingCache<String, JWKSKeyLoader> jwksCache;
     private final HttpClient httpClient;
+    private volatile JWKSKeyLoader lastValidResult;
 
     /**
      * Creates a new HttpJwksLoader with the specified parameters.
@@ -76,10 +84,18 @@ public class HttpJwksLoader implements JwksLoader {
         this.jwksUri = validateAndCreateUri(jwksUrl);
         this.refreshIntervalSeconds = refreshIntervalSeconds;
         this.httpClient = createHttpClient(sslContext);
-        this.jwksCache = Caffeine.newBuilder()
-                .expireAfterWrite(Duration.ofSeconds(refreshIntervalSeconds))
-                .refreshAfterWrite(Duration.ofSeconds(refreshIntervalSeconds))
-                .build(this::loadJwksKeyLoader);
+        this.lastValidResult = null;
+
+        // Configure cache based on refresh interval
+        Caffeine<Object, Object> builder = Caffeine.newBuilder();
+
+        // If refreshIntervalSeconds is 0, don't set expiration or refresh policies
+        if (refreshIntervalSeconds > 0) {
+            builder.expireAfterWrite(Duration.ofSeconds(refreshIntervalSeconds))
+                  .refreshAfterWrite(Duration.ofSeconds(refreshIntervalSeconds));
+        }
+
+        this.jwksCache = builder.build(this::loadJwksKeyLoader);
 
         // Initial JWKS content fetch to populate cache
         jwksCache.get(CACHE_KEY);
@@ -143,7 +159,7 @@ public class HttpJwksLoader implements JwksLoader {
 
         /**
          * Builds a new HttpJwksLoader instance with the configured parameters.
-         * If refreshIntervalSeconds is 0, the default value of 300 seconds (5 minutes) will be used.
+         * If refreshIntervalSeconds is 0, no time-based caching will be used.
          * If secureSSLContextProvider is null, a default instance will be created.
          * The method creates the correct SSLContext using the TLSVersions configuration.
          *
@@ -158,16 +174,13 @@ public class HttpJwksLoader implements JwksLoader {
                 throw new IllegalArgumentException("Refresh interval must not be negative");
             }
 
-            // Use default refresh interval if none is specified
-            int actualRefreshInterval = refreshIntervalSeconds == 0 ? DEFAULT_REFRESH_INTERVAL_SECONDS : refreshIntervalSeconds;
-
             // Create default SecureSSLContextProvider instance if none is provided
             SecureSSLContextProvider actualSecureSSLContextProvider = secureSSLContextProvider != null ? secureSSLContextProvider : new SecureSSLContextProvider();
 
             // Get or create a secure SSLContext using the SecureSSLContextProvider configuration
             SSLContext secureContext = actualSecureSSLContextProvider.getOrCreateSecureSSLContext(sslContext);
 
-            return new HttpJwksLoader(jwksUrl, actualRefreshInterval, secureContext);
+            return new HttpJwksLoader(jwksUrl, refreshIntervalSeconds, secureContext);
         }
     }
 
@@ -205,7 +218,7 @@ public class HttpJwksLoader implements JwksLoader {
      */
     private HttpClient createHttpClient(@NonNull SSLContext sslContext) {
         HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECONDS))
+                .connectTimeout(Duration.ofSeconds(DEFAULT_REQUEST_TIMEOUT_SECONDS))
                 .sslContext(sslContext);
 
         LOGGER.debug(DEBUG.USING_SSL_CONTEXT.format(sslContext.getProtocol()));
@@ -223,7 +236,12 @@ public class HttpJwksLoader implements JwksLoader {
         LOGGER.debug(DEBUG.RESOLVING_KEY_LOADER.format(jwksUri.toString()));
 
         try {
-            // Get the current JWKSKeyLoader from cache, which will trigger a refresh if needed
+            // If refreshIntervalSeconds is 0, bypass the cache and load directly
+            if (refreshIntervalSeconds == 0) {
+                return loadJwksKeyLoader(CACHE_KEY);
+            }
+
+            // Otherwise, get the current JWKSKeyLoader from cache, which will trigger a refresh if needed
             return jwksCache.get(CACHE_KEY);
         } catch (RuntimeException e) {
             LOGGER.warn(e, WARN.JWKS_REFRESH_ERROR.format(e.getMessage()));
@@ -235,36 +253,90 @@ public class HttpJwksLoader implements JwksLoader {
 
     /**
      * Loads a JWKSKeyLoader from the endpoint. This method is used by the LoadingCache.
+     * Implements HTTP 304 "Not Modified" handling, content-based caching, and fallback to last valid result.
      *
      * @param key the cache key (ignored)
-     * @return a JWKSKeyLoader instance with the current JWKS content, or an empty one if an error occurs
+     * @return a JWKSKeyLoader instance with the current JWKS content, or the last valid result if available, or an empty one if an error occurs
      */
     private JWKSKeyLoader loadJwksKeyLoader(String key) {
         LOGGER.debug(DEBUG.REFRESHING_KEYS.format(jwksUri.toString()));
 
         try {
-            HttpRequest request = HttpRequest.newBuilder()
+            // Build the request with If-None-Match header if we have a previous etag
+            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                     .uri(jwksUri)
-                    .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECONDS))
-                    .GET()
-                    .build();
+                    .timeout(Duration.ofSeconds(DEFAULT_REQUEST_TIMEOUT_SECONDS))
+                    .GET();
+
+            // Add If-None-Match header if we have a last valid result with an etag
+            if (lastValidResult != null && lastValidResult.getEtag() != null) {
+                requestBuilder.header("If-None-Match", lastValidResult.getEtag());
+                LOGGER.debug(DEBUG.ADDING_IF_NONE_MATCH_HEADER.format(lastValidResult.getEtag()));
+            }
+
+            HttpRequest request = requestBuilder.build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            // Handle 304 Not Modified response
+            if (response.statusCode() == 304) {
+                LOGGER.debug(DEBUG.RECEIVED_304_NOT_MODIFIED::format);
+                return lastValidResult;
+            }
 
             if (response.statusCode() != HTTP_OK) {
                 LOGGER.warn(WARN.JWKS_FETCH_FAILED.format(response.statusCode()));
+                // Fallback to last valid result if available
+                if (lastValidResult != null && lastValidResult.isNotEmpty()) {
+                    LOGGER.warn(WARN.FALLBACK_TO_LAST_VALID_JWKS_HTTP_ERROR.format(response.statusCode()));
+                    return lastValidResult;
+                }
                 return new JWKSKeyLoader(EMPTY_JWKS);
             }
 
             String jwksContent = response.body();
             LOGGER.debug(DEBUG.FETCHED_JWKS.format(jwksUri.toString()));
-            return new JWKSKeyLoader(jwksContent);
+
+            // Get ETag from response headers
+            String etag = response.headers().firstValue("ETag").orElse(null);
+
+            // Content-based caching: if content hasn't changed and we have a valid previous result, return it
+            if (lastValidResult != null &&
+                    lastValidResult.isNotEmpty() &&
+                    jwksContent.equals(lastValidResult.getOriginalString())) {
+                LOGGER.debug(DEBUG.CONTENT_UNCHANGED::format);
+                return lastValidResult;
+            }
+
+            // Create new JWKSKeyLoader with the content and etag
+            JWKSKeyLoader newLoader = new JWKSKeyLoader(jwksContent, etag);
+
+            // Only update lastValidResult if the new loader has valid keys
+            if (newLoader.isNotEmpty()) {
+                lastValidResult = newLoader;
+            } else if (lastValidResult != null && lastValidResult.isNotEmpty()) {
+                // If new loader is empty but we have a valid previous result, log warning and return previous
+                LOGGER.warn(WARN.FALLBACK_TO_LAST_VALID_JWKS_EMPTY::format);
+                return lastValidResult;
+            }
+
+            return newLoader;
         } catch (InterruptedException e) {
             LOGGER.warn(e, WARN.FAILED_TO_FETCH_JWKS.format(jwksUri.toString()));
             // Preserve the interrupt status
             Thread.currentThread().interrupt();
+            // Fallback to last valid result if available
+            if (lastValidResult != null && lastValidResult.isNotEmpty()) {
+                LOGGER.warn(WARN.FALLBACK_TO_LAST_VALID_JWKS_INTERRUPTED::format);
+                return lastValidResult;
+            }
             return new JWKSKeyLoader(EMPTY_JWKS);
         } catch (IOException | SecurityException | IllegalArgumentException e) {
             LOGGER.warn(e, WARN.FAILED_TO_FETCH_JWKS.format(jwksUri.toString()));
+            // Fallback to last valid result if available
+            if (lastValidResult != null && lastValidResult.isNotEmpty()) {
+                LOGGER.warn(WARN.FALLBACK_TO_LAST_VALID_JWKS_EXCEPTION.format(e.getMessage()));
+                return lastValidResult;
+            }
             return new JWKSKeyLoader(EMPTY_JWKS);
         }
     }

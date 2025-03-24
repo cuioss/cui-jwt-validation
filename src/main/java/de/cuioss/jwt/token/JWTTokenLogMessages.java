@@ -101,6 +101,25 @@ public final class JWTTokenLogMessages {
                 .identifier(12)
                 .template("Key with ID %s not found, refreshing keys")
                 .build();
+
+        public static final LogRecord RECEIVED_304_NOT_MODIFIED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(13)
+                .template("Received 304 Not Modified response, using cached JWKS")
+                .build();
+
+        public static final LogRecord CONTENT_UNCHANGED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(14)
+                .template("JWKS content unchanged, using existing key loader")
+                .build();
+
+        public static final LogRecord ADDING_IF_NONE_MATCH_HEADER = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(15)
+                .template("Adding If-None-Match header: %s")
+                .build();
+
     }
 
     @UtilityClass
@@ -123,6 +142,30 @@ public final class JWTTokenLogMessages {
 
     @UtilityClass
     public static final class WARN {
+        public static final LogRecord FALLBACK_TO_LAST_VALID_JWKS_HTTP_ERROR = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(128)
+                .template("Falling back to last valid JWKS due to HTTP error: %s")
+                .build();
+
+        public static final LogRecord FALLBACK_TO_LAST_VALID_JWKS_EMPTY = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(129)
+                .template("New JWKS response has no valid keys, falling back to previous valid keys")
+                .build();
+
+        public static final LogRecord FALLBACK_TO_LAST_VALID_JWKS_EXCEPTION = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(130)
+                .template("Falling back to last valid JWKS due to exception: %s")
+                .build();
+
+        public static final LogRecord FALLBACK_TO_LAST_VALID_JWKS_INTERRUPTED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(131)
+                .template("Falling back to last valid JWKS due to interrupted exception")
+                .build();
+
         public static final LogRecord TOKEN_SIZE_EXCEEDED = LogRecordModel.builder()
                 .prefix(PREFIX)
                 .identifier(100)

@@ -41,6 +41,9 @@ import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
  * This implementation supports cryptographic agility by handling multiple key types
  * and algorithms, including RSA, EC, and RSA-PSS.
  * <p>
+ * The class stores the original JWKS content string and the ETag value from HTTP responses
+ * to support content-based caching and HTTP 304 "Not Modified" handling in {@link HttpJwksLoader}.
+ * <p>
  * Implements requirement: {@code CUI-JWT-8.5: Cryptographic Agility}
  * <p>
  * For more details on the security aspects, see the
@@ -48,8 +51,8 @@ import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
  * 
  * @author Oliver Wolff
  */
-@ToString
-@EqualsAndHashCode
+@ToString(of = {"keyInfoMap", "originalString", "etag"})
+@EqualsAndHashCode(of = {"keyInfoMap", "originalString", "etag"})
 public class JWKSKeyLoader implements JwksLoader {
 
     private static final CuiLogger LOGGER = new CuiLogger(JWKSKeyLoader.class);
@@ -57,6 +60,8 @@ public class JWKSKeyLoader implements JwksLoader {
     private static final String EC_KEY_TYPE = "EC";
 
     private final Map<String, KeyInfo> keyInfoMap;
+    private final String originalString;
+    private final String etag;
 
     /**
      * Creates a new JWKSKeyLoader with the specified JWKS content.
@@ -64,7 +69,46 @@ public class JWKSKeyLoader implements JwksLoader {
      * @param jwksContent the JWKS content as a string, must not be null
      */
     public JWKSKeyLoader(@NonNull String jwksContent) {
+        this(jwksContent, null);
+    }
+
+    /**
+     * Creates a new JWKSKeyLoader with the specified JWKS content and ETag.
+     *
+     * @param jwksContent the JWKS content as a string, must not be null
+     * @param etag the ETag value from the HTTP response, may be null
+     */
+    public JWKSKeyLoader(@NonNull String jwksContent, String etag) {
+        this.originalString = jwksContent;
+        this.etag = etag;
         keyInfoMap = parseJwks(jwksContent);
+    }
+
+    /**
+     * Returns the original JWKS content string.
+     *
+     * @return the original JWKS content string
+     */
+    public String getOriginalString() {
+        return originalString;
+    }
+
+    /**
+     * Returns the ETag value from the HTTP response.
+     *
+     * @return the ETag value, may be null if not available
+     */
+    public String getEtag() {
+        return etag;
+    }
+
+    /**
+     * Checks if this loader contains valid keys.
+     *
+     * @return true if the loader contains at least one valid key, false otherwise
+     */
+    public boolean isNotEmpty() {
+        return !keyInfoMap.isEmpty();
     }
 
     /**
