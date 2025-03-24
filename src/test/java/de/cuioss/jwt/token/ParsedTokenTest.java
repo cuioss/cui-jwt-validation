@@ -125,70 +125,7 @@ class ParsedTokenTest {
         }
     }
 
-    @Nested
-    @DisplayName("Not Before Time Tests")
-    class NotBeforeTimeTests {
-
-        @Test
-        @DisplayName("Should handle token without explicit nbf claim")
-        void shouldHandleTokenWithoutNotBeforeClaim() {
-            // Currently smallrye add nbf claim automatically
-            String initialToken = validSignedJWTWithNotBefore(OffsetDateTime.now().toInstant());
-
-            var token = tokenFactory.createAccessToken(initialToken);
-            assertTrue(token.isPresent(), "Token should be present for valid input");
-
-            // Just verify that the method doesn't throw an exception
-            // and returns something (either empty or a value)
-            assertDoesNotThrow(() -> token.get().getNotBeforeTime());
-
-        }
-
-        @Test
-        @DisplayName("Should handle token with nbf claim")
-        void shouldHandleTokenWithNotBeforeClaim() {
-            // Create a token with nbf set to 5 minutes ago
-            java.time.Instant notBeforeTime = java.time.Instant.now().minusSeconds(300);
-            String initialToken = validSignedJWTWithNotBefore(notBeforeTime);
-
-            var token = tokenFactory.createAccessToken(initialToken);
-            assertTrue(token.isPresent(), "Token should be present for nbf in the past");
-            var parsedNotBeforeTime = token.get().getNotBeforeTime();
-            assertTrue(parsedNotBeforeTime.isPresent(), "Not Before Time should be present");
-            assertTrue(parsedNotBeforeTime.get().isBefore(OffsetDateTime.now()), "Not Before Time should be in the past");
-
-        }
-
-        @Test
-        @DisplayName("Should handle token with near future, less than 60 sec nbf claim")
-        void shouldHandleTokenWithNearFutureNotBeforeClaim() {
-            // Create a token with nbf set to 30 seconds in the future.
-            // The token parser rejects tokens with nbf in the future (no clock skew allowance)
-            java.time.Instant notBeforeTime = java.time.Instant.now().plusSeconds(30);
-            String initialToken = validSignedJWTWithNotBefore(notBeforeTime);
-
-            var token = tokenFactory.createAccessToken(initialToken);
-            // The token should be rejected because the nbf claim is in the future
-            assertFalse(token.isPresent(), "Token should not be present for nbf in the future");
-
-            // Verify that the correct warning message is logged
-            LogAsserts.assertSingleLogMessagePresentContaining(TestLogLevel.WARN,
-                    JWTTokenLogMessages.WARN.COULD_NOT_PARSE_TOKEN.resolveIdentifierString());
-        }
-
-        @Test
-        @DisplayName("Should handle token with future, more than 60 sec nbf claim")
-        void shouldHandleTokenWithFutureNotBeforeClaim() {
-            // Create a token with nbf set to 300 seconds in the future.
-            // Smallrye rejects token with nbf in the future starting from 60s.
-            java.time.Instant notBeforeTime = java.time.Instant.now().plusSeconds(300);
-            String initialToken = validSignedJWTWithNotBefore(notBeforeTime);
-
-            var token = tokenFactory.createAccessToken(initialToken);
-            assertFalse(token.isPresent(), "Token should not be present for valid input");
-
-        }
-    }
+    // NotBeforeTimeTests have been moved to JwtAdapterTest
 
     @Nested
     @DisplayName("Issued At Time and Token ID Tests")

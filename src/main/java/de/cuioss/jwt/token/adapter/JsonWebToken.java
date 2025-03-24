@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.token.adapter;
 
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.Set;
 
@@ -55,10 +56,10 @@ public interface JsonWebToken {
      * <p>
      * For ID tokens, this represents the end-user's full name as specified in OpenID Connect Core 1.0.
      *
-     * @return the name of the JWT
+     * @return an Optional containing the name of the JWT, or empty if not present
      * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims">OpenID Connect Core 1.0 - Standard Claims</a>
      */
-    String getName();
+    Optional<String> getName();
 
     /**
      * Returns the set of claim names present in the JWT.
@@ -86,7 +87,7 @@ public interface JsonWebToken {
      * </ul>
      *
      * @param claimName the name of the claim
-     * @param <T> the type of the claim value
+     * @param <T>       the type of the claim value
      * @return the value of the claim, or null if the claim is not present
      */
     <T> T getClaim(String claimName);
@@ -148,11 +149,11 @@ public interface JsonWebToken {
      * The "aud" (audience) claim identifies the recipients that the JWT is intended for.
      * The value is an array of case-sensitive strings, each containing a StringOrURI value.
      *
-     * @return the audience of the JWT
+     * @return an Optional containing the audience of the JWT, or empty if not present
      * @see <a href="https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.3">RFC 7519 - 4.1.3. "aud" (Audience) Claim</a>
      * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#IDToken">OpenID Connect Core 1.0 - ID Token</a>
      */
-    Set<String> getAudience();
+    Optional<Set<String>> getAudience();
 
     /**
      * Returns the expiration time of the JWT, which is the 'exp' claim.
@@ -162,10 +163,27 @@ public interface JsonWebToken {
      * The "exp" (expiration time) claim identifies the expiration time on or after which
      * the JWT MUST NOT be accepted for processing. The value is a NumericDate value.
      *
-     * @return the expiration time of the JWT in seconds since the epoch
+     * @return the expiration time of the JWT as an OffsetDateTime
      * @see <a href="https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.4">RFC 7519 - 4.1.4. "exp" (Expiration Time) Claim</a>
      */
-    long getExpirationTime();
+    OffsetDateTime getExpirationTime();
+
+    /**
+     * @return boolean indicating whether the token is already expired. Shorthand for
+     * {@link #willExpireInSeconds(int)}
+     * with '0'.
+     */
+    default boolean isExpired() {
+        return willExpireInSeconds(0);
+    }
+
+    /**
+     * @param seconds maybe {@code 0}. Calling it with a negative number is not defined.
+     * @return boolean indicating whether the token will expired within the given number of seconds.
+     */
+    default boolean willExpireInSeconds(int seconds) {
+        return getExpirationTime().isBefore(OffsetDateTime.now().plusSeconds(seconds));
+    }
 
     /**
      * Returns the issued at time of the JWT, which is the 'iat' claim.
@@ -175,10 +193,23 @@ public interface JsonWebToken {
      * The "iat" (issued at) claim identifies the time at which the JWT was issued.
      * The value is a NumericDate value.
      *
-     * @return the issued at time of the JWT in seconds since the epoch
+     * @return the issued at time of the JWT as an OffsetDateTime
      * @see <a href="https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.6">RFC 7519 - 4.1.6. "iat" (Issued At) Claim</a>
      */
-    long getIssuedAtTime();
+    OffsetDateTime getIssuedAtTime();
+
+    /**
+     * Returns the "Not Before" time from the token if present, which is the 'nbf' claim.
+     * <p>
+     * This claim is optional, according to the JWT specification (RFC 7519).
+     * <p>
+     * The "nbf" (not before) claim identifies the time before which the JWT must not be accepted for processing.
+     * The value is a NumericDate value.
+     *
+     * @return an Optional containing the "Not Before" time as an OffsetDateTime, or empty if not present
+     * @see <a href="https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.5">RFC 7519 - 4.1.5. "nbf" (Not Before) Claim</a>
+     */
+    Optional<OffsetDateTime> getNotBeforeTime();
 
     /**
      * Returns the token ID of the JWT, which is the 'jti' claim.
@@ -188,23 +219,11 @@ public interface JsonWebToken {
      * The "jti" (JWT ID) claim provides a unique identifier for the JWT.
      * The value is a case-sensitive string.
      *
-     * @return the token ID of the JWT
+     * @return an Optional containing the token ID of the JWT, or empty if not present
      * @see <a href="https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.7">RFC 7519 - 4.1.7. "jti" (JWT ID) Claim</a>
      */
-    String getTokenID();
+    Optional<String> getTokenID();
 
-    /**
-     * Returns the groups of the JWT, which is the 'groups' claim.
-     * <p>
-     * This claim is optional for all token types.
-     * <p>
-     * The "groups" claim is not defined in the JWT specification (RFC 7519) but is commonly used
-     * to represent the groups or roles that the subject belongs to. In this implementation,
-     * it's primarily used with Keycloak tokens.
-     *
-     * @return the groups of the JWT
-     */
-    Set<String> getGroups();
 
     /**
      * Returns the value of the specified claim as an Optional.
@@ -216,7 +235,7 @@ public interface JsonWebToken {
      * claims defined in RFC 7519 and custom claims specific to the token issuer.
      *
      * @param name the name of the claim
-     * @param <T> the type of the claim value
+     * @param <T>  the type of the claim value
      * @return an Optional containing the claim value, or empty if the claim is not present
      */
     default <T> Optional<T> claim(String name) {

@@ -63,10 +63,6 @@ public final class Claims {
      */
     public static final String TOKEN_ID = "jti";
 
-    /**
-     * The "groups" claim identifies the groups that the JWT belongs to.
-     */
-    public static final String GROUPS = "groups";
 
     /**
      * The "email" claim identifies the email address of the JWT subject.

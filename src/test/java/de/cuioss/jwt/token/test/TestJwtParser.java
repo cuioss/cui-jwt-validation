@@ -31,6 +31,9 @@ import lombok.ToString;
 
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.*;
 
 /**
@@ -164,7 +167,7 @@ public class TestJwtParser implements JwtParser {
         }
 
         @Override
-        public String getName() {
+        public Optional<String> getName() {
             return delegate.getName();
         }
 
@@ -248,29 +251,30 @@ public class TestJwtParser implements JwtParser {
         }
 
         @Override
-        public Set<String> getAudience() {
+        public Optional<Set<String>> getAudience() {
             return delegate.getAudience();
         }
 
         @Override
-        public long getExpirationTime() {
+        public OffsetDateTime getExpirationTime() {
             return delegate.getExpirationTime();
         }
 
         @Override
-        public long getIssuedAtTime() {
+        public OffsetDateTime getIssuedAtTime() {
             return delegate.getIssuedAtTime();
         }
 
         @Override
-        public String getTokenID() {
-            return delegate.getTokenID();
+        public Optional<OffsetDateTime> getNotBeforeTime() {
+            return delegate.getNotBeforeTime();
         }
 
         @Override
-        public Set<String> getGroups() {
-            return delegate.getGroups();
+        public Optional<String> getTokenID() {
+            return delegate.getTokenID();
         }
+
     }
 
     /**
@@ -286,8 +290,8 @@ public class TestJwtParser implements JwtParser {
         }
 
         @Override
-        public String getName() {
-            return getClaim("name");
+        public Optional<String> getName() {
+            return Optional.ofNullable(getClaim("name"));
         }
 
         @Override
@@ -301,12 +305,12 @@ public class TestJwtParser implements JwtParser {
             }
 
             // Add other standard claims that might be derived
-            if (getTokenID() != null) allClaims.add("jti");
+            getTokenID().ifPresent(id -> allClaims.add("jti"));
             if (getIssuer() != null) allClaims.add("iss");
             if (getSubject() != null) allClaims.add("sub");
-            if (getExpirationTime() > 0) allClaims.add("exp");
-            if (getIssuedAtTime() > 0) allClaims.add("iat");
-            if (getName() != null) allClaims.add("name");
+            allClaims.add("exp"); // Always added since getExpirationTime always returns a value
+            allClaims.add("iat"); // Always added since getIssuedAtTime always returns a value
+            getName().ifPresent(name -> allClaims.add("name"));
 
             return allClaims;
         }
@@ -346,47 +350,52 @@ public class TestJwtParser implements JwtParser {
         }
 
         @Override
-        public Set<String> getAudience() {
-            return Collections.emptySet(); // Not needed for inspection
+        public Optional<Set<String>> getAudience() {
+            return Optional.of(Collections.emptySet()); // Not needed for inspection
         }
 
         @Override
-        public long getExpirationTime() {
+        public OffsetDateTime getExpirationTime() {
             Long exp = getClaim("exp");
             if (exp == null) {
-                return 0;
+                return OffsetDateTime.ofInstant(Instant.EPOCH, ZoneId.systemDefault());
             }
-            return exp;
+            return OffsetDateTime.ofInstant(Instant.ofEpochSecond(exp), ZoneId.systemDefault());
         }
 
         @Override
-        public long getIssuedAtTime() {
+        public OffsetDateTime getIssuedAtTime() {
             Long iat = getClaim("iat");
             if (iat == null) {
-                return 0;
+                return OffsetDateTime.ofInstant(Instant.EPOCH, ZoneId.systemDefault());
             }
-            return iat;
+            return OffsetDateTime.ofInstant(Instant.ofEpochSecond(iat), ZoneId.systemDefault());
         }
 
         @Override
-        public String getTokenID() {
+        public Optional<OffsetDateTime> getNotBeforeTime() {
+            Long nbf = getClaim("nbf");
+            if (nbf == null) {
+                return Optional.empty();
+            }
+            return Optional.of(OffsetDateTime.ofInstant(Instant.ofEpochSecond(nbf), ZoneId.systemDefault()));
+        }
+
+        @Override
+        public Optional<String> getTokenID() {
             String jti = getClaim("jti");
             if (jti == null) {
                 // Generate a token ID based on the token's content
                 String subject = getSubject();
                 String issuer = getIssuer();
-                long issuedAt = getIssuedAtTime();
-                return "%s-%s-%d".formatted(
+                OffsetDateTime issuedAt = getIssuedAtTime();
+                jti = "%s-%s-%s".formatted(
                         subject != null ? subject : "unknown",
                         issuer != null ? issuer : "unknown",
-                        issuedAt);
+                        issuedAt.toEpochSecond());
             }
-            return jti;
+            return Optional.of(jti);
         }
 
-        @Override
-        public Set<String> getGroups() {
-            return Set.of(); // Not needed for inspection
-        }
     }
 }

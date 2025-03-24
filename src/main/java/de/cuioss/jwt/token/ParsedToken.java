@@ -101,8 +101,7 @@ public abstract class ParsedToken {
      * @return {@link OffsetDateTime} representation of the expiration-Time
      */
     public OffsetDateTime getExpirationTime() {
-        return OffsetDateTime
-                .ofInstant(Instant.ofEpochSecond(jsonWebToken.getExpirationTime()), ZoneId.systemDefault());
+        return jsonWebToken.getExpirationTime();
     }
 
     /**
@@ -128,20 +127,7 @@ public abstract class ParsedToken {
      * if the claim is present, or an empty Optional if not
      */
     public Optional<OffsetDateTime> getNotBeforeTime() {
-        Optional<Object> notBeforeTime = jsonWebToken.claim(Claims.NOT_BEFORE);
-        return notBeforeTime.map(value -> {
-            long epochSecond;
-            if (value instanceof Long longValue) {
-                epochSecond = longValue;
-            } else if (value instanceof Integer integerValue) {
-                epochSecond = integerValue.longValue();
-            } else if (value instanceof Number number) {
-                epochSecond = number.longValue();
-            } else {
-                throw new IllegalArgumentException("Unexpected type for nbf claim: " + value.getClass().getName());
-            }
-            return OffsetDateTime.ofInstant(Instant.ofEpochSecond(epochSecond), ZoneId.systemDefault());
-        });
+        return jsonWebToken.getNotBeforeTime();
     }
 
     /**
@@ -151,17 +137,16 @@ public abstract class ParsedToken {
      * @return the {@link OffsetDateTime} representation of the "Issued At" time
      */
     public OffsetDateTime getIssuedAtTime() {
-        return OffsetDateTime
-                .ofInstant(Instant.ofEpochSecond(jsonWebToken.getIssuedAtTime()), ZoneId.systemDefault());
+        return jsonWebToken.getIssuedAtTime();
     }
 
     /**
      * Returns the JWT ID from the token.
      * The "jti" (JWT ID) claim provides a unique identifier for the JWT.
      *
-     * @return the JWT ID string
+     * @return the JWT ID string, or null if not present
      */
     public String getTokenId() {
-        return jsonWebToken.getTokenID();
+        return jsonWebToken.getTokenID().orElse(null);
     }
 }

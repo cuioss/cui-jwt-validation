@@ -22,6 +22,9 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -50,8 +53,8 @@ public class JwtAdapter implements JsonWebToken {
     private final String rawToken;
 
     @Override
-    public String getName() {
-        return getClaim("name");
+    public Optional<String> getName() {
+        return Optional.ofNullable(getClaim("name"));
     }
 
     @Override
@@ -76,52 +79,74 @@ public class JwtAdapter implements JsonWebToken {
     }
 
     @Override
-    public Set<String> getAudience() {
+    public Optional<Set<String>> getAudience() {
         Object audience = jws.getBody().get(de.cuioss.jwt.token.adapter.Claims.AUDIENCE);
         if (audience == null) {
-            return Collections.emptySet();
+            return Optional.empty();
         }
         if (audience instanceof List<?> list) {
-            return list.stream()
+            Set<String> result = list.stream()
                     .filter(String.class::isInstance)
                     .map(String.class::cast)
                     .collect(Collectors.toSet());
+            return Optional.of(result);
         }
         if (audience instanceof String string) {
-            return Set.of(string);
+            return Optional.of(Set.of(string));
         }
-        return Collections.emptySet();
+        return Optional.empty();
     }
 
     @Override
-    public long getExpirationTime() {
+    public OffsetDateTime getExpirationTime() {
         if (jws.getBody().getExpiration() == null) {
-            return 0;
+            // Return epoch start as a fallback for missing expiration
+            return OffsetDateTime.ofInstant(Instant.EPOCH, ZoneId.systemDefault());
         }
-        return jws.getBody().getExpiration().getTime() / 1000;
+        return OffsetDateTime.ofInstant(
+                Instant.ofEpochMilli(jws.getBody().getExpiration().getTime()),
+                ZoneId.systemDefault());
     }
 
     @Override
-    public long getIssuedAtTime() {
+    public OffsetDateTime getIssuedAtTime() {
         if (jws.getBody().getIssuedAt() == null) {
-            return 0;
+            // Return epoch start as a fallback for missing issuedAt
+            return OffsetDateTime.ofInstant(Instant.EPOCH, ZoneId.systemDefault());
         }
-        return jws.getBody().getIssuedAt().getTime() / 1000;
+        return OffsetDateTime.ofInstant(
+                Instant.ofEpochMilli(jws.getBody().getIssuedAt().getTime()),
+                ZoneId.systemDefault());
     }
 
     @Override
-    public String getTokenID() {
-        return jws.getBody().getId();
+    public Optional<OffsetDateTime> getNotBeforeTime() {
+        Object nbf = jws.getBody().get(de.cuioss.jwt.token.adapter.Claims.NOT_BEFORE);
+        if (nbf == null) {
+            return Optional.empty();
+        }
+
+        long epochSecond;
+        if (nbf instanceof Long longValue) {
+            epochSecond = longValue;
+        } else if (nbf instanceof Integer integerValue) {
+            epochSecond = integerValue.longValue();
+        } else if (nbf instanceof Number number) {
+            epochSecond = number.longValue();
+        } else if (nbf instanceof java.util.Date date) {
+            return Optional.of(OffsetDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault()));
+        } else {
+            return Optional.empty();
+        }
+
+        return Optional.of(OffsetDateTime.ofInstant(Instant.ofEpochSecond(epochSecond), ZoneId.systemDefault()));
     }
 
     @Override
-    public Set<String> getGroups() {
-        Object groups = jws.getBody().get(de.cuioss.jwt.token.adapter.Claims.GROUPS);
-        if (groups instanceof List) {
-            return new HashSet<>((List<String>) groups);
-        }
-        return Collections.emptySet();
+    public Optional<String> getTokenID() {
+        return Optional.ofNullable(jws.getBody().getId());
     }
+
 
     /**
      * Gets a claim as an Optional.
