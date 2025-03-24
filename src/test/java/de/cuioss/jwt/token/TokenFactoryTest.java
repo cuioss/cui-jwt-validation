@@ -146,7 +146,7 @@ class TokenFactoryTest {
             var parsedToken = tokenFactory.createRefreshToken(token);
 
             assertTrue(parsedToken.isPresent(), "Token should be present");
-            assertNotNull(parsedToken.get().getTokenString(), "Token string should not be null");
+            assertNotNull(parsedToken.get().getRawToken(), "Token string should not be null");
         }
     }
 
@@ -187,6 +187,28 @@ class TokenFactoryTest {
             var parsedToken = wrongSignatureTokenFactory.createAccessToken(token);
 
             assertFalse(parsedToken.isPresent(), "Token with invalid signature should not be valid");
+        }
+
+        @Test
+        @DisplayName("Should handle empty or blank token strings")
+        void shouldProvideEmptyFallbackOnEmptyInput() {
+            // Test with empty string
+            var emptyToken = tokenFactory.createAccessToken("");
+            assertFalse(emptyToken.isPresent(), "Token should not be present for empty input");
+
+            // Test with blank string
+            var blankToken = tokenFactory.createAccessToken("   ");
+            assertFalse(blankToken.isPresent(), "Token should not be present for blank input");
+        }
+
+        @Test
+        @DisplayName("Should handle invalid token format")
+        void shouldHandleInvalidTokenFormat() {
+            var initialTokenString = de.cuioss.test.generator.Generators.letterStrings(10, 20).next();
+
+            var token = tokenFactory.createAccessToken(initialTokenString);
+
+            assertFalse(token.isPresent(), "Token should not be present for invalid format");
         }
     }
 }

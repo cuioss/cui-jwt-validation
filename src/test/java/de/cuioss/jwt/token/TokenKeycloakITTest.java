@@ -154,7 +154,7 @@ public class TokenKeycloakITTest extends KeycloakITBase {
             var refreshToken = factory.createRefreshToken(tokenString);
             assertTrue(refreshToken.isPresent(), "Refresh token should be present");
             assertFalse(refreshToken.get().isEmpty(), "Refresh token should be present");
-            assertNotNull(refreshToken.get().getTokenString(), "Token string should not be null");
+            assertNotNull(refreshToken.get().getRawToken(), "Token string should not be null");
             assertEquals(TokenType.REFRESH_TOKEN, refreshToken.get().getType(), "Token type should be REFRESH_TOKEN");
         }
     }

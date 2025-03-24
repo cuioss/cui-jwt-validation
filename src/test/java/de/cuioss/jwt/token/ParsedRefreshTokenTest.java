@@ -46,7 +46,7 @@ class ParsedRefreshTokenTest implements ShouldBeSerializable<ParsedRefreshToken>
             String initialToken = validSignedJWTWithClaims(REFRESH_TOKEN);
             var parsedRefreshToken = new ParsedRefreshToken(initialToken);
 
-            assertEquals(initialToken, parsedRefreshToken.getTokenString(), "Token string should match original");
+            assertEquals(initialToken, parsedRefreshToken.getRawToken(), "Token string should match original");
             assertFalse(parsedRefreshToken.isEmpty(), "Token should be present");
             assertEquals(TokenType.REFRESH_TOKEN, parsedRefreshToken.getType(), "Token type should be REFRESH_TOKEN");
         }
@@ -56,7 +56,7 @@ class ParsedRefreshTokenTest implements ShouldBeSerializable<ParsedRefreshToken>
         void shouldHandleInvalidToken() {
             var parsedRefreshToken = new ParsedRefreshToken("invalid-token");
             assertFalse(parsedRefreshToken.isEmpty(), "Invalid token should still be wrapped");
-            assertEquals("invalid-token", parsedRefreshToken.getTokenString(), "Token string should match original");
+            assertEquals("invalid-token", parsedRefreshToken.getRawToken(), "Token string should match original");
         }
     }
 }

@@ -1,0 +1,131 @@
+= Refactoring Plan: Replace Inheritance of ParsedToken with JsonWebToken
+:toc:
+:toclevels: 3
+:toc-title: Table of Contents
+:sectnums:
+
+== Overview
+
+This document outlines the plan to refactor the current inheritance-based structure of `ParsedToken` classes to use composition with `JsonWebToken`. The refactoring aims to improve code maintainability, reduce duplication, and make the codebase more flexible.
+
+== Current Structure
+
+=== Class Hierarchy
+* [x] Review current class hierarchy:
+  * _`JsonWebToken` (interface): Defines methods for accessing JWT claims and token information_
+  * _`ParsedToken` (abstract class): Contains a `JsonWebToken` field and delegates many methods to it_
+  * _`ParsedAccessToken` (extends `ParsedToken`): Adds methods for handling scopes, roles, and user information_
+  * _`ParsedIdToken` (extends `ParsedToken`): Adds methods for handling email claims_
+
+=== Test Structure
+* [x] Review current test structure:
+  * _`ParsedTokenTest`: Tests functionality of `ParsedToken`_
+  * _`TokenFactoryTest`: Tests functionality of `TokenFactory`_
+  * _`ClaimValidatorTest`: Tests functionality of `ClaimValidator`_
+  * _`JwtAdapterTest`: Tests functionality of `JwtAdapter` (implementation of `JsonWebToken`)_
+
+== Refactoring Steps
+
+=== Step 1: Move Tests
+* [x] Move all tests from `ParsedTokenTest` to either `TokenFactoryTest`, `ClaimValidatorTest`, or `JwtAdapterTest` based on their functionality:
+
+* [x] Move token parsing error tests from `ParsedTokenTest` to `TokenFactoryTest`:
+  * [x] `shouldProvideEmptyFallbackOnEmptyInput`
+  * [x] `shouldHandleInvalidTokenFormat`
+  * [x] `shouldHandleInvalidIssuer` (already in TokenFactoryTest)
+  * [x] `shouldHandleInvalidSignature` (already in TokenFactoryTest)
+
+* [x] Move token expiration tests from `ParsedTokenTest` to `JwtAdapterTest`:
+  * [x] `shouldHandleNotExpiredToken`
+
+* [x] Move issued at time and token ID tests from `ParsedTokenTest` to `JwtAdapterTest`:
+  * [x] `shouldRetrieveIssuedAtTime`
+  * [x] `shouldRetrieveTokenId`
+
+=== Step 2: Refactor ParsedToken
+* [x] Modify `ParsedToken` to implement `JsonWebToken` interface:
+  * [x] Make `ParsedToken` implement `JsonWebToken`
+  * [x] Implement all required methods from `JsonWebToken` interface by delegating to the `jsonWebToken` field
+  * [x] Remove duplicate methods that are already defined in `JsonWebToken`
+  * [x] Update documentation to reflect the changes
+
+=== Step 3: Refactor ParsedAccessToken
+* [x] Replace inheritance from `ParsedToken` with delegation to `JsonWebToken`:
+  * [x] Remove the inheritance from `ParsedToken`
+  * [x] Add a `JsonWebToken` field
+  * [x] Implement all methods from `ParsedToken` that are used by `ParsedAccessToken` by delegating to the `JsonWebToken` field
+  * [x] Update the constructor to accept a `JsonWebToken` parameter
+  * [x] Update documentation to reflect the changes
+
+=== Step 4: Refactor ParsedIdToken
+* [x] Replace inheritance from `ParsedToken` with delegation to `JsonWebToken`:
+  * [x] Remove the inheritance from `ParsedToken`
+  * [x] Add a `JsonWebToken` field
+  * [x] Implement all methods from `ParsedToken` that are used by `ParsedIdToken` by delegating to the `JsonWebToken` field
+  * [x] Update the constructor to accept a `JsonWebToken` parameter
+  * [x] Update documentation to reflect the changes
+
+=== Step 5: Update Documentation
+* [x] Update all documentation to reflect the changes:
+  * [x] Update Javadoc in all modified classes
+  * [x] Update specification documents under `doc/specification`
+  * [x] Update README.adoc
+
+=== Step 6: Clean-Up Code
+* [x] Run the Maven rewrite plugins to clean up the code:
+  * [x] Run `./mvnw -Prewrite-modernize rewrite:run`
+  * [x] Verify with `./mvnw clean install`
+  * [x] Fix any issues and commit
+  * [x] Run `./mvnw -Prewrite-prepare-release rewrite:run`
+  * [x] Verify with `./mvnw clean install`
+  * [x] Fix any issues and commit
+
+== Verification Steps
+
+* [x] For each major step:
+  * [x] Run Maven build to verify the changes: `./mvnw clean install`
+  * [x] Run tests to ensure functionality is preserved
+  * [x] Commit each verified step locally
+
+== Implementation Details
+
+=== ParsedToken Implementation of JsonWebToken
+* [x] The `ParsedToken` class will need to implement the following methods from `JsonWebToken`:
+  * [x] `Optional<String> getName()`
+  * [x] `Set<String> getClaimNames()`
+  * [x] `<T> T getClaim(String claimName)`
+  * [x] `String getRawToken()`
+  * [x] `String getIssuer()`
+  * [x] `String getSubject()`
+  * [x] `Optional<Set<String>> getAudience()`
+  * [x] `OffsetDateTime getExpirationTime()`
+  * [x] `OffsetDateTime getIssuedAtTime()`
+  * [x] `Optional<OffsetDateTime> getNotBeforeTime()`
+  * [x] `Optional<String> getTokenID()`
+  * _Most of these methods can be implemented by delegating to the `jsonWebToken` field._
+
+=== ParsedAccessToken Delegation to JsonWebToken
+* [x] The `ParsedAccessToken` class will need to implement the following methods by delegating to the `JsonWebToken` field:
+  * [x] `String getTokenString()`
+  * [x] `boolean isExpired()`
+  * [x] `boolean willExpireInSeconds(int seconds)`
+  * [x] `TokenType getType()`
+  * [x] `OffsetDateTime getExpirationTime()`
+  * [x] `String getSubject()`
+  * [x] `String getIssuer()`
+  * [x] `Optional<OffsetDateTime> getNotBeforeTime()`
+  * [x] `OffsetDateTime getIssuedAtTime()`
+  * [x] `String getTokenId()`
+
+=== ParsedIdToken Delegation to JsonWebToken
+* [x] The `ParsedIdToken` class will need to implement the following methods by delegating to the `JsonWebToken` field:
+  * [x] `String getTokenString()`
+  * [x] `boolean isExpired()`
+  * [x] `boolean willExpireInSeconds(int seconds)`
+  * [x] `TokenType getType()`
+  * [x] `OffsetDateTime getExpirationTime()`
+  * [x] `String getSubject()`
+  * [x] `String getIssuer()`
+  * [x] `Optional<OffsetDateTime> getNotBeforeTime()`
+  * [x] `OffsetDateTime getIssuedAtTime()`
+  * [x] `String getTokenId()`

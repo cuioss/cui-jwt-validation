@@ -52,7 +52,7 @@ class ParsedIdTokenTest {
             var parsedIdToken = tokenFactory.createIdToken(initialTokenString);
 
             assertTrue(parsedIdToken.isPresent(), "Token should be parsed successfully");
-            assertEquals(initialTokenString, parsedIdToken.get().getTokenString(), "Token string should match original");
+            assertEquals(initialTokenString, parsedIdToken.get().getRawToken(), "Token string should match original");
             assertFalse(parsedIdToken.get().isExpired(), "Token should not be expired");
             assertEquals(TokenType.ID_TOKEN, parsedIdToken.get().getType(), "Token type should be ID_TOKEN");
         }

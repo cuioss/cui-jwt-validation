@@ -44,7 +44,7 @@ Key features include:
 
 === TokenFactory: The Main Entry Point
 
-The link:src/main/java/de/cuioss/portal/authentication/token/TokenFactory.java[TokenFactory] serves as the primary entry point for token operations. It provides:
+The link:src/main/java/de/cuioss/jwt/token/TokenFactory.java[TokenFactory] serves as the primary entry point for token operations. It provides:
 
 * Centralized token creation and validation
 * Support for multiple token types (Access, ID, Refresh)
@@ -65,7 +65,7 @@ Optional<ParsedIdToken> idToken = factory.createIdToken(tokenString);
 
 === JwksAwareTokenParser: Secure Token Validation
 
-The link:src/main/java/de/cuioss/portal/authentication/token/JwksAwareTokenParser.java[JwksAwareTokenParser] handles secure token validation using JWKS endpoints:
+The link:src/main/java/de/cuioss/jwt/token/JwksAwareTokenParserImpl.java[JwksAwareTokenParserImpl] handles secure token validation using JWKS endpoints:
 
 * Automatic public key retrieval and caching
 * Configurable key refresh intervals
@@ -85,7 +85,7 @@ JwksAwareTokenParser parser = JwksAwareTokenParser.builder()
 
 The module provides robust support for multi-issuer environments through:
 
-* link:src/main/java/de/cuioss/portal/authentication/token/util/MultiIssuerTokenParser.java[MultiIssuerTokenParser]: Manages multiple token parsers
+* link:src/main/java/de/cuioss/jwt/token/util/MultiIssuerJwtParser.java[MultiIssuerJwtParser]: Manages multiple token parsers
 * Dynamic parser selection based on token issuer
 * Thread-safe token validation
 
@@ -109,13 +109,35 @@ TokenFactory multiIssuerFactory = TokenFactory.builder()
         .build();
 ----
 
-== Token Types
+== Token Architecture and Types
+
+=== Architecture
+
+The module uses a flexible architecture based on composition and delegation:
+
+* link:src/main/java/de/cuioss/jwt/token/adapter/JsonWebToken.java[JsonWebToken]: Core interface defining JWT token functionality
+* Token-specific classes directly implement JsonWebToken or use delegation for improved flexibility and separation of concerns
+
+This architecture provides several benefits:
+
+* Better separation of concerns
+* More flexible composition
+* Reduced code duplication
+* Easier maintenance and extension
+
+=== Token Types
 
 The module supports three token types, each with specific functionality:
 
-* link:src/main/java/de/cuioss/portal/authentication/token/ParsedAccessToken.java[ParsedAccessToken]: OAuth2 access token with scope and role support
-* link:src/main/java/de/cuioss/portal/authentication/token/ParsedIdToken.java[ParsedIdToken]: OpenID Connect ID token for user identity
-* link:src/main/java/de/cuioss/portal/authentication/token/ParsedRefreshToken.java[ParsedRefreshToken]: OAuth2 refresh token
+* link:src/main/java/de/cuioss/jwt/token/ParsedAccessToken.java[ParsedAccessToken]: OAuth2 access token with scope and role support
+  ** Implements JsonWebToken interface directly
+  ** Provides enhanced scope and role management
+* link:src/main/java/de/cuioss/jwt/token/ParsedIdToken.java[ParsedIdToken]: OpenID Connect ID token for user identity
+  ** Implements JsonWebToken interface directly
+  ** Focuses on identity information claims
+* link:src/main/java/de/cuioss/jwt/token/ParsedRefreshToken.java[ParsedRefreshToken]: OAuth2 refresh token
+  ** Implements Serializable for basic token functionality
+  ** Treats refresh tokens as opaque strings per OAuth2 specification
 
 == Documentation
 

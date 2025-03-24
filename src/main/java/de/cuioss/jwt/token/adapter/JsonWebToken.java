@@ -242,4 +242,15 @@ public interface JsonWebToken {
         T value = getClaim(name);
         return Optional.ofNullable(value);
     }
+
+    /**
+     * Extracts the {@link de.cuioss.jwt.token.TokenType} from the claim "type."
+     * <em>Caution:</em> This is only tested for keycloak.
+     * The claim 'typ' is not from the oauth spec.
+     * 
+     * @return the token type based on the "typ" claim
+     */
+    default de.cuioss.jwt.token.TokenType getType() {
+        return de.cuioss.jwt.token.TokenType.fromTypClaim(getClaim("typ"));
+    }
 }

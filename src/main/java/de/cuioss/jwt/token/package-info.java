@@ -23,7 +23,7 @@
  * <ul>
  *   <li>Token Parsing:
  *     <ul>
- *       <li>{@link de.cuioss.jwt.token.ParsedToken}: Base class for token handling</li>
+ *       <li>{@link de.cuioss.jwt.token.adapter.JsonWebToken}: Core interface for JWT token handling</li>
  *       <li>{@link de.cuioss.jwt.token.ParsedAccessToken}: OAuth2 access token support</li>
  *       <li>{@link de.cuioss.jwt.token.ParsedIdToken}: OpenID Connect ID token support</li>
  *       <li>{@link de.cuioss.jwt.token.ParsedRefreshToken}: OAuth2 refresh token support</li>
@@ -37,7 +37,7 @@
  *   </li>
  *   <li>Token Validation:
  *     <ul>
- *       <li>{@link de.cuioss.jwt.token.JwksAwareTokenParser}: JWKS-based token validation</li>
+ *       <li>{@link de.cuioss.jwt.token.JwksAwareTokenParserImpl}: JWKS-based token validation</li>
  *     </ul>
  *   </li>
  * </ul>

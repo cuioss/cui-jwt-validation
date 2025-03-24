@@ -64,7 +64,7 @@ class ParsedAccessTokenTest {
             assertTrue(retrievedToken.isPresent(), "Token should be present");
             var parsedAccessToken = retrievedToken.get();
 
-            assertEquals(initialToken, parsedAccessToken.getTokenString(), "Token string should match");
+            assertEquals(initialToken, parsedAccessToken.getRawToken(), "Token string should match");
             assertFalse(parsedAccessToken.getScopes().isEmpty(), "Should have scopes");
             assertTrue(parsedAccessToken.getScopes().contains("openid"), "Should contain openid scope");
             assertFalse(parsedAccessToken.getScopes().contains(DEFINITELY_NO_SCOPE), "Should not contain invalid scope");
@@ -215,8 +215,8 @@ class ParsedAccessTokenTest {
 
             var parsedAccessToken = tokenFactory.createAccessToken(initialToken);
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
-            assertNotNull(parsedAccessToken.get().getSubjectId(), "Subject ID should not be null");
-            assertFalse(parsedAccessToken.get().getSubjectId().isEmpty(), "Subject ID should not be empty");
+            assertNotNull(parsedAccessToken.get().getSubject(), "Subject ID should not be null");
+            assertFalse(parsedAccessToken.get().getSubject().isEmpty(), "Subject ID should not be empty");
         }
     }
 

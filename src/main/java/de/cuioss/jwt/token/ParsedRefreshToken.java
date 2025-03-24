@@ -95,4 +95,14 @@ public class ParsedRefreshToken implements Serializable {
     public TokenType getType() {
         return TokenType.REFRESH_TOKEN;
     }
+
+    /**
+     * Returns the token as encoded String.
+     * This method is provided for consistency with the JsonWebToken interface.
+     *
+     * @return the token as encoded String.
+     */
+    public String getRawToken() {
+        return tokenString;
+    }
 }

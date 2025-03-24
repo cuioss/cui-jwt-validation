@@ -154,5 +154,74 @@ class JwtAdapterTest {
             assertTrue(issuedAtDiff <= 1, "Issued at time should be within 1 second of expected time");
             assertTrue(expiresAtDiff <= 1, "Expiration time should be within 1 second of expected time");
         }
+
+        @Test
+        @DisplayName("Should correctly handle token expiration checks")
+        void shouldHandleNotExpiredToken() {
+            // Create a token that expires in 5 minutes
+            java.time.Instant expireAt = java.time.Instant.now().plusSeconds(300);
+            String initialToken = TestTokenProducer.validSignedJWTExpireAt(expireAt);
+
+            var token = tokenFactory.createAccessToken(initialToken);
+            assertTrue(token.isPresent(), "Token should be present for valid input");
+
+            // Get the underlying JsonWebToken from the ParsedToken
+            JsonWebToken jsonWebToken = token.get().getJsonWebToken();
+            assertInstanceOf(JwtAdapter.class, jsonWebToken, "JsonWebToken should be a JwtAdapter");
+
+            // Test isExpired() returns false for a token that's not expired
+            assertFalse(jsonWebToken.isExpired(), "Token should not be expired");
+
+            // Test willExpireInSeconds() with different values
+            assertFalse(jsonWebToken.willExpireInSeconds(5), "Token should not expire in 5 seconds");
+            assertTrue(jsonWebToken.willExpireInSeconds(500), "Token should expire in 500 seconds");
+        }
+
+        @Test
+        @DisplayName("Should correctly retrieve issued at time")
+        void shouldRetrieveIssuedAtTime() {
+            // Create a token with a specific issued at time (5 minutes ago)
+            Instant issuedAt = Instant.now().minusSeconds(300);
+            String tokenId = "test-token-id-" + System.currentTimeMillis();
+            String initialToken = TestTokenProducer.validSignedJWTWithIssuedAtAndTokenId(issuedAt, tokenId);
+
+            var token = tokenFactory.createAccessToken(initialToken);
+            assertTrue(token.isPresent(), "Token should be present for valid input");
+
+            // Get the underlying JsonWebToken from the ParsedToken
+            JsonWebToken jsonWebToken = token.get().getJsonWebToken();
+            assertInstanceOf(JwtAdapter.class, jsonWebToken, "JsonWebToken should be a JwtAdapter");
+
+            // Verify the issued at time is correctly retrieved
+            OffsetDateTime expectedIssuedAt = OffsetDateTime.ofInstant(issuedAt, ZoneId.systemDefault());
+            OffsetDateTime actualIssuedAt = jsonWebToken.getIssuedAtTime();
+
+            // Check that the times are within 1 second of each other (to account for any precision loss)
+            long timeDifferenceSeconds = Math.abs(expectedIssuedAt.toEpochSecond() - actualIssuedAt.toEpochSecond());
+            assertTrue(timeDifferenceSeconds <= 1,
+                    "Issued at time should match the expected time (within 1 second). Expected: " +
+                            expectedIssuedAt + ", Actual: " + actualIssuedAt);
+        }
+
+        @Test
+        @DisplayName("Should correctly retrieve token ID")
+        void shouldRetrieveTokenId() {
+            // Create a token with a specific token ID
+            Instant issuedAt = Instant.now();
+            String tokenId = "test-token-id-" + System.currentTimeMillis();
+            String initialToken = TestTokenProducer.validSignedJWTWithIssuedAtAndTokenId(issuedAt, tokenId);
+
+            var token = tokenFactory.createAccessToken(initialToken);
+            assertTrue(token.isPresent(), "Token should be present for valid input");
+
+            // Get the underlying JsonWebToken from the ParsedToken
+            JsonWebToken jsonWebToken = token.get().getJsonWebToken();
+            assertInstanceOf(JwtAdapter.class, jsonWebToken, "JsonWebToken should be a JwtAdapter");
+
+            // Verify the token ID is correctly retrieved
+            var retrievedTokenId = jsonWebToken.getTokenID();
+            assertTrue(retrievedTokenId.isPresent(), "Token ID should be present");
+            assertEquals(tokenId, retrievedTokenId.get(), "Token ID should match the expected value");
+        }
     }
 }

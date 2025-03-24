@@ -15,15 +15,22 @@
  */
 package de.cuioss.jwt.token;
 
+import de.cuioss.jwt.token.adapter.Claims;
 import de.cuioss.jwt.token.adapter.JsonWebToken;
 import de.cuioss.tools.logging.CuiLogger;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.ToString;
+import lombok.experimental.Delegate;
 
 import java.util.Optional;
 
 /**
  * Represents a parsed OpenID Connect ID token.
  * Provides access to identity information claims as specified by the OpenID Connect Core specification.
+ * <p>
+ * This class directly implements the {@link JsonWebToken} interface using delegation to a
+ * {@link JsonWebToken} instance, allowing for flexible composition and better separation of concerns.
  * <p>
  * Key features:
  * <ul>
@@ -47,12 +54,16 @@ import java.util.Optional;
  * </pre>
  *
  * @author Oliver Wolff
- * @see ParsedToken
  */
 @ToString
-public class ParsedIdToken extends ParsedToken {
+@EqualsAndHashCode
+public class ParsedIdToken implements JsonWebToken {
 
     private static final CuiLogger LOGGER = new CuiLogger(ParsedIdToken.class);
+
+    @Getter
+    @Delegate
+    private final JsonWebToken jsonWebToken;
 
     /**
      * Creates a new {@link ParsedIdToken} from the given JsonWebToken.
@@ -60,7 +71,7 @@ public class ParsedIdToken extends ParsedToken {
      * @param jsonWebToken The JsonWebToken to wrap, must not be null
      */
     public ParsedIdToken(JsonWebToken jsonWebToken) {
-        super(jsonWebToken);
+        this.jsonWebToken = jsonWebToken;
         LOGGER.debug("Successfully created ID token");
     }
 
@@ -71,7 +82,7 @@ public class ParsedIdToken extends ParsedToken {
      */
     public Optional<String> getEmail() {
         LOGGER.debug("Retrieving email from ID token");
-        Optional<String> email = jsonWebToken.claim(de.cuioss.jwt.token.adapter.Claims.EMAIL);
+        Optional<String> email = jsonWebToken.claim(Claims.EMAIL);
         if (email.isEmpty()) {
             LOGGER.debug("No email claim found in ID token");
         } else {
@@ -79,4 +90,5 @@ public class ParsedIdToken extends ParsedToken {
         }
         return email;
     }
+
 }

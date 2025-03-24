@@ -106,7 +106,7 @@ public class JwksAwareTokenParserImplTest {
             var jsonWebToken = assertDoesNotThrow(() -> tokenFactory.createAccessToken(initialToken));
 
             assertTrue(jsonWebToken.isPresent());
-            assertEquals(jsonWebToken.get().getTokenString(), initialToken);
+            assertEquals(jsonWebToken.get().getRawToken(), initialToken);
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.INFO, "Initializing JWKS lookup");
         }
 
@@ -177,7 +177,7 @@ public class JwksAwareTokenParserImplTest {
             var tokenFactory = TokenFactory.builder().addParser(getValidJWKSParserWithLocalJWKS()).build();
             var token = tokenFactory.createRefreshToken(initialToken);
             assertTrue(token.isPresent());
-            assertEquals(token.get().getTokenString(), initialToken);
+            assertEquals(token.get().getRawToken(), initialToken);
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.INFO, "Initializing JWKS lookup");
         }
     }
