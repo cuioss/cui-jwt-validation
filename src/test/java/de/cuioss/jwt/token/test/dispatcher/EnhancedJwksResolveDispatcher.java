@@ -16,7 +16,6 @@
 package de.cuioss.jwt.token.test.dispatcher;
 
 import de.cuioss.jwt.token.test.JWKSFactory;
-import de.cuioss.jwt.token.test.KeyMaterialHandler;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.Getter;
@@ -27,7 +26,6 @@ import okhttp3.Headers;
 
 import java.security.KeyPair;
 import java.security.interfaces.RSAPublicKey;
-
 import java.util.Optional;
 
 import static jakarta.servlet.http.HttpServletResponse.SC_NOT_MODIFIED;

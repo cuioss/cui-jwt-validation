@@ -36,7 +36,7 @@ import lombok.ToString;
 import java.security.Key;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 import static de.cuioss.jwt.token.JWTTokenLogMessages.INFO;
 import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
@@ -78,12 +78,96 @@ import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
  *
  * @author Oliver Wolff
  */
+@SuppressWarnings("JavadocLinkAsPlainText")
 @ToString
 @EqualsAndHashCode
 public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
 
     private static final CuiLogger LOGGER = new CuiLogger(JwksAwareTokenParserImpl.class);
     public static final int DEFAULT_REFRESH_INTERVAL = 180;
+
+    /**
+     * Builder for creating JwksAwareTokenParserImpl instances.
+     */
+    public static class Builder {
+        private JwksLoader jwksLoader;
+        private String issuer;
+        private AlgorithmPreferences algorithmPreferences;
+        private Set<String> expectedAudience;
+
+        /**
+         * Sets the JWKS loader.
+         *
+         * @param jwksLoader the JWKS loader
+         * @return this builder instance
+         */
+        public Builder jwksLoader(@NonNull JwksLoader jwksLoader) {
+            this.jwksLoader = jwksLoader;
+            return this;
+        }
+
+        /**
+         * Sets the issuer.
+         *
+         * @param issuer the issuer
+         * @return this builder instance
+         */
+        public Builder issuer(@NonNull String issuer) {
+            this.issuer = issuer;
+            return this;
+        }
+
+        /**
+         * Sets the algorithm preferences.
+         *
+         * @param algorithmPreferences the algorithm preferences
+         * @return this builder instance
+         */
+        public Builder algorithmPreferences(@NonNull AlgorithmPreferences algorithmPreferences) {
+            this.algorithmPreferences = algorithmPreferences;
+            return this;
+        }
+
+        /**
+         * Sets the expected audience.
+         *
+         * @param expectedAudience the expected audience
+         * @return this builder instance
+         */
+        public Builder expectedAudience(Set<String> expectedAudience) {
+            this.expectedAudience = expectedAudience;
+            return this;
+        }
+
+        /**
+         * Builds a new JwksAwareTokenParserImpl instance.
+         *
+         * @return a new JwksAwareTokenParserImpl instance
+         * @throws IllegalArgumentException if jwksLoader or issuer is null
+         */
+        public JwksAwareTokenParserImpl build() {
+            if (jwksLoader == null) {
+                throw new IllegalArgumentException("JWKS loader must not be null");
+            }
+            if (issuer == null) {
+                throw new IllegalArgumentException("Issuer must not be null");
+            }
+
+            AlgorithmPreferences prefs = algorithmPreferences != null ?
+                    algorithmPreferences : new AlgorithmPreferences();
+
+            return new JwksAwareTokenParserImpl(jwksLoader, issuer, prefs, expectedAudience);
+        }
+    }
+
+    /**
+     * Creates a new builder for JwksAwareTokenParserImpl.
+     *
+     * @return a new builder instance
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
 
     private final JwtParser jwtParser;
     private final JwksLoader jwksLoader;
@@ -112,6 +196,20 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
      */
     public JwksAwareTokenParserImpl(@NonNull JwksLoader jwksLoader, @NonNull String issuer,
                                     @NonNull AlgorithmPreferences algorithmPreferences) {
+        this(jwksLoader, issuer, algorithmPreferences, null);
+    }
+
+    /**
+     * Constructor for JwksAwareTokenParserImpl with custom algorithm preferences and expected audience.
+     *
+     * @param jwksLoader           the JWKS loader, must not be null
+     * @param issuer               the issuer, must not be null
+     * @param algorithmPreferences the algorithm preferences, must not be null
+     * @param expectedAudience     the expected audience, may be null if no audience validation is required
+     */
+    public JwksAwareTokenParserImpl(@NonNull JwksLoader jwksLoader, @NonNull String issuer,
+                                    @NonNull AlgorithmPreferences algorithmPreferences,
+                                    Set<String> expectedAudience) {
         this.jwksLoader = jwksLoader;
         this.issuer = issuer;
         this.algorithmPreferences = algorithmPreferences;
@@ -120,7 +218,7 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
                 .requireIssuer(issuer)
                 .build();
         this.tokenParser = NonValidatingJwtParser.builder().build();
-        this.claimValidator = new ClaimValidator(issuer);
+        this.claimValidator = new ClaimValidator(issuer, expectedAudience);
 
         // Log the initialization
         LOGGER.info(INFO.CONFIGURED_JWKS.format(
@@ -177,8 +275,8 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
 
     /**
      * Retrieves the key information based on the decoded JWT.
-     * 
-     * @param decodedJwt The decoded JWT
+     *
+     * @param decodedJwt   The decoded JWT
      * @param requestedAlg The requested algorithm
      * @return An Optional containing the KeyInfo if found, or empty if not found
      */
@@ -207,7 +305,7 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
         // Filter keys by algorithm
         List<String> availableAlgorithms = availableKeys.stream()
                 .map(KeyInfo::getAlgorithm)
-                .collect(Collectors.toList());
+                .toList();
 
         // Get the most preferred algorithm that is available
         Optional<String> preferredAlg = algorithmPreferences.getMostPreferredAlgorithm(availableAlgorithms);
@@ -230,8 +328,8 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
 
     /**
      * Parses and validates the token using the provided key information.
-     * 
-     * @param token The token to parse
+     *
+     * @param token   The token to parse
      * @param keyInfo The key information to use for parsing
      * @return An Optional containing the parsed JWT if valid, or empty if invalid
      */

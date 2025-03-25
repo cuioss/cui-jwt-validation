@@ -75,6 +75,7 @@ import java.util.Optional;
 public class TokenFactory {
 
     private static final CuiLogger LOGGER = new CuiLogger(TokenFactory.class);
+    public static final String NO_SUITABLE_PARSER_FOUND_FOR_TOKEN = "No suitable parser found for token";
 
     private final MultiIssuerJwtParser tokenParser;
 
@@ -205,7 +206,7 @@ public class TokenFactory {
             return createJsonWebToken(tokenString, parser.get())
                     .map(jwt -> new ParsedAccessToken(jwt, null));
         }
-        LOGGER.debug("No suitable parser found for token");
+        LOGGER.debug(NO_SUITABLE_PARSER_FOUND_FOR_TOKEN);
         return Optional.empty();
     }
 
@@ -228,7 +229,7 @@ public class TokenFactory {
             return createJsonWebToken(tokenString, parser.get())
                     .map(jwt -> new ParsedAccessToken(jwt, email));
         }
-        LOGGER.debug("No suitable parser found for token");
+        LOGGER.debug(NO_SUITABLE_PARSER_FOUND_FOR_TOKEN);
         return Optional.empty();
     }
 
@@ -250,7 +251,7 @@ public class TokenFactory {
             return createJsonWebToken(tokenString, parser.get())
                     .map(ParsedIdToken::new);
         }
-        LOGGER.debug("No suitable parser found for token");
+        LOGGER.debug(NO_SUITABLE_PARSER_FOUND_FOR_TOKEN);
         return Optional.empty();
     }
 

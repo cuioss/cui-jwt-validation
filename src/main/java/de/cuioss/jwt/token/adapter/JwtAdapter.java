@@ -31,7 +31,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Adapter class that implements the JsonWebToken interface using JJWT's Jws&lt;Claims&gt;.
+ * Adapter class that implements the JsonWebToken interface using JJWT's Jws&lt;Claims&gt;
  * This allows the existing ParsedToken and derived classes to continue working with the new
  * JJWT implementation without changes to their API.
  * <p>
@@ -145,17 +145,4 @@ public class JwtAdapter implements JsonWebToken {
         return Optional.ofNullable(jws.getBody().getId());
     }
 
-
-    /**
-     * Gets a claim as an Optional.
-     * This method is used by ParsedToken and derived classes.
-     *
-     * @param name the name of the claim
-     * @param <T> the type of the claim
-     * @return an Optional containing the claim value, or empty if the claim is not present
-     */
-    public <T> Optional<T> claim(String name) {
-        T value = getClaim(name);
-        return Optional.ofNullable(value);
-    }
 }

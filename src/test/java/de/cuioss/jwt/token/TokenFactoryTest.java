@@ -23,11 +23,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("Tests TokenFactory functionality")
 class TokenFactoryTest {
@@ -35,7 +37,7 @@ class TokenFactoryTest {
     private TokenFactory tokenFactory;
 
     @BeforeEach
-    void setUp() throws IOException {
+    void setUp() {
         tokenFactory = TokenFactory.builder()
                 .addParser(JwksAwareTokenParserImplTest.getValidJWKSParserWithLocalJWKS())
                 .build();
@@ -47,7 +49,7 @@ class TokenFactoryTest {
 
         @Test
         @DisplayName("Should create TokenFactory with builder and default token size limits")
-        void shouldCreateTokenFactoryWithBuilder() throws IOException {
+        void shouldCreateTokenFactoryWithBuilder() {
             // Create TokenFactory using builder
             TokenFactory factory = TokenFactory.builder()
                     .addParser(JwksAwareTokenParserImplTest.getValidJWKSParserWithLocalJWKS())
@@ -62,11 +64,10 @@ class TokenFactoryTest {
 
         @Test
         @DisplayName("Should respect custom token size limits")
-        void shouldRespectCustomTokenSizeLimits() throws IOException {
+        void shouldRespectCustomTokenSizeLimits() {
             // Create a token that exceeds the custom max size but is smaller than the default
             int customMaxSize = 1024;
-            StringBuilder largeToken = new StringBuilder();
-            largeToken.append("a".repeat(customMaxSize + 1));
+            String largeToken = "a".repeat(customMaxSize + 1);
 
             // Create TokenFactory with custom token size limits
             TokenFactory factory = TokenFactory.builder()
@@ -75,14 +76,14 @@ class TokenFactoryTest {
                     .build();
 
             // Verify it rejects a token that exceeds the custom max size
-            var parsedToken = factory.createAccessToken(largeToken.toString());
+            var parsedToken = factory.createAccessToken(largeToken);
 
             assertFalse(parsedToken.isPresent(), "Token exceeding custom max size should be rejected");
         }
 
         @Test
         @DisplayName("Should respect custom payload size limits")
-        void shouldRespectCustomPayloadSizeLimits() throws IOException {
+        void shouldRespectCustomPayloadSizeLimits() {
             // Create TokenFactory with custom payload size limits
             TokenFactory factory = TokenFactory.builder()
                     .addParser(JwksAwareTokenParserImplTest.getValidJWKSParserWithLocalJWKS())
@@ -90,14 +91,14 @@ class TokenFactoryTest {
                     .build();
 
             // Create a token with a large payload by creating a large string claim
-            StringBuilder largePayload = new StringBuilder();
-            largePayload.append("a".repeat(200));
 
             // Create a JWT with the large payload using io.jsonwebtoken
             String token = io.jsonwebtoken.Jwts.builder()
                     .setIssuer(TestTokenProducer.ISSUER)
                     .setSubject("test-subject")
-                    .claim("large-claim", largePayload.toString())
+                    .claim("large-claim", "a".repeat(200)
+                            // Create a JWT with the large payload using io.jsonwebtoken
+                    )
                     .signWith(de.cuioss.jwt.token.test.KeyMaterialHandler.getDefaultPrivateKey(),
                             io.jsonwebtoken.SignatureAlgorithm.RS256)
                     .compact();
@@ -167,7 +168,7 @@ class TokenFactoryTest {
 
         @Test
         @DisplayName("Should handle invalid issuer")
-        void shouldHandleInvalidIssuer() throws IOException {
+        void shouldHandleInvalidIssuer() {
             var wrongIssuerTokenFactory = TokenFactory.builder()
                     .addParser(JwksAwareTokenParserImplTest.getInvalidValidJWKSParserWithLocalJWKSAndWrongIssuer())
                     .build();
@@ -179,7 +180,7 @@ class TokenFactoryTest {
 
         @Test
         @DisplayName("Should handle invalid signature")
-        void shouldHandleInvalidSignature() throws IOException {
+        void shouldHandleInvalidSignature() {
             var wrongSignatureTokenFactory = TokenFactory.builder()
                     .addParser(JwksAwareTokenParserImplTest.getInvalidJWKSParserWithWrongLocalJWKS())
                     .build();

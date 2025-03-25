@@ -28,6 +28,8 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -173,6 +175,117 @@ class ClaimValidatorTest {
         // Then the validation should fail
         assertFalse(result, "Token with nbf claim too far in the future should be invalid");
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Token has a 'not before' claim that is more than 60 seconds in the future");
+    }
+
+    @Test
+    @DisplayName("Should validate token with matching audience (string format)")
+    void shouldValidateTokenWithMatchingAudienceString() {
+        // Given a token with audience claim as a string
+        String expectedAudience = "test-audience";
+        String token = TestTokenProducer.validSignedJWTWithAudience(new String[]{expectedAudience}, false);
+        Jws<Claims> jws = parseToken(token);
+
+        // Create a validator with the expected audience
+        Set<String> expectedAudienceSet = Set.of(expectedAudience);
+        ClaimValidator audienceValidator = new ClaimValidator(EXPECTED_ISSUER, expectedAudienceSet);
+
+        // When validating the claims
+        boolean result = audienceValidator.validateClaims(jws);
+
+        // Then the validation should pass
+        assertTrue(result, "Token with matching audience (string format) should be valid");
+    }
+
+    @Test
+    @DisplayName("Should validate token with matching audience (array format)")
+    void shouldValidateTokenWithMatchingAudienceArray() {
+        // Given a token with audience claim as an array
+        String[] audienceArray = {"audience1", "test-audience", "audience3"};
+        String token = TestTokenProducer.validSignedJWTWithAudience(audienceArray, true);
+        Jws<Claims> jws = parseToken(token);
+
+        // Create a validator with the expected audience
+        Set<String> expectedAudienceSet = Set.of("test-audience");
+        ClaimValidator audienceValidator = new ClaimValidator(EXPECTED_ISSUER, expectedAudienceSet);
+
+        // When validating the claims
+        boolean result = audienceValidator.validateClaims(jws);
+
+        // Then the validation should pass
+        assertTrue(result, "Token with matching audience (array format) should be valid");
+    }
+
+    @Test
+    @DisplayName("Should reject token with non-matching audience")
+    void shouldRejectTokenWithNonMatchingAudience() {
+        // Given a token with audience claim that doesn't match the expected audience
+        String token = TestTokenProducer.validSignedJWTWithAudience(new String[]{"wrong-audience"}, false);
+        Jws<Claims> jws = parseToken(token);
+
+        // Create a validator with a different expected audience
+        Set<String> expectedAudienceSet = Set.of("test-audience");
+        ClaimValidator audienceValidator = new ClaimValidator(EXPECTED_ISSUER, expectedAudienceSet);
+
+        // When validating the claims
+        boolean result = audienceValidator.validateClaims(jws);
+
+        // Then the validation should fail
+        assertFalse(result, "Token with non-matching audience should be invalid");
+        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Token audience");
+    }
+
+    @Test
+    @DisplayName("Should reject token without audience claim when expected audience is provided")
+    void shouldRejectTokenWithoutAudienceWhenExpected() {
+        // Given a token without audience claim
+        String token = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_SCOPES);
+        Jws<Claims> jws = parseToken(token);
+
+        // Create a validator with an expected audience
+        Set<String> expectedAudienceSet = Set.of("test-audience");
+        ClaimValidator audienceValidator = new ClaimValidator(EXPECTED_ISSUER, expectedAudienceSet);
+
+        // When validating the claims
+        boolean result = audienceValidator.validateClaims(jws);
+
+        // Then the validation should fail
+        assertFalse(result, "Token without audience claim should be invalid when expected audience is provided");
+        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, JWTTokenLogMessages.WARN.MISSING_CLAIM.resolveIdentifierString());
+    }
+
+    @Test
+    @DisplayName("Should validate token without audience claim when no expected audience is provided")
+    void shouldValidateTokenWithoutAudienceWhenNotExpected() {
+        // Given a token without audience claim
+        String token = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_SCOPES);
+        Jws<Claims> jws = parseToken(token);
+
+        // When validating the claims with the default validator (no expected audience)
+        boolean result = validator.validateClaims(jws);
+
+        // Then the validation should pass
+        assertTrue(result, "Token without audience claim should be valid when no expected audience is provided");
+    }
+
+    @Test
+    @DisplayName("Should validate token with multiple expected audiences")
+    void shouldValidateTokenWithMultipleExpectedAudiences() {
+        // Given a token with audience claim
+        String token = TestTokenProducer.validSignedJWTWithAudience(new String[]{"audience1"}, false);
+        Jws<Claims> jws = parseToken(token);
+
+        // Create a validator with multiple expected audiences
+        Set<String> expectedAudienceSet = new HashSet<>();
+        expectedAudienceSet.add("test-audience");
+        expectedAudienceSet.add("audience1");
+        expectedAudienceSet.add("audience3");
+        ClaimValidator audienceValidator = new ClaimValidator(EXPECTED_ISSUER, expectedAudienceSet);
+
+        // When validating the claims
+        boolean result = audienceValidator.validateClaims(jws);
+
+        // Then the validation should pass
+        assertTrue(result, "Token with audience matching one of multiple expected audiences should be valid");
     }
 
     /**

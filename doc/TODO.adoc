@@ -37,9 +37,10 @@ _See Requirement CUI-JWT-2.1: Base Token Functionality in link:Requirements.adoc
   * _Implemented in ParsedToken.java with getIssuedAtTime() method_
 * [x] Implement JWT ID (jti claim)
   * _Implemented in ParsedToken.java with getTokenId() method_
-* [ ] Implement audience validation (aud claim)
+* [x] Implement audience validation (aud claim)
   * _Required by CUI-JWT-8.4: Claims Validation_
-  * _JsonWebToken interface has getAudience() method but validation is not implemented in ClaimValidator_
+  * _Implemented in ClaimValidator.java with validateAudience() method_
+  * _JwksAwareTokenParserImpl now supports configuring expected audience via builder_
 
 ==== ParsedToken / TokenFactory Improvements
 _New improvements for better separation of concerns and code maintainability_
@@ -233,5 +234,5 @@ _See Requirement CUI-JWT-8.4: Claims Validation in link:Requirements.adoc[Requir
   * [x] Expiration time (exp)
   * [x] Issued at (iat)
   * [x] Not before time (nbf)
+  * [x] Audience (aud)
 * _Note: Implemented in ClaimValidator.java and used by JwksAwareTokenParserImpl.java_
-* _Note: Audience validation is still pending implementation_

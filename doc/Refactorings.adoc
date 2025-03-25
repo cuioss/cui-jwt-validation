@@ -113,14 +113,14 @@ This document outlines the plan to improve the `HttpJwksLoader` and `JWKSKeyLoad
   * [x] If the server responds with 200 OK and new content, update the cache
 
 === Content-Based Caching
-* [ ] The implementation will follow these steps:
-  * [ ] Compare the content of the new response with the stored originalString
-  * [ ] If the content is the same, return the previously created JWKSKeyLoader
-  * [ ] If the content is different, create a new JWKSKeyLoader with the new content
+* [x] The implementation will follow these steps:
+  * [x] Compare the content of the new response with the stored originalString
+  * [x] If the content is the same, return the previously created JWKSKeyLoader
+  * [x] If the content is different, create a new JWKSKeyLoader with the new content
 
 === Fallback Mechanism
-* [ ] The implementation will follow these steps:
-  * [ ] Store the last valid JWKSKeyLoader in the lastValidResult field
-  * [ ] If a new request fails but there's a valid cached result, return the cached result
-  * [ ] Log a warning when falling back to the cached result
-  * [ ] Only return an empty result if there's no valid cached result
+* [x] The implementation will follow these steps:
+  * [x] Store the last valid JWKSKeyLoader in the lastValidResult field
+  * [x] If a new request fails but there's a valid cached result, return the cached result
+  * [x] Log a warning when falling back to the cached result
+  * [x] Only return an empty result if there's no valid cached result

@@ -65,13 +65,12 @@ public class HttpJwksLoader implements JwksLoader {
     private static final String EMPTY_JWKS = "{}";
     private static final String CACHE_KEY = "jwks";
     private static final int HTTP_OK = 200;
-    private static final int DEFAULT_REFRESH_INTERVAL_SECONDS = 300; // 5 minutes
 
     private final URI jwksUri;
     private final int refreshIntervalSeconds;
     private final LoadingCache<String, JWKSKeyLoader> jwksCache;
     private final HttpClient httpClient;
-    private volatile JWKSKeyLoader lastValidResult;
+    private JWKSKeyLoader lastValidResult;
 
     /**
      * Creates a new HttpJwksLoader with the specified parameters.
@@ -92,7 +91,7 @@ public class HttpJwksLoader implements JwksLoader {
         // If refreshIntervalSeconds is 0, don't set expiration or refresh policies
         if (refreshIntervalSeconds > 0) {
             builder.expireAfterWrite(Duration.ofSeconds(refreshIntervalSeconds))
-                  .refreshAfterWrite(Duration.ofSeconds(refreshIntervalSeconds));
+                    .refreshAfterWrite(Duration.ofSeconds(refreshIntervalSeconds));
         }
 
         this.jwksCache = builder.build(this::loadJwksKeyLoader);

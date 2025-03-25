@@ -1,13 +1,24 @@
+/*
+ * Copyright 2023 the original author or authors.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * https://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package de.cuioss.jwt.token.test.util;
 
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.LongSummaryStatistics;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -156,16 +167,11 @@ public class PerformanceStatistics {
     /**
      * Creates a bar string of the specified length using the given character.
      *
-     * @param length  the length of the bar
-     * @param barChar the character to use for the bar
+     * @param length the length of the bar
      * @return a string representing the bar
      */
-    private String createBar(int length, char barChar) {
-        StringBuilder bar = new StringBuilder();
-        for (int i = 0; i < length; i++) {
-            bar.append(barChar);
-        }
-        return bar.toString();
+    private String createBar(int length) {
+        return "█".repeat(Math.max(0, length));
     }
 
     /**
@@ -176,24 +182,24 @@ public class PerformanceStatistics {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("\n----------- Performance Statistics ---------\n");
+        sb.append("%n----------- Performance Statistics ---------\n");
 
         // Test completion status
-        sb.append(String.format("Test completed: %s, Executor terminated: %s\n",
+        sb.append("Test completed: %s, Executor terminated: %s%n".formatted(
                 completed, terminated));
 
         // Performance results
-        sb.append(String.format("Performance results - Successful: %d, Failed: %d, Empty: %d, Exceptions: %d\n",
+        sb.append("Performance results - Successful: %d, Failed: %d, Empty: %d, Exceptions: %d%n".formatted(
                 successCount.get(), failureCount.get(), emptyResultCount.get(), exceptions.size()));
 
         // Performance statistics
         double avgTimePerRequest = totalRequests > 0 ? totalTimeMs / (double) totalRequests : 0.0;
         double successRate = totalRequests > 0 ? (double) (successCount.get() + emptyResultCount.get()) / totalRequests * 100 : 0.0;
-        sb.append(String.format("Performance statistics - Total time: %d ms, Average time: %.2f ms, Success rate: %.2f%%\n",
+        sb.append("Performance statistics - Total time: %d ms, Average time: %.2f ms, Success rate: %.2f%%%n".formatted(
                 totalTimeMs, avgTimePerRequest, successRate));
 
         // Access statistics
-        sb.append(String.format("KeyInfo access statistics - Total: %d, Average time: %.1f ms, Fastest: %.1f ms, Slowest: %.1f ms\n",
+        sb.append("%nKeyInfo access statistics - Total: %d, Average time: %.1f ms, Fastest: %.1f ms, Slowest: %.1f ms%n".formatted(
                 totalAccessCount.get(), accessTimeStats.getAverage(),
                 (double) accessTimeStats.getMin(), (double) accessTimeStats.getMax()));
 
@@ -239,33 +245,33 @@ public class PerformanceStatistics {
         double greaterThan150Percent = totalCount > 0 ? (double) greaterThan150Count / totalCount * 100 : 0.0;
 
         // Display the ranges with highlighting for high access times
-        sb.append(String.format("  %-15s: %6d (%5.2f%%)\n",
-                String.format("< %.1f ms", LOW_TIME_THRESHOLD_MS),
+        sb.append("  %-15s: %6d (%5.2f%%)%n".formatted(
+                "< %.1f ms".formatted(LOW_TIME_THRESHOLD_MS),
                 lessThan50Count,
                 lessThan50Percent));
 
         // Highlight the mid range if it contains items
-        String midRangeDisplay = String.format("%.1f-%.1f ms", LOW_TIME_THRESHOLD_MS, HIGH_TIME_THRESHOLD_MS);
+        String midRangeDisplay = "%.1f-%.1f ms".formatted(LOW_TIME_THRESHOLD_MS, HIGH_TIME_THRESHOLD_MS);
         if (between50And150Count > 0) {
-            sb.append(String.format("  %-15s: %6d (%5.2f%%) %s\n",
+            sb.append("  %-15s: %6d (%5.2f%%) %s%n".formatted(
                     midRangeDisplay,
                     between50And150Count,
                     between50And150Percent,
                     "- High derivation detected"));
         } else {
-            sb.append(String.format("  %-15s: %6d (%5.2f%%)\n", midRangeDisplay, between50And150Count, between50And150Percent));
+            sb.append("  %-15s: %6d (%5.2f%%)%n".formatted(midRangeDisplay, between50And150Count, between50And150Percent));
         }
 
         // Highlight the high range if it contains items
-        String highRangeDisplay = String.format("> %.1f ms", HIGH_TIME_THRESHOLD_MS);
+        String highRangeDisplay = "> %.1f ms".formatted(HIGH_TIME_THRESHOLD_MS);
         if (greaterThan150Count > 0) {
-            sb.append(String.format("  %-15s: %6d (%5.2f%%) %s\n",
+            sb.append("  %-15s: %6d (%5.2f%%) %s%n".formatted(
                     highRangeDisplay,
                     greaterThan150Count,
                     greaterThan150Percent,
                     "- High derivation detected"));
         } else {
-            sb.append(String.format("  %-15s: %6d (%5.2f%%)\n", highRangeDisplay, greaterThan150Count, greaterThan150Percent));
+            sb.append("  %-15s: %6d (%5.2f%%)%n".formatted(highRangeDisplay, greaterThan150Count, greaterThan150Percent));
         }
 
         // Add a note about the spread
@@ -276,11 +282,8 @@ public class PerformanceStatistics {
         // Add ASCII art visualization of the distribution
         sb.append("\nDistribution visualization:\n");
 
-        // Define the character to use for bars
-        final char barChar = '█';
-
         // Define the format strings for the bar chart
-        final String barFormatString = String.format("  %%s : [%%-%ds] %%5.2f%%%%\n", MAX_BAR_LENGTH);
+        final String barFormatString = "  %%s : [%%-%ds] %%5.2f%%%%%n".formatted(MAX_BAR_LENGTH);
 
         // Calculate bar lengths based on percentages
         int lessThan50Bar = (int) Math.round(lessThan50Percent * MAX_BAR_LENGTH / 100);
@@ -288,23 +291,23 @@ public class PerformanceStatistics {
         int greaterThan150Bar = (int) Math.round(greaterThan150Percent * MAX_BAR_LENGTH / 100);
 
         // Display the bars with labels
-        sb.append(String.format(barFormatString,
-                String.format("< %.1f ms   ", LOW_TIME_THRESHOLD_MS),
-                createBar(lessThan50Bar, barChar),
+        sb.append(barFormatString.formatted(
+                "< %.1f ms   ".formatted(LOW_TIME_THRESHOLD_MS),
+                createBar(lessThan50Bar),
                 lessThan50Percent));
 
-        sb.append(String.format(barFormatString,
-                String.format("%.1f-%.1f ms", LOW_TIME_THRESHOLD_MS, HIGH_TIME_THRESHOLD_MS),
-                createBar(between50And150Bar, barChar),
+        sb.append(barFormatString.formatted(
+                "%.1f-%.1f ms".formatted(LOW_TIME_THRESHOLD_MS, HIGH_TIME_THRESHOLD_MS),
+                createBar(between50And150Bar),
                 between50And150Percent));
 
-        sb.append(String.format(barFormatString,
-                String.format("> %.1f ms   ", HIGH_TIME_THRESHOLD_MS),
-                createBar(greaterThan150Bar, barChar),
+        sb.append(barFormatString.formatted(
+                "> %.1f ms   ".formatted(HIGH_TIME_THRESHOLD_MS),
+                createBar(greaterThan150Bar),
                 greaterThan150Percent));
 
         // Server calls
-        sb.append(String.format("\nServer was called %d times", serverCallCount));
+        sb.append("%nServer was called %d times".formatted(serverCallCount));
 
         return sb.toString();
     }

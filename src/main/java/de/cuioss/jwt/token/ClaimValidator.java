@@ -18,11 +18,9 @@ package de.cuioss.jwt.token;
 import de.cuioss.tools.logging.CuiLogger;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
 
 import java.time.Instant;
-import java.util.Date;
+import java.util.*;
 
 import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
 
@@ -35,6 +33,7 @@ import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
  *   <li>Subject (sub)</li>
  *   <li>Expiration Time (exp)</li>
  *   <li>Issued At (iat)</li>
+ *   <li>Audience (aud) - if expected audience is provided</li>
  * </ul>
  * <p>
  * The validator logs appropriate warning messages for validation failures.
@@ -44,12 +43,33 @@ import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
  * For more details on the security aspects, see the
  * <a href="../../../../../../doc/specification/security.adoc">Security Specification</a>.
  */
-@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 class ClaimValidator {
 
     private static final CuiLogger LOGGER = new CuiLogger(ClaimValidator.class);
 
     private final String expectedIssuer;
+    private final Set<String> expectedAudience;
+
+    /**
+     * Creates a new ClaimValidator with the specified issuer.
+     *
+     * @param expectedIssuer the expected issuer
+     */
+    ClaimValidator(String expectedIssuer) {
+        this(expectedIssuer, null);
+    }
+
+    /**
+     * Creates a new ClaimValidator with the specified issuer and audience.
+     *
+     * @param expectedIssuer the expected issuer
+     * @param expectedAudience the expected audience, may be null if no audience validation is required
+     */
+    ClaimValidator(String expectedIssuer, Set<String> expectedAudience) {
+        this.expectedIssuer = expectedIssuer;
+        this.expectedAudience = expectedAudience != null ?
+                Collections.unmodifiableSet(new HashSet<>(expectedAudience)) : null;
+    }
 
     /**
      * Validates all required claims in the JWT.
@@ -88,11 +108,62 @@ class ClaimValidator {
                 return false;
             }
 
-            return true;
+            // Validate audience if expected audience is provided
+            return expectedAudience == null || validateAudience(claims);
         } catch (Exception e) {
             LOGGER.error(e, JWTTokenLogMessages.ERROR.CLAIMS_VALIDATION_FAILED.format(e.getMessage()));
             return false;
         }
+    }
+
+    /**
+     * Validates the audience claim.
+     * <p>
+     * The "aud" (audience) claim identifies the recipients that the JWT is intended for.
+     * If the expected audience is provided, this method checks if the token's audience claim
+     * contains at least one of the expected audience values.
+     * <p>
+     * If the audience claim is missing but expected audience is provided, the validation fails.
+     *
+     * @param claims the JWT claims
+     * @return true if the audience is valid or no audience validation is required, false otherwise
+     */
+    private boolean validateAudience(Claims claims) {
+        // If no expected audience is provided, skip validation
+        if (expectedAudience == null || expectedAudience.isEmpty()) {
+            return true;
+        }
+
+        // Get the audience claim
+        Object audienceObj = claims.get("aud");
+        if (audienceObj == null) {
+            LOGGER.warn(WARN.MISSING_CLAIM.format("aud"));
+            return false;
+        }
+
+        // Handle different audience formats (string or array)
+        Set<String> tokenAudience = new HashSet<>();
+        if (audienceObj instanceof String string) {
+            tokenAudience.add(string);
+        } else if (audienceObj instanceof List) {
+            @SuppressWarnings("unchecked")
+            List<String> audienceList = (List<String>) audienceObj;
+            tokenAudience.addAll(audienceList);
+        } else {
+            LOGGER.warn("Unexpected audience claim format: {}", audienceObj.getClass().getName());
+            return false;
+        }
+
+        // Check if there's at least one matching audience
+        for (String audience : expectedAudience) {
+            if (tokenAudience.contains(audience)) {
+                return true;
+            }
+        }
+
+        LOGGER.warn("Token audience {} does not match any of the expected audiences {}",
+                tokenAudience, expectedAudience);
+        return false;
     }
 
     /**

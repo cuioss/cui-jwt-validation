@@ -35,6 +35,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -251,6 +252,42 @@ public class TestTokenProducer {
             return builder.compact();
         } catch (Exception e) {
             throw new RuntimeException("Failed to create JWT", e);
+        }
+    }
+
+    /**
+     * Creates a valid signed JWT with a specific audience claim.
+     * The audience can be a single string or an array of strings.
+     *
+     * @param audience the audience value(s) to set
+     * @param asArray whether to set the audience as an array (true) or a single string (false)
+     * @return a signed JWT token string with the audience claim set
+     */
+    public static String validSignedJWTWithAudience(String[] audience, boolean asArray) {
+        try {
+            JwtBuilder builder = Jwts.builder()
+                    .setIssuer(ISSUER)
+                    .setSubject(SUBJECT)
+                    .setIssuedAt(Date.from(Instant.now()))
+                    .setExpiration(Date.from(Instant.now().plusSeconds(3600))) // 1 hour expiration
+                    .setHeaderParam("kid", "default-key-id"); // Add key ID to header
+
+            // Set audience claim based on the asArray parameter
+            if (asArray) {
+                builder.claim("aud", Arrays.asList(audience));
+            } else if (audience.length > 0) {
+                builder.claim("aud", audience[0]);
+            }
+
+            // Add standard claims
+            addClaims(builder, SOME_SCOPES);
+
+            // Sign the token
+            builder.signWith(KeyMaterialHandler.getDefaultPrivateKey(), SignatureAlgorithm.RS256);
+
+            return builder.compact();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create JWT with audience", e);
         }
     }
 

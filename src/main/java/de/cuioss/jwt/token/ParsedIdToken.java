@@ -18,9 +18,6 @@ package de.cuioss.jwt.token;
 import de.cuioss.jwt.token.adapter.Claims;
 import de.cuioss.jwt.token.adapter.JsonWebToken;
 import de.cuioss.tools.logging.CuiLogger;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
 import lombok.experimental.Delegate;
 
 import java.util.Optional;
@@ -55,25 +52,9 @@ import java.util.Optional;
  *
  * @author Oliver Wolff
  */
-@ToString
-@EqualsAndHashCode
-public class ParsedIdToken implements JsonWebToken {
+public record ParsedIdToken(@Delegate JsonWebToken jsonWebToken) implements JsonWebToken {
 
     private static final CuiLogger LOGGER = new CuiLogger(ParsedIdToken.class);
-
-    @Getter
-    @Delegate
-    private final JsonWebToken jsonWebToken;
-
-    /**
-     * Creates a new {@link ParsedIdToken} from the given JsonWebToken.
-     *
-     * @param jsonWebToken The JsonWebToken to wrap, must not be null
-     */
-    public ParsedIdToken(JsonWebToken jsonWebToken) {
-        this.jsonWebToken = jsonWebToken;
-        LOGGER.debug("Successfully created ID token");
-    }
 
     /**
      * Resolves the email from the token. Only available, if the current token is an ID token.

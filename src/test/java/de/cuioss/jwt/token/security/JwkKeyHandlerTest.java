@@ -16,7 +16,6 @@
 package de.cuioss.jwt.token.security;
 
 import de.cuioss.jwt.token.test.JWKSFactory;
-import de.cuioss.jwt.token.test.KeyMaterialHandler;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
@@ -28,10 +27,15 @@ import org.junit.jupiter.params.provider.ValueSource;
 import java.io.StringReader;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
-import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Tests for {@link JwkKeyHandler} with a focus on security aspects and potential attacks.
@@ -47,7 +51,6 @@ class JwkKeyHandlerTest {
 
     // Helper method to create a single RSA JWK
     private JsonObject createRsaJwk() {
-        RSAPublicKey publicKey = (RSAPublicKey) KeyMaterialHandler.getDefaultPublicKey();
         String jwkString = JWKSFactory.createSingleJwk(JWKSFactory.DEFAULT_KEY_ID);
         return createJsonObject(jwkString);
     }
@@ -107,7 +110,7 @@ class JwkKeyHandlerTest {
     }
 
     @Test
-    void shouldValidateRsaKeyFields() throws InvalidKeySpecException {
+    void shouldValidateRsaKeyFields() {
         // Given a valid RSA JWK
         JsonObject jwk = createRsaJwk();
 
@@ -181,7 +184,7 @@ class JwkKeyHandlerTest {
     }
 
     @Test
-    void shouldValidateEcKeyFields() throws InvalidKeySpecException {
+    void shouldValidateEcKeyFields() {
         // Given a valid EC JWK
         JsonObject jwk = createEcJwk("P-256", "validXCoord", "validYCoord", "test-key");
 
@@ -273,7 +276,7 @@ class JwkKeyHandlerTest {
     })
     void shouldDetermineCorrectEcAlgorithm(String curve) {
         // Given a curve name
-        
+
         // When determining the EC algorithm
         String algorithm = JwkKeyHandler.determineEcAlgorithm(curve);
 
@@ -311,7 +314,7 @@ class JwkKeyHandlerTest {
     })
     void shouldValidateCorrectBase64UrlEncodedValues(String value) {
         // Given a valid Base64 URL encoded value
-        
+
         // When validating the value
         boolean isValid = JwkKeyHandler.isValidBase64UrlEncoded(value);
 
@@ -325,7 +328,7 @@ class JwkKeyHandlerTest {
     })
     void shouldRejectInvalidBase64UrlEncodedValues(String value) {
         // Given an invalid Base64 URL encoded value
-        
+
         // When validating the value
         boolean isValid = JwkKeyHandler.isValidBase64UrlEncoded(value);
 
@@ -348,11 +351,7 @@ class JwkKeyHandlerTest {
     @Test
     void shouldHandleExtremelyLongBase64Values() {
         // Given an extremely long Base64 URL encoded value (potential DoS attack)
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < 10000; i++) {
-            sb.append("A");
-        }
-        String value = sb.toString();
+        String value = "A".repeat(10000);
 
         // When validating the value
         boolean isValid = JwkKeyHandler.isValidBase64UrlEncoded(value);

@@ -15,7 +15,6 @@
  */
 package de.cuioss.jwt.token.security;
 
-import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
 import jakarta.json.JsonObject;
 import lombok.AccessLevel;
@@ -25,9 +24,12 @@ import java.math.BigInteger;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
-import java.security.spec.*;
+import java.security.spec.ECParameterSpec;
+import java.security.spec.ECPoint;
+import java.security.spec.ECPublicKeySpec;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.RSAPublicKeySpec;
 import java.util.Base64;
-import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -40,23 +42,15 @@ import java.util.regex.Pattern;
  * <p>
  * For more details on the security aspects, see the
  * <a href="../../../../../../../doc/specification/security.adoc">Security Specification</a>.
- * 
+ *
  * @author Oliver Wolff
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class JwkKeyHandler {
 
-    private static final CuiLogger LOGGER = new CuiLogger(JwkKeyHandler.class);
     private static final String RSA_KEY_TYPE = "RSA";
     private static final String EC_KEY_TYPE = "EC";
     private static final Pattern BASE64_URL_PATTERN = Pattern.compile("^[A-Za-z0-9\\-_]*=*$");
-
-    // Map of EC curve names to their corresponding key sizes
-    private static final Map<String, Integer> EC_CURVE_SIZES = Map.of(
-            "P-256", 256,
-            "P-384", 384,
-            "P-521", 521
-    );
 
     /**
      * Parse an RSA key from a JWK.
@@ -64,7 +58,7 @@ public final class JwkKeyHandler {
      * @param jwk the JWK object
      * @return the RSA public key
      * @throws NoSuchAlgorithmException if the RSA algorithm is not available
-     * @throws InvalidKeySpecException if the key specification is invalid
+     * @throws InvalidKeySpecException  if the key specification is invalid
      */
     public static Key parseRsaKey(JsonObject jwk) throws NoSuchAlgorithmException, InvalidKeySpecException {
         validateRsaKeyFields(jwk);
@@ -119,7 +113,7 @@ public final class JwkKeyHandler {
      * @param jwk the JWK object
      * @return the EC public key
      * @throws NoSuchAlgorithmException if the EC algorithm is not available
-     * @throws InvalidKeySpecException if the key specification is invalid
+     * @throws InvalidKeySpecException  if the key specification is invalid
      */
     public static Key parseEcKey(JsonObject jwk) throws NoSuchAlgorithmException, InvalidKeySpecException {
         validateEcKeyFields(jwk);
@@ -206,15 +200,11 @@ public final class JwkKeyHandler {
      * @return the algorithm name
      */
     public static String determineEcAlgorithm(String curve) {
-        switch (curve) {
-            case "P-256":
-                return "ES256";
-            case "P-384":
-                return "ES384";
-            case "P-521":
-                return "ES512";
-            default:
-                return "ES256"; // Default to ES256
-        }
+        return switch (curve) {
+            case "P-256" -> "ES256";
+            case "P-384" -> "ES384";
+            case "P-521" -> "ES512";
+            default -> "ES256"; // Default to ES256
+        };
     }
 }
