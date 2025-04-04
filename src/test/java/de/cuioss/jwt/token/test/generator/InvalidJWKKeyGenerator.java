@@ -34,7 +34,7 @@ import jakarta.json.JsonValue;
 public class InvalidJWKKeyGenerator implements TypedGenerator<JsonObject> {
 
     private final TypedGenerator<String> keyGenerator = Generators.fixedValues("n", "e", "d", "x", "y");
-    private final TypedGenerator<String> invalidContentGenerator = Generators.fixedValues("", null, "invalid_base64", "  ");
+    private final TypedGenerator<String> invalidContentGenerator = Generators.fixedValues("", null, "invalid@base64", "  ");
 
     @Override
     public JsonObject next() {
