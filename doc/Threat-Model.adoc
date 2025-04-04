@@ -187,6 +187,9 @@ _See Requirement link:Requirements.adoc#CUI-JWT-8.4[CUI-JWT-8.4: Claims Validati
 * E4: Bypass of token validation
 * E5: Algorithm confusion attacks
 * E6: Key confusion attacks
+* E7: Client confusion attacks - Using a token issued for one client with a different client
+* E8: Scope upgrade attacks - Adding additional scopes during token exchange
+* E9: Mutable claims attacks - Using non-immutable identifiers (like email) instead of immutable ones (like subject)
 
 ==== Current Mitigations
 * Strict claim type checking
@@ -194,6 +197,7 @@ _See Requirement link:Requirements.adoc#CUI-JWT-8.4[CUI-JWT-8.4: Claims Validati
 * Non-nullable constraints
 * Type-safe claim extraction
 * Algorithm restriction
+* Optional audience validation
 
 ==== Recommendations
 * Implement role hierarchy validation
@@ -202,6 +206,11 @@ _See Requirement link:Requirements.adoc#CUI-JWT-8.4[CUI-JWT-8.4: Claims Validati
 * Add permission boundary checks
 * Validate token type against expected usage
 * Implement explicit key ID (kid) validation
+* Add validation of the `azp` (authorized party) claim
+* Make audience validation mandatory for client applications
+* Implement scope restriction to prevent scope upgrade attacks
+* Add warnings when non-immutable claims are used for identification
+* Require immutable claims (like `sub`) for user identification
 
 == Security Controls
 
@@ -236,6 +245,9 @@ _See Requirement link:Requirements.adoc#CUI-JWT-8.4[CUI-JWT-8.4: Claims Validati
 * Not-before time validation
 * Subject validation
 * Scope validation
+* Client ID validation (azp claim)
+* Immutable identifier validation
+* Prevention of scope upgrade attacks
 
 === Secure Communication
 _See Requirement link:Requirements.adoc#CUI-JWT-8.3[CUI-JWT-8.3: Secure Communication]_
@@ -279,6 +291,12 @@ _See Requirement link:Requirements.adoc#CUI-JWT-12.1[CUI-JWT-12.1: Security Test
 * Claim manipulation tests
 * Key ID manipulation tests
 * Oversized token tests
+* Client confusion attack tests
+* Scope upgrade attack tests
+* Mutable claims attack tests
+* Cross-client token usage tests
+* Audience validation tests
+* Authorized party (azp) validation tests
 
 === Vulnerability Scanning
 _See Requirement link:Requirements.adoc#CUI-JWT-12.5[CUI-JWT-12.5: Vulnerability Scanning]_
@@ -319,3 +337,6 @@ _See Requirement link:Requirements.adoc#CUI-JWT-12.5[CUI-JWT-12.5: Vulnerability
 * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-52r2.pdf[NIST SP 800-52 Rev. 2] (2019)
 * https://datatracker.ietf.org/doc/html/rfc7519[RFC 7519 - JSON Web Token (JWT)]
 * https://datatracker.ietf.org/doc/html/rfc7518[RFC 7518 - JSON Web Algorithms (JWA)]
+* https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html[OAuth Common Vulnerabilities] (Doyensec, 2025)
+* https://datatracker.ietf.org/doc/html/rfc6749[RFC 6749 - The OAuth 2.0 Authorization Framework]
+* https://openid.net/specs/openid-connect-core-1_0.html[OpenID Connect Core 1.0]

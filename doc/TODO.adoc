@@ -306,6 +306,33 @@ _See Requirement CUI-JWT-8.4: Claims Validation in link:Requirements.adoc[Requir
   * [x] Audience (aud)
 * _Note: Implemented in ClaimValidator.java and used by JwksAwareTokenParserImpl.java_
 
+=== OAuth-Specific Security Enhancements
+_See link:specification/security.adoc#_additional_oauthjwt_security_considerations[Additional OAuth/JWT Security Considerations]_
+
+* [x] Implement client confusion attack prevention:
+  * [x] Add validation of the `azp` (authorized party) claim
+  * [x] Update ClaimValidator to validate both `aud` and `azp` claims
+  * [x] Add configuration option for client ID validation in JwksAwareTokenParserImpl
+  * [x] Add tests for client confusion attack scenarios
+
+* [ ] Implement scope upgrade attack prevention:
+  * [ ] Add scope validation during token validation
+  * [ ] Implement scope restriction mechanisms
+  * [ ] Add configuration option to specify expected or allowed scopes
+  * [ ] Add tests for scope upgrade attack scenarios
+
+* [ ] Implement mutable claims attack prevention:
+  * [ ] Require subject (`sub`) claim as the primary user identifier
+  * [ ] Add warnings when token processing relies on mutable claims
+  * [ ] Implement API methods that encourage using immutable identifiers
+  * [ ] Add tests for mutable claims attack scenarios
+
+* [ ] Add security best practices documentation:
+  * [ ] Create documentation on CSRF prevention in OAuth flows
+  * [ ] Add guidance on secure redirect URI validation
+  * [ ] Document mobile OAuth security considerations
+  * [ ] Include code examples for secure OAuth implementation
+
 === ERROR and FATAL Level Log Messages
 _See link:LogMessages.adoc[Log Messages]_
 

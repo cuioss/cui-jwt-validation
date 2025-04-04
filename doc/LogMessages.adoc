@@ -50,6 +50,15 @@ The log message levels follow these identifier ranges:
 |JWTToken-121 |TOKEN |Token has a 'not before' claim that is more than 60 seconds in the future |Logged when a token has a 'not before' claim that is too far in the future
 |JWTToken-122 |TOKEN |Unknown token type: %s |Logged when an unknown token type is encountered
 |JWTToken-123 |JWKS |Failed to read JWKS from file: %s |Logged when there is an error reading the JWKS from a file
+|JWTToken-124 |TOKEN |Token is missing required claim: %s |Logged when a token is missing a required claim
+|JWTToken-125 |TOKEN |Token from issuer '%s' has expired |Logged when a token has expired
+|JWTToken-126 |SSL |Provided SSL context uses insecure protocol: %s. Creating a secure context instead. |Logged when an insecure SSL protocol is detected
+|JWTToken-127 |SSL |Failed to configure secure SSL context: %s |Logged when there is an error configuring a secure SSL context
+|JWTToken-128 |JWKS |Falling back to last valid JWKS due to HTTP error: %s |Logged when falling back to the last valid JWKS due to an HTTP error
+|JWTToken-129 |JWKS |New JWKS response has no valid keys, falling back to previous valid keys |Logged when the new JWKS response has no valid keys
+|JWTToken-130 |JWKS |Falling back to last valid JWKS due to exception: %s |Logged when falling back to the last valid JWKS due to an exception
+|JWTToken-131 |JWKS |Falling back to last valid JWKS due to interrupted exception |Logged when falling back to the last valid JWKS due to an interrupted exception
+|JWTToken-132 |TOKEN |Token authorized party '%s' does not match expected client ID '%s' |Logged when the azp claim in the token does not match the expected client ID
 |===
 
 == ERROR Level (200-299)

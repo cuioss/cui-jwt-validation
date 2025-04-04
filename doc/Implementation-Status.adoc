@@ -246,9 +246,9 @@ This document provides a comprehensive overview of the implementation status for
 |link:Requirements.adoc#CUI-JWT-8.4[CUI-JWT-8.4: Claims Validation]
 |COMPLETED
 |✅ 100%
-|✅ 90%
+|✅ 95%
 |✅ Complete
-|Claims validation is implemented
+|Claims validation is implemented, including azp claim validation for client confusion attack prevention
 
 |link:Requirements.adoc#CUI-JWT-8.5[CUI-JWT-8.5: Cryptographic Agility]
 |COMPLETED
@@ -315,10 +315,10 @@ This document provides a comprehensive overview of the implementation status for
 
 |link:Requirements.adoc#CUI-JWT-12.1[CUI-JWT-12.1: Security Testing]
 |PARTIAL
-|⚠️ 60%
-|⚠️ 60%
+|⚠️ 70%
+|⚠️ 70%
 |⚠️ Partial
-|Basic security testing is implemented, but more comprehensive security testing is needed
+|Security testing is improving with tests for signature validation and client confusion attacks, but additional tests for scope validation and mutable claims attacks are needed
 
 |link:Requirements.adoc#CUI-JWT-12.2[CUI-JWT-12.2: Unit Testing]
 |PARTIAL
@@ -376,8 +376,12 @@ _See link:specification/technical-components.adoc#_jwtparser[Technical Component
 *Status*: COMPLETED
 
 * Interface and implementation are complete
-* All required functionality is implemented
-* Test coverage is good
+* All required functionality is implemented, including:
+  * Signature validation
+  * Claims validation (iss, sub, exp, iat, nbf)
+  * Audience (aud) validation
+  * Authorized party (azp) validation for client confusion attack prevention
+* Test coverage is good with comprehensive tests for security features
 * Documentation is complete
 
 === MultiIssuerJwtParser
@@ -511,7 +515,8 @@ _See link:specification/technical-components.adoc#_token_classes[Technical Compo
 === High Priority
 
 . Implement ERROR and FATAL level log messages in the code
-. Improve test coverage for security features
+. Implement scope upgrade attack prevention with expected scopes validation
+. Implement mutable claims attack prevention with immutable identifier enforcement
 . Implement comprehensive performance testing
 . Complete vulnerability scanning integration
 
@@ -521,6 +526,7 @@ _See link:specification/technical-components.adoc#_token_classes[Technical Compo
 . Improve test coverage for edge cases
 . Implement additional security hardening measures
 . Complete compliance testing
+. Add security best practices documentation for OAuth flows
 
 === Low Priority
 

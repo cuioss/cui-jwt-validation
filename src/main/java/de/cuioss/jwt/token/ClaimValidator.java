@@ -33,10 +33,15 @@ import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
  *   <li>Subject (sub)</li>
  *   <li>Expiration Time (exp)</li>
  *   <li>Issued At (iat)</li>
+ *   <li>Not Before (nbf) - if present</li>
  *   <li>Audience (aud) - if expected audience is provided</li>
+ *   <li>Authorized Party (azp) - if expected client ID is provided</li>
  * </ul>
  * <p>
  * The validator logs appropriate warning messages for validation failures.
+ * <p>
+ * The azp claim validation is an important security measure to prevent client confusion attacks
+ * where tokens issued for one client are used with a different client.
  * <p>
  * Implements requirement: {@code CUI-JWT-8.4: Claims Validation}
  * <p>
@@ -46,9 +51,11 @@ import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
 class ClaimValidator {
 
     private static final CuiLogger LOGGER = new CuiLogger(ClaimValidator.class);
+    private static final String AZP_CLAIM = "azp";
 
     private final String expectedIssuer;
     private final Set<String> expectedAudience;
+    private final String expectedClientId;
 
     /**
      * Creates a new ClaimValidator with the specified issuer.
@@ -56,7 +63,7 @@ class ClaimValidator {
      * @param expectedIssuer the expected issuer
      */
     ClaimValidator(String expectedIssuer) {
-        this(expectedIssuer, null);
+        this(expectedIssuer, null, null);
     }
 
     /**
@@ -66,9 +73,21 @@ class ClaimValidator {
      * @param expectedAudience the expected audience, may be null if no audience validation is required
      */
     ClaimValidator(String expectedIssuer, Set<String> expectedAudience) {
+        this(expectedIssuer, expectedAudience, null);
+    }
+    
+    /**
+     * Creates a new ClaimValidator with the specified issuer, audience, and client ID.
+     *
+     * @param expectedIssuer   the expected issuer
+     * @param expectedAudience the expected audience, may be null if no audience validation is required
+     * @param expectedClientId the expected client ID for azp claim validation, may be null if no client ID validation is required
+     */
+    ClaimValidator(String expectedIssuer, Set<String> expectedAudience, String expectedClientId) {
         this.expectedIssuer = expectedIssuer;
         this.expectedAudience = expectedAudience != null ?
                 Collections.unmodifiableSet(new HashSet<>(expectedAudience)) : null;
+        this.expectedClientId = expectedClientId;
     }
 
     /**
@@ -105,6 +124,11 @@ class ClaimValidator {
 
             // Validate not before time
             if (!validateNotBefore(claims)) {
+                return false;
+            }
+            
+            // Validate authorized party (client id) if expected client id is provided
+            if (expectedClientId != null && !validateAuthorizedParty(claims)) {
                 return false;
             }
 
@@ -260,6 +284,43 @@ class ClaimValidator {
 
         if (notBeforeTime > currentTime + 60) {
             LOGGER.warn(WARN.TOKEN_NBF_FUTURE::format);
+            return false;
+        }
+
+        return true;
+    }
+    
+    /**
+     * Validates the authorized party claim.
+     * <p>
+     * The "azp" (authorized party) claim identifies the client that the token was issued for.
+     * This claim is used to prevent client confusion attacks where tokens issued for one client
+     * are used with a different client.
+     * <p>
+     * If the expected client ID is provided, this method checks if the token's azp claim
+     * matches the expected client ID.
+     * <p>
+     * If the azp claim is missing but expected client ID is provided, the validation fails.
+     *
+     * @param claims the JWT claims
+     * @return true if the authorized party is valid or no client ID validation is required, false otherwise
+     */
+    private boolean validateAuthorizedParty(Claims claims) {
+        // If no expected client ID is provided, skip validation
+        if (expectedClientId == null || expectedClientId.isEmpty()) {
+            return true;
+        }
+
+        // Get the azp claim
+        Object azpObj = claims.get(AZP_CLAIM);
+        if (azpObj == null) {
+            LOGGER.warn(WARN.MISSING_CLAIM.format(AZP_CLAIM));
+            return false;
+        }
+
+        String azp = azpObj.toString();
+        if (!expectedClientId.equals(azp)) {
+            LOGGER.warn(WARN.AZP_MISMATCH.format(azp, expectedClientId));
             return false;
         }
 

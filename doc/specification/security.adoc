@@ -114,6 +114,7 @@ The library provides comprehensive validation for standard JWT claims as defined
 * Subject (sub)
 * Expiration Time (exp)
 * Issued At (iat)
+* Audience (aud) - validated if expected audience is provided
 
 For implementation details, see the JavaDoc of the link:../src/main/java/de/cuioss/jwt/token/ClaimValidator.java[ClaimValidator] and link:../src/main/java/de/cuioss/jwt/token/JwksAwareTokenParserImpl.java[JwksAwareTokenParserImpl] classes.
 
@@ -174,3 +175,206 @@ The following tests verify the implementation:
 ** Security tests for potential attacks
 * link:../src/test/java/de/cuioss/jwt/token/jwks/InMemoryJwksLoaderTest.java[InMemoryJwksLoaderTest] - Tests for the JWKSKeyLoader with in-memory JWKS
 * link:../src/test/java/de/cuioss/jwt/token/jwks/JwksClientBenchmarkTest.java[JwksClientBenchmarkTest] - Performance tests for key retrieval
+
+== Additional OAuth/JWT Security Considerations
+
+Based on research from https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html[OAuth Common Vulnerabilities (Doyensec, 2025)], this section addresses additional security considerations for JWT token handling in OAuth/OIDC scenarios.
+
+=== Client Confusion Attack Prevention
+_See Requirement link:../Requirements.adoc#CUI-JWT-8.4[CUI-JWT-8.4: Claims Validation]_
+
+==== Status: IMPLEMENTED
+
+The client confusion attack occurs when a token issued for one client is used with a different client. This can lead to unauthorized access if the validation doesn't verify that the token was issued for the correct client.
+
+==== Implementation
+
+* The `ClaimValidator` class validates the `azp` (authorized party) claim, which identifies the client the token was issued for.
+* The `JwksAwareTokenParserImpl` class supports both audience (`aud`) and `azp` validation through the `ClaimValidator`.
+* Validation of both claims is configurable through the `JwksAwareTokenParserImpl` builder:
+  * `expectedAudience()` - sets the expected audience for validation
+  * `expectedClientId()` - sets the expected client ID for `azp` claim validation
+* For maximum security, both audience and client ID validation should be enabled.
+
+==== Security Note
+
+To provide comprehensive protection against client confusion attacks, applications should:
+
+1. Always include the `azp` claim in tokens issued for a specific client
+2. Configure token validators to require `azp` validation
+3. Consider making audience validation mandatory for all client applications
+
+==== Test Specifications
+
+1. **AZP Claim Validation Test**:
+   * Create tokens with various `azp` claim values
+   * Test validation with matching and non-matching client IDs
+   * Verify tokens with non-matching `azp` values are rejected
+
+2. **Client Confusion Attack Test**:
+   * Create a token for Client A
+   * Attempt to use it with Client B's configuration
+   * Verify the token is rejected due to `azp` claim mismatch
+
+=== Scope Upgrade Attack Prevention
+_See Requirement link:../Requirements.adoc#CUI-JWT-8.4[CUI-JWT-8.4: Claims Validation]_
+
+==== Status: PARTIALLY IMPLEMENTED
+
+The scope upgrade attack occurs when an attacker attempts to add additional scopes during the token exchange process, potentially gaining unauthorized privileges.
+
+==== Current Implementation
+
+* The `ParsedAccessToken` class provides methods to verify token scopes through `getScopes()`, `providesScopes()`, and `determineMissingScopes()`.
+* Scope validation is currently implemented at the application level, not as part of the token validation process.
+
+==== Required Enhancements
+
+* Add support for scope validation during token validation.
+* Implement scope restriction to ensure tokens aren't used with more privileges than originally granted.
+* Add configuration option to specify expected or allowed scopes.
+
+==== Test Specifications
+
+1. **Scope Validation Test**:
+   * Create tokens with various scope values
+   * Test validation with expected scope sets
+   * Verify tokens with insufficient scopes are appropriately flagged
+
+2. **Scope Upgrade Attack Test**:
+   * Create a token with limited scopes
+   * Attempt scope upgrade through token manipulation
+   * Verify the token validation process rejects the attempt
+
+=== Mutable Claims Attack Prevention
+_See Requirement link:../Requirements.adoc#CUI-JWT-8.4[CUI-JWT-8.4: Claims Validation]_
+
+==== Status: NOT IMPLEMENTED
+
+The mutable claims attack exploits non-immutable user identification fields (like email) instead of using immutable identifiers (like subject).
+
+==== Required Enhancements
+
+* Add validation for subject (`sub`) claim as the primary user identifier.
+* Add warnings when token processing relies on mutable claims for user identification.
+* Implement API methods that encourage using immutable identifiers.
+
+==== Test Specifications
+
+1. **Immutable Claims Test**:
+   * Create tokens with various claim combinations (subject, email)
+   * Test validation with different claim patterns
+   * Verify the library enforces subject claim usage for identification
+
+2. **Mutable Claims Attack Test**:
+   * Create a token with conflicting mutable and immutable claims
+   * Verify the library prioritizes immutable claims
+   * Test that immutable claim (subject) is required
+
+=== CSRF Prevention Recommendations
+_See Requirement link:../Requirements.adoc#CUI-JWT-8[CUI-JWT-8: Security]_
+
+==== Status: NOT APPLICABLE (LIBRARY SCOPE)
+
+CSRF prevention in OAuth requires the use of the `state` parameter at the application/framework level. While this is outside the direct scope of a token handling library, the documentation should provide guidance.
+
+==== Documentation Enhancements
+
+* Add security best practices section to documentation
+* Provide guidance on using the `state` parameter in OAuth flows
+* Include sample code for CSRF protection in OAuth applications
+
+=== Redirect Attack Prevention Recommendations
+_See Requirement link:../Requirements.adoc#CUI-JWT-8[CUI-JWT-8: Security]_
+
+==== Status: NOT APPLICABLE (LIBRARY SCOPE)
+
+Redirect attacks are based on manipulating the `redirect_uri` parameter during OAuth authorization. This is handled at the application/framework level.
+
+==== Documentation Enhancements
+
+* Add security best practices section to documentation
+* Provide guidance on secure redirect URI validation
+* Warn against common implementation errors:
+  * Validating only the domain
+  * Allowing subdomains/wildcards
+  * Using partial path matching
+
+=== Mobile OAuth Security Recommendations
+_See Requirement link:../Requirements.adoc#CUI-JWT-8[CUI-JWT-8: Security]_
+
+==== Status: NOT APPLICABLE (LIBRARY SCOPE)
+
+Mobile OAuth security concerns are specific to mobile applications and platforms.
+
+==== Documentation Enhancements
+
+* Add section on mobile OAuth security
+* Recommend use of Authorization Code Flow with PKCE
+* Provide guidance on securing custom URI schemes
+* Discuss platform-specific verification mechanisms
+
+== Security Testing Specifications
+
+=== Client Confusion Attack Testing
+_See Requirement link:../Requirements.adoc#CUI-JWT-12.1[CUI-JWT-12.1: Security Testing]_
+
+==== Test Cases
+
+[cols="2,3,1", options="header"]
+|===
+|Test Case |Description |Expected Outcome
+|verify_audience_validation |Test token validation with valid audience claim |Success
+|verify_audience_validation_failure |Test token validation with invalid audience claim |Failure
+|verify_azp_validation |Test token validation with valid azp claim |Success
+|verify_azp_validation_failure |Test token validation with invalid azp claim |Failure
+|verify_different_client_token_rejected |Test token from a different client ID is rejected |Failure
+|===
+
+==== Implementation Requirements
+
+* Add test class `ClientConfusionAttackTest`
+* Create tokens with various client IDs and audience values
+* Test with different validators configured for specific clients
+* Verify cross-client token usage is rejected
+
+=== Scope Validation and Scope Upgrade Attack Testing
+_See Requirement link:../Requirements.adoc#CUI-JWT-12.1[CUI-JWT-12.1: Security Testing]_
+
+==== Test Cases
+
+[cols="2,3,1", options="header"]
+|===
+|Test Case |Description |Expected Outcome
+|verify_scope_validation |Test token validation with expected scopes |Success
+|verify_missing_scopes_detected |Test detection of missing required scopes |Specific missing scopes
+|verify_scope_upgrade_rejection |Test rejection of scope upgrade attempts |Failure
+|verify_scope_downgrade_allowed |Test acceptance of scope downgrade |Success
+|===
+
+==== Implementation Requirements
+
+* Add test class `ScopeValidationTest`
+* Create tokens with varied scope configurations
+* Test validation with different scope expectations
+* Verify scope upgrade attempts are rejected
+
+=== Mutable Claims Attack Testing
+_See Requirement link:../Requirements.adoc#CUI-JWT-12.1[CUI-JWT-12.1: Security Testing]_
+
+==== Test Cases
+
+[cols="2,3,1", options="header"]
+|===
+|Test Case |Description |Expected Outcome
+|verify_subject_required |Test subject claim is required for validation |Failure if missing
+|verify_immutable_id_prioritized |Test immutable identifier is prioritized over mutable claims |Consistent ID
+|verify_mutable_claim_warning |Test warning when mutable claims are used for identification |Warning logged
+|===
+
+==== Implementation Requirements
+
+* Add test class `MutableClaimsSecurityTest`
+* Create tokens with different identifier patterns
+* Test API methods that extract user identity
+* Verify immutable identifiers are correctly prioritized

@@ -44,7 +44,7 @@ import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
 /**
  * JWT parser implementation with support for remote JWKS (JSON Web Key Set) loading.
  * This parser extends the standard JJWT functionality by adding the ability
- * to fetch and manage public keys from64EncodedContent a JWKS endpoint for token signature verification.
+ * to fetch and manage public keys from a JWKS endpoint for token signature verification.
  * <p>
  * Key features:
  * <ul>
@@ -52,23 +52,32 @@ import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
  *   <li>Automatic key refresh support</li>
  *   <li>TLS certificate configuration for secure key loading</li>
  *   <li>Issuer-based token validation</li>
+ *   <li>Audience validation for protecting against token misuse</li>
+ *   <li>Client ID (azp claim) validation for preventing client confusion attacks</li>
  * </ul>
  * <p>
- * The parser can be configured using the constructor:
+ * The parser can be configured using the builder pattern:
  * <pre>
  * JwksLoader jwksLoader = JwksLoaderFactory.createHttpLoader(
  *     "https://auth.example.com/.well-known/jwks.json",
  *     60,
  *     null);
- * JwksAwareTokenParserImpl parser = new JwksAwareTokenParserImpl(
- *     jwksLoader,
- *     "https://auth.example.com");
+ * JwksAwareTokenParserImpl parser = JwksAwareTokenParserImpl.builder()
+ *     .jwksLoader(jwksLoader)
+ *     .issuer("https://auth.example.com")
+ *     .expectedAudience(Set.of("my-client-id"))
+ *     .expectedClientId("my-client-id")
+ *     .build();
  * </pre>
  * <p>
  * This implementation is thread-safe and handles automatic key rotation
  * based on the configured refresh interval.
  * <p>
- * Implements requirement: {@code CUI-JWT-1.3: Signature Validation}
+ * <strong>Security Note:</strong> To protect against client confusion attacks, it is strongly
+ * recommended to set both the expected audience and the expected client ID. This ensures that
+ * tokens issued for one client cannot be used with a different client.
+ * <p>
+ * Implements requirement: {@code CUI-JWT-1.3: Signature Validation} and {@code CUI-JWT-8.4: Claims Validation}
  * <p>
  * For more details on the requirements, see the
  * <a href="../../../../../../doc/specification/technical-components.adoc">Technical Components Specification</a>.
@@ -94,6 +103,7 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
         private String issuer;
         private AlgorithmPreferences algorithmPreferences;
         private Set<String> expectedAudience;
+        private String expectedClientId;
 
         /**
          * Sets the JWKS loader.
@@ -138,6 +148,21 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
             this.expectedAudience = expectedAudience;
             return this;
         }
+        
+        /**
+         * Sets the expected client ID for azp claim validation.
+         * <p>
+         * The authorized party (azp) claim identifies the client that the token was issued for.
+         * Validating this claim prevents client confusion attacks where tokens issued for one client
+         * are used with a different client.
+         *
+         * @param expectedClientId the expected client ID
+         * @return this builder instance
+         */
+        public Builder expectedClientId(String expectedClientId) {
+            this.expectedClientId = expectedClientId;
+            return this;
+        }
 
         /**
          * Builds a new JwksAwareTokenParserImpl instance.
@@ -156,7 +181,7 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
             AlgorithmPreferences prefs = algorithmPreferences != null ?
                     algorithmPreferences : new AlgorithmPreferences();
 
-            return new JwksAwareTokenParserImpl(jwksLoader, issuer, prefs, expectedAudience);
+            return new JwksAwareTokenParserImpl(jwksLoader, issuer, prefs, expectedAudience, expectedClientId);
         }
     }
 
@@ -210,6 +235,23 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
     public JwksAwareTokenParserImpl(@NonNull JwksLoader jwksLoader, @NonNull String issuer,
             @NonNull AlgorithmPreferences algorithmPreferences,
             Set<String> expectedAudience) {
+        this(jwksLoader, issuer, algorithmPreferences, expectedAudience, null);
+    }
+    
+    /**
+     * Constructor for JwksAwareTokenParserImpl with custom algorithm preferences, expected audience,
+     * and expected client ID.
+     *
+     * @param jwksLoader           the JWKS loader, must not be null
+     * @param issuer               the issuer, must not be null
+     * @param algorithmPreferences the algorithm preferences, must not be null
+     * @param expectedAudience     the expected audience, may be null if no audience validation is required
+     * @param expectedClientId     the expected client ID, may be null if no client ID validation is required
+     */
+    public JwksAwareTokenParserImpl(@NonNull JwksLoader jwksLoader, @NonNull String issuer,
+            @NonNull AlgorithmPreferences algorithmPreferences,
+            Set<String> expectedAudience,
+            String expectedClientId) {
         this.jwksLoader = jwksLoader;
         this.issuer = issuer;
         this.algorithmPreferences = algorithmPreferences;
@@ -218,7 +260,7 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
                 .requireIssuer(issuer)
                 .build();
         this.tokenParser = NonValidatingJwtParser.builder().build();
-        this.claimValidator = new ClaimValidator(issuer, expectedAudience);
+        this.claimValidator = new ClaimValidator(issuer, expectedAudience, expectedClientId);
 
         // Log the initialization
         LOGGER.info(INFO.CONFIGURED_JWKS.format(

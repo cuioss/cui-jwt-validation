@@ -351,6 +351,12 @@ public final class JWTTokenLogMessages {
                 .identifier(127)
                 .template("Failed to configure secure SSL context: %s")
                 .build();
+                
+        public static final LogRecord AZP_MISMATCH = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(132)
+                .template("Token authorized party '%s' does not match expected client ID '%s'")
+                .build();
     }
 
 }
