@@ -1,4 +1,4 @@
-= Refactoring Plan: JWT Refresh Token Enhancement
+= Refactoring Plan: JWT Implementation Restructuring
 :toc:
 :toclevels: 3
 :toc-title: Table of Contents
@@ -6,240 +6,472 @@
 
 == Overview
 
-This document outlines the plan to enhance the `ParsedRefreshToken` class to handle JWT-formatted refresh tokens. Currently, the `ParsedRefreshToken` class only acts as a string holder, but some Identity Providers, like Keycloak, return refresh tokens in JWT format. This refactoring aims to add functionality to detect and handle JWT-formatted refresh tokens while maintaining compatibility with string-based refresh tokens.
+This document outlines the plan for refactoring the JWT token handling implementation to improve code organization, reduce coupling to specific JWT libraries, and create a more maintainable architecture. The key objectives are:
+
+1. Isolate all JJWT-specific code into a dedicated implementation package
+2. Create a JJWT-agnostic representation of tokens and claims
+3. Refactor token types to act as data transfer objects without dynamic computations
+4. Design a more robust claim handling mechanism
 
 == Current Structure
 
-=== Class Hierarchy
-* `ParsedToken` (abstract class): Base class for all token types
-* `ParsedRefreshToken` (extends `ParsedToken`): Represents a refresh token
-* `TokenFactory`: Creates token instances based on token strings
-* `NonValidatingJwtParser`: Decodes JWT tokens without validation
+=== Current Package Structure
 
-=== Current Behavior
-* `ParsedRefreshToken` currently only stores the raw token string
-* No detection or handling of JWT-formatted refresh tokens
-* No access to claims or other JWT features for refresh tokens
+* `de.cuioss.jwt.token` - Core token classes and interfaces
+* `de.cuioss.jwt.token.adapter` - Adapter classes for JWT implementation
+* `de.cuioss.jwt.token.jwks` - JWKS handling
+* `de.cuioss.jwt.token.security` - Security-related classes
+* `de.cuioss.jwt.token.util` - Utility classes
+
+=== Key Classes with Implementation-Specific Dependencies
+
+* `de.cuioss.jwt.token.adapter.JwtAdapter` - Directly uses JJWT's `Jws<Claims>` type
+* `de.cuioss.jwt.token.adapter.JsonWebToken` - Interface with methods reflecting JJWT's capabilities
+* `de.cuioss.jwt.token.JwtParser` - Interface referencing JJWT types like `Jws<Claims>`
+* `de.cuioss.jwt.token.ParsedAccessToken` - Contains dynamic computation logic for scopes and roles
 
 == Refactoring Steps
 
-=== Step 1: Enhance NonValidatingJwtParser
-* [x] Add a `logWarnings` parameter to the `decode` method:
-  * [x] Update the `decode` method signature to include a boolean parameter: `public Optional<DecodedJwt> decode(String token, boolean logWarnings)`
-  * [x] Modify the method to conditionally log warnings based on the parameter
-  * [x] Update the existing method to call the new method with `logWarnings=true` for backward compatibility
-  * [x] Update the builder to include a `logWarningsOnDecodeFailure` option
+=== Step 1: Create a Clean Domain Model
 
-* [x] Update tests for NonValidatingJwtParser:
-  * [x] Ensure all existing functionality remains working with the enhanced implementation
+==== Create a new package structure
 
-* [x] Update all method calls in the codebase to reflect the change:
-  * [x] Use the appropriate logging mode for different contexts
+[source]
+----
+de.cuioss.jwt.token.domain
+├── claim
+│   ├── ClaimName.java       # Enum for standard claim names
+│   ├── ClaimValue.java      # Interface for claim values
+│   ├── StringClaimValue.java
+│   ├── SetClaimValue.java
+│   ├── DateTimeClaimValue.java
+│   └── Claim.java           # Combines ClaimName and ClaimValue
+└── token
+    ├── TokenContent.java    # Core interface for token content
+    ├── AccessTokenContent.java
+    ├── IdTokenContent.java
+    └── RefreshTokenContent.java
+----
 
-=== Step 2: Enhance ParsedRefreshToken and TokenFactory
-* [x] Modify the `TokenFactory` to detect JWT refresh tokens:
-  * [x] Use `NonValidatingJwtParser` with `logWarnings=false` to check if the refresh token is a valid JWT
-  * [x] If it is a valid JWT, parse it into a `JsonWebToken` instance
-  * [x] Pass the `JsonWebToken` to the `ParsedRefreshToken` constructor
+==== Implement the claim value types
 
-* [x] Update the `ParsedRefreshToken` class:
-  * [x] Add a private field for the `JsonWebToken`: `private final JsonWebToken jsonWebToken;`
-  * [x] Update the constructor to accept a nullable `JsonWebToken` parameter
-  * [x] Add a getter method: `public Optional<JsonWebToken> getJsonWebToken()`
-  * [x] Implement the getter to return an `Optional` containing the `JsonWebToken` if available
-  * [x] Add helper method: `public boolean isJwtFormat()`
-
-* [x] Update tests:
-  * [x] Modify `ParsedRefreshTokenTest` to test both string-based and JWT-based refresh tokens
-  * [x] Tests verify the functionality of both string-based and JWT-based refresh tokens
-
-=== Step 3: Update Documentation
-* [x] Update all documentation to reflect the changes:
-  * [x] Classes already have appropriate JavaDoc
-  * [x] Updated technical-components.adoc to reflect JWT refresh token support
-  * [x] README.adoc doesn't need changes as the change is backward compatible
-
-=== Step 4: Clean-Up Code
-* [x] Verify code builds without issues:
-  * [x] Verified with `./mvnw clean install -Dmaven.test.skip=true`
-  * [x] All changes are compatible with the existing codebase
-  
-* [x] Fixed test issues:
-  * [x] Fixed test case implementation for JWT refresh tokens
-  * [x] All implemented code passes build verification
-
-== Verification Steps
-
-* [x] For each major step:
-  * [x] Ran Maven build to verify the changes: `./mvnw clean install -Dmaven.test.skip=true`
-  * [x] Tests were modified to verify new functionality
-  * [x] All implementation steps have been completed
-
-== Implementation Summary
-
-The implementation of JWT refresh token support has been completed successfully, with the following key components:
-
-1. Enhanced `NonValidatingJwtParser` to support silent decoding (without logging warnings)
-2. Enhanced `ParsedRefreshToken` to optionally store and provide access to parsed JWT tokens
-3. Enhanced `TokenFactory` to detect and handle JWT-formatted refresh tokens
-4. Updated tests and documentation to reflect the new capabilities
-
-The implementation is backward compatible, meaning existing code that uses `ParsedRefreshToken` as an opaque string holder will continue to work without changes. Applications that want to access JWT claims in refresh tokens can now do so using the new `getJsonWebToken()` method, which returns an Optional containing the JsonWebToken if the refresh token is in JWT format.
-
-== Implementation Details
-
-=== NonValidatingJwtParser Enhancements
-
-The `NonValidatingJwtParser` class will be enhanced to support silent mode (no logging) for decode operations. This is important because we don't want to log warnings when checking if a refresh token is a JWT format, since many refresh tokens are legitimately not in JWT format.
-
-We'll add a new `decode` method with a `logWarnings` parameter and update the existing method to call the new method with `logWarnings=true` for backward compatibility:
-
-```java
-// Current method
-public Optional<DecodedJwt> decode(String token) {
-    // Call new method with logWarnings=true
-    return decode(token, true);
+[source,java]
+----
+// Base interface
+public interface ClaimValue<T> {
+    ClaimValueType getType();
+    T getValue();
+    Optional<T> getOptionalValue();
 }
 
-// New method
-public Optional<DecodedJwt> decode(String token, boolean logWarnings) {
-    if (MoreStrings.isEmpty(token)) {
-        if (logWarnings) {
-            LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
+// Enum for claim value types
+public enum ClaimValueType {
+    STRING,
+    STRING_SET,
+    DATETIME,
+    BOOLEAN,
+    NUMBER,
+    OBJECT
+}
+
+// Implementation for string values
+public class StringClaimValue implements ClaimValue<String> {
+    private final String value;
+    
+    @Override
+    public ClaimValueType getType() {
+        return ClaimValueType.STRING;
+    }
+    
+    @Override
+    public String getValue() {
+        return value;
+    }
+    
+    @Override
+    public Optional<String> getOptionalValue() {
+        return Optional.ofNullable(value);
+    }
+}
+
+// Similar implementations for other types
+----
+
+==== Create the `ClaimName` enum
+
+[source,java]
+----
+public enum ClaimName {
+    // Standard JWT claims
+    ISSUER("iss", ClaimValueType.STRING),
+    SUBJECT("sub", ClaimValueType.STRING),
+    AUDIENCE("aud", ClaimValueType.STRING_SET),
+    EXPIRATION("exp", ClaimValueType.DATETIME),
+    NOT_BEFORE("nbf", ClaimValueType.DATETIME),
+    ISSUED_AT("iat", ClaimValueType.DATETIME),
+    TOKEN_ID("jti", ClaimValueType.STRING),
+    
+    // OpenID Connect claims
+    NAME("name", ClaimValueType.STRING),
+    EMAIL("email", ClaimValueType.STRING),
+    PREFERRED_USERNAME("preferred_username", ClaimValueType.STRING),
+    
+    // OAuth2 claims
+    SCOPE("scope", ClaimValueType.STRING),
+    
+    // Custom claims
+    ROLES("roles", ClaimValueType.STRING_SET),
+    TYPE("typ", ClaimValueType.STRING);
+    
+    private final String claimName;
+    private final ClaimValueType valueType;
+    
+    // Constructor, getters, etc.
+}
+----
+
+==== Create the `Claim` class
+
+[source,java]
+----
+public class Claim<T> {
+    private final ClaimName name;
+    private final ClaimValue<T> value;
+    
+    public Claim(ClaimName name, ClaimValue<T> value) {
+        this.name = name;
+        this.value = value;
+    }
+    
+    // Getters, etc.
+}
+----
+
+==== Create the token content interfaces
+
+[source,java]
+----
+public interface TokenContent {
+    Map<ClaimName, Claim<?>> getClaims();
+    
+    default Optional<Claim<?>> getClaim(ClaimName name) {
+        return Optional.ofNullable(getClaims().get(name));
+    }
+    
+    String getRawToken();
+}
+
+public interface AccessTokenContent extends TokenContent {
+    Set<String> getScopes();
+    Set<String> getRoles();
+    Optional<String> getEmail();
+    Optional<String> getPreferredUsername();
+}
+----
+
+=== Step 2: Create the Implementation Package for JJWT
+
+==== Create the JJWT implementation package
+
+[source]
+----
+de.cuioss.jwt.token.adapter.jjwt
+├── JjwtAdapter.java           # Replaces JwtAdapter
+├── JjwtTokenContentFactory.java
+├── JjwtClaimExtractor.java
+└── JjwtParser.java
+----
+
+==== Implement the `JjwtAdapter` class
+
+[source,java]
+----
+public class JjwtAdapter {
+    private final Jws<Claims> jws;
+    private final String rawToken;
+    
+    public JjwtAdapter(Jws<Claims> jws, String rawToken) {
+        this.jws = jws;
+        this.rawToken = rawToken;
+    }
+    
+    public Jws<Claims> getJws() {
+        return jws;
+    }
+    
+    public String getRawToken() {
+        return rawToken;
+    }
+}
+----
+
+==== Implement the `JjwtTokenContentFactory` class
+
+[source,java]
+----
+public class JjwtTokenContentFactory {
+    public static AccessTokenContent createAccessTokenContent(JjwtAdapter adapter, String email) {
+        Map<ClaimName, Claim<?>> claims = extractClaims(adapter);
+        return new JjwtAccessTokenContent(claims, adapter.getRawToken(), email);
+    }
+    
+    public static IdTokenContent createIdTokenContent(JjwtAdapter adapter) {
+        Map<ClaimName, Claim<?>> claims = extractClaims(adapter);
+        return new JjwtIdTokenContent(claims, adapter.getRawToken());
+    }
+    
+    private static Map<ClaimName, Claim<?>> extractClaims(JjwtAdapter adapter) {
+        Map<ClaimName, Claim<?>> result = new HashMap<>();
+        
+        Claims jwtClaims = adapter.getJws().getPayload();
+        
+        // Extract all standard claims
+        for (ClaimName claimName : ClaimName.values()) {
+            Optional<Claim<?>> claim = JjwtClaimExtractor.extractClaim(claimName, jwtClaims);
+            claim.ifPresent(c -> result.put(claimName, c));
         }
-        return Optional.empty();
+        
+        return result;
     }
+}
+----
 
-    if (token.getBytes(StandardCharsets.UTF_8).length > maxTokenSize) {
-        if (logWarnings) {
-            LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_SIZE_EXCEEDED.format(maxTokenSize));
+==== Implement the `JjwtClaimExtractor` class
+
+[source,java]
+----
+public class JjwtClaimExtractor {
+    public static Optional<Claim<?>> extractClaim(ClaimName claimName, Claims claims) {
+        String name = claimName.getClaimName();
+        Object value = claims.get(name);
+        
+        if (value == null) {
+            return Optional.empty();
         }
-        return Optional.empty();
+        
+        return switch (claimName.getValueType()) {
+            case STRING -> createStringClaim(claimName, value);
+            case STRING_SET -> createStringSetClaim(claimName, value);
+            case DATETIME -> createDateTimeClaim(claimName, value);
+            default -> Optional.empty();
+        };
     }
-
-    // Continue with similar conditional logging pattern throughout the method
-    // ...
-}
-```
-
-We'll also update the builder to include a `logWarningsOnDecodeFailure` option:
-
-```java
-@Builder.Default
-private final boolean logWarningsOnDecodeFailure = true;
-```
-
-=== ParsedRefreshToken Enhancements
-
-The `ParsedRefreshToken` class will be enhanced to optionally store a `JsonWebToken` instance when the refresh token is in JWT format. This will allow applications to access JWT-specific properties if the refresh token is a JWT, while still treating it as an opaque string for compatibility with OAuth2 specifications.
-
-We'll add a new private field for the `JsonWebToken` and update the constructor:
-
-```java
-// New field
-private final JsonWebToken jsonWebToken;
-
-// Update existing constructor to initialize jsonWebToken to null
-public ParsedRefreshToken(String tokenString) {
-    this(tokenString, null);
-}
-
-// New constructor that accepts a JsonWebToken
-public ParsedRefreshToken(String tokenString, JsonWebToken jsonWebToken) {
-    if (MoreStrings.isEmpty(tokenString)) {
-        LOGGER.debug("Creating refresh token from empty token string");
+    
+    private static Optional<Claim<?>> createStringClaim(ClaimName name, Object value) {
+        if (value instanceof String s) {
+            return Optional.of(new Claim<>(name, new StringClaimValue(s)));
+        }
+        return Optional.of(new Claim<>(name, new StringClaimValue(value.toString())));
     }
-    this.tokenString = tokenString;
-    this.jsonWebToken = jsonWebToken;
+    
+    // Similar methods for other claim types
 }
+----
 
-// New getter method
-public Optional<JsonWebToken> getJsonWebToken() {
-    return Optional.ofNullable(jsonWebToken);
+=== Step 3: Update Token Classes to Use the New Domain Model
+
+==== Refactor `ParsedAccessToken`
+
+[source,java]
+----
+public class ParsedAccessToken {
+    private final AccessTokenContent content;
+    
+    public ParsedAccessToken(AccessTokenContent content) {
+        this.content = content;
+    }
+    
+    public Set<String> getScopes() {
+        return content.getScopes();
+    }
+    
+    public Set<String> getRoles() {
+        return content.getRoles();
+    }
+    
+    public Optional<String> getEmail() {
+        return content.getEmail();
+    }
+    
+    public String getIssuer() {
+        return content.getClaim(ClaimName.ISSUER)
+            .map(claim -> ((StringClaimValue)claim.getValue()).getValue())
+            .orElse(null);
+    }
+    
+    // Other methods that delegate to content
 }
-```
+----
 
-This enhancement maintains full backward compatibility while adding the capability to handle JWT-formatted refresh tokens.
+==== Refactor `ParsedIdToken`
 
-=== TokenFactory Enhancements
+[source,java]
+----
+public class ParsedIdToken {
+    private final IdTokenContent content;
+    
+    public ParsedIdToken(IdTokenContent content) {
+        this.content = content;
+    }
+    
+    // Methods that delegate to content
+}
+----
 
-The `TokenFactory` class will be enhanced to detect JWT-formatted refresh tokens and create `ParsedRefreshToken` instances accordingly. The key changes are:
+==== Refactor `ParsedRefreshToken`
 
-1. Add a method to try parsing the refresh token as a JWT without logging warnings
-2. Update the `createRefreshToken` method to check if the token is a JWT
+[source,java]
+----
+public class ParsedRefreshToken {
+    private final String tokenString;
+    private final TokenContent content; // Optional for JWT refresh tokens
+    
+    public ParsedRefreshToken(String tokenString) {
+        this(tokenString, null);
+    }
+    
+    public ParsedRefreshToken(String tokenString, TokenContent content) {
+        this.tokenString = tokenString;
+        this.content = content;
+    }
+    
+    public boolean isJwtFormat() {
+        return content != null;
+    }
+    
+    public Optional<TokenContent> getTokenContent() {
+        return Optional.ofNullable(content);
+    }
+    
+    // Other methods
+}
+----
 
-```java
-// Current method
-public Optional<ParsedRefreshToken> createRefreshToken(@NonNull String tokenString) {
-    LOGGER.debug("Creating refresh token");
-    return tokenParser.getParserForToken(tokenString)
-            .map(parser -> {
-                LOGGER.debug("Found parser for token, creating refresh token");
-                return new ParsedRefreshToken(tokenString);
+=== Step 4: Update the Factory Classes
+
+==== Update `TokenFactory`
+
+[source,java]
+----
+public interface TokenFactory {
+    Optional<ParsedAccessToken> createAccessToken(String tokenString);
+    Optional<ParsedAccessToken> createAccessToken(String tokenString, String email);
+    Optional<ParsedIdToken> createIdToken(String tokenString);
+    Optional<ParsedRefreshToken> createRefreshToken(String tokenString);
+}
+----
+
+==== Create a JJWT-specific implementation
+
+[source,java]
+----
+public class JjwtTokenFactory implements TokenFactory {
+    private final MultiIssuerJwtParser tokenParser;
+    
+    @Override
+    public Optional<ParsedAccessToken> createAccessToken(String tokenString) {
+        return tokenParser.getParserForToken(tokenString)
+            .flatMap(parser -> createJjwtAdapter(tokenString, parser))
+            .map(adapter -> new ParsedAccessToken(
+                JjwtTokenContentFactory.createAccessTokenContent(adapter, null)
+            ));
+    }
+    
+    // Similar implementations for other methods
+    
+    private Optional<JjwtAdapter> createJjwtAdapter(String tokenString, JwtParser parser) {
+        try {
+            return parser.parseToken(tokenString)
+                .map(jws -> new JjwtAdapter(jws, tokenString));
+        } catch (JwtException e) {
+            LOGGER.warn(e, JWTTokenLogMessages.WARN.COULD_NOT_PARSE_TOKEN.format(e.getMessage()));
+            return Optional.empty();
+        }
+    }
+}
+----
+
+=== Step 5: Update the JwtParser Interface
+
+==== Create a new interface that doesn't expose JJWT types
+
+[source,java]
+----
+public interface JwtParser {
+    Optional<TokenContent> parse(String token) throws JwtException;
+    boolean supportsIssuer(String issuer);
+    String getIssuer();
+}
+----
+
+==== Create a bridge implementation that adapts the old interface to the new one
+
+[source,java]
+----
+public class JjwtParserAdapter implements JwtParser {
+    private final de.cuioss.jwt.token.adapter.jjwt.JwtParser delegate;
+    
+    @Override
+    public Optional<TokenContent> parse(String token) throws JwtException {
+        return delegate.parseToken(token)
+            .map(jws -> {
+                JjwtAdapter adapter = new JjwtAdapter(jws, token);
+                return JjwtTokenContentFactory.createTokenContent(adapter);
             });
-}
-
-// Enhanced implementation
-public Optional<ParsedRefreshToken> createRefreshToken(@NonNull String tokenString) {
-    LOGGER.debug("Creating refresh token");
-    
-    // Get parser for token
-    var parserOption = tokenParser.getParserForToken(tokenString);
-    if (parserOption.isEmpty()) {
-        LOGGER.debug(NO_SUITABLE_PARSER_FOUND_FOR_TOKEN);
-        return Optional.empty();
     }
     
-    JwtParser parser = parserOption.get();
-    
-    // Try to parse as JWT token silently (without logging warnings)
-    Optional<JsonWebToken> jsonWebToken = tryParseAsJwt(tokenString, parser);
-    
-    // Create ParsedRefreshToken with or without the JsonWebToken
-    LOGGER.debug("Creating refresh token{}",
-            jsonWebToken.isPresent() ? " with JWT content" : " as opaque string");
-    return Optional.of(new ParsedRefreshToken(tokenString, jsonWebToken.orElse(null)));
+    // Other methods delegating to the delegate
 }
+----
 
-/**
- * Tries to parse a token as JWT without logging warnings on failure.
- * This is used to check if a refresh token is in JWT format.
- *
- * @param tokenString The token string to parse
- * @param parser The parser to use
- * @return An Optional containing the JsonWebToken if parsing succeeded, or empty if not
- */
-private Optional<JsonWebToken> tryParseAsJwt(String tokenString, JwtParser parser) {
-    if (MoreStrings.isBlank(tokenString)) {
-        return Optional.empty();
-    }
-    
-    try {
-        // Use the parser to validate the token
-        return parser.parse(tokenString);
-    } catch (JwtException e) {
-        // Silently return empty on parsing failure
-        LOGGER.debug("Token is not a valid JWT: {}", e.getMessage());
-        return Optional.empty();
-    }
-}
-```
+== Testing Strategy
 
-This implementation maintains backward compatibility while adding the capability to detect and handle JWT-formatted refresh tokens. The key improvement is that we now try to parse the refresh token as a JWT, but we don't log warnings if it fails because many refresh tokens are legitimately not in JWT format.
+. Create unit tests for each new component:
+* Tests for `ClaimValue` implementations
+* Tests for `Claim` class
+* Tests for token content classes
+* Tests for JJWT adapter classes
+* Tests for extractors
 
-=== Testing Strategy
+. Create integration tests:
+* Tests that verify the entire flow from token string to parsed token
+* Tests for different token types and formats
+* Tests for error handling and edge cases
 
-The testing strategy will include:
+. Update existing tests to use the new domain model
 
-1. Unit tests for `NonValidatingJwtParser` to verify silent mode works correctly
-2. Unit tests for `ParsedRefreshToken` to verify it can handle both string-based and JWT-based tokens
-3. Unit tests for `TokenFactory` to verify it correctly detects JWT refresh tokens
-4. Integration tests with Keycloak to verify real-world JWT refresh tokens are handled correctly
+== Migration Strategy
 
-=== Documentation Updates
+. Implement the new domain model and JJWT adapter classes
+. Update the factory classes to use the new model internally
+. Refactor token classes to use the new model
+. Update user-facing APIs
+. Run tests to verify everything works correctly
 
-The following documentation will be updated:
+== Implementation Order
 
-1. Javadoc for all modified classes
-2. The technical-components.adoc specification document to reflect the new capabilities
-3. Any other relevant documentation that mentions refresh tokens
+. Create the domain model (claim and token packages)
+. Implement the JJWT adapter classes
+. Update the factory classes
+. Refactor the token classes
+. Update the parser interfaces
+. Run tests and fix any issues
+
+== Benefits
+
+=== Better Separation of Concerns
+* Clear separation between domain model and implementation details
+* Token classes focus on their specific functionality
+
+=== Reduced Coupling
+* Core code doesn't depend on JJWT
+* Easier to switch implementation libraries
+
+=== Improved Type Safety
+* Strongly typed claim values
+* Explicit handling of optional values
+
+=== More Maintainable Code
+* Clear package structure
+* Consistent abstraction levels
+* Better testability
