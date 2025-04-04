@@ -156,6 +156,7 @@ public class TokenKeycloakITTest extends KeycloakITBase {
             assertFalse(refreshToken.get().isEmpty(), "Refresh token should be present");
             assertNotNull(refreshToken.get().getRawToken(), "Token string should not be null");
             assertEquals(TokenType.REFRESH_TOKEN, refreshToken.get().getType(), "Token type should be REFRESH_TOKEN");
+            assertFalse(refreshToken.get().isJwtFormat(), "As of now, while testing the token will be rejected, because keycloak JWTToken-119: Unsupported algorithm: HS512. If you see this message, please check the Keycloak version and the algorithm used.");
         }
     }
 }

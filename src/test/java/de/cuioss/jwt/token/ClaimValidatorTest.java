@@ -290,7 +290,7 @@ class ClaimValidatorTest {
     }
 
     /**
-     * Helper method to parse a token string into a Jws<Claims> object.
+     * Helper method to parse a token string into a Jws<ClaimNames> object.
      * This method disables expiration validation in the JJWT parser so we can test
      * the ClaimValidator's expiration validation separately.
      */

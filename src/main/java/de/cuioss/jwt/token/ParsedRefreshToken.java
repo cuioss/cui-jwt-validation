@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.token;
 
+import de.cuioss.jwt.token.adapter.JsonWebToken;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
 import lombok.Getter;
@@ -22,6 +23,7 @@ import lombok.ToString;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Optional;
 
 /**
  * Represents a parsed OAuth2 refresh token with basic validation support.
@@ -33,6 +35,7 @@ import java.io.Serializable;
  *   <li>Simple token string validation</li>
  *   <li>Type-safe token representation</li>
  *   <li>Immutable and thread-safe implementation</li>
+ *   <li>Optional support for JWT-formatted refresh tokens</li>
  * </ul>
  * <p>
  * Note: While OAuth2 specification treats refresh tokens as opaque strings,
@@ -47,6 +50,9 @@ import java.io.Serializable;
  * Optional&lt;ParsedRefreshToken&gt; optionalToken = factory.createRefreshToken(tokenString);
  * if (optionalToken.isPresent() &amp;&amp; !optionalToken.get().isEmpty()) {
  *     // Use the token
+ *     optionalToken.get().getJsonWebToken().ifPresent(jwt -> {
+ *         // Access JWT claims if the refresh token is a JWT
+ *     });
  * }
  * </pre>
  *
@@ -62,9 +68,11 @@ public class ParsedRefreshToken implements Serializable {
 
     @Getter
     private final String tokenString;
+    
+    private final JsonWebToken jsonWebToken;
 
     /**
-     * Creates a new {@link ParsedRefreshToken} from64EncodedContent the given token string.
+     * Creates a new {@link ParsedRefreshToken} from the given token string.
      * <p>
      * Note: This constructor does not validate the token's signature or format.
      * It only wraps the string for type-safety purposes.
@@ -72,10 +80,24 @@ public class ParsedRefreshToken implements Serializable {
      * @param tokenString The raw refresh token string, may be null or empty
      */
     public ParsedRefreshToken(String tokenString) {
+        this(tokenString, null);
+    }
+    
+    /**
+     * Creates a new {@link ParsedRefreshToken} from the given token string and optional JsonWebToken.
+     * <p>
+     * This constructor supports handling refresh tokens in JWT format by storing the parsed JWT
+     * for easy access to its claims.
+     *
+     * @param tokenString The raw refresh token string, may be null or empty
+     * @param jsonWebToken The parsed JWT if the token is in JWT format, may be null
+     */
+    public ParsedRefreshToken(String tokenString, JsonWebToken jsonWebToken) {
         if (MoreStrings.isEmpty(tokenString)) {
-            LOGGER.debug("Creating refresh token from64EncodedContent empty token string");
+            LOGGER.debug("Creating refresh token from empty token string");
         }
         this.tokenString = tokenString;
+        this.jsonWebToken = jsonWebToken;
     }
 
     /**
@@ -104,5 +126,26 @@ public class ParsedRefreshToken implements Serializable {
      */
     public String getRawToken() {
         return tokenString;
+    }
+    
+    /**
+     * Returns the JsonWebToken representation of this refresh token if it's in JWT format.
+     * <p>
+     * This method allows accessing JWT-specific properties if the refresh token is a JWT,
+     * while still treating it as an opaque string for compatibility with OAuth2 specifications.
+     *
+     * @return an Optional containing the JsonWebToken if the refresh token is in JWT format, or empty otherwise
+     */
+    public Optional<JsonWebToken> getJsonWebToken() {
+        return Optional.ofNullable(jsonWebToken);
+    }
+    
+    /**
+     * Indicates whether this refresh token is in JWT format.
+     *
+     * @return {@code true} if the token is in JWT format and can be parsed as a JWT, {@code false} otherwise
+     */
+    public boolean isJwtFormat() {
+        return jsonWebToken != null;
     }
 }

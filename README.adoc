@@ -142,7 +142,7 @@ The module supports three token types, each with specific functionality:
 
 == Documentation
 
-* link:doc/LogMessages.md[Log Messages]
+* link:doc/LogMessages.adoc[Log Messages]
 
 == Security Considerations
 

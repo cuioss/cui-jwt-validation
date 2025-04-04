@@ -15,7 +15,7 @@
  */
 package de.cuioss.jwt.token;
 
-import de.cuioss.jwt.token.adapter.Claims;
+import de.cuioss.jwt.token.adapter.ClaimNames;
 import de.cuioss.jwt.token.adapter.JsonWebToken;
 import de.cuioss.tools.collect.MoreCollections;
 import de.cuioss.tools.logging.CuiLogger;
@@ -53,8 +53,8 @@ import static java.util.stream.Collectors.toSet;
  * <ul>
  *   <li>{@link #CLAIM_NAME_SCOPE}: Space-separated list of OAuth2 scopes</li>
  *   <li>{@link #CLAIM_NAME_ROLES}: JSON array of assigned roles</li>
- *   <li>{@link Claims#EMAIL}: User's email address</li>
- *   <li>{@link Claims#PREFERRED_USERNAME}: User's preferred username</li>
+ *   <li>{@link ClaimNames#EMAIL}: User's email address</li>
+ *   <li>{@link ClaimNames#PREFERRED_USERNAME}: User's preferred username</li>
  * </ul>
  * <p>
  * Usage example:
@@ -241,7 +241,7 @@ public class ParsedAccessToken implements JsonWebToken {
     public Optional<String> getEmail() {
         return Optional
                 .ofNullable(email)
-                .or(() -> Optional.ofNullable(jsonWebToken.getClaim(Claims.EMAIL)));
+                .or(() -> Optional.ofNullable(jsonWebToken.getClaim(ClaimNames.EMAIL)));
     }
 
     /**
@@ -250,7 +250,7 @@ public class ParsedAccessToken implements JsonWebToken {
      * @return an optional containing the potential preferred username
      */
     public Optional<String> getPreferredUsername() {
-        return Optional.ofNullable(jsonWebToken.getClaim(Claims.PREFERRED_USERNAME));
+        return Optional.ofNullable(jsonWebToken.getClaim(ClaimNames.PREFERRED_USERNAME));
     }
 
 }

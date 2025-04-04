@@ -77,7 +77,7 @@ import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
  * recommended to set both the expected audience and the expected client ID. This ensures that
  * tokens issued for one client cannot be used with a different client.
  * <p>
- * Implements requirement: {@code CUI-JWT-1.3: Signature Validation} and {@code CUI-JWT-8.4: Claims Validation}
+ * Implements requirement: {@code CUI-JWT-1.3: Signature Validation} and {@code CUI-JWT-8.4: ClaimNames Validation}
  * <p>
  * For more details on the requirements, see the
  * <a href="../../../../../../doc/specification/technical-components.adoc">Technical Components Specification</a>.

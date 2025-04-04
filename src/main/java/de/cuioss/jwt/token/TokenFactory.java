@@ -258,17 +258,52 @@ public class TokenFactory {
     }
 
     /**
-     * Creates a refresh token from64EncodedContent the given token string.
+     * Creates a refresh token from the given token string.
      *
      * @param tokenString The token string to parse, must not be null
      * @return The parsed refresh token, which may be empty if the token is invalid or no parser is found
      */
     public Optional<ParsedRefreshToken> createRefreshToken(@NonNull String tokenString) {
         LOGGER.debug("Creating refresh token");
-        return tokenParser.getParserForToken(tokenString)
-                .map(parser -> {
-                    LOGGER.debug("Found parser for token, creating refresh token");
-                    return new ParsedRefreshToken(tokenString);
-                });
+        
+        // Get parser for token
+        var parserOption = tokenParser.getParserForToken(tokenString);
+        if (parserOption.isEmpty()) {
+            LOGGER.debug(NO_SUITABLE_PARSER_FOUND_FOR_TOKEN);
+            return Optional.empty();
+        }
+        
+        JwtParser parser = parserOption.get();
+        
+        // Try to parse as JWT token silently (without logging warnings)
+        Optional<JsonWebToken> jsonWebToken = tryParseAsJwt(tokenString, parser);
+        
+        // Create ParsedRefreshToken with or without the JsonWebToken
+        LOGGER.debug("Creating refresh token{}",
+                jsonWebToken.isPresent() ? " with JWT content" : " as opaque string");
+        return Optional.of(new ParsedRefreshToken(tokenString, jsonWebToken.orElse(null)));
+    }
+    
+    /**
+     * Tries to parse a token as JWT without logging warnings on failure.
+     * This is used to check if a refresh token is in JWT format.
+     *
+     * @param tokenString The token string to parse
+     * @param parser The parser to use
+     * @return An Optional containing the JsonWebToken if parsing succeeded, or empty if not
+     */
+    private Optional<JsonWebToken> tryParseAsJwt(String tokenString, JwtParser parser) {
+        if (MoreStrings.isBlank(tokenString)) {
+            return Optional.empty();
+        }
+        
+        try {
+            // Use the parser to validate the token
+            return parser.parse(tokenString);
+        } catch (JwtException e) {
+            // Silently return empty on parsing failure
+            LOGGER.debug("Token is not a valid JWT: {}", e.getMessage());
+            return Optional.empty();
+        }
     }
 }

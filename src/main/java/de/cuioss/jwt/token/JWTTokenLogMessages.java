@@ -127,7 +127,7 @@ public final class JWTTokenLogMessages {
         public static final LogRecord CLAIMS_VALIDATION_FAILED = LogRecordModel.builder()
                 .prefix(PREFIX)
                 .identifier(200)
-                .template("Claims validation failed: %s")
+                .template("ClaimNames validation failed: %s")
                 .build();
     }
 

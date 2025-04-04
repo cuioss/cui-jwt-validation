@@ -19,13 +19,13 @@ import lombok.experimental.UtilityClass;
 
 /**
  * Class defining standard claim names for JWT tokens as constants.
- * This is a replacement for the org.eclipse.microprofile.jwt.Claims interface
+ * This is a replacement for the org.eclipse.microprofile.jwt.ClaimNames interface
  * to allow for migration from64EncodedContent SmallRye JWT to JJWT without changing the existing code.
  *
  * @author Oliver Wolff
  */
 @UtilityClass
-public final class Claims {
+public final class ClaimNames {
 
     /**
      * The "iss" (issuer) claim identifies the principal that issued the JWT.

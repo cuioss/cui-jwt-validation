@@ -43,7 +43,7 @@ import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
  * The azp claim validation is an important security measure to prevent client confusion attacks
  * where tokens issued for one client are used with a different client.
  * <p>
- * Implements requirement: {@code CUI-JWT-8.4: Claims Validation}
+ * Implements requirement: {@code CUI-JWT-8.4: ClaimNames Validation}
  * <p>
  * For more details on the security aspects, see the
  * <a href="../../../../../../doc/specification/security.adoc">Security Specification</a>.

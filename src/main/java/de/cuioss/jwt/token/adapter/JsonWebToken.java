@@ -17,6 +17,7 @@ package de.cuioss.jwt.token.adapter;
 
 import de.cuioss.jwt.token.TokenType;
 
+import java.io.Serializable;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.Set;
@@ -49,7 +50,7 @@ import java.util.Set;
  * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html">OpenID Connect Core 1.0</a>
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc6749">RFC 6749 - OAuth 2.0 Authorization Framework</a>
  */
-public interface JsonWebToken {
+public interface JsonWebToken extends Serializable {
 
     /**
      * Returns the name of the JWT, which is the 'name' claim.
@@ -59,7 +60,7 @@ public interface JsonWebToken {
      * For ID tokens, this represents the end-user's full name as specified in OpenID Connect Core 1.0.
      *
      * @return an Optional containing the name of the JWT, or empty if not present
-     * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims">OpenID Connect Core 1.0 - Standard Claims</a>
+     * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims">OpenID Connect Core 1.0 - Standard ClaimNames</a>
      */
     Optional<String> getName();
 

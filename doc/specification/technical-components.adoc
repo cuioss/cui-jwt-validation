@@ -109,7 +109,7 @@ The library provides specialized classes for different token types, each with fu
 
 `ParsedAccessToken` and `ParsedIdToken` directly implement the `JsonWebToken` interface using delegation to a `JsonWebToken` instance, allowing for flexible composition and better separation of concerns.
 
-`ParsedRefreshToken` implements `Serializable` and provides basic functionality for handling refresh tokens, which are treated as opaque strings according to OAuth2 specifications.
+`ParsedRefreshToken` implements `Serializable` and provides functionality for handling refresh tokens, which are treated primarily as opaque strings according to OAuth2 specifications. However, it also supports JWT-formatted refresh tokens, which some Identity Providers (like Keycloak) may use, allowing access to JWT claims when available while maintaining compatibility with opaque token handling.
 
 ==== Class Structure
 

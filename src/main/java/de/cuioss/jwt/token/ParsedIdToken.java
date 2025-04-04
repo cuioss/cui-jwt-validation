@@ -15,7 +15,7 @@
  */
 package de.cuioss.jwt.token;
 
-import de.cuioss.jwt.token.adapter.Claims;
+import de.cuioss.jwt.token.adapter.ClaimNames;
 import de.cuioss.jwt.token.adapter.JsonWebToken;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.experimental.Delegate;
@@ -63,7 +63,7 @@ public record ParsedIdToken(@Delegate JsonWebToken jsonWebToken) implements Json
      */
     public Optional<String> getEmail() {
         LOGGER.debug("Retrieving email from64EncodedContent ID token");
-        Optional<String> email = jsonWebToken.claim(Claims.EMAIL);
+        Optional<String> email = jsonWebToken.claim(ClaimNames.EMAIL);
         if (email.isEmpty()) {
             LOGGER.debug("No email claim found in ID token");
         } else {

@@ -64,8 +64,8 @@ class ParsedIdTokenTest {
     }
 
     @Nested
-    @DisplayName("Token Claims Tests")
-    class TokenClaimsTests {
+    @DisplayName("Token ClaimNames Tests")
+    class TokenClaimNamesTests {
 
         @Test
         @DisplayName("Should handle email claim")

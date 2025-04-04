@@ -32,12 +32,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Adapter class that implements the JsonWebToken interface using JJWT's Jws&lt;Claims&gt;
+ * Adapter class that implements the JsonWebToken interface using JJWT's Jws&lt;ClaimNames&gt;
  * This allows the existing ParsedToken and derived classes to continue working with the new
  * JJWT implementation without changes to their API.
  * <p>
  * The adapter maps between the JsonWebToken interface methods and the corresponding
- * methods in JJWT's Jws&lt;Claims&gt; class.
+ * methods in JJWT's Jws&lt;ClaimNames&gt; class.
  *
  * @author Oliver Wolff
  */
@@ -79,7 +79,7 @@ public class JwtAdapter implements JsonWebToken {
 
     @Override
     public Optional<Set<String>> getAudience() {
-        Object audience = jws.getPayload().get(de.cuioss.jwt.token.adapter.Claims.AUDIENCE);
+        Object audience = jws.getPayload().get(ClaimNames.AUDIENCE);
         if (audience == null) {
             return Optional.empty();
         }
@@ -120,7 +120,7 @@ public class JwtAdapter implements JsonWebToken {
 
     @Override
     public Optional<OffsetDateTime> getNotBeforeTime() {
-        Object nbf = jws.getPayload().get(de.cuioss.jwt.token.adapter.Claims.NOT_BEFORE);
+        Object nbf = jws.getPayload().get(ClaimNames.NOT_BEFORE);
         if (nbf == null) {
             return Optional.empty();
         }
