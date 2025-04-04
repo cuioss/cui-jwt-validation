@@ -45,7 +45,7 @@ import java.io.Serializable;
  *     .addParser(parser)
  *     .build();
  * Optional&lt;ParsedRefreshToken&gt; optionalToken = factory.createRefreshToken(tokenString);
- * if (optionalToken.isPresent() && !optionalToken.get().isEmpty()) {
+ * if (optionalToken.isPresent() &amp;&amp; !optionalToken.get().isEmpty()) {
  *     // Use the token
  * }
  * </pre>
