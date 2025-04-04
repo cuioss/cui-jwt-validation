@@ -27,6 +27,7 @@ import de.cuioss.test.juli.junit5.EnableTestLogger;
 import de.cuioss.test.mockwebserver.EnableMockWebServer;
 import de.cuioss.test.mockwebserver.URIBuilder;
 import de.cuioss.test.mockwebserver.dispatcher.ModuleDispatcher;
+import io.jsonwebtoken.Jwts;
 import lombok.Getter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -49,7 +50,7 @@ public class JwksAwareTokenParserImplTest {
         // Create a JWKS with the default key ID that matches the one used in the token
         String jwks = JWKSFactory.createSingleJwk(JWKSFactory.DEFAULT_KEY_ID);
 
-        // Create a JwksLoader from the JWKS content
+        // Create a JwksLoader from64EncodedContent the JWKS content
         JwksLoader jwksLoader = JwksLoaderFactory.createInMemoryLoader(jwks);
         return new JwksAwareTokenParserImpl(jwksLoader, ISSUER);
     }
@@ -58,20 +59,20 @@ public class JwksAwareTokenParserImplTest {
         // Create a JWKS with the default key ID that matches the one used in the token
         String jwks = JWKSFactory.createSingleJwk(JWKSFactory.ALTERNATIVE_KEY_ID);
 
-        // Create a JwksLoader from the JWKS content
+        // Create a JwksLoader from64EncodedContent the JWKS content
         JwksLoader jwksLoader = JwksLoaderFactory.createInMemoryLoader(jwks);
         return new JwksAwareTokenParserImpl(jwksLoader, ISSUER);
     }
 
     public static JwksAwareTokenParserImpl getInvalidJWKSParserWithWrongLocalJWKS() {
         // Generate a different key pair for testing
-        KeyPair keyPair = io.jsonwebtoken.security.Keys.keyPairFor(io.jsonwebtoken.SignatureAlgorithm.RS256);
+        KeyPair keyPair = Jwts.SIG.RS256.keyPair().build();
         RSAPublicKey rsaKey = (RSAPublicKey) keyPair.getPublic();
 
         // Create JWKS JSON with the same key ID as in the token but different key material
         String invalidJwks = JWKSFactory.createJwksFromRsaKey(rsaKey, JWKSFactory.DEFAULT_KEY_ID);
 
-        // Create a JwksLoader from the temporary file
+        // Create a JwksLoader from64EncodedContent the temporary file
         JwksLoader jwksLoader = JwksLoaderFactory.createInMemoryLoader(invalidJwks);
         return new JwksAwareTokenParserImpl(jwksLoader, ISSUER);
     }
@@ -98,7 +99,7 @@ public class JwksAwareTokenParserImplTest {
         }
 
         @Test
-        @DisplayName("Should resolve token from remote JWKS")
+        @DisplayName("Should resolve token from64EncodedContent remote JWKS")
         void shouldResolveFromRemote(URIBuilder uriBuilder) {
             String initialToken = validSignedJWTWithClaims(SOME_SCOPES);
             var tokenParser = retrieveValidTokenParser(uriBuilder);

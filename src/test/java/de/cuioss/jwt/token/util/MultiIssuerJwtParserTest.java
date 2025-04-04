@@ -25,8 +25,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-
 import static de.cuioss.jwt.token.test.TestTokenProducer.*;
 import static de.cuioss.test.juli.LogAsserts.assertLogMessagePresentContaining;
 import static org.junit.jupiter.api.Assertions.*;
@@ -41,12 +39,11 @@ class MultiIssuerJwtParserTest {
 
     private MultiIssuerJwtParser multiIssuerParser;
     private JwksAwareTokenParserImpl defaultParser;
-    private JwksAwareTokenParserImpl otherParser;
 
     @BeforeEach
-    void setUp() throws IOException {
+    void setUp() {
         defaultParser = JwksAwareTokenParserImplTest.getValidJWKSParserWithLocalJWKS();
-        otherParser = JwksAwareTokenParserImplTest.getInvalidValidJWKSParserWithLocalJWKSAndWrongIssuer();
+        JwksAwareTokenParserImpl otherParser = JwksAwareTokenParserImplTest.getInvalidValidJWKSParserWithLocalJWKSAndWrongIssuer();
 
         multiIssuerParser = MultiIssuerJwtParser.builder()
                 .addParser(defaultParser)
@@ -61,14 +58,14 @@ class MultiIssuerJwtParserTest {
     class IssuerExtractionTests {
 
         @Test
-        @DisplayName("Should extract issuer from valid token")
+        @DisplayName("Should extract issuer from64EncodedContent valid token")
         void shouldExtractIssuerFromValidToken() {
             var token = validSignedJWTWithClaims(SOME_SCOPES);
             var extractedIssuer = multiIssuerParser.extractIssuer(token);
 
             assertTrue(extractedIssuer.isPresent(), "Issuer should be present for valid token");
             assertEquals(ISSUER, extractedIssuer.get(), "Extracted issuer should match expected");
-            assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Extracting issuer from token");
+            assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Extracting issuer from64EncodedContent token");
             assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Extracted issuer: " + ISSUER);
         }
 
@@ -77,7 +74,7 @@ class MultiIssuerJwtParserTest {
         void shouldHandleInvalidTokenForIssuerExtraction() {
             var extractedIssuer = multiIssuerParser.extractIssuer(INVALID_TOKEN);
             assertFalse(extractedIssuer.isPresent(), "Issuer should not be present for invalid token");
-            assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Extracting issuer from token");
+            assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Extracting issuer from64EncodedContent token");
             assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Extracted issuer: <none>");
         }
     }
@@ -121,7 +118,7 @@ class MultiIssuerJwtParserTest {
         void shouldHandleInvalidTokenForParserRetrieval() {
             var parser = multiIssuerParser.getParserForToken(INVALID_TOKEN);
             assertFalse(parser.isPresent(), "Parser should not be present for invalid token");
-            assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Extracting issuer from token");
+            assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Extracting issuer from64EncodedContent token");
             assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Extracted issuer: <none>");
         }
     }

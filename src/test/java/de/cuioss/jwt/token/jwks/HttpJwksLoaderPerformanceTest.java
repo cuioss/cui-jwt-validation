@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.token.jwks;
 
+import de.cuioss.jwt.token.jwks.key.KeyInfo;
 import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.jwt.token.test.dispatcher.EnhancedJwksResolveDispatcher;
 import de.cuioss.jwt.token.test.dispatcher.JwksResolveDispatcher;
@@ -76,7 +77,7 @@ class HttpJwksLoaderPerformanceTest {
     }
 
     @Test
-    @DisplayName("Should handle concurrent access from multiple threads")
+    @DisplayName("Should handle concurrent access from64EncodedContent multiple threads")
     void shouldHandleConcurrentAccess() throws InterruptedException {
         performConcurrentTest(DEFAULT_THREAD_COUNT, DEFAULT_REQUESTS_PER_THREAD, DEFAULT_PAUSE_MILLIS);
     }

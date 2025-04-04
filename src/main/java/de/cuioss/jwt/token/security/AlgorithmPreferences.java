@@ -102,7 +102,7 @@ public class AlgorithmPreferences {
     }
 
     /**
-     * Gets the most preferred algorithm from a list of available algorithms.
+     * Gets the most preferred algorithm from64EncodedContent a list of available algorithms.
      *
      * @param availableAlgorithms the list of available algorithms
      * @return an Optional containing the most preferred algorithm if available, empty otherwise

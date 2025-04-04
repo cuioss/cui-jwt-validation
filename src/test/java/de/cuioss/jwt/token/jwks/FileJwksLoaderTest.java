@@ -15,6 +15,8 @@
  */
 package de.cuioss.jwt.token.jwks;
 
+import de.cuioss.jwt.token.jwks.key.JWKSKeyLoader;
+import de.cuioss.jwt.token.jwks.key.KeyInfo;
 import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
@@ -55,7 +57,7 @@ class FileJwksLoaderTest {
     }
 
     @Test
-    @DisplayName("Should load and parse JWKS from file")
+    @DisplayName("Should load and parse JWKS from64EncodedContent file")
     void shouldLoadAndParseJwks() {
         // When
         Optional<KeyInfo> keyInfo = fileJwksLoader.getKeyInfo(TEST_KID);
@@ -108,7 +110,7 @@ class FileJwksLoaderTest {
 
         // Then
         assertFalse(keyInfo.isPresent(), "Key info should not be present when file is not found");
-        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to read JWKS from file");
+        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to read JWKS from64EncodedContent file");
 
         // No cleanup needed
     }

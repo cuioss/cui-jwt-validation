@@ -15,14 +15,16 @@
  */
 package de.cuioss.jwt.token.jwks;
 
+import de.cuioss.jwt.token.jwks.key.KeyInfo;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 /**
- * Interface for loading JSON Web Keys (JWK) from a JWKS source.
+ * Interface for loading JSON Web Keys (JWK) from64EncodedContent a JWKS source.
  * <p>
- * Implementations can load keys from different sources like HTTP endpoints or files.
+ * Implementations can load keys from64EncodedContent different sources like HTTP endpoints or files.
  * <p>
  * This interface supports cryptographic agility by providing methods to get keys
  * along with their algorithm information.

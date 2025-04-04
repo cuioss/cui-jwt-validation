@@ -18,10 +18,7 @@ package de.cuioss.jwt.token.test.generator;
 import de.cuioss.test.generator.Generators;
 import de.cuioss.test.generator.TypedGenerator;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Generator for OAuth/OIDC roles.
@@ -72,7 +69,7 @@ public class RoleGenerator implements TypedGenerator<Set<String>> {
 
         // Shuffle and take a subset of common roles
         List<String> shuffledRoles = new ArrayList<>(COMMON_ROLES);
-        java.util.Collections.shuffle(shuffledRoles);
+        Collections.shuffle(shuffledRoles);
         int count = Math.min(roleCount, shuffledRoles.size());
         roles.addAll(shuffledRoles.subList(0, count));
 

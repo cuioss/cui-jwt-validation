@@ -56,15 +56,14 @@ class TestTokenProducerTest {
         assertNotNull(token);
 
         // Parse the token using JJWT
-        Jws<Claims> parsedToken = Jwts.parserBuilder()
-                .setSigningKey(KeyMaterialHandler.getDefaultPrivateKey())
-                .build()
-                .parseClaimsJws(token);
+        Jws<Claims> parsedToken = Jwts.parser()
+                .verifyWith(KeyMaterialHandler.getDefaultPublicKey())
+                .build().parseSignedClaims(token);
 
         assertNotNull(parsedToken);
-        assertEquals(TestTokenProducer.ISSUER, parsedToken.getBody().getIssuer());
-        assertEquals(TestTokenProducer.SUBJECT, parsedToken.getBody().getSubject());
-        assertTrue(parsedToken.getBody().containsKey("scope"));
+        assertEquals(TestTokenProducer.ISSUER, parsedToken.getPayload().getIssuer());
+        assertEquals(TestTokenProducer.SUBJECT, parsedToken.getPayload().getSubject());
+        assertTrue(parsedToken.getPayload().containsKey("scope"));
     }
 
     @Test
@@ -73,14 +72,13 @@ class TestTokenProducerTest {
         assertNotNull(token);
 
         // Parse the token using JJWT
-        Jws<Claims> parsedToken = Jwts.parserBuilder()
-                .setSigningKey(KeyMaterialHandler.getDefaultPrivateKey())
-                .build()
-                .parseClaimsJws(token);
+        Jws<Claims> parsedToken = Jwts.parser()
+                .verifyWith(KeyMaterialHandler.getDefaultPublicKey())
+                .build().parseSignedClaims(token);
 
         assertNotNull(parsedToken);
-        assertEquals(TestTokenProducer.ISSUER, parsedToken.getBody().getIssuer());
-        assertEquals(TestTokenProducer.SUBJECT, parsedToken.getBody().getSubject());
+        assertEquals(TestTokenProducer.ISSUER, parsedToken.getPayload().getIssuer());
+        assertEquals(TestTokenProducer.SUBJECT, parsedToken.getPayload().getSubject());
     }
 
     @Test
@@ -90,15 +88,14 @@ class TestTokenProducerTest {
         assertNotNull(token);
 
         // Parse the token using JJWT
-        Jws<Claims> parsedToken = Jwts.parserBuilder()
-                .setSigningKey(KeyMaterialHandler.getDefaultPrivateKey())
-                .build()
-                .parseClaimsJws(token);
+        Jws<Claims> parsedToken = Jwts.parser()
+                .verifyWith(KeyMaterialHandler.getDefaultPublicKey())
+                .build().parseSignedClaims(token);
 
         assertNotNull(parsedToken);
-        assertEquals(TestTokenProducer.ISSUER, parsedToken.getBody().getIssuer());
-        assertEquals(customSubject, parsedToken.getBody().getSubject());
-        assertTrue(parsedToken.getBody().containsKey("scope"));
+        assertEquals(TestTokenProducer.ISSUER, parsedToken.getPayload().getIssuer());
+        assertEquals(customSubject, parsedToken.getPayload().getSubject());
+        assertTrue(parsedToken.getPayload().containsKey("scope"));
     }
 
     @Test
@@ -108,17 +105,16 @@ class TestTokenProducerTest {
         assertNotNull(token);
 
         // Parse the token using JJWT
-        Jws<Claims> parsedToken = Jwts.parserBuilder()
-                .setSigningKey(KeyMaterialHandler.getDefaultPrivateKey())
-                .build()
-                .parseClaimsJws(token);
+        Jws<Claims> parsedToken = Jwts.parser()
+                .verifyWith(KeyMaterialHandler.getDefaultPublicKey())
+                .build().parseSignedClaims(token);
 
         assertNotNull(parsedToken);
-        assertEquals(TestTokenProducer.ISSUER, parsedToken.getBody().getIssuer());
-        assertEquals(TestTokenProducer.SUBJECT, parsedToken.getBody().getSubject());
+        assertEquals(TestTokenProducer.ISSUER, parsedToken.getPayload().getIssuer());
+        assertEquals(TestTokenProducer.SUBJECT, parsedToken.getPayload().getSubject());
 
         // Check expiration
-        Date expiration = parsedToken.getBody().getExpiration();
+        Date expiration = parsedToken.getPayload().getExpiration();
         assertNotNull(expiration);
         assertEquals(expireAt.getEpochSecond(), expiration.toInstant().getEpochSecond());
     }
@@ -131,18 +127,17 @@ class TestTokenProducerTest {
         assertNotNull(token);
 
         // Parse the token using JJWT
-        Jws<Claims> parsedToken = Jwts.parserBuilder()
-                .setSigningKey(KeyMaterialHandler.getDefaultPrivateKey())
-                .build()
-                .parseClaimsJws(token);
+        Jws<Claims> parsedToken = Jwts.parser()
+                .verifyWith(KeyMaterialHandler.getDefaultPublicKey())
+                .build().parseSignedClaims(token);
 
         assertNotNull(parsedToken);
-        assertEquals(TestTokenProducer.ISSUER, parsedToken.getBody().getIssuer());
-        assertEquals(TestTokenProducer.SUBJECT, parsedToken.getBody().getSubject());
+        assertEquals(TestTokenProducer.ISSUER, parsedToken.getPayload().getIssuer());
+        assertEquals(TestTokenProducer.SUBJECT, parsedToken.getPayload().getSubject());
 
         // Check nbf claim
-        assertTrue(parsedToken.getBody().containsKey("nbf"));
-        assertEquals(notBefore.getEpochSecond(), ((Number) parsedToken.getBody().get("nbf")).longValue());
+        assertTrue(parsedToken.getPayload().containsKey("nbf"));
+        assertEquals(notBefore.getEpochSecond(), ((Number) parsedToken.getPayload().get("nbf")).longValue());
     }
 
     @Test
@@ -151,14 +146,13 @@ class TestTokenProducerTest {
         assertNotNull(token);
 
         // Parse the token using JJWT
-        Jws<Claims> parsedToken = Jwts.parserBuilder()
-                .setSigningKey(KeyMaterialHandler.getDefaultPrivateKey())
-                .build()
-                .parseClaimsJws(token);
+        Jws<Claims> parsedToken = Jwts.parser()
+                .verifyWith(KeyMaterialHandler.getDefaultPublicKey())
+                .build().parseSignedClaims(token);
 
         assertNotNull(parsedToken);
-        assertEquals(TestTokenProducer.ISSUER, parsedToken.getBody().getIssuer());
-        assertEquals(TestTokenProducer.SUBJECT, parsedToken.getBody().getSubject());
+        assertEquals(TestTokenProducer.ISSUER, parsedToken.getPayload().getIssuer());
+        assertEquals(TestTokenProducer.SUBJECT, parsedToken.getPayload().getSubject());
     }
 
     @Test
@@ -173,15 +167,14 @@ class TestTokenProducerTest {
         String token = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_SCOPES);
 
         // Parse the token using JJWT directly
-        Jws<Claims> parsedToken = Jwts.parserBuilder()
-                .setSigningKey(KeyMaterialHandler.getDefaultPrivateKey())
-                .build()
-                .parseClaimsJws(token);
+        Jws<Claims> parsedToken = Jwts.parser()
+                .verifyWith(KeyMaterialHandler.getDefaultPublicKey())
+                .build().parseSignedClaims(token);
 
         assertNotNull(parsedToken);
-        assertEquals(TestTokenProducer.ISSUER, parsedToken.getBody().getIssuer());
-        assertEquals(TestTokenProducer.SUBJECT, parsedToken.getBody().getSubject());
-        assertTrue(parsedToken.getBody().containsKey("scope"));
+        assertEquals(TestTokenProducer.ISSUER, parsedToken.getPayload().getIssuer());
+        assertEquals(TestTokenProducer.SUBJECT, parsedToken.getPayload().getSubject());
+        assertTrue(parsedToken.getPayload().containsKey("scope"));
     }
 
     @Test

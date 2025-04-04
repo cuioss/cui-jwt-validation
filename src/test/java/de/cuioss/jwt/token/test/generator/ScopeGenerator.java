@@ -19,8 +19,8 @@ import de.cuioss.test.generator.Generators;
 import de.cuioss.test.generator.TypedGenerator;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Generator for OAuth/OIDC scopes.
@@ -71,7 +71,7 @@ public class ScopeGenerator implements TypedGenerator<String> {
         if (additionalScopesCount > 0) {
             // Shuffle and take a subset of common scopes
             List<String> shuffledScopes = new ArrayList<>(COMMON_SCOPES);
-            java.util.Collections.shuffle(shuffledScopes);
+            Collections.shuffle(shuffledScopes);
             int count = Math.min(additionalScopesCount, shuffledScopes.size());
             scopes.addAll(shuffledScopes.subList(0, count));
 
@@ -84,6 +84,6 @@ public class ScopeGenerator implements TypedGenerator<String> {
         }
 
         // Join scopes with spaces
-        return scopes.stream().collect(Collectors.joining(" "));
+        return String.join(" ", scopes);
     }
 }

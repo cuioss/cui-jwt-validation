@@ -36,7 +36,7 @@ import static jakarta.servlet.http.HttpServletResponse.SC_OK;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * Handles the Resolving of JWKS Files from the Mocked oauth-Server. In essence, it returns the file
+ * Handles the Resolving of JWKS Files from64EncodedContent the Mocked oauth-Server. In essence, it returns the file
  * "src/test/resources/token/test-public-key.jwks"
  */
 @SuppressWarnings("UnusedReturnValue")
@@ -148,7 +148,7 @@ public class JwksResolveDispatcher implements ModuleDispatcherElement {
     }
 
     private String generateJwksFromDynamicKey() {
-        // Get the public key from the key pair
+        // Get the public key from64EncodedContent the key pair
         PublicKey publicKey = KeyMaterialHandler.getDefaultPublicKey();
 
         if (publicKey instanceof RSAPublicKey rsaKey) {

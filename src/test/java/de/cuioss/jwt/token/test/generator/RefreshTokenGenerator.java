@@ -21,9 +21,9 @@ import de.cuioss.test.generator.Generators;
 import de.cuioss.test.generator.TypedGenerator;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 
 import java.time.Instant;
+import java.util.Date;
 
 /**
  * Generator for OAuth/OIDC refresh tokens.
@@ -54,18 +54,16 @@ public class RefreshTokenGenerator implements TypedGenerator<String> {
             String subject = Generators.letterStrings(5, 10).next();
             String scope = scopeGenerator.next();
 
-            JwtBuilder builder = Jwts.builder()
-                    .setIssuer(TestTokenProducer.ISSUER)
-                    .setSubject(subject)
-                    .setIssuedAt(java.util.Date.from(Instant.now()))
-                    .setExpiration(java.util.Date.from(Instant.now().plusSeconds(86400))) // 24 hours
+            JwtBuilder builder = Jwts.builder().issuer(TestTokenProducer.ISSUER)
+                    .subject(subject).issuedAt(Date.from(Instant.now()))
+                    .expiration(Date.from(Instant.now().plusSeconds(86400))) // 24 hours
                     .claim("scope", scope)
                     .claim("typ", "Refresh")
-                    .setHeaderParam("kid", useAlternativeMode ? ALTERNATIVE_KEY_ID : DEFAULT_KEY_ID);
+                    .header().add("kid", useAlternativeMode ? ALTERNATIVE_KEY_ID : DEFAULT_KEY_ID).and();
 
             // Sign with default private key (we don't have an alternative private key)
             // The "alternative" mode is indicated by the key ID in the header
-            builder.signWith(KeyMaterialHandler.getDefaultPrivateKey(), SignatureAlgorithm.RS256);
+            builder.signWith(KeyMaterialHandler.getDefaultPrivateKey(), Jwts.SIG.RS256);
 
             return builder.compact();
         } catch (Exception e) {

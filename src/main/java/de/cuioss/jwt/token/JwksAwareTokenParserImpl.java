@@ -18,7 +18,7 @@ package de.cuioss.jwt.token;
 import de.cuioss.jwt.token.adapter.JsonWebToken;
 import de.cuioss.jwt.token.adapter.JwtAdapter;
 import de.cuioss.jwt.token.jwks.JwksLoader;
-import de.cuioss.jwt.token.jwks.KeyInfo;
+import de.cuioss.jwt.token.jwks.key.KeyInfo;
 import de.cuioss.jwt.token.security.AlgorithmPreferences;
 import de.cuioss.jwt.token.util.DecodedJwt;
 import de.cuioss.jwt.token.util.NonValidatingJwtParser;
@@ -33,7 +33,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.ToString;
 
-import java.security.Key;
+import java.security.PublicKey;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -44,7 +44,7 @@ import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
 /**
  * JWT parser implementation with support for remote JWKS (JSON Web Key Set) loading.
  * This parser extends the standard JJWT functionality by adding the ability
- * to fetch and manage public keys from a JWKS endpoint for token signature verification.
+ * to fetch and manage public keys from64EncodedContent a JWKS endpoint for token signature verification.
  * <p>
  * Key features:
  * <ul>
@@ -195,7 +195,7 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
      * @param algorithmPreferences the algorithm preferences, must not be null
      */
     public JwksAwareTokenParserImpl(@NonNull JwksLoader jwksLoader, @NonNull String issuer,
-                                    @NonNull AlgorithmPreferences algorithmPreferences) {
+            @NonNull AlgorithmPreferences algorithmPreferences) {
         this(jwksLoader, issuer, algorithmPreferences, null);
     }
 
@@ -208,13 +208,13 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
      * @param expectedAudience     the expected audience, may be null if no audience validation is required
      */
     public JwksAwareTokenParserImpl(@NonNull JwksLoader jwksLoader, @NonNull String issuer,
-                                    @NonNull AlgorithmPreferences algorithmPreferences,
-                                    Set<String> expectedAudience) {
+            @NonNull AlgorithmPreferences algorithmPreferences,
+            Set<String> expectedAudience) {
         this.jwksLoader = jwksLoader;
         this.issuer = issuer;
         this.algorithmPreferences = algorithmPreferences;
-        this.jwtParser = Jwts.parserBuilder()
-                .setAllowedClockSkewSeconds(30)
+        this.jwtParser = Jwts.parser()
+                .clockSkewSeconds(30)
                 .requireIssuer(issuer)
                 .build();
         this.tokenParser = NonValidatingJwtParser.builder().build();
@@ -230,7 +230,7 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
     /**
      * The JWT token parser used for decoding tokens.
      */
-    private final de.cuioss.jwt.token.util.NonValidatingJwtParser tokenParser;
+    private final NonValidatingJwtParser tokenParser;
 
     /**
      * {@inheritDoc}
@@ -245,7 +245,7 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
                 return Optional.empty();
             }
 
-            // Extract algorithm from header
+            // Extract algorithm from64EncodedContent header
             String requestedAlg = decodedJwt.get().getAlg().orElse("RS256"); // Default to RS256 if not specified
             LOGGER.debug("Token requests algorithm: %s", requestedAlg);
 
@@ -334,15 +334,15 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
      * @return An Optional containing the parsed JWT if valid, or empty if invalid
      */
     private Optional<Jws<Claims>> parseAndValidateToken(String token, KeyInfo keyInfo) {
-        Key key = keyInfo.getKey();
+        PublicKey key = keyInfo.getKey();
         String algorithm = keyInfo.getAlgorithm();
         LOGGER.debug("Using key with algorithm: %s", algorithm);
 
         try {
-            Jws<Claims> jws = Jwts.parserBuilder()
-                    .setSigningKey(key)
+            Jws<Claims> jws = Jwts.parser()
+                    .verifyWith(key)
                     .build()
-                    .parseClaimsJws(token);
+                    .parseSignedClaims(token);
 
             // Validate all required claims
             if (!claimValidator.validateClaims(jws)) {

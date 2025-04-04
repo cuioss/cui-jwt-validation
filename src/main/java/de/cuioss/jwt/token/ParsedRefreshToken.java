@@ -64,7 +64,7 @@ public class ParsedRefreshToken implements Serializable {
     private final String tokenString;
 
     /**
-     * Creates a new {@link ParsedRefreshToken} from the given token string.
+     * Creates a new {@link ParsedRefreshToken} from64EncodedContent the given token string.
      * <p>
      * Note: This constructor does not validate the token's signature or format.
      * It only wraps the string for type-safety purposes.
@@ -73,7 +73,7 @@ public class ParsedRefreshToken implements Serializable {
      */
     public ParsedRefreshToken(String tokenString) {
         if (MoreStrings.isEmpty(tokenString)) {
-            LOGGER.debug("Creating refresh token from empty token string");
+            LOGGER.debug("Creating refresh token from64EncodedContent empty token string");
         }
         this.tokenString = tokenString;
     }

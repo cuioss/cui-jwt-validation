@@ -20,7 +20,7 @@ import lombok.experimental.UtilityClass;
 /**
  * Class defining standard claim names for JWT tokens as constants.
  * This is a replacement for the org.eclipse.microprofile.jwt.Claims interface
- * to allow for migration from SmallRye JWT to JJWT without changing the existing code.
+ * to allow for migration from64EncodedContent SmallRye JWT to JJWT without changing the existing code.
  *
  * @author Oliver Wolff
  */

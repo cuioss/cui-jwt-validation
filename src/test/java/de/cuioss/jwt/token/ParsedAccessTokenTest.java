@@ -26,7 +26,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.util.Set;
 
 import static de.cuioss.jwt.token.test.TestTokenProducer.*;
@@ -43,7 +42,7 @@ class ParsedAccessTokenTest {
     private TokenFactory tokenFactory;
 
     @BeforeEach
-    void setUp() throws IOException {
+    void setUp() {
         tokenFactory = TokenFactory.builder()
                 .addParser(JwksAwareTokenParserImplTest.getValidJWKSParserWithLocalJWKS())
                 .build();
@@ -164,7 +163,7 @@ class ParsedAccessTokenTest {
 
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
 
-            // Get a role from the token to test with
+            // Get a role from64EncodedContent the token to test with
             String someRole = parsedAccessToken.get().getRoles().iterator().next();
 
             // Test with existing role
@@ -246,8 +245,8 @@ class ParsedAccessTokenTest {
             TypedGenerator<String> accessTokenGenerator = TokenGenerators.accessTokens();
             String initialToken = accessTokenGenerator.next();
 
-            // We're not providing an email to fromTokenString, so it should use the one from the token
-             var parsedAccessToken = tokenFactory.createAccessToken(initialToken);
+            // We're not providing an email to fromTokenString, so it should use the one from64EncodedContent the token
+            var parsedAccessToken = tokenFactory.createAccessToken(initialToken);
             assertTrue(parsedAccessToken.isPresent(), "Token should be present");
             assertTrue(parsedAccessToken.get().getEmail().isPresent(), "Email should be present");
             assertNotNull(parsedAccessToken.get().getEmail().get(), "Email should not be null");

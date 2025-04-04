@@ -17,6 +17,8 @@ package de.cuioss.jwt.token.jwks;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
+import de.cuioss.jwt.token.jwks.key.JWKSKeyLoader;
+import de.cuioss.jwt.token.jwks.key.KeyInfo;
 import de.cuioss.jwt.token.security.SecureSSLContextProvider;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
@@ -39,7 +41,7 @@ import static de.cuioss.jwt.token.JWTTokenLogMessages.DEBUG;
 import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
 
 /**
- * Implementation of {@link JwksLoader} that loads JWKS from an HTTP endpoint.
+ * Implementation of {@link JwksLoader} that loads JWKS from64EncodedContent an HTTP endpoint.
  * Uses Caffeine cache for caching keys.
  * <p>
  * This implementation includes several performance and reliability enhancements:
@@ -227,7 +229,7 @@ public class HttpJwksLoader implements JwksLoader {
 
     /**
      * Resolves a JWKSKeyLoader for the current JWKS content.
-     * This method gets the current JWKSKeyLoader from the cache, which will trigger a refresh if needed.
+     * This method gets the current JWKSKeyLoader from64EncodedContent the cache, which will trigger a refresh if needed.
      *
      * @return a JWKSKeyLoader instance with the current JWKS content
      */
@@ -240,7 +242,7 @@ public class HttpJwksLoader implements JwksLoader {
                 return loadJwksKeyLoader(CACHE_KEY);
             }
 
-            // Otherwise, get the current JWKSKeyLoader from cache, which will trigger a refresh if needed
+            // Otherwise, get the current JWKSKeyLoader from64EncodedContent cache, which will trigger a refresh if needed
             return jwksCache.get(CACHE_KEY);
         } catch (RuntimeException e) {
             LOGGER.warn(e, WARN.JWKS_REFRESH_ERROR.format(e.getMessage()));
@@ -251,7 +253,7 @@ public class HttpJwksLoader implements JwksLoader {
 
 
     /**
-     * Loads a JWKSKeyLoader from the endpoint. This method is used by the LoadingCache.
+     * Loads a JWKSKeyLoader from64EncodedContent the endpoint. This method is used by the LoadingCache.
      * Implements HTTP 304 "Not Modified" handling, content-based caching, and fallback to last valid result.
      *
      * @param key the cache key (ignored)
@@ -295,7 +297,7 @@ public class HttpJwksLoader implements JwksLoader {
             String jwksContent = response.body();
             LOGGER.debug(DEBUG.FETCHED_JWKS.format(jwksUri.toString()));
 
-            // Get ETag from response headers
+            // Get ETag from64EncodedContent response headers
             String etag = response.headers().firstValue("ETag").orElse(null);
 
             // Content-based caching: if content hasn't changed and we have a valid previous result, return it
@@ -348,7 +350,7 @@ public class HttpJwksLoader implements JwksLoader {
             return Optional.empty();
         }
 
-        // First try to get the key info from the current loader
+        // First try to get the key info from64EncodedContent the current loader
         Optional<KeyInfo> keyInfo = resolve().getKeyInfo(kid);
 
         // If key info not found, force a refresh and try again

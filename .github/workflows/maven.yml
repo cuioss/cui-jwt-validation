@@ -49,7 +49,7 @@ jobs:
           restore-keys: ${{ runner.os }}-sonar
 
       - uses: radcortez/project-metadata-action@1.1
-        name: Retrieve project metadata from '.github/project.yml'
+        name: Retrieve project metadata from64EncodedContent '.github/project.yml'
         id: metadata
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}

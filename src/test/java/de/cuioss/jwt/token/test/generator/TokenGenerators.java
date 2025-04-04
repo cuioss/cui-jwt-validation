@@ -17,6 +17,8 @@ package de.cuioss.jwt.token.test.generator;
 
 import de.cuioss.test.generator.TypedGenerator;
 
+import java.util.Set;
+
 /**
  * Factory for unified access to token generators.
  * Provides access to generators for various token types and JWKS.
@@ -114,7 +116,7 @@ public class TokenGenerators {
      *
      * @return a generator for roles
      */
-    public static TypedGenerator<java.util.Set<String>> roles() {
+    public static TypedGenerator<Set<String>> roles() {
         return new RoleGenerator();
     }
 
@@ -123,7 +125,7 @@ public class TokenGenerators {
      *
      * @return a generator for groups
      */
-    public static TypedGenerator<java.util.Set<String>> groups() {
+    public static TypedGenerator<Set<String>> groups() {
         return new GroupGenerator();
     }
 }

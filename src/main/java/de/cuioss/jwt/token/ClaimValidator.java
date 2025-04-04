@@ -62,7 +62,7 @@ class ClaimValidator {
     /**
      * Creates a new ClaimValidator with the specified issuer and audience.
      *
-     * @param expectedIssuer the expected issuer
+     * @param expectedIssuer   the expected issuer
      * @param expectedAudience the expected audience, may be null if no audience validation is required
      */
     ClaimValidator(String expectedIssuer, Set<String> expectedAudience) {
@@ -81,7 +81,7 @@ class ClaimValidator {
         LOGGER.debug("Validating claims");
 
         try {
-            Claims claims = jws.getBody();
+            Claims claims = jws.getPayload();
 
             // Validate issuer
             if (!validateIssuer(claims)) {
@@ -145,10 +145,8 @@ class ClaimValidator {
         Set<String> tokenAudience = new HashSet<>();
         if (audienceObj instanceof String string) {
             tokenAudience.add(string);
-        } else if (audienceObj instanceof List) {
-            @SuppressWarnings("unchecked")
-            List<String> audienceList = (List<String>) audienceObj;
-            tokenAudience.addAll(audienceList);
+        } else if (audienceObj instanceof Collection<?> collection) {
+            collection.forEach(item -> tokenAudience.add(item.toString()));
         } else {
             LOGGER.warn("Unexpected audience claim format: {}", audienceObj.getClass().getName());
             return false;

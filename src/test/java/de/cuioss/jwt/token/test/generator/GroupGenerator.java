@@ -18,10 +18,7 @@ package de.cuioss.jwt.token.test.generator;
 import de.cuioss.test.generator.Generators;
 import de.cuioss.test.generator.TypedGenerator;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Generator for OAuth/OIDC groups.
@@ -73,7 +70,7 @@ public class GroupGenerator implements TypedGenerator<Set<String>> {
 
         // Shuffle and take a subset of common groups
         List<String> shuffledGroups = new ArrayList<>(COMMON_GROUPS);
-        java.util.Collections.shuffle(shuffledGroups);
+        Collections.shuffle(shuffledGroups);
         int count = Math.min(groupCount, shuffledGroups.size());
         groups.addAll(shuffledGroups.subList(0, count));
 

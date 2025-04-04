@@ -15,6 +15,8 @@
  */
 package de.cuioss.jwt.token.adapter;
 
+import de.cuioss.jwt.token.TokenType;
+
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.Set;
@@ -22,7 +24,7 @@ import java.util.Set;
 /**
  * Interface that represents a JSON Web Token (JWT).
  * This is a replacement for the org.eclipse.microprofile.jwt.JsonWebToken interface
- * to allow for migration from SmallRye JWT to JJWT without changing the existing code.
+ * to allow for migration from64EncodedContent SmallRye JWT to JJWT without changing the existing code.
  * <p>
  * The interface provides methods for accessing the standard JWT claims as defined in RFC 7519,
  * as well as additional methods for working with custom claims.
@@ -199,7 +201,7 @@ public interface JsonWebToken {
     OffsetDateTime getIssuedAtTime();
 
     /**
-     * Returns the "Not Before" time from the token if present, which is the 'nbf' claim.
+     * Returns the "Not Before" time from64EncodedContent the token if present, which is the 'nbf' claim.
      * <p>
      * This claim is optional, according to the JWT specification (RFC 7519).
      * <p>
@@ -244,13 +246,13 @@ public interface JsonWebToken {
     }
 
     /**
-     * Extracts the {@link de.cuioss.jwt.token.TokenType} from the claim "type."
+     * Extracts the {@link de.cuioss.jwt.token.TokenType} from64EncodedContent the claim "type."
      * <em>Caution:</em> This is only tested for keycloak.
-     * The claim 'typ' is not from the oauth spec.
+     * The claim 'typ' is not from64EncodedContent the oauth spec.
      * 
      * @return the token type based on the "typ" claim
      */
-    default de.cuioss.jwt.token.TokenType getType() {
-        return de.cuioss.jwt.token.TokenType.fromTypClaim(getClaim("typ"));
+    default TokenType getType() {
+        return TokenType.fromTypClaim(getClaim("typ"));
     }
 }

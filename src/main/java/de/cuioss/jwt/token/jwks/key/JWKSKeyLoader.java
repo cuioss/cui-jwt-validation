@@ -13,42 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.cuioss.jwt.token.jwks;
+package de.cuioss.jwt.token.jwks.key;
 
-import de.cuioss.jwt.token.security.JwkKeyHandler;
+import de.cuioss.jwt.token.jwks.HttpJwksLoader;
+import de.cuioss.jwt.token.jwks.JwksLoader;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
 import jakarta.json.Json;
-import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonReader;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.ToString;
 
 import java.io.StringReader;
-import java.security.Key;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
 
 /**
- * Implementation of {@link JwksLoader} that loads JWKS from a string content.
+ * Implementation of {@link JwksLoader} that loads JWKS from64EncodedContent a string content.
  * <p>
  * This implementation is useful when the JWKS content is already available as a string.
  * <p>
  * This implementation supports cryptographic agility by handling multiple key types
  * and algorithms, including RSA, EC, and RSA-PSS.
  * <p>
- * The class stores the original JWKS content string and the ETag value from HTTP responses
+ * The class stores the original JWKS content string and the ETag value from64EncodedContent HTTP responses
  * to support content-based caching and HTTP 304 "Not Modified" handling in {@link HttpJwksLoader}.
  * <p>
  * Implements requirement: {@code CUI-JWT-8.5: Cryptographic Agility}
  * <p>
  * For more details on the security aspects, see the
  * <a href="../../../../../../../doc/specification/security.adoc">Security Specification</a>.
- * 
+ *
  * @author Oliver Wolff
  */
 @ToString(of = {"keyInfoMap", "originalString", "etag"})
@@ -60,7 +60,9 @@ public class JWKSKeyLoader implements JwksLoader {
     private static final String EC_KEY_TYPE = "EC";
 
     private final Map<String, KeyInfo> keyInfoMap;
+    @Getter
     private final String originalString;
+    @Getter
     private final String etag;
 
     /**
@@ -76,30 +78,12 @@ public class JWKSKeyLoader implements JwksLoader {
      * Creates a new JWKSKeyLoader with the specified JWKS content and ETag.
      *
      * @param jwksContent the JWKS content as a string, must not be null
-     * @param etag the ETag value from the HTTP response, may be null
+     * @param etag        the ETag value from64EncodedContent the HTTP response, may be null
      */
     public JWKSKeyLoader(@NonNull String jwksContent, String etag) {
         this.originalString = jwksContent;
         this.etag = etag;
         keyInfoMap = parseJwks(jwksContent);
-    }
-
-    /**
-     * Returns the original JWKS content string.
-     *
-     * @return the original JWKS content string
-     */
-    public String getOriginalString() {
-        return originalString;
-    }
-
-    /**
-     * Returns the ETag value from the HTTP response.
-     *
-     * @return the ETag value, may be null if not available
-     */
-    public String getEtag() {
-        return etag;
     }
 
     /**
@@ -134,16 +118,16 @@ public class JWKSKeyLoader implements JwksLoader {
     /**
      * Parse a JSON Web Key Set object and extract keys.
      *
-     * @param jwks the JSON Web Key Set object
+     * @param jwks   the JSON Web Key Set object
      * @param result the map to store the extracted keys
      */
     private void parseJsonWebKeySet(JsonObject jwks, Map<String, KeyInfo> result) {
         // Check if this is a JWKS with a "keys" array or a single key
-        if (jwks.containsKey("keys")) {
-            parseStandardJwks(jwks, result);
-        } else if (jwks.containsKey("kty")) {
+        if (JwkKeyConstants.Keys.isPresent(jwks)) {
+            parseKeysArray(jwks, result);
+        } else if (JwkKeyConstants.KeyType.isPresent(jwks)) {
             // This is a single key object
-            processKey(jwks, result);
+            processSingleKey(jwks, result);
         } else {
             LOGGER.warn(WARN.JWKS_MISSING_KEYS::format);
         }
@@ -152,15 +136,15 @@ public class JWKSKeyLoader implements JwksLoader {
     /**
      * Parse a standard JWKS with a "keys" array.
      *
-     * @param jwks the JWKS object
+     * @param jwks   the JWKS object
      * @param result the map to store the extracted keys
      */
-    private void parseStandardJwks(JsonObject jwks, Map<String, KeyInfo> result) {
-        JsonArray keysArray = jwks.getJsonArray("keys");
-        if (keysArray != null) {
-            for (int i = 0; i < keysArray.size(); i++) {
-                JsonObject jwk = keysArray.getJsonObject(i);
-                processKey(jwk, result);
+    private void parseKeysArray(JsonObject jwks, Map<String, KeyInfo> result) {
+        var keysArray = JwkKeyConstants.Keys.extract(jwks);
+        if (keysArray.isPresent()) {
+            for (int i = 0; i < keysArray.get().size(); i++) {
+                JsonObject jwk = keysArray.get().getJsonObject(i);
+                processSingleKey(jwk, result);
             }
         }
     }
@@ -168,37 +152,36 @@ public class JWKSKeyLoader implements JwksLoader {
     /**
      * Process a single JWK and add it to the result map.
      *
-     * @param jwk the JWK object
+     * @param jwk    the JWK object
      * @param result the map to store the extracted key
      */
-    private void processKey(JsonObject jwk, Map<String, KeyInfo> result) {
-        if (!jwk.containsKey("kty")) {
+    private void processSingleKey(JsonObject jwk, Map<String, KeyInfo> result) {
+        var keyType = JwkKeyConstants.KeyType.getString(jwk);
+        if (keyType.isEmpty()) {
             LOGGER.warn(WARN.JWK_MISSING_KTY::format);
             return;
         }
 
-        String kty = jwk.getString("kty");
-        String kid = jwk.containsKey("kid") ? jwk.getString("kid") : "default-key-id";
-        String alg = jwk.containsKey("alg") ? jwk.getString("alg") : null;
-
+        String kty = keyType.get();
+        String kid = JwkKeyConstants.KeyId.from(jwk).orElse("default-key-id");
         try {
             if (RSA_KEY_TYPE.equals(kty)) {
-                Key publicKey = JwkKeyHandler.parseRsaKey(jwk);
+                var publicKey = JwkKeyHandler.parseRsaKey(jwk);
                 // Determine algorithm if not specified
-                if (alg == null) {
-                    alg = "RS256"; // Default to RS256 if not specified
-                }
-                result.put(kid, new KeyInfo(publicKey, alg));
+                String alg = JwkKeyConstants.Algorithm.from(jwk).orElse("RS256");// Default to RS256 if not specified
+                result.put(kid, new KeyInfo(publicKey, alg, kid));
                 LOGGER.debug("Parsed RSA key with ID: %s and algorithm: %s", kid, alg);
             } else if (EC_KEY_TYPE.equals(kty)) {
-                Key publicKey = JwkKeyHandler.parseEcKey(jwk);
+                var publicKey = JwkKeyHandler.parseEcKey(jwk);
                 // Determine algorithm if not specified
-                if (alg == null) {
+                var algOption = JwkKeyConstants.Algorithm.from(jwk);
+                String alg = algOption.orElse(null);
+                if (algOption.isEmpty()) {
                     // Determine algorithm based on curve
-                    String curve = jwk.getString("crv", "P-256");
+                    String curve = JwkKeyConstants.Curve.from(jwk).orElse("P-256");
                     alg = JwkKeyHandler.determineEcAlgorithm(curve);
                 }
-                result.put(kid, new KeyInfo(publicKey, alg));
+                result.put(kid, new KeyInfo(publicKey, alg, kid));
                 LOGGER.debug("Parsed EC key with ID: %s and algorithm: %s", kid, alg);
             } else {
                 LOGGER.debug("Unsupported key type: %s for key ID: %s", kty, kid);

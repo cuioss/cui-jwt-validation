@@ -16,8 +16,7 @@
 package de.cuioss.jwt.token.test.dispatcher;
 
 import de.cuioss.jwt.token.test.JWKSFactory;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.Jwts;
 import lombok.Getter;
 import lombok.NonNull;
 import mockwebserver3.MockResponse;
@@ -113,7 +112,7 @@ public class EnhancedJwksResolveDispatcher extends JwksResolveDispatcher {
 
         // Check for If-None-Match header if expected
         if (responseStrategy == ResponseStrategy.CHECK_IF_NONE_MATCH) {
-            // Get headers from request
+            // Get headers from64EncodedContent request
             Headers headers = request.getHeaders();
             String ifNoneMatch = headers.get("If-None-Match");
             ifNoneMatchHeaderPresent = ifNoneMatch != null && !ifNoneMatch.isEmpty();
@@ -128,7 +127,7 @@ public class EnhancedJwksResolveDispatcher extends JwksResolveDispatcher {
             case DIFFERENT_CONTENT -> {
                 if (differentContentKeyId != null) {
                     // Create a new key pair for a truly different key
-                    KeyPair keyPair = Keys.keyPairFor(SignatureAlgorithm.RS256);
+                    KeyPair keyPair = Jwts.SIG.RS256.keyPair().build();
                     RSAPublicKey rsaPublicKey = (RSAPublicKey) keyPair.getPublic();
 
                     // Create JWKS with the new key and the specified key ID

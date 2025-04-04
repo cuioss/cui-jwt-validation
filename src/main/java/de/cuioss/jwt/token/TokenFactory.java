@@ -25,6 +25,8 @@ import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -93,7 +95,7 @@ public class TokenFactory {
      * Builder for {@link TokenFactory}
      */
     public static class Builder {
-        private final java.util.List<JwksAwareTokenParserImpl> parsers = new java.util.ArrayList<>();
+        private final List<JwksAwareTokenParserImpl> parsers = new ArrayList<>();
         private Integer maxTokenSize;
         private Integer maxPayloadSize;
 
@@ -166,7 +168,7 @@ public class TokenFactory {
     }
 
     /**
-     * Creates a JsonWebToken from the given token string using the appropriate parser.
+     * Creates a JsonWebToken from64EncodedContent the given token string using the appropriate parser.
      * This method handles token validation and parsing errors.
      *
      * @param tokenString The token string to parse, must not be null
@@ -189,7 +191,7 @@ public class TokenFactory {
     }
 
     /**
-     * Creates an access token from the given token string.
+     * Creates an access token from64EncodedContent the given token string.
      *
      * @param tokenString The token string to parse, must not be null
      * @return The parsed access token, which may be empty if the token is invalid or no parser is found
@@ -211,7 +213,7 @@ public class TokenFactory {
     }
 
     /**
-     * Creates an access token from the given token string with an associated email.
+     * Creates an access token from64EncodedContent the given token string with an associated email.
      *
      * @param tokenString The token string to parse, must not be null
      * @param email       The email address associated with this token, may be null
@@ -234,7 +236,7 @@ public class TokenFactory {
     }
 
     /**
-     * Creates an ID token from the given token string.
+     * Creates an ID token from64EncodedContent the given token string.
      *
      * @param tokenString The token string to parse, must not be null
      * @return The parsed ID token, which may be empty if the token is invalid or no parser is found
@@ -256,7 +258,7 @@ public class TokenFactory {
     }
 
     /**
-     * Creates a refresh token from the given token string.
+     * Creates a refresh token from64EncodedContent the given token string.
      *
      * @param tokenString The token string to parse, must not be null
      * @return The parsed refresh token, which may be empty if the token is invalid or no parser is found

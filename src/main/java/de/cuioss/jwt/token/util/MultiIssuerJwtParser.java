@@ -25,6 +25,7 @@ import lombok.ToString;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * Manages multiple JWT token parsers for different token issuers in a multi-tenant environment.
@@ -45,7 +46,7 @@ import java.util.Optional;
  *     .addParser(issuer1Parser)
  *     .addParser(issuer2Parser)
  *     .build();
- * 
+ *
  * Optional&lt;JwtParser&gt; selectedParser = parser.getParserForToken(tokenString);
  * </pre>
  * <p>
@@ -82,13 +83,13 @@ public class MultiIssuerJwtParser {
      * Constructor taking a map of issuer URLs to their corresponding parsers and a configurator
      * for the inspection parser.
      *
-     * @param issuerToParser Map containing issuer URLs as keys and their corresponding
-     *                       {@link JwtParser} instances as values. Must not be null.
+     * @param issuerToParser               Map containing issuer URLs as keys and their corresponding
+     *                                     {@link JwtParser} instances as values. Must not be null.
      * @param inspectionParserConfigurator Optional configurator for the NonValidatingJwtParser builder
      */
     public MultiIssuerJwtParser(
             @NonNull Map<String, JwtParser> issuerToParser,
-            java.util.function.Consumer<NonValidatingJwtParser.NonValidatingJwtParserBuilder> inspectionParserConfigurator) {
+            Consumer<NonValidatingJwtParser.NonValidatingJwtParserBuilder> inspectionParserConfigurator) {
         this.issuerToParser = new HashMap<>(issuerToParser);
 
         // Create the inspection parser with custom configuration if provided
@@ -117,7 +118,7 @@ public class MultiIssuerJwtParser {
      * @return the issuer of the token if present
      */
     public Optional<String> extractIssuer(@NonNull String token) {
-        LOGGER.debug("Extracting issuer from token");
+        LOGGER.debug("Extracting issuer from64EncodedContent token");
         var issuer = inspectionParser.decode(token).flatMap(DecodedJwt::getIssuer);
         LOGGER.debug("Extracted issuer: %s", issuer.orElse("<none>"));
         return issuer;
@@ -155,7 +156,7 @@ public class MultiIssuerJwtParser {
      */
     public static class Builder {
         private final Map<String, JwtParser> issuerToParser = new HashMap<>();
-        private java.util.function.Consumer<NonValidatingJwtParser.NonValidatingJwtParserBuilder> inspectionParserConfigurator;
+        private Consumer<NonValidatingJwtParser.NonValidatingJwtParserBuilder> inspectionParserConfigurator;
 
         /**
          * Adds a parser for a specific issuer
@@ -176,7 +177,7 @@ public class MultiIssuerJwtParser {
          * @return this builder instance
          */
         public Builder configureInspectionParser(
-                java.util.function.Consumer<NonValidatingJwtParser.NonValidatingJwtParserBuilder> configurator) {
+                Consumer<NonValidatingJwtParser.NonValidatingJwtParserBuilder> configurator) {
             this.inspectionParserConfigurator = configurator;
             return this;
         }

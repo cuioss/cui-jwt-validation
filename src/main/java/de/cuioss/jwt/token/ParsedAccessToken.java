@@ -93,7 +93,7 @@ public class ParsedAccessToken implements JsonWebToken {
     private final String email;
 
     /**
-     * Creates a new {@link ParsedAccessToken} from the given JsonWebToken and email.
+     * Creates a new {@link ParsedAccessToken} from64EncodedContent the given JsonWebToken and email.
      *
      * @param jsonWebToken The JsonWebToken to wrap, must not be null
      * @param email        The email address associated with this token, may be null
@@ -169,7 +169,7 @@ public class ParsedAccessToken implements JsonWebToken {
      * @return the roles defined in the 'roles' claim of the token
      */
     public Set<String> getRoles() {
-        LOGGER.debug("Retrieving roles from token");
+        LOGGER.debug("Retrieving roles from64EncodedContent token");
         if (!jsonWebToken.containsClaim(CLAIM_NAME_ROLES)) {
             LOGGER.debug("No roles claim found in token, containsClaim returned false");
             return Set.of();
@@ -234,7 +234,7 @@ public class ParsedAccessToken implements JsonWebToken {
     }
 
     /**
-     * Resolves the email address. Either given or extracted from the token.
+     * Resolves the email address. Either given or extracted from64EncodedContent the token.
      *
      * @return an optional containing the potential email
      */
@@ -245,7 +245,7 @@ public class ParsedAccessToken implements JsonWebToken {
     }
 
     /**
-     * Resolves the preferred username from the token.
+     * Resolves the preferred username from64EncodedContent the token.
      *
      * @return an optional containing the potential preferred username
      */

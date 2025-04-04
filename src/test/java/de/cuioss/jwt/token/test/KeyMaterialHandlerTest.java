@@ -18,7 +18,6 @@ package de.cuioss.jwt.token.test;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
@@ -40,7 +39,7 @@ class KeyMaterialHandlerTest {
     }
 
     // Test removed: shouldLoadPrivateKeyFromFile
-    // We're now generating the key pair instead of loading it from a file
+    // We're now generating the key pair instead of loading it from64EncodedContent a file
 
     @Test
     void shouldSignAndVerifyToken() {
@@ -48,23 +47,21 @@ class KeyMaterialHandlerTest {
         PrivateKey privateKey = KeyMaterialHandler.getDefaultPrivateKey();
 
         // Create and sign a token
-        String token = Jwts.builder()
-                .setSubject("test-subject")
-                .signWith(privateKey, SignatureAlgorithm.RS256)
+        String token = Jwts.builder().subject("test-subject")
+                .signWith(privateKey, Jwts.SIG.RS256)
                 .compact();
 
         // Verify the token is not null
         assertNotNull(token);
 
         // Parse and verify the token
-        Jws<Claims> parsedToken = Jwts.parserBuilder()
-                .setSigningKey(privateKey)
-                .build()
-                .parseClaimsJws(token);
+        Jws<Claims> parsedToken = Jwts.parser()
+                .verifyWith(KeyMaterialHandler.getDefaultPublicKey())
+                .build().parseSignedClaims(token);
 
         // Verify the parsed token
         assertNotNull(parsedToken);
-        assertEquals("test-subject", parsedToken.getBody().getSubject());
+        assertEquals("test-subject", parsedToken.getPayload().getSubject());
     }
 
     @Test

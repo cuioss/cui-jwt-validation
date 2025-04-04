@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.cuioss.jwt.token.jwks;
+package de.cuioss.jwt.token.jwks.key;
 
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.ToString;
+import lombok.Value;
 
-import java.security.Key;
+import java.security.PublicKey;
 
 /**
  * Class that holds information about a key, including the key itself and its algorithm.
@@ -35,30 +34,24 @@ import java.security.Key;
  *
  * @author Oliver Wolff
  */
-@ToString
-@EqualsAndHashCode
+@Value
 public class KeyInfo {
 
     /**
      * The key.
      */
     @Getter
-    private final Key key;
+    @NonNull
+    PublicKey key;
 
     /**
      * The algorithm used by the key.
      */
     @Getter
-    private final String algorithm;
+    @NonNull
+    String algorithm;
 
-    /**
-     * Constructor for KeyInfo.
-     *
-     * @param key       the key, must not be null
-     * @param algorithm the algorithm, must not be null
-     */
-    public KeyInfo(@NonNull Key key, @NonNull String algorithm) {
-        this.key = key;
-        this.algorithm = algorithm;
-    }
+    @Getter
+    @NonNull
+    String keyId;
 }

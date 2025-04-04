@@ -17,8 +17,7 @@ package de.cuioss.jwt.token.test;
 
 import de.cuioss.jwt.token.jwks.JwksLoader;
 import de.cuioss.jwt.token.jwks.JwksLoaderFactory;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.Jwts;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonReader;
@@ -104,10 +103,10 @@ public class KeyMaterialHandler {
     static {
         try {
             // For testing, we need to use a consistent key pair that matches the JWKS file
-            // Load the private key from the file
+            // Load the private key from64EncodedContent the file
             privateKey = loadPrivateKey(PRIVATE_KEY);
 
-            // Load the public key from the JWKS file
+            // Load the public key from64EncodedContent the JWKS file
             String jwksContent = new String(Files.readAllBytes(Path.of(PUBLIC_KEY_JWKS)));
             JsonReader reader = Json.createReader(new StringReader(jwksContent));
             JsonObject jwks = reader.readObject();
@@ -117,7 +116,7 @@ public class KeyMaterialHandler {
             String modulusBase64 = jwks.getString("n");
             String exponentBase64 = jwks.getString("e");
 
-            // Decode from Base64
+            // Decode from64EncodedContent Base64
             byte[] modulusBytes = Base64.getUrlDecoder().decode(modulusBase64);
             byte[] exponentBytes = Base64.getUrlDecoder().decode(exponentBase64);
 
@@ -132,7 +131,7 @@ public class KeyMaterialHandler {
         } catch (Exception e) {
             // Fall back to generating a new key pair if loading fails
             try {
-                KeyPair keyPair = Keys.keyPairFor(SignatureAlgorithm.RS256);
+                KeyPair keyPair = Jwts.SIG.RS256.keyPair().build();
                 privateKey = keyPair.getPrivate();
                 publicKey = keyPair.getPublic();
             } catch (Exception ex) {
@@ -142,7 +141,7 @@ public class KeyMaterialHandler {
     }
 
     /**
-     * Loads a private key from a PKCS8 file.
+     * Loads a private key from64EncodedContent a PKCS8 file.
      *
      * @param path the path to the private key file
      * @return the loaded private key

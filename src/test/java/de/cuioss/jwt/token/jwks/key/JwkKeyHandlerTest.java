@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.cuioss.jwt.token.security;
+package de.cuioss.jwt.token.jwks.key;
 
 import de.cuioss.jwt.token.test.JWKSFactory;
 import jakarta.json.Json;
@@ -29,20 +29,14 @@ import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for {@link JwkKeyHandler} with a focus on security aspects and potential attacks.
  */
 class JwkKeyHandlerTest {
 
-    // Helper method to create a JsonObject from a string
+    // Helper method to create a JsonObject from64EncodedContent a string
     private JsonObject createJsonObject(String jsonString) {
         try (JsonReader reader = Json.createReader(new StringReader(jsonString))) {
             return reader.readObject();
@@ -56,9 +50,9 @@ class JwkKeyHandlerTest {
     }
 
     // Helper method to create a JsonObject with specific fields
-    private JsonObject createJsonObject(String keyType, String n, String e, String kid) {
+    private JsonObject createJsonObject(String n, String e) {
         JsonObjectBuilder builder = Json.createObjectBuilder()
-                .add("kty", keyType);
+                .add("kty", "RSA");
 
         if (n != null) {
             builder.add("n", n);
@@ -68,18 +62,16 @@ class JwkKeyHandlerTest {
             builder.add("e", e);
         }
 
-        if (kid != null) {
-            builder.add("kid", kid);
-        }
+        builder.add("kid", "test-key");
 
         return builder.build();
     }
 
     // Helper method to create an EC JWK
-    private JsonObject createEcJwk(String curve, String x, String y, String kid) {
+    private JsonObject createEcJwk(String x, String y) {
         JsonObjectBuilder builder = Json.createObjectBuilder()
                 .add("kty", "EC")
-                .add("crv", curve);
+                .add("crv", "P-256");
 
         if (x != null) {
             builder.add("x", x);
@@ -89,15 +81,13 @@ class JwkKeyHandlerTest {
             builder.add("y", y);
         }
 
-        if (kid != null) {
-            builder.add("kid", kid);
-        }
+        builder.add("kid", "test-key");
 
         return builder.build();
     }
 
     @Test
-    void shouldParseValidRsaKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
+    void shouldParseValidRsaKey() throws InvalidKeySpecException, NoSuchAlgorithmException {
         // Given a valid RSA JWK
         JsonObject jwk = createRsaJwk();
 
@@ -116,67 +106,67 @@ class JwkKeyHandlerTest {
 
         // When validating the key fields
         // Then no exception should be thrown
-        assertDoesNotThrow(() -> JwkKeyHandler.validateRsaKeyFields(jwk));
+        assertDoesNotThrow(() -> JwkKeyHandler.parseRsaKey(jwk));
     }
 
     @Test
     void shouldRejectRsaKeyWithMissingModulus() {
         // Given an RSA JWK with missing modulus
-        JsonObject jwk = createJsonObject("RSA", null, "AQAB", "test-key");
+        JsonObject jwk = createJsonObject(null, "AQAB");
 
         // When validating the key fields
         // Then an exception should be thrown
         InvalidKeySpecException exception = assertThrows(
                 InvalidKeySpecException.class,
-                () -> JwkKeyHandler.validateRsaKeyFields(jwk)
+                () -> JwkKeyHandler.parseRsaKey(jwk)
         );
 
         // And the exception message should indicate the missing field
-        assertTrue(exception.getMessage().contains("missing required fields"));
+        assertTrue(exception.getMessage().contains("Invalid Base64 URL encoded value for 'n'"), exception.getMessage());
     }
 
     @Test
     void shouldRejectRsaKeyWithMissingExponent() {
         // Given an RSA JWK with missing exponent
-        JsonObject jwk = createJsonObject("RSA", "someModulus", null, "test-key");
+        JsonObject jwk = createJsonObject("someModulus", null);
 
         // When validating the key fields
         // Then an exception should be thrown
         InvalidKeySpecException exception = assertThrows(
                 InvalidKeySpecException.class,
-                () -> JwkKeyHandler.validateRsaKeyFields(jwk)
+                () -> JwkKeyHandler.parseRsaKey(jwk)
         );
 
         // And the exception message should indicate the missing field
-        assertTrue(exception.getMessage().contains("missing required fields"));
+        assertTrue(exception.getMessage().contains("Invalid Base64 URL encoded value for 'e'"));
     }
 
     @Test
     void shouldRejectRsaKeyWithInvalidBase64UrlModulus() {
         // Given an RSA JWK with invalid Base64 URL encoded modulus
-        JsonObject jwk = createJsonObject("RSA", "invalid!base64", "AQAB", "test-key");
+        JsonObject jwk = createJsonObject("invalid!base64", "AQAB");
 
         // When validating the key fields
         // Then an exception should be thrown
         InvalidKeySpecException exception = assertThrows(
                 InvalidKeySpecException.class,
-                () -> JwkKeyHandler.validateRsaKeyFields(jwk)
+                () -> JwkKeyHandler.parseRsaKey(jwk)
         );
 
         // And the exception message should indicate the invalid value
-        assertTrue(exception.getMessage().contains("Invalid Base64 URL encoded value for 'n'"));
+        assertTrue(exception.getMessage().contains("Invalid Base64 URL encoded value for 'n'"), exception.getMessage());
     }
 
     @Test
     void shouldRejectRsaKeyWithInvalidBase64UrlExponent() {
         // Given an RSA JWK with invalid Base64 URL encoded exponent
-        JsonObject jwk = createJsonObject("RSA", "validModulus", "invalid!base64", "test-key");
+        JsonObject jwk = createJsonObject("validModulus", "invalid!base64");
 
         // When validating the key fields
         // Then an exception should be thrown
         InvalidKeySpecException exception = assertThrows(
                 InvalidKeySpecException.class,
-                () -> JwkKeyHandler.validateRsaKeyFields(jwk)
+                () -> JwkKeyHandler.parseRsaKey(jwk)
         );
 
         // And the exception message should indicate the invalid value
@@ -184,83 +174,73 @@ class JwkKeyHandlerTest {
     }
 
     @Test
-    void shouldValidateEcKeyFields() {
-        // Given a valid EC JWK
-        JsonObject jwk = createEcJwk("P-256", "validXCoord", "validYCoord", "test-key");
-
-        // When validating the key fields
-        // Then no exception should be thrown
-        assertDoesNotThrow(() -> JwkKeyHandler.validateEcKeyFields(jwk));
-    }
-
-    @Test
     void shouldRejectEcKeyWithMissingXCoordinate() {
         // Given an EC JWK with missing x coordinate
-        JsonObject jwk = createEcJwk("P-256", null, "validYCoord", "test-key");
+        JsonObject jwk = createEcJwk(null, "validYCoord");
 
         // When validating the key fields
         // Then an exception should be thrown
         InvalidKeySpecException exception = assertThrows(
                 InvalidKeySpecException.class,
-                () -> JwkKeyHandler.validateEcKeyFields(jwk)
+                () -> JwkKeyHandler.parseEcKey(jwk)
         );
 
         // And the exception message should indicate the missing field
-        assertTrue(exception.getMessage().contains("missing required fields"));
+        assertTrue(exception.getMessage().contains("Invalid Base64 URL encoded value for 'x'"), exception.getMessage());
     }
 
     @Test
     void shouldRejectEcKeyWithMissingYCoordinate() {
         // Given an EC JWK with missing y coordinate
-        JsonObject jwk = createEcJwk("P-256", "validXCoord", null, "test-key");
+        JsonObject jwk = createEcJwk("validXCoord", null);
 
         // When validating the key fields
         // Then an exception should be thrown
         InvalidKeySpecException exception = assertThrows(
                 InvalidKeySpecException.class,
-                () -> JwkKeyHandler.validateEcKeyFields(jwk)
+                () -> JwkKeyHandler.parseEcKey(jwk)
         );
 
         // And the exception message should indicate the missing field
-        assertTrue(exception.getMessage().contains("missing required fields"));
+        assertTrue(exception.getMessage().contains("Invalid Base64 URL encoded value for 'y'"), exception.getMessage());
     }
 
     @Test
     void shouldRejectEcKeyWithInvalidBase64UrlXCoordinate() {
         // Given an EC JWK with invalid Base64 URL encoded x coordinate
-        JsonObject jwk = createEcJwk("P-256", "invalid!base64", "validYCoord", "test-key");
+        JsonObject jwk = createEcJwk("invalid!base64", "validYCoord");
 
         // When validating the key fields
         // Then an exception should be thrown
         InvalidKeySpecException exception = assertThrows(
                 InvalidKeySpecException.class,
-                () -> JwkKeyHandler.validateEcKeyFields(jwk)
+                () -> JwkKeyHandler.parseEcKey(jwk)
         );
 
         // And the exception message should indicate the invalid value
-        assertTrue(exception.getMessage().contains("Invalid Base64 URL encoded value for 'x'"));
+        assertTrue(exception.getMessage().contains("Invalid Base64 URL encoded value for 'x'"), "Actual message: " + exception.getMessage());
     }
 
     @Test
     void shouldRejectEcKeyWithInvalidBase64UrlYCoordinate() {
         // Given an EC JWK with invalid Base64 URL encoded y coordinate
-        JsonObject jwk = createEcJwk("P-256", "validXCoord", "invalid!base64", "test-key");
+        JsonObject jwk = createEcJwk("validXCoord", "invalid!base64");
 
         // When validating the key fields
         // Then an exception should be thrown
         InvalidKeySpecException exception = assertThrows(
                 InvalidKeySpecException.class,
-                () -> JwkKeyHandler.validateEcKeyFields(jwk)
+                () -> JwkKeyHandler.parseEcKey(jwk)
         );
 
         // And the exception message should indicate the invalid value
-        assertTrue(exception.getMessage().contains("Invalid Base64 URL encoded value for 'y'"));
+        assertTrue(exception.getMessage().contains("Invalid Base64 URL encoded value for 'y'"), exception.getMessage());
     }
 
     @Test
     void shouldThrowExceptionForUnsupportedEcCurve() {
         // Given a valid EC JWK
-        JsonObject jwk = createEcJwk("P-256", "validXCoord", "validYCoord", "test-key");
+        JsonObject jwk = createEcJwk("validXCoord", "validYCoord");
 
         // When trying to parse the EC key
         // Then an exception should be thrown because EC curve support is not implemented
@@ -308,56 +288,4 @@ class JwkKeyHandlerTest {
         assertEquals("ES256", algorithm);
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {
-            "validBase64", "abc123", "ABC-_", "ABC-_="
-    })
-    void shouldValidateCorrectBase64UrlEncodedValues(String value) {
-        // Given a valid Base64 URL encoded value
-
-        // When validating the value
-        boolean isValid = JwkKeyHandler.isValidBase64UrlEncoded(value);
-
-        // Then it should be considered valid
-        assertTrue(isValid);
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {
-            "", "invalid!", "invalid#", "invalid$", "invalid%", "invalid&", "invalid+", "invalid/"
-    })
-    void shouldRejectInvalidBase64UrlEncodedValues(String value) {
-        // Given an invalid Base64 URL encoded value
-
-        // When validating the value
-        boolean isValid = JwkKeyHandler.isValidBase64UrlEncoded(value);
-
-        // Then it should be considered invalid
-        assertFalse(isValid);
-    }
-
-    @Test
-    void shouldHandleNullValuesInBase64Validation() {
-        // Given a null value
-        String value = null;
-
-        // When validating the value
-        boolean isValid = JwkKeyHandler.isValidBase64UrlEncoded(value);
-
-        // Then it should be considered invalid
-        assertFalse(isValid);
-    }
-
-    @Test
-    void shouldHandleExtremelyLongBase64Values() {
-        // Given an extremely long Base64 URL encoded value (potential DoS attack)
-        String value = "A".repeat(10000);
-
-        // When validating the value
-        boolean isValid = JwkKeyHandler.isValidBase64UrlEncoded(value);
-
-        // Then it should be considered valid (since it only contains valid characters)
-        // This tests that the validation doesn't crash with very long inputs
-        assertTrue(isValid);
-    }
 }

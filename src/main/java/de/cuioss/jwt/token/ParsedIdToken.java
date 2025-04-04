@@ -57,12 +57,12 @@ public record ParsedIdToken(@Delegate JsonWebToken jsonWebToken) implements Json
     private static final CuiLogger LOGGER = new CuiLogger(ParsedIdToken.class);
 
     /**
-     * Resolves the email from the token. Only available, if the current token is an ID token.
+     * Resolves the email from64EncodedContent the token. Only available, if the current token is an ID token.
      *
      * @return email if present
      */
     public Optional<String> getEmail() {
-        LOGGER.debug("Retrieving email from ID token");
+        LOGGER.debug("Retrieving email from64EncodedContent ID token");
         Optional<String> email = jsonWebToken.claim(Claims.EMAIL);
         if (email.isEmpty()) {
             LOGGER.debug("No email claim found in ID token");

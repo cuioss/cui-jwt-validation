@@ -21,14 +21,13 @@ import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.MacAlgorithm;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
@@ -50,7 +49,7 @@ class SignatureValidationTest {
 
     @BeforeEach
     void setUp() {
-        // Use the helper method from JwksAwareTokenParserImplTest to create a valid parser
+        // Use the helper method from64EncodedContent JwksAwareTokenParserImplTest to create a valid parser
         var tokenParser = JwksAwareTokenParserImplTest.getValidJWKSParserWithLocalJWKS();
         tokenFactory = TokenFactory.builder().addParser(tokenParser).build();
     }
@@ -87,7 +86,7 @@ class SignatureValidationTest {
     @DisplayName("Should reject token with HS256 algorithm")
     void shouldRejectHS256Token() {
         // Create a token signed with HS256
-        String token = createTokenWithSymmetricAlgorithm(SignatureAlgorithm.HS256);
+        String token = createTokenWithSymmetricAlgorithm(Jwts.SIG.HS256);
 
         // Parse and validate the token
         var parsedToken = tokenFactory.createAccessToken(token);
@@ -102,7 +101,7 @@ class SignatureValidationTest {
     @DisplayName("Should reject token with HS384 algorithm")
     void shouldRejectHS384Token() {
         // Create a token signed with HS384
-        String token = createTokenWithSymmetricAlgorithm(SignatureAlgorithm.HS384);
+        String token = createTokenWithSymmetricAlgorithm(Jwts.SIG.HS384);
 
         // Parse and validate the token
         var parsedToken = tokenFactory.createAccessToken(token);
@@ -117,7 +116,7 @@ class SignatureValidationTest {
     @DisplayName("Should reject token with HS512 algorithm")
     void shouldRejectHS512Token() {
         // Create a token signed with HS512
-        String token = createTokenWithSymmetricAlgorithm(SignatureAlgorithm.HS512);
+        String token = createTokenWithSymmetricAlgorithm(Jwts.SIG.HS512);
 
         // Parse and validate the token
         var parsedToken = tokenFactory.createAccessToken(token);
@@ -147,17 +146,16 @@ class SignatureValidationTest {
     /**
      * Creates a token signed with the specified algorithm.
      */
-    private String createToken(SignatureAlgorithm algorithm) {
+    private String createToken() {
         Instant now = Instant.now();
         Instant expiration = now.plus(1, ChronoUnit.HOURS);
 
-        return Jwts.builder()
-                .setSubject("test-subject")
-                .setIssuer(ISSUER)
-                .setIssuedAt(Date.from(now))
-                .setExpiration(Date.from(expiration))
-                .setHeaderParam("kid", JWKSFactory.DEFAULT_KEY_ID)
-                .signWith(KeyMaterialHandler.getDefaultPrivateKey(), algorithm)
+        return Jwts.builder().subject("test-subject")
+                .issuer(ISSUER)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiration))
+                .header().add("kid", JWKSFactory.DEFAULT_KEY_ID).and()
+                .signWith(KeyMaterialHandler.getDefaultPrivateKey(), Jwts.SIG.RS256)
                 .compact();
     }
 
@@ -168,32 +166,26 @@ class SignatureValidationTest {
         Instant now = Instant.now();
         Instant expiration = now.plus(1, ChronoUnit.HOURS);
 
-        return Jwts.builder()
-                .setSubject("test-subject")
-                .setIssuer(ISSUER)
-                .setIssuedAt(Date.from(now))
-                .setExpiration(Date.from(expiration))
-                .setHeaderParam("kid", JWKSFactory.DEFAULT_KEY_ID)
-                .setHeaderParam("alg", "none")
+        return Jwts.builder().subject("test-subject")
+                .issuer(ISSUER)
+                .issuedAt(Date.from(now)).expiration(Date.from(expiration))
+                .header().add("kid", JWKSFactory.DEFAULT_KEY_ID)
+                .add("alg", "none").and()
                 .compact();
     }
 
     /**
      * Creates a token signed with a symmetric algorithm.
      */
-    private String createTokenWithSymmetricAlgorithm(SignatureAlgorithm algorithm) {
+    private String createTokenWithSymmetricAlgorithm(MacAlgorithm algorithm) {
         Instant now = Instant.now();
         Instant expiration = now.plus(1, ChronoUnit.HOURS);
-
         // Generate a symmetric key
-        Key key = Keys.secretKeyFor(algorithm);
+        SecretKey key = algorithm.key().build();
 
-        return Jwts.builder()
-                .setSubject("test-subject")
-                .setIssuer(ISSUER)
-                .setIssuedAt(Date.from(now))
-                .setExpiration(Date.from(expiration))
-                .setHeaderParam("kid", JWKSFactory.DEFAULT_KEY_ID)
+        return Jwts.builder().subject("test-subject").issuer(ISSUER)
+                .issuedAt(Date.from(now)).expiration(Date.from(expiration))
+                .header().add("kid", JWKSFactory.DEFAULT_KEY_ID).and()
                 .signWith(key, algorithm)
                 .compact();
     }
@@ -204,7 +196,7 @@ class SignatureValidationTest {
      */
     private String createAlgorithmConfusionToken() {
         // Create a valid token with RS256
-        String validToken = createToken(SignatureAlgorithm.RS256);
+        String validToken = createToken();
 
         // Split the token into its parts
         String[] parts = validToken.split("\\.");

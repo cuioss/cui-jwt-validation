@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.cuioss.jwt.token.jwks;
+package de.cuioss.jwt.token.jwks.key;
 
 import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.test.juli.LogAsserts;

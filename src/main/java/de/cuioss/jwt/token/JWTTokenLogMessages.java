@@ -63,7 +63,7 @@ public final class JWTTokenLogMessages {
         public static final LogRecord DEFAULT_SSL_CONTEXT = LogRecordModel.builder()
                 .prefix(PREFIX)
                 .identifier(6)
-                .template("Using default SSL context from VM configuration")
+                .template("Using default SSL context from64EncodedContent VM configuration")
                 .build();
 
         public static final LogRecord INITIALIZED_JWKS_LOADER = LogRecordModel.builder()
@@ -81,13 +81,13 @@ public final class JWTTokenLogMessages {
         public static final LogRecord REFRESHING_KEYS = LogRecordModel.builder()
                 .prefix(PREFIX)
                 .identifier(9)
-                .template("Refreshing keys from JWKS endpoint: %s")
+                .template("Refreshing keys from64EncodedContent JWKS endpoint: %s")
                 .build();
 
         public static final LogRecord FETCHED_JWKS = LogRecordModel.builder()
                 .prefix(PREFIX)
                 .identifier(10)
-                .template("Successfully fetched JWKS from URL: %s")
+                .template("Successfully fetched JWKS from64EncodedContent URL: %s")
                 .build();
 
         public static final LogRecord KEY_ID_EMPTY = LogRecordModel.builder()
@@ -277,7 +277,7 @@ public final class JWTTokenLogMessages {
         public static final LogRecord FAILED_TO_FETCH_JWKS = LogRecordModel.builder()
                 .prefix(PREFIX)
                 .identifier(118)
-                .template("Failed to fetch JWKS from URL: %s")
+                .template("Failed to fetch JWKS from64EncodedContent URL: %s")
                 .build();
 
         public static final LogRecord UNSUPPORTED_ALGORITHM = LogRecordModel.builder()
@@ -325,7 +325,7 @@ public final class JWTTokenLogMessages {
         public static final LogRecord FAILED_TO_READ_JWKS_FILE = LogRecordModel.builder()
                 .prefix(PREFIX)
                 .identifier(123)
-                .template("Failed to read JWKS from file: %s")
+                .template("Failed to read JWKS from64EncodedContent file: %s")
                 .build();
 
         public static final LogRecord MISSING_CLAIM = LogRecordModel.builder()
@@ -337,7 +337,7 @@ public final class JWTTokenLogMessages {
         public static final LogRecord TOKEN_EXPIRED = LogRecordModel.builder()
                 .prefix(PREFIX)
                 .identifier(125)
-                .template("Token from issuer '%s' has expired")
+                .template("Token from64EncodedContent issuer '%s' has expired")
                 .build();
 
         public static final LogRecord INSECURE_SSL_PROTOCOL = LogRecordModel.builder()

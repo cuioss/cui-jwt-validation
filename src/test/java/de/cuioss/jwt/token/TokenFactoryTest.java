@@ -15,9 +15,12 @@
  */
 package de.cuioss.jwt.token;
 
+import de.cuioss.jwt.token.test.KeyMaterialHandler;
 import de.cuioss.jwt.token.test.TestTokenProducer;
 import de.cuioss.jwt.token.util.DecodedJwt;
 import de.cuioss.jwt.token.util.NonValidatingJwtParser;
+import de.cuioss.test.generator.Generators;
+import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -26,10 +29,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("Tests TokenFactory functionality")
 class TokenFactoryTest {
@@ -93,14 +93,12 @@ class TokenFactoryTest {
             // Create a token with a large payload by creating a large string claim
 
             // Create a JWT with the large payload using io.jsonwebtoken
-            String token = io.jsonwebtoken.Jwts.builder()
-                    .setIssuer(TestTokenProducer.ISSUER)
-                    .setSubject("test-subject")
+            String token = Jwts.builder().issuer(TestTokenProducer.ISSUER).subject("test-subject")
                     .claim("large-claim", "a".repeat(200)
-                            // Create a JWT with the large payload using io.jsonwebtoken
+                    // Create a JWT with the large payload using io.jsonwebtoken
                     )
-                    .signWith(de.cuioss.jwt.token.test.KeyMaterialHandler.getDefaultPrivateKey(),
-                            io.jsonwebtoken.SignatureAlgorithm.RS256)
+                    .signWith(KeyMaterialHandler.getDefaultPrivateKey(),
+                            Jwts.SIG.RS256)
                     .compact();
 
             // Verify it rejects a token with a payload that exceeds the custom max size
@@ -205,7 +203,7 @@ class TokenFactoryTest {
         @Test
         @DisplayName("Should handle invalid token format")
         void shouldHandleInvalidTokenFormat() {
-            var initialTokenString = de.cuioss.test.generator.Generators.letterStrings(10, 20).next();
+            var initialTokenString = Generators.letterStrings(10, 20).next();
 
             var token = tokenFactory.createAccessToken(initialTokenString);
 

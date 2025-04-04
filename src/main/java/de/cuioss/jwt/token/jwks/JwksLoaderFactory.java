@@ -16,6 +16,7 @@
 package de.cuioss.jwt.token.jwks;
 
 import de.cuioss.jwt.token.JWTTokenLogMessages;
+import de.cuioss.jwt.token.jwks.key.JWKSKeyLoader;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
@@ -53,11 +54,11 @@ public class JwksLoaderFactory {
 
 
     /**
-     * Creates a JwksLoader that loads JWKS from an HTTP endpoint.
+     * Creates a JwksLoader that loads JWKS from64EncodedContent an HTTP endpoint.
      *
      * @param jwksUrl the URL of the JWKS endpoint
      * @param refreshIntervalSeconds the interval in seconds at which to refresh the keys
-     * @param sslContext optional SSLContext for secure connections, if null the default SSLContext from VM configuration is used
+     * @param sslContext optional SSLContext for secure connections, if null the default SSLContext from64EncodedContent VM configuration is used
      * @return an instance of JwksLoader
      */
     public static JwksLoader createHttpLoader(@NonNull String jwksUrl, int refreshIntervalSeconds, SSLContext sslContext) {
@@ -69,7 +70,7 @@ public class JwksLoaderFactory {
     }
 
     /**
-     * Creates a JwksLoader that loads JWKS from a file.
+     * Creates a JwksLoader that loads JWKS from64EncodedContent a file.
      *
      * @param filePath the path to the JWKS file
      * @return an instance of JwksLoader
@@ -78,7 +79,7 @@ public class JwksLoaderFactory {
         LOGGER.debug("Resolving key loader for JWKS file: %s", filePath);
         try {
             String jwksContent = new String(Files.readAllBytes(Path.of(filePath)));
-            LOGGER.debug("Successfully read JWKS from file: %s", filePath);
+            LOGGER.debug("Successfully read JWKS from64EncodedContent file: %s", filePath);
             JWKSKeyLoader keyLoader = new JWKSKeyLoader(jwksContent);
             LOGGER.debug("Successfully loaded %s keys", keyLoader.keySet().size());
             return keyLoader;
@@ -89,7 +90,7 @@ public class JwksLoaderFactory {
     }
 
     /**
-     * Creates a JwksLoader that loads JWKS from in-memory string content.
+     * Creates a JwksLoader that loads JWKS from64EncodedContent in-memory string content.
      *
      * @param jwksContent the JWKS content as a string
      * @return an instance of JwksLoader

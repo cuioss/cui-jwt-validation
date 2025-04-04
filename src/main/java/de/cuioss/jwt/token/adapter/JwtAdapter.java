@@ -25,6 +25,7 @@ import lombok.ToString;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -57,28 +58,28 @@ public class JwtAdapter implements JsonWebToken {
 
     @Override
     public Set<String> getClaimNames() {
-        return jws.getBody().keySet();
+        return jws.getPayload().keySet();
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public <T> T getClaim(String claimName) {
-        return (T) jws.getBody().get(claimName);
+        return (T) jws.getPayload().get(claimName);
     }
 
     @Override
     public String getIssuer() {
-        return jws.getBody().getIssuer();
+        return jws.getPayload().getIssuer();
     }
 
     @Override
     public String getSubject() {
-        return jws.getBody().getSubject();
+        return jws.getPayload().getSubject();
     }
 
     @Override
     public Optional<Set<String>> getAudience() {
-        Object audience = jws.getBody().get(de.cuioss.jwt.token.adapter.Claims.AUDIENCE);
+        Object audience = jws.getPayload().get(de.cuioss.jwt.token.adapter.Claims.AUDIENCE);
         if (audience == null) {
             return Optional.empty();
         }
@@ -97,29 +98,29 @@ public class JwtAdapter implements JsonWebToken {
 
     @Override
     public OffsetDateTime getExpirationTime() {
-        if (jws.getBody().getExpiration() == null) {
+        if (jws.getPayload().getExpiration() == null) {
             // Return epoch start as a fallback for missing expiration
             return OffsetDateTime.ofInstant(Instant.EPOCH, ZoneId.systemDefault());
         }
         return OffsetDateTime.ofInstant(
-                Instant.ofEpochMilli(jws.getBody().getExpiration().getTime()),
+                Instant.ofEpochMilli(jws.getPayload().getExpiration().getTime()),
                 ZoneId.systemDefault());
     }
 
     @Override
     public OffsetDateTime getIssuedAtTime() {
-        if (jws.getBody().getIssuedAt() == null) {
+        if (jws.getPayload().getIssuedAt() == null) {
             // Return epoch start as a fallback for missing issuedAt
             return OffsetDateTime.ofInstant(Instant.EPOCH, ZoneId.systemDefault());
         }
         return OffsetDateTime.ofInstant(
-                Instant.ofEpochMilli(jws.getBody().getIssuedAt().getTime()),
+                Instant.ofEpochMilli(jws.getPayload().getIssuedAt().getTime()),
                 ZoneId.systemDefault());
     }
 
     @Override
     public Optional<OffsetDateTime> getNotBeforeTime() {
-        Object nbf = jws.getBody().get(de.cuioss.jwt.token.adapter.Claims.NOT_BEFORE);
+        Object nbf = jws.getPayload().get(de.cuioss.jwt.token.adapter.Claims.NOT_BEFORE);
         if (nbf == null) {
             return Optional.empty();
         }
@@ -131,7 +132,7 @@ public class JwtAdapter implements JsonWebToken {
             epochSecond = integerValue.longValue();
         } else if (nbf instanceof Number number) {
             epochSecond = number.longValue();
-        } else if (nbf instanceof java.util.Date date) {
+        } else if (nbf instanceof Date date) {
             return Optional.of(OffsetDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault()));
         } else {
             return Optional.empty();
@@ -142,7 +143,7 @@ public class JwtAdapter implements JsonWebToken {
 
     @Override
     public Optional<String> getTokenID() {
-        return Optional.ofNullable(jws.getBody().getId());
+        return Optional.ofNullable(jws.getPayload().getId());
     }
 
 }

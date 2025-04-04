@@ -22,7 +22,6 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonReader;
@@ -53,7 +52,6 @@ public class TestTokenProducer {
     public static final String SOME_SCOPES = BASE_PATH + "some-scopes.json";
     public static final String REFRESH_TOKEN = BASE_PATH + "refresh-token.json";
     public static final String SOME_ROLES = BASE_PATH + "some-roles.json";
-    public static final String SOME_NAME = BASE_PATH + "some-name.json";
     public static final String SOME_ID_TOKEN = BASE_PATH + "some-id-token.json";
 
     // Lazy initialization of token parsers to avoid circular dependencies
@@ -83,7 +81,7 @@ public class TestTokenProducer {
     }
 
     /**
-     * Loads JSON claims from a file.
+     * Loads JSON claims from64EncodedContent a file.
      *
      * @param path the path to the JSON file
      * @return the JSON object
@@ -97,16 +95,15 @@ public class TestTokenProducer {
     }
 
     /**
-     * Adds claims from a JSON file to a JWT builder.
+     * Adds claims from64EncodedContent a JSON file to a JWT builder.
      *
      * @param builder    the JWT builder
      * @param claimsPath the path to the JSON claims file
-     * @return the updated JWT builder
      * @throws IOException if loading the claims fails
      */
-    private static JwtBuilder addClaims(JwtBuilder builder, String claimsPath) throws IOException {
+    private static void addClaims(JwtBuilder builder, String claimsPath) throws IOException {
         if (claimsPath == null) {
-            return builder;
+            return;
         }
 
         JsonObject claims = loadJsonClaims(claimsPath);
@@ -128,20 +125,17 @@ public class TestTokenProducer {
                 // Ignore other types
             }
         }
-        return builder;
     }
 
     public static String validSignedJWTWithClaims(String claimsPath) {
         try {
-            JwtBuilder builder = Jwts.builder()
-                    .setIssuer(ISSUER)
-                    .setSubject(SUBJECT)
-                    .setIssuedAt(Date.from(Instant.now()))
-                    .setExpiration(Date.from(Instant.now().plusSeconds(3600))) // Set expiration to 1 hour from now
-                    .setHeaderParam("kid", "default-key-id") // Add key ID to header
-                    .signWith(KeyMaterialHandler.getDefaultPrivateKey(), SignatureAlgorithm.RS256);
+            JwtBuilder builder = Jwts.builder().issuer(ISSUER)
+                    .subject(SUBJECT)
+                    .issuedAt(Date.from(Instant.now())).expiration(Date.from(Instant.now().plusSeconds(3600))) // Set expiration to 1 hour from64EncodedContent now
+                    .header().add("kid", "default-key-id").and() // Add key ID to header
+                    .signWith(KeyMaterialHandler.getDefaultPrivateKey(), Jwts.SIG.RS256);
 
-            // Add claims from file if provided
+            // Add claims from64EncodedContent file if provided
             if (claimsPath != null) {
                 addClaims(builder, claimsPath);
             }
@@ -153,24 +147,20 @@ public class TestTokenProducer {
     }
 
     public static String validSignedEmptyJWT() {
-        return Jwts.builder()
-                .setIssuer(ISSUER)
-                .setSubject(SUBJECT)
-                .setIssuedAt(Date.from(Instant.now()))
-                .setExpiration(Date.from(Instant.now().plusSeconds(3600))) // 1 hour expiration
-                .setHeaderParam("kid", "default-key-id") // Add key ID to header
-                .signWith(KeyMaterialHandler.getDefaultPrivateKey(), SignatureAlgorithm.RS256)
+        return Jwts.builder().issuer(ISSUER)
+                .subject(SUBJECT)
+                .issuedAt(Date.from(Instant.now())).expiration(Date.from(Instant.now().plusSeconds(3600))) // 1 hour expiration
+                .header().add("kid", "default-key-id").and() // Add key ID to header
+                .signWith(KeyMaterialHandler.getDefaultPrivateKey(), Jwts.SIG.RS256)
                 .compact();
     }
 
     public static String validSignedJWTWithClaims(String claimsPath, String subject) {
         try {
-            JwtBuilder builder = Jwts.builder()
-                    .setIssuer(ISSUER)
-                    .setSubject(subject)
-                    .signWith(KeyMaterialHandler.getDefaultPrivateKey(), SignatureAlgorithm.RS256);
+            JwtBuilder builder = Jwts.builder().issuer(ISSUER).subject(subject)
+                    .signWith(KeyMaterialHandler.getDefaultPrivateKey(), Jwts.SIG.RS256);
 
-            // Add claims from file if provided
+            // Add claims from64EncodedContent file if provided
             if (claimsPath != null) {
                 addClaims(builder, claimsPath);
             }
@@ -183,14 +173,12 @@ public class TestTokenProducer {
 
     public static String validSignedJWTExpireAt(Instant expireAt) {
         try {
-            JwtBuilder builder = Jwts.builder()
-                    .setIssuer(ISSUER)
-                    .setSubject(SUBJECT)
-                    .setIssuedAt(Date.from(OffsetDateTime.ofInstant(expireAt, ZoneId.systemDefault()).minusMinutes(5).toInstant()))
-                    .setExpiration(Date.from(expireAt))
-                    .signWith(KeyMaterialHandler.getDefaultPrivateKey(), SignatureAlgorithm.RS256);
+            JwtBuilder builder = Jwts.builder().issuer(ISSUER)
+                    .subject(SUBJECT)
+                    .issuedAt(Date.from(OffsetDateTime.ofInstant(expireAt, ZoneId.systemDefault()).minusMinutes(5).toInstant())).expiration(Date.from(expireAt))
+                    .signWith(KeyMaterialHandler.getDefaultPrivateKey(), Jwts.SIG.RS256);
 
-            // Add claims from file
+            // Add claims from64EncodedContent file
             addClaims(builder, SOME_SCOPES);
 
             return builder.compact();
@@ -207,20 +195,19 @@ public class TestTokenProducer {
      */
     public static String validSignedJWTWithNotBefore(Instant notBefore) {
         try {
-            // Always set the expiration time to 1 hour in the future from now,
+            // Always set the expiration time to 1 hour in the future from64EncodedContent now,
             // regardless of the notBefore time, to ensure the token is not expired
             Instant expirationTime = Instant.now().plusSeconds(3600);
 
             JwtBuilder builder = Jwts.builder()
-                    .setIssuer(ISSUER)
-                    .setSubject(SUBJECT)
-                    .setIssuedAt(Date.from(Instant.now().minusSeconds(300))) // 5 minutes ago
-                    .setExpiration(Date.from(expirationTime))
+                    .issuer(ISSUER)
+                    .subject(SUBJECT)
+                    .issuedAt(Date.from(Instant.now().minusSeconds(300))).expiration(Date.from(expirationTime))
                     .claim("nbf", notBefore.getEpochSecond())
-                    .setHeaderParam("kid", "default-key-id") // Add key ID to header
-                    .signWith(KeyMaterialHandler.getDefaultPrivateKey(), SignatureAlgorithm.RS256);
+                    .header().add("kid", "default-key-id").and() // Add key ID to header
+                    .signWith(KeyMaterialHandler.getDefaultPrivateKey(), Jwts.SIG.RS256);
 
-            // Add claims from file
+            // Add claims from64EncodedContent file
             addClaims(builder, SOME_SCOPES);
 
             return builder.compact();
@@ -233,20 +220,18 @@ public class TestTokenProducer {
      * Creates a valid signed JWT with a specific "Issued At" (iat) time and a "JWT ID" (jti) claim
      *
      * @param issuedAt the instant representing the "Issued At" time
-     * @param tokenId the JWT ID to set
+     * @param tokenId  the JWT ID to set
      * @return a signed JWT token string with the iat and jti claims set
      */
     public static String validSignedJWTWithIssuedAtAndTokenId(Instant issuedAt, String tokenId) {
         try {
             JwtBuilder builder = Jwts.builder()
-                    .setIssuer(ISSUER)
-                    .setSubject(SUBJECT)
-                    .setIssuedAt(Date.from(issuedAt))
-                    .setId(tokenId)
-                    .setExpiration(Date.from(issuedAt.plusSeconds(3600))) // 1 hour expiration
-                    .signWith(KeyMaterialHandler.getDefaultPrivateKey(), SignatureAlgorithm.RS256);
+                    .issuer(ISSUER)
+                    .subject(SUBJECT)
+                    .issuedAt(Date.from(issuedAt)).id(tokenId).expiration(Date.from(issuedAt.plusSeconds(3600))) // 1 hour expiration
+                    .signWith(KeyMaterialHandler.getDefaultPrivateKey(), Jwts.SIG.RS256);
 
-            // Add claims from file
+            // Add claims from64EncodedContent file
             addClaims(builder, SOME_SCOPES);
 
             return builder.compact();
@@ -260,17 +245,15 @@ public class TestTokenProducer {
      * The audience can be a single string or an array of strings.
      *
      * @param audience the audience value(s) to set
-     * @param asArray whether to set the audience as an array (true) or a single string (false)
+     * @param asArray  whether to set the audience as an array (true) or a single string (false)
      * @return a signed JWT token string with the audience claim set
      */
     public static String validSignedJWTWithAudience(String[] audience, boolean asArray) {
         try {
             JwtBuilder builder = Jwts.builder()
-                    .setIssuer(ISSUER)
-                    .setSubject(SUBJECT)
-                    .setIssuedAt(Date.from(Instant.now()))
-                    .setExpiration(Date.from(Instant.now().plusSeconds(3600))) // 1 hour expiration
-                    .setHeaderParam("kid", "default-key-id"); // Add key ID to header
+                    .issuer(ISSUER).subject(SUBJECT)
+                    .issuedAt(Date.from(Instant.now())).expiration(Date.from(Instant.now().plusSeconds(3600))) // 1 hour expiration
+                    .header().add("kid", "default-key-id").and(); // Add key ID to header
 
             // Set audience claim based on the asArray parameter
             if (asArray) {
@@ -283,7 +266,7 @@ public class TestTokenProducer {
             addClaims(builder, SOME_SCOPES);
 
             // Sign the token
-            builder.signWith(KeyMaterialHandler.getDefaultPrivateKey(), SignatureAlgorithm.RS256);
+            builder.signWith(KeyMaterialHandler.getDefaultPrivateKey(), Jwts.SIG.RS256);
 
             return builder.compact();
         } catch (Exception e) {
@@ -297,13 +280,13 @@ public class TestTokenProducer {
         assertNotNull(token);
 
         // Parse the token using JJWT
-        Jws<Claims> parsedToken = Jwts.parserBuilder()
-                .setSigningKey(KeyMaterialHandler.getDefaultPrivateKey())
+        Jws<Claims> parsedToken = Jwts.parser()
+                .verifyWith(KeyMaterialHandler.getDefaultPublicKey())
                 .build()
-                .parseClaimsJws(token);
+                .parseSignedClaims(token);
 
         assertNotNull(parsedToken);
-        assertNotNull(parsedToken.getBody());
-        assertNotNull(parsedToken.getBody().getSubject());
+        assertNotNull(parsedToken.getPayload());
+        assertNotNull(parsedToken.getPayload().getSubject());
     }
 }

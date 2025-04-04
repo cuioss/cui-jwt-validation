@@ -15,6 +15,8 @@
  */
 package de.cuioss.jwt.token.jwks;
 
+import de.cuioss.jwt.token.jwks.key.JWKSKeyLoader;
+import de.cuioss.jwt.token.jwks.key.KeyInfo;
 import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.jwt.token.test.dispatcher.EnhancedJwksResolveDispatcher;
 import de.cuioss.jwt.token.test.dispatcher.JwksResolveDispatcher;
@@ -156,7 +158,7 @@ class HttpJwksLoaderCachingAndFallbackTest {
             // The new key should be available
             assertTrue(newKeyInfo.isPresent(), "New key info should be present");
             // Verify that the keys are different
-            assertNotEquals(initialKeyInfo.get().getKey(), newKeyInfo.get().getKey(), "New key should be different from the initial key");
+            assertNotEquals(initialKeyInfo.get().getKey(), newKeyInfo.get().getKey(), "New key should be different from64EncodedContent the initial key");
         }
     }
 

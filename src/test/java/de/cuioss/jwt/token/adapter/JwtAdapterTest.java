@@ -57,7 +57,7 @@ class JwtAdapterTest {
             var token = tokenFactory.createAccessToken(initialToken);
             assertTrue(token.isPresent(), "Token should be present for valid input");
 
-            // Get the underlying JsonWebToken from the ParsedToken
+            // Get the underlying JsonWebToken from64EncodedContent the ParsedToken
             JsonWebToken jsonWebToken = token.get().getJsonWebToken();
             assertInstanceOf(JwtAdapter.class, jsonWebToken, "JsonWebToken should be a JwtAdapter");
 
@@ -70,13 +70,13 @@ class JwtAdapterTest {
         @DisplayName("Should handle token with nbf claim")
         void shouldHandleTokenWithNotBeforeClaim() {
             // Create a token with nbf set to 5 minutes ago
-            java.time.Instant notBeforeTime = java.time.Instant.now().minusSeconds(300);
+            Instant notBeforeTime = Instant.now().minusSeconds(300);
             String initialToken = validSignedJWTWithNotBefore(notBeforeTime);
 
             var token = tokenFactory.createAccessToken(initialToken);
             assertTrue(token.isPresent(), "Token should be present for nbf in the past");
 
-            // Get the underlying JsonWebToken from the ParsedToken
+            // Get the underlying JsonWebToken from64EncodedContent the ParsedToken
             JsonWebToken jsonWebToken = token.get().getJsonWebToken();
             assertInstanceOf(JwtAdapter.class, jsonWebToken, "JsonWebToken should be a JwtAdapter");
 
@@ -99,7 +99,7 @@ class JwtAdapterTest {
             var token = tokenFactory.createAccessToken(initialToken);
             assertTrue(token.isPresent(), "Token should be present for valid input");
 
-            // Get the underlying JsonWebToken from the ParsedToken
+            // Get the underlying JsonWebToken from64EncodedContent the ParsedToken
             JsonWebToken jsonWebToken = token.get().getJsonWebToken();
             assertInstanceOf(JwtAdapter.class, jsonWebToken, "JsonWebToken should be a JwtAdapter");
 
@@ -129,7 +129,7 @@ class JwtAdapterTest {
             var token = tokenFactory.createAccessToken(initialToken);
             assertTrue(token.isPresent(), "Token should be present for valid input");
 
-            // Get the underlying JsonWebToken from the ParsedToken
+            // Get the underlying JsonWebToken from64EncodedContent the ParsedToken
             JsonWebToken jsonWebToken = token.get().getJsonWebToken();
             assertInstanceOf(JwtAdapter.class, jsonWebToken, "JsonWebToken should be a JwtAdapter");
 
@@ -159,13 +159,13 @@ class JwtAdapterTest {
         @DisplayName("Should correctly handle token expiration checks")
         void shouldHandleNotExpiredToken() {
             // Create a token that expires in 5 minutes
-            java.time.Instant expireAt = java.time.Instant.now().plusSeconds(300);
+            Instant expireAt = Instant.now().plusSeconds(300);
             String initialToken = TestTokenProducer.validSignedJWTExpireAt(expireAt);
 
             var token = tokenFactory.createAccessToken(initialToken);
             assertTrue(token.isPresent(), "Token should be present for valid input");
 
-            // Get the underlying JsonWebToken from the ParsedToken
+            // Get the underlying JsonWebToken from64EncodedContent the ParsedToken
             JsonWebToken jsonWebToken = token.get().getJsonWebToken();
             assertInstanceOf(JwtAdapter.class, jsonWebToken, "JsonWebToken should be a JwtAdapter");
 
@@ -188,7 +188,7 @@ class JwtAdapterTest {
             var token = tokenFactory.createAccessToken(initialToken);
             assertTrue(token.isPresent(), "Token should be present for valid input");
 
-            // Get the underlying JsonWebToken from the ParsedToken
+            // Get the underlying JsonWebToken from64EncodedContent the ParsedToken
             JsonWebToken jsonWebToken = token.get().getJsonWebToken();
             assertInstanceOf(JwtAdapter.class, jsonWebToken, "JsonWebToken should be a JwtAdapter");
 
@@ -214,7 +214,7 @@ class JwtAdapterTest {
             var token = tokenFactory.createAccessToken(initialToken);
             assertTrue(token.isPresent(), "Token should be present for valid input");
 
-            // Get the underlying JsonWebToken from the ParsedToken
+            // Get the underlying JsonWebToken from64EncodedContent the ParsedToken
             JsonWebToken jsonWebToken = token.get().getJsonWebToken();
             assertInstanceOf(JwtAdapter.class, jsonWebToken, "JsonWebToken should be a JwtAdapter");
 

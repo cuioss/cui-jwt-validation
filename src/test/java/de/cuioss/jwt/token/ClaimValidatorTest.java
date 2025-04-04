@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.token;
 
+import de.cuioss.jwt.token.test.KeyMaterialHandler;
 import de.cuioss.jwt.token.test.TestTokenProducer;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
@@ -95,7 +96,7 @@ class ClaimValidatorTest {
 
         // Then the validation should fail
         assertFalse(result, "Expired token should be invalid");
-        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Token from issuer");
+        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Token from64EncodedContent issuer");
     }
 
     @Test
@@ -294,10 +295,10 @@ class ClaimValidatorTest {
      * the ClaimValidator's expiration validation separately.
      */
     private Jws<Claims> parseToken(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(de.cuioss.jwt.token.test.KeyMaterialHandler.getDefaultPrivateKey())
-                .setAllowedClockSkewSeconds(Integer.MAX_VALUE) // Disable expiration validation
+        return Jwts.parser()
+                .verifyWith(KeyMaterialHandler.getDefaultPublicKey())
+                .clockSkewSeconds(Integer.MAX_VALUE) // Disable expiration validation
                 .build()
-                .parseClaimsJws(token);
+                .parseSignedClaims(token);
     }
 }

@@ -34,7 +34,7 @@ import java.util.Base64;
  *   <li>Empty JWKS</li>
  *   <li>JWKS with a specific key ID</li>
  *   <li>JWKS with no key ID (default key ID)</li>
- *   <li>JWKS from a specific RSA key pair</li>
+ *   <li>JWKS from64EncodedContent a specific RSA key pair</li>
  * </ul>
  */
 public class JWKSFactory {
@@ -50,7 +50,7 @@ public class JWKSFactory {
     public static final String ALTERNATIVE_KEY_ID = "test-key-id";
 
     /**
-     * Creates a valid JWKS with a single key using the default key from KeyMaterialHandler.
+     * Creates a valid JWKS with a single key using the default key from64EncodedContent KeyMaterialHandler.
      *
      * @return a valid JWKS JSON string
      */
@@ -59,7 +59,7 @@ public class JWKSFactory {
     }
 
     /**
-     * Creates a valid JWKS with a single key using the default key from KeyMaterialHandler
+     * Creates a valid JWKS with a single key using the default key from64EncodedContent KeyMaterialHandler
      * and the specified key ID.
      *
      * @param keyId the key ID to use
@@ -99,7 +99,7 @@ public class JWKSFactory {
     }
 
     /**
-     * Creates a valid single JWK (not in a keys array) using the default key from KeyMaterialHandler.
+     * Creates a valid single JWK (not in a keys array) using the default key from64EncodedContent KeyMaterialHandler.
      *
      * @param keyId the key ID to use
      * @return a valid JWK JSON string

@@ -15,6 +15,8 @@
  */
 package de.cuioss.jwt.token.jwks;
 
+import de.cuioss.jwt.token.jwks.key.JWKSKeyLoader;
+import de.cuioss.jwt.token.jwks.key.KeyInfo;
 import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.jwt.token.test.dispatcher.JwksResolveDispatcher;
 import de.cuioss.test.juli.LogAsserts;
@@ -61,7 +63,7 @@ class HttpJwksLoaderTest {
         }
 
         @Test
-        @DisplayName("Should fetch and parse JWKS from remote endpoint")
+        @DisplayName("Should fetch and parse JWKS from64EncodedContent remote endpoint")
         void shouldFetchAndParseJwks() {
             // When
             Optional<KeyInfo> keyInfo = httpJwksLoader.getKeyInfo(TEST_KID);
@@ -247,7 +249,7 @@ class HttpJwksLoaderTest {
 
             // Then
             assertFalse(keyInfo.isPresent(), "Key info should not be present when URL is invalid");
-            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to fetch JWKS from URL: invalid-url");
+            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to fetch JWKS from64EncodedContent URL: invalid-url");
         }
     }
 
@@ -268,9 +270,7 @@ class HttpJwksLoaderTest {
             String endpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
 
             // When/Then
-            assertThrows(IllegalArgumentException.class, () -> {
-                JwksLoaderFactory.createHttpLoader(endpoint, -1, null);
-            }, "Should throw exception when refresh interval is negative");
+            assertThrows(IllegalArgumentException.class, () -> JwksLoaderFactory.createHttpLoader(endpoint, -1, null), "Should throw exception when refresh interval is negative");
         }
 
         @Test

@@ -22,9 +22,9 @@ import de.cuioss.test.generator.TypedGenerator;
 import de.cuioss.test.generator.domain.EmailGenerator;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 
 import java.time.Instant;
+import java.util.Date;
 import java.util.Set;
 
 /**
@@ -62,20 +62,16 @@ public class AccessTokenGenerator implements TypedGenerator<String> {
             String scope = scopeGenerator.next();
             Set<String> roles = roleGenerator.next();
 
-            JwtBuilder builder = Jwts.builder()
-                    .setIssuer(TestTokenProducer.ISSUER)
-                    .setSubject(subject)
-                    .setIssuedAt(java.util.Date.from(Instant.now()))
-                    .setExpiration(java.util.Date.from(Instant.now().plusSeconds(3600))) // 1 hour
+            JwtBuilder builder = Jwts.builder().issuer(TestTokenProducer.ISSUER).subject(subject).issuedAt(Date.from(Instant.now())).expiration(Date.from(Instant.now().plusSeconds(3600))) // 1 hour
                     .claim("email", email)
                     .claim("scope", scope)
                     .claim("roles", roles)
                     .claim("typ", "Bearer")
-                    .setHeaderParam("kid", useAlternativeMode ? ALTERNATIVE_KEY_ID : DEFAULT_KEY_ID);
+                    .header().add("kid", useAlternativeMode ? ALTERNATIVE_KEY_ID : DEFAULT_KEY_ID).and();
 
             // Sign with default private key (we don't have an alternative private key)
             // The "alternative" mode is indicated by the key ID in the header
-            builder.signWith(KeyMaterialHandler.getDefaultPrivateKey(), SignatureAlgorithm.RS256);
+            builder.signWith(KeyMaterialHandler.getDefaultPrivateKey(), Jwts.SIG.RS256);
 
             return builder.compact();
         } catch (Exception e) {

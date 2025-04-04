@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.token.jwks;
 
+import de.cuioss.jwt.token.jwks.key.KeyInfo;
 import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.jwt.token.test.dispatcher.JwksResolveDispatcher;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
