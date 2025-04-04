@@ -103,16 +103,85 @@ _See Requirement CUI-JWT-1.4: Token Decryption in link:Requirements.adoc[Require
 * [ ] Implement support for decrypting JWT tokens (JWE) as defined in RFC 7516
   * _Note: This is marked as optional for a future version in the requirements_
 
-=== Testing
+== Documentation Tasks
+_See link:/home/oliver/git/cui-llm-rules/standards/documentation/general-standard.adoc[Documentation Standards]_
 
-==== Test Coverage Improvements
+=== Log Messages Documentation
+_See link:/home/oliver/git/cui-llm-rules/standards/logging/core-standards.adoc[Logging Core Standards]_
+
+* [x] Convert LogMessages.md to AsciiDoc format
+  * _Converted to link:LogMessages.adoc[LogMessages.adoc]_
+* [x] Add sections for ERROR (200-299) and FATAL (300-399) levels
+  * _Added to link:LogMessages.adoc[LogMessages.adoc]_
+* [x] Add explanation of the logging level structure
+  * _Added to link:LogMessages.adoc[LogMessages.adoc]_
+* [ ] Update implementation to include ERROR and FATAL level messages
+  * _Defined in LogMessages.adoc but not yet implemented in code_
+
+=== Documentation Format Standardization
+_See link:/home/oliver/git/cui-llm-rules/standards/documentation/general-standard.adoc[Documentation Standards]_
+
+* [x] Convert generator-usage.md to AsciiDoc format
+  * _Converted to link:generator-usage.adoc[generator-usage.adoc]_
+* [x] Ensure consistent formatting across all documentation
+  * _Standardized formatting for AsciiDoc files_
+* [x] Add cross-references between documentation files
+  * _Added consistent cross-references between requirements and implementations_
+
+=== Implementation Status Documentation
+_See link:/home/oliver/git/cui-llm-rules/standards/requirements/specification-documents.adoc[Specification Documents Standards]_
+
+* [x] Create implementation status overview document
+  * _Created link:Implementation-Status.adoc[Implementation-Status.adoc]_
+* [ ] Add implementation status to README.adoc
+  * _Update README.adoc to reference Implementation-Status.adoc_
+* [ ] Update implementation status document regularly
+  * _Ensure the document is updated when implementation status changes_
+
+=== Package Documentation
+_See link:/home/oliver/git/cui-llm-rules/standards/documentation/javadoc-standards.adoc[Javadoc Standards]_
+
+* [ ] Add package-info.java for all packages
+  * [ ] Add package-info.java for de.cuioss.jwt.token
+  * [ ] Add package-info.java for de.cuioss.jwt.token.jwks
+  * [ ] Add package-info.java for de.cuioss.jwt.token.util
+  * [ ] Add package-info.java for de.cuioss.jwt.token.adapter
+  * [ ] Add package-info.java for de.cuioss.jwt.token.security
+
+=== Documentation Enhancement
+_See link:/home/oliver/git/cui-llm-rules/standards/documentation/javadoc-standards.adoc[Javadoc Standards]_
+
+* [ ] Enhance Javadoc for all public classes and methods
+  * [ ] Add usage examples for complex classes
+  * [ ] Add thread-safety information
+  * [ ] Add documentation for edge cases
+* [ ] Create usage examples for common scenarios
+  * [ ] Add example for token validation
+  * [ ] Add example for multi-issuer setup
+  * [ ] Add example for key rotation configuration
+
+=== Testing Documentation
+_See link:/home/oliver/git/cui-llm-rules/standards/testing/core-standards.adoc[Testing Core Standards]_
+
+* [ ] Enhance testing documentation with detailed examples
+  * [ ] Add examples for using test generators
+  * [ ] Add examples for testing error scenarios
+  * [ ] Add examples for integration testing
+* [ ] Document performance testing methodology
+  * [ ] Define performance benchmarks
+  * [ ] Document performance test setup
+  * [ ] Document performance test results
+
+== Testing Tasks
+
+=== Test Coverage Improvements
 _See link:specification/testing.adoc#_summary_of_cui_testing_core_standards[Summary of CUI Testing Core Standards]_
 
 * [ ] Implement test coverage reporting in the build process
 * [ ] Ensure all public methods have corresponding unit tests
 * [ ] Set up coverage thresholds in the build to enforce minimum 80% line coverage
 
-==== Test Structure and Organization
+=== Test Structure and Organization
 _See link:specification/testing.adoc#_summary_of_cui_testing_core_standards[Summary of CUI Testing Core Standards]_
 
 * [ ] Establish consistent test naming conventions
@@ -121,21 +190,21 @@ _See link:specification/testing.adoc#_summary_of_cui_testing_core_standards[Summ
 * [ ] Define naming conventions for test methods
 * [ ] Group related tests in the same test class
 
-==== Test Data Management
+=== Test Data Management
 _See link:specification/testing.adoc#_summary_of_cui_testing_core_standards[Summary of CUI Testing Core Standards]_
 
 * [ ] Create reusable test data generators
 * [ ] Implement test data builders for complex objects
 * [ ] Document best practices for test data management
 
-==== Assertion Improvements
+=== Assertion Improvements
 _See link:specification/testing.adoc#_summary_of_cui_testing_core_standards[Summary of CUI Testing Core Standards]_
 
 * [ ] Document best practices for assertions
 * [ ] Ensure all assertions include meaningful error messages
 * [ ] Use appropriate assertion methods for different scenarios
 
-==== Unit Testing
+=== Unit Testing
 _See link:specification/testing.adoc#_unit_testing[Unit Testing Specification]_
 
 * [ ] Implement comprehensive unit tests as specified in the testing documentation:
@@ -145,7 +214,7 @@ _See link:specification/testing.adoc#_unit_testing[Unit Testing Specification]_
   * [ ] Error handling tests
   * [ ] Edge cases (malformed tokens, expired tokens, etc.)
 
-==== Security Testing
+=== Security Testing
 _See Requirement CUI-JWT-12.1: Security Testing in link:Requirements.adoc[Requirements]_
 
 * [ ] Add more comprehensive security testing according to OWASP JWT Security Cheat Sheet
@@ -156,7 +225,7 @@ _See Requirement CUI-JWT-12.1: Security Testing in link:Requirements.adoc[Requir
   * [ ] Signature verification bypass
   * [ ] Token cracking resistance
 
-==== Performance Testing
+=== Performance Testing
 _See Requirement CUI-JWT-9: Performance in link:Requirements.adoc[Requirements]_
 
 * [ ] Implement performance tests to verify:
@@ -164,7 +233,7 @@ _See Requirement CUI-JWT-9: Performance in link:Requirements.adoc[Requirements]_
   * [ ] Token validation performance (at least 500 tokens per second)
   * [ ] Key retrieval and caching performance (no more than 100ms overhead per new key)
 
-==== Integration Testing
+=== Integration Testing
 _See link:specification/testing.adoc#_integration_testing_with_testcontainers[Integration Testing with TestContainers Specification]_
 
 * [ ] Ensure Keycloak integration tests are comprehensive and cover all test cases:
@@ -174,7 +243,7 @@ _See link:specification/testing.adoc#_integration_testing_with_testcontainers[In
   * [ ] Validate tokens against Keycloak JWKS endpoint
   * [ ] Handle token expiration and validation
 
-==== Logging Tests
+=== Logging Tests
 _See link:specification/testing.adoc#_logging_tests[Logging Tests Specification]_
 
 * [ ] Implement comprehensive logging tests as specified in the testing documentation:
@@ -183,21 +252,21 @@ _See link:specification/testing.adoc#_logging_tests[Logging Tests Specification]
   * [ ] Use cui-test-juli-logger for testing
   * [ ] Test coverage for INFO/WARN/ERROR/FATAL logs
 
-==== Test Maintenance
+=== Test Maintenance
 _See link:specification/testing.adoc#_summary_of_cui_testing_core_standards[Summary of CUI Testing Core Standards]_
 
 * [ ] Establish guidelines for test maintenance
 * [ ] Implement CI/CD checks to prevent merging code with failing tests
 * [ ] Document the process for updating tests when production code changes
 
-==== Test Independence
+=== Test Independence
 _See link:specification/testing.adoc#_summary_of_cui_testing_core_standards[Summary of CUI Testing Core Standards]_
 
 * [ ] Review existing tests for independence issues
 * [ ] Add guidelines for ensuring test independence
 * [ ] Implement proper test cleanup mechanisms, especially for integration tests
 
-==== Vulnerability Scanning
+=== Vulnerability Scanning
 _See Requirement CUI-JWT-12.5: Vulnerability Scanning in link:Requirements.adoc[Requirements]_
 
 * [ ] Implement regular vulnerability scanning using:
@@ -206,7 +275,7 @@ _See Requirement CUI-JWT-12.5: Vulnerability Scanning in link:Requirements.adoc[
   * [ ] Fuzz testing for input validation
 * _Note: These scans should be integrated into the CI/CD pipeline_
 
-==== Compliance Testing
+=== Compliance Testing
 _See Requirement CUI-JWT-12.6: Compliance Testing in link:Requirements.adoc[Requirements]_
 
 * [ ] Implement tests to verify compliance with:
@@ -215,9 +284,9 @@ _See Requirement CUI-JWT-12.6: Compliance Testing in link:Requirements.adoc[Requ
   * [ ] OAuth 2.0 JWT Best Current Practices
 * _Note: Compliance tests should verify that the implementation adheres to the standards and best practices_
 
-=== Security
+== Security Tasks
 
-==== Safe Parsing
+=== Safe Parsing
 _See Requirement CUI-JWT-8.2: Safe Parsing in link:Requirements.adoc[Requirements]_
 
 * [ ] Implement safe parsing practices to prevent security vulnerabilities:
@@ -226,7 +295,7 @@ _See Requirement CUI-JWT-8.2: Safe Parsing in link:Requirements.adoc[Requirement
   * [ ] Protection against deserialization vulnerabilities
 * _Note: The implementation should follow OWASP Top 10 guidelines, particularly A8:2021-Software and Data Integrity Failures_
 
-==== Claims Validation
+=== Claims Validation
 _See Requirement CUI-JWT-8.4: Claims Validation in link:Requirements.adoc[Requirements]_
 
 * [x] Implement comprehensive validation for required claims as specified in RFC 7519:
@@ -236,3 +305,15 @@ _See Requirement CUI-JWT-8.4: Claims Validation in link:Requirements.adoc[Requir
   * [x] Not before time (nbf)
   * [x] Audience (aud)
 * _Note: Implemented in ClaimValidator.java and used by JwksAwareTokenParserImpl.java_
+
+=== ERROR and FATAL Level Log Messages
+_See link:LogMessages.adoc[Log Messages]_
+
+* [ ] Implement ERROR level log messages:
+  * [ ] JWTToken-200: Failed to validate token signature
+  * [ ] JWTToken-201: Critical error loading JWKS data
+  * [ ] JWTToken-202: Authentication failure
+  * [ ] JWTToken-203: Security violation detected
+* [ ] Implement FATAL level log messages:
+  * [ ] JWTToken-300: Critical security breach
+  * [ ] JWTToken-301: Fatal error in cryptographic operations
