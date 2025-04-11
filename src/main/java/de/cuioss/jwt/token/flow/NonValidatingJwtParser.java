@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.cuioss.jwt.token.util;
+package de.cuioss.jwt.token.flow;
 
 import de.cuioss.jwt.token.JWTTokenLogMessages;
 import de.cuioss.tools.logging.CuiLogger;
@@ -268,20 +268,6 @@ public class NonValidatingJwtParser {
             }
             return Optional.empty();
         }
-    }
-
-    /**
-     * Decodes a Base64Url encoded JSON part of a JWT token.
-     * Implements security measures to prevent JSON parsing attacks:
-     * - JSON depth limits
-     * - JSON object size limits
-     * - Protection against duplicate keys
-     *
-     * @param encodedPart the Base64Url encoded part
-     * @return an Optional containing the decoded JsonObject, or empty if decoding fails
-     */
-    private Optional<JsonObject> decodeJsonPart(String encodedPart) {
-        return decodeJsonPart(encodedPart, true);
     }
 
     /**

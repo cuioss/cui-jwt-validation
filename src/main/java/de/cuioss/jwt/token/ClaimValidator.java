@@ -15,12 +15,16 @@
  */
 package de.cuioss.jwt.token;
 
+import de.cuioss.jwt.token.domain.claim.ClaimName;
 import de.cuioss.tools.logging.CuiLogger;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
 
@@ -51,7 +55,6 @@ import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
 class ClaimValidator {
 
     private static final CuiLogger LOGGER = new CuiLogger(ClaimValidator.class);
-    private static final String AZP_CLAIM = "azp";
 
     private final String expectedIssuer;
     private final Set<String> expectedAudience;
@@ -75,7 +78,7 @@ class ClaimValidator {
     ClaimValidator(String expectedIssuer, Set<String> expectedAudience) {
         this(expectedIssuer, expectedAudience, null);
     }
-    
+
     /**
      * Creates a new ClaimValidator with the specified issuer, audience, and client ID.
      *
@@ -86,7 +89,7 @@ class ClaimValidator {
     ClaimValidator(String expectedIssuer, Set<String> expectedAudience, String expectedClientId) {
         this.expectedIssuer = expectedIssuer;
         this.expectedAudience = expectedAudience != null ?
-                Collections.unmodifiableSet(new HashSet<>(expectedAudience)) : null;
+                Set.copyOf(expectedAudience) : null;
         this.expectedClientId = expectedClientId;
     }
 
@@ -126,7 +129,7 @@ class ClaimValidator {
             if (!validateNotBefore(claims)) {
                 return false;
             }
-            
+
             // Validate authorized party (client id) if expected client id is provided
             if (expectedClientId != null && !validateAuthorizedParty(claims)) {
                 return false;
@@ -289,7 +292,7 @@ class ClaimValidator {
 
         return true;
     }
-    
+
     /**
      * Validates the authorized party claim.
      * <p>
@@ -312,9 +315,9 @@ class ClaimValidator {
         }
 
         // Get the azp claim
-        Object azpObj = claims.get(AZP_CLAIM);
+        Object azpObj = claims.get(ClaimName.AUTHORIZED_PARTY.getName());
         if (azpObj == null) {
-            LOGGER.warn(WARN.MISSING_CLAIM.format(AZP_CLAIM));
+            LOGGER.warn(WARN.MISSING_CLAIM.format(ClaimName.AUTHORIZED_PARTY.getName()));
             return false;
         }
 

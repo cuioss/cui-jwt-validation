@@ -17,6 +17,10 @@ package de.cuioss.jwt.token.test;
 
 import de.cuioss.jwt.token.JwksAwareTokenParserImplTest;
 import de.cuioss.jwt.token.JwtParser;
+import de.cuioss.jwt.token.domain.claim.ClaimName;
+import de.cuioss.jwt.token.domain.claim.ClaimValue;
+import de.cuioss.jwt.token.domain.token.AccessTokenContent;
+import de.cuioss.jwt.token.domain.token.TokenContent;
 import de.cuioss.test.generator.Generators;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
@@ -34,8 +38,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.util.Arrays;
-import java.util.Date;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -44,6 +47,72 @@ public class TestTokenProducer {
     public static final String ISSUER = "Token-Test-testIssuer";
     public static final String WRONG_ISSUER = Generators.nonBlankStrings().next();
     public static final String SUBJECT = Generators.letterStrings(10, 12).next();
+
+    /**
+     * Creates a valid TokenContent instance with all mandatory claims.
+     *
+     * @param expectedAudience the expected audience
+     * @param expectedClientId the expected client ID
+     * @return a TokenContent instance with all mandatory claims
+     */
+    public static TokenContent createValidTokenContent(String expectedAudience, String expectedClientId) {
+        try {
+            // Create a token with all mandatory claims
+            String token = validSignedJWTWithClaims(SOME_SCOPES);
+
+            // Create claims map
+            Map<String, ClaimValue> claims = new HashMap<>();
+
+            // Add mandatory claims for ACCESS_TOKEN
+            claims.put(ClaimName.ISSUER.getName(), ClaimValue.forPlainString(ISSUER));
+            claims.put(ClaimName.SUBJECT.getName(), ClaimValue.forPlainString(SUBJECT));
+            claims.put(ClaimName.EXPIRATION.getName(), ClaimValue.forDateTime(
+                    String.valueOf(Date.from(Instant.now().plusSeconds(3600)).getTime() / 1000),
+                    OffsetDateTime.now().plusSeconds(3600)));
+            claims.put(ClaimName.ISSUED_AT.getName(), ClaimValue.forDateTime(
+                    String.valueOf(Date.from(Instant.now()).getTime() / 1000),
+                    OffsetDateTime.now()));
+
+            // Add scope claim
+            claims.put(ClaimName.SCOPE.getName(), ClaimValue.forList("openid profile email",
+                    List.of("openid", "profile", "email")));
+
+            // Add audience claim
+            claims.put(ClaimName.AUDIENCE.getName(), ClaimValue.forList(expectedAudience,
+                    List.of(expectedAudience)));
+
+            // Add authorized party claim
+            claims.put("azp", ClaimValue.forPlainString(expectedClientId));
+
+            // Create and return AccessTokenContent
+            return new AccessTokenContent(claims, token, "test@example.com");
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create valid token content", e);
+        }
+    }
+
+    /**
+     * Creates a TokenContent instance with missing mandatory claims.
+     *
+     * @return a TokenContent instance with missing mandatory claims
+     */
+    public static TokenContent createTokenContentMissingMandatoryClaims() {
+        try {
+            // Create a token with missing mandatory claims
+            String token = validSignedEmptyJWT();
+
+            // Create claims map with minimal claims
+            Map<String, ClaimValue> claims = new HashMap<>();
+
+            // Add only issuer claim, missing other mandatory claims
+            claims.put(ClaimName.ISSUER.getName(), ClaimValue.forPlainString(ISSUER));
+
+            // Create and return AccessTokenContent
+            return new AccessTokenContent(claims, token, null);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create token content with missing claims", e);
+        }
+    }
 
     // Constants for file paths
     public static final String BASE_PATH = KeyMaterialHandler.BASE_PATH;

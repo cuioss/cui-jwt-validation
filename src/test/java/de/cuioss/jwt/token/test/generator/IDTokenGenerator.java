@@ -50,7 +50,7 @@ public class IDTokenGenerator implements TypedGenerator<String> {
     public IDTokenGenerator(boolean useAlternativeMode) {
         this(useAlternativeMode, useAlternativeMode ? ALTERNATIVE_CLIENT_ID : DEFAULT_CLIENT_ID);
     }
-    
+
     /**
      * Constructor with default mode and specific client ID.
      *
@@ -80,10 +80,10 @@ public class IDTokenGenerator implements TypedGenerator<String> {
                     .claim("name", name)
                     .claim("preferred_username", preferredUsername)
                     .claim("typ", "ID");
-            
+
             // Add key ID to the header
             builder.header().add("kid", useAlternativeMode ? ALTERNATIVE_KEY_ID : DEFAULT_KEY_ID).and();
-                    
+
             // Only add the azp claim if clientId is not null (for testing missing azp claim)
             if (clientId != null) {
                 builder.claim("azp", clientId);

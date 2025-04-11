@@ -19,28 +19,17 @@ import de.cuioss.jwt.token.adapter.ClaimNames;
 import de.cuioss.jwt.token.adapter.JsonWebToken;
 import de.cuioss.tools.collect.MoreCollections;
 import de.cuioss.tools.logging.CuiLogger;
-import de.cuioss.tools.string.Splitter;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonString;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
-import lombok.experimental.Delegate;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
-
-import static java.util.stream.Collectors.toSet;
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.*;
 
 /**
- * Represents a parsed OAuth2 access token with enhanced functionality for scope and role management.
- * Provides convenient access to standard OAuth2 claims as well as additional OpenID Connect claims.
- * <p>
- * This class directly implements the {@link JsonWebToken} interface using delegation to a
- * {@link JsonWebToken} instance, allowing for flexible composition and better separation of concerns.
+ * Represents a parsed OAuth2 access token.
+ * Acts as a Data Transfer Object without dynamic computation logic.
  * <p>
  * Key features:
  * <ul>
@@ -48,73 +37,146 @@ import static java.util.stream.Collectors.toSet;
  *   <li>Role-based access control</li>
  *   <li>User identity information (subject ID, email, name)</li>
  * </ul>
- * <p>
- * The token supports the following claims:
- * <ul>
- *   <li>{@link #CLAIM_NAME_SCOPE}: Space-separated list of OAuth2 scopes</li>
- *   <li>{@link #CLAIM_NAME_ROLES}: JSON array of assigned roles</li>
- *   <li>{@link ClaimNames#EMAIL}: User's email address</li>
- *   <li>{@link ClaimNames#PREFERRED_USERNAME}: User's preferred username</li>
- * </ul>
- * <p>
- * Usage example:
- * <pre>
- * TokenFactory factory = TokenFactory.builder()
- *     .addParser(parser)
- *     .build();
- * Optional&lt;ParsedAccessToken&gt; token = factory.createAccessToken(tokenString);
- * if (token.isPresent() &amp;&amp; token.get().providesScopes(requiredScopes)) {
- *     // Token is valid and has required scopes
- * }
- * </pre>
- * <p>
- * See specification: {@code doc/specification/technical-components.adoc#_token_classes}
- * <p>
- * Implements requirement: {@code CUI-JWT-2.2: Access Token Functionality}
- *
- * @author Oliver Wolff
  */
 @ToString
 @EqualsAndHashCode
-public class ParsedAccessToken implements JsonWebToken {
+public class ParsedAccessToken implements Serializable {
 
+    @Serial
+    private static final long serialVersionUID = 1L;
     private static final CuiLogger LOGGER = new CuiLogger(ParsedAccessToken.class);
 
-    /**
-     * The name for the scopes-claim.
-     */
-    public static final String CLAIM_NAME_SCOPE = "scope";
-    private static final String CLAIM_NAME_ROLES = "roles";
-
     @Getter
-    @Delegate
-    private final JsonWebToken jsonWebToken;
+    private final JsonWebToken jwt;
 
     private final String email;
 
     /**
-     * Creates a new {@link ParsedAccessToken} from64EncodedContent the given JsonWebToken and email.
+     * Creates a new ParsedAccessToken with the given JsonWebToken.
      *
-     * @param jsonWebToken The JsonWebToken to wrap, must not be null
-     * @param email        The email address associated with this token, may be null
+     * @param jwt   the JsonWebToken
+     * @param email the email associated with the token (may be null)
      */
-    public ParsedAccessToken(JsonWebToken jsonWebToken, String email) {
-        this.jsonWebToken = jsonWebToken;
+    public ParsedAccessToken(JsonWebToken jwt, String email) {
+        this.jwt = jwt;
         this.email = email;
     }
 
     /**
-     * @return a {@link Set} representing all scopes. If none can be found, it returns an empty set
+     * Gets the scopes in this token.
+     *
+     * @return the set of scopes
      */
-    public Set<String> getScopes() {
-        if (!jsonWebToken.containsClaim(CLAIM_NAME_SCOPE)) {
-            LOGGER.debug("No scope claim found in token");
-            return Set.of();
+    @SuppressWarnings("unchecked")
+    public SortedSet<String> getScopes() {
+        SortedSet<String> scopes = new TreeSet<>();
+        Object scopeObj = jwt.getClaim(ClaimNames.SCOPE);
+
+        if (scopeObj instanceof String scopeStr) {
+            if (!scopeStr.isBlank()) {
+                for (String scope : scopeStr.split("\\s+")) {
+                    scopes.add(scope.trim());
+                }
+            }
+        } else if (scopeObj instanceof Collection) {
+            // Handle array of scopes
+            try {
+                Collection<String> scopeColl = (Collection<String>) scopeObj;
+                scopes.addAll(scopeColl);
+            } catch (ClassCastException e) {
+                LOGGER.warn("Invalid scope claim format: {}", e.getMessage());
+            }
         }
 
-        var result = Splitter.on(' ').splitToList(jsonWebToken.getClaim(CLAIM_NAME_SCOPE));
-        LOGGER.debug("Found scopes in token: %s", result);
-        return new TreeSet<>(result);
+        return scopes;
+    }
+
+    /**
+     * Gets the roles in this token.
+     *
+     * @return the set of roles
+     */
+    @SuppressWarnings("unchecked")
+    public SortedSet<String> getRoles() {
+        SortedSet<String> roles = new TreeSet<>();
+
+        // Try to get roles from various possible claims
+        for (String rolesClaim : new String[]{"roles", "realm_access/roles", "resource_access/*/roles"}) {
+            Object rolesObj = jwt.getClaim(rolesClaim);
+            if (rolesObj instanceof Collection) {
+                try {
+                    Collection<String> rolesColl = (Collection<String>) rolesObj;
+                    roles.addAll(rolesColl);
+                } catch (ClassCastException e) {
+                    LOGGER.warn("Invalid roles claim format: {}", e.getMessage());
+                }
+            }
+        }
+
+        return roles;
+    }
+
+    /**
+     * Gets the raw token string.
+     *
+     * @return the raw token string
+     */
+    public String getRawToken() {
+        return jwt.getRawToken();
+    }
+
+    /**
+     * Gets the token issuer.
+     *
+     * @return the issuer
+     */
+    public String getIssuer() {
+        return jwt.getIssuer();
+    }
+
+    /**
+     * Gets the token subject.
+     *
+     * @return the subject
+     */
+    public String getSubject() {
+        return jwt.getSubject();
+    }
+
+    /**
+     * Gets the token type.
+     *
+     * @return the token type
+     */
+    public TokenType getType() {
+        return TokenType.ACCESS_TOKEN;
+    }
+
+    /**
+     * Gets the name associated with this token.
+     *
+     * @return an Optional containing the name if present, or empty otherwise
+     */
+    public Optional<String> getName() {
+        return jwt.getName();
+    }
+
+    /**
+     * Gets the underlying JsonWebToken implementation.
+     *
+     * @return the JsonWebToken
+     */
+    public JsonWebToken getJsonWebToken() {
+        return jwt;
+    }
+
+    /**
+     * Checks if the token has expired.
+     *
+     * @return true if the token has expired, false otherwise
+     */
+    public boolean isExpired() {
+        return jwt.isExpired();
     }
 
     /**
@@ -139,7 +201,7 @@ public class ParsedAccessToken implements JsonWebToken {
      * {@link #providesScopes(Collection)} it log on debug the corresponding scopes
      */
     public boolean providesScopesAndDebugIfScopesAreMissing(Collection<String> expectedScopes, String logContext,
-                                                            CuiLogger logger) {
+            CuiLogger logger) {
         Set<String> delta = determineMissingScopes(expectedScopes);
         if (delta.isEmpty()) {
             logger.trace("All expected scopes are present: {}, {}", expectedScopes, logContext);
@@ -163,46 +225,6 @@ public class ParsedAccessToken implements JsonWebToken {
         Set<String> scopeDelta = new TreeSet<>(expectedScopes);
         scopeDelta.removeAll(getScopes());
         return scopeDelta;
-    }
-
-    /**
-     * @return the roles defined in the 'roles' claim of the token
-     */
-    public Set<String> getRoles() {
-        LOGGER.debug("Retrieving roles from64EncodedContent token");
-        if (!jsonWebToken.containsClaim(CLAIM_NAME_ROLES)) {
-            LOGGER.debug("No roles claim found in token, containsClaim returned false");
-            return Set.of();
-        }
-
-        var roles = jsonWebToken.getClaim(CLAIM_NAME_ROLES);
-        LOGGER.debug("Roles claim value: %s (type: %s)", roles, roles != null ? roles.getClass().getName() : "null");
-
-        if (roles instanceof JsonArray array) {
-            var result = array.getValuesAs(JsonString.class).stream()
-                    .map(JsonString::getString)
-                    .collect(toSet());
-            LOGGER.debug("Found roles in token as JsonArray: %s", result);
-            return result;
-        } else if (roles instanceof Set<?> set) {
-            // Handle the case where roles is a Set<String> (as in AccessTokenGenerator)
-            var result = set.stream()
-                    .filter(String.class::isInstance)
-                    .map(String.class::cast)
-                    .collect(toSet());
-            LOGGER.debug("Found roles in token as Set: %s", result);
-            return result;
-        } else if (roles instanceof java.util.Collection<?> collection) {
-            // Handle the case where roles is any other Collection type
-            var result = collection.stream()
-                    .filter(String.class::isInstance)
-                    .map(String.class::cast)
-                    .collect(toSet());
-            LOGGER.debug("Found roles in token as Collection: %s", result);
-            return result;
-        }
-        LOGGER.debug("Roles claim is not a JsonArray, Set, or Collection");
-        return Set.of();
     }
 
     /**
@@ -234,23 +256,23 @@ public class ParsedAccessToken implements JsonWebToken {
     }
 
     /**
-     * Resolves the email address. Either given or extracted from64EncodedContent the token.
+     * Gets the email address associated with this token.
      *
-     * @return an optional containing the potential email
+     * @return an Optional containing the email if present, or empty otherwise
      */
     public Optional<String> getEmail() {
-        return Optional
-                .ofNullable(email)
-                .or(() -> Optional.ofNullable(jsonWebToken.getClaim(ClaimNames.EMAIL)));
+        if (email != null) {
+            return Optional.of(email);
+        }
+        return jwt.claim("email");
     }
 
     /**
-     * Resolves the preferred username from64EncodedContent the token.
+     * Gets the preferred username from the token.
      *
-     * @return an optional containing the potential preferred username
+     * @return an Optional containing the preferred username if present, or empty otherwise
      */
     public Optional<String> getPreferredUsername() {
-        return Optional.ofNullable(jsonWebToken.getClaim(ClaimNames.PREFERRED_USERNAME));
+        return jwt.claim("preferred_username");
     }
-
 }

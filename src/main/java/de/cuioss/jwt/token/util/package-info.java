@@ -28,7 +28,7 @@
  *       <li>Supports thread-safe token parsing in multi-tenant environments</li>
  *     </ul>
  *   </li>
- *   <li>{@link de.cuioss.jwt.token.util.NonValidatingJwtParser}:
+ *   <li>{@link de.cuioss.jwt.token.flow.NonValidatingJwtParser}:
  *     <ul>
  *       <li>Performs preliminary token inspection without signature validation</li>
  *       <li>Implements security measures against token-based attacks</li>

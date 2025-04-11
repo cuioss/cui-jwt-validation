@@ -453,7 +453,7 @@ _See link:specification/technical-components.adoc#_token_classes[Technical Compo
 |80%
 |90%
 
-|de.cuioss.jwt.token.util.NonValidatingJwtParser
+|de.cuioss.jwt.token.flow.NonValidatingJwtParser
 |85%
 |80%
 |90%

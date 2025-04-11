@@ -17,12 +17,13 @@ package de.cuioss.jwt.token;
 
 import de.cuioss.jwt.token.adapter.JsonWebToken;
 import de.cuioss.jwt.token.adapter.JwtAdapter;
+import de.cuioss.jwt.token.flow.DecodedJwt;
+import de.cuioss.jwt.token.flow.NonValidatingJwtParser;
 import de.cuioss.jwt.token.jwks.JwksLoader;
 import de.cuioss.jwt.token.jwks.key.KeyInfo;
 import de.cuioss.jwt.token.security.AlgorithmPreferences;
-import de.cuioss.jwt.token.util.DecodedJwt;
-import de.cuioss.jwt.token.util.NonValidatingJwtParser;
 import de.cuioss.tools.logging.CuiLogger;
+import de.cuioss.tools.string.MoreStrings;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
@@ -148,7 +149,7 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
             this.expectedAudience = expectedAudience;
             return this;
         }
-        
+
         /**
          * Sets the expected client ID for azp claim validation.
          * <p>
@@ -195,7 +196,10 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
     }
 
     private final JwtParser jwtParser;
+
+    @Getter
     private final JwksLoader jwksLoader;
+
     private final ClaimValidator claimValidator;
     private final AlgorithmPreferences algorithmPreferences;
 
@@ -237,7 +241,7 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
             Set<String> expectedAudience) {
         this(jwksLoader, issuer, algorithmPreferences, expectedAudience, null);
     }
-    
+
     /**
      * Constructor for JwksAwareTokenParserImpl with custom algorithm preferences, expected audience,
      * and expected client ID.
@@ -416,5 +420,132 @@ public class JwksAwareTokenParserImpl implements de.cuioss.jwt.token.JwtParser {
         return this.issuer.equals(issuer);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Optional<ParsedAccessToken> createAccessToken(@NonNull String tokenString, @NonNull KeyInfo keyInfo) {
+        LOGGER.debug("Creating access token with specific key info");
+        if (MoreStrings.isBlank(tokenString)) {
+            LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
+            return Optional.empty();
+        }
 
+        try {
+            // Parse and validate the token
+            Optional<Jws<Claims>> jws = parseAndValidateToken(tokenString, keyInfo);
+            if (jws.isEmpty()) {
+                return Optional.empty();
+            }
+
+            // Create JsonWebToken
+            JsonWebToken jwt = new JwtAdapter(jws.get(), tokenString);
+
+            // Create ParsedAccessToken
+            return Optional.of(new ParsedAccessToken(jwt, null));
+        } catch (JwtException e) {
+            LOGGER.warn(e, WARN.COULD_NOT_PARSE_TOKEN.format(e.getMessage()));
+            LOGGER.trace("Offending token '%s'", tokenString);
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Optional<ParsedAccessToken> createAccessToken(@NonNull String tokenString, @NonNull KeyInfo keyInfo, String email) {
+        LOGGER.debug("Creating access token with specific key info and email");
+        if (MoreStrings.isBlank(tokenString)) {
+            LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
+            return Optional.empty();
+        }
+
+        try {
+            // Parse and validate the token
+            Optional<Jws<Claims>> jws = parseAndValidateToken(tokenString, keyInfo);
+            if (jws.isEmpty()) {
+                return Optional.empty();
+            }
+
+            // Create JsonWebToken
+            JsonWebToken jwt = new JwtAdapter(jws.get(), tokenString);
+
+            // Create ParsedAccessToken
+            return Optional.of(new ParsedAccessToken(jwt, email));
+        } catch (JwtException e) {
+            LOGGER.warn(e, WARN.COULD_NOT_PARSE_TOKEN.format(e.getMessage()));
+            LOGGER.trace("Offending token '%s'", tokenString);
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Optional<ParsedIdToken> createIdToken(@NonNull String tokenString, @NonNull KeyInfo keyInfo) {
+        LOGGER.debug("Creating ID token with specific key info");
+        if (MoreStrings.isBlank(tokenString)) {
+            LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
+            return Optional.empty();
+        }
+
+        try {
+            // Parse and validate the token
+            Optional<Jws<Claims>> jws = parseAndValidateToken(tokenString, keyInfo);
+            if (jws.isEmpty()) {
+                return Optional.empty();
+            }
+
+            // Create JsonWebToken
+            JsonWebToken jwt = new JwtAdapter(jws.get(), tokenString);
+
+            // Create ParsedIdToken
+            return Optional.of(new ParsedIdToken(jwt));
+        } catch (JwtException e) {
+            LOGGER.warn(e, WARN.COULD_NOT_PARSE_TOKEN.format(e.getMessage()));
+            LOGGER.trace("Offending token '%s'", tokenString);
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Optional<ParsedRefreshToken> createRefreshToken(@NonNull String tokenString, KeyInfo keyInfo) {
+        LOGGER.debug("Creating refresh token with specific key info");
+        if (MoreStrings.isBlank(tokenString)) {
+            LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
+            return Optional.empty();
+        }
+
+        // If no key info is provided, return opaque token
+        if (keyInfo == null) {
+            LOGGER.debug("No key info provided, creating opaque refresh token");
+            return Optional.of(new ParsedRefreshToken(tokenString));
+        }
+
+        try {
+            // Parse and validate the token
+            Optional<Jws<Claims>> jws = parseAndValidateToken(tokenString, keyInfo);
+            if (jws.isEmpty()) {
+                // Token could not be parsed as JWT, return opaque token
+                LOGGER.debug("Token could not be parsed as JWT, creating opaque refresh token");
+                return Optional.of(new ParsedRefreshToken(tokenString));
+            }
+
+            // Create JsonWebToken
+            JsonWebToken jwt = new JwtAdapter(jws.get(), tokenString);
+
+            // Create ParsedRefreshToken with JWT content
+            LOGGER.debug("Creating refresh token with JWT content");
+            return Optional.of(new ParsedRefreshToken(tokenString, jwt));
+        } catch (JwtException e) {
+            LOGGER.debug("Error parsing token as JWT: {}, creating opaque refresh token", e.getMessage());
+            // For refresh tokens, we still return a token even if parsing fails
+            return Optional.of(new ParsedRefreshToken(tokenString));
+        }
+    }
 }

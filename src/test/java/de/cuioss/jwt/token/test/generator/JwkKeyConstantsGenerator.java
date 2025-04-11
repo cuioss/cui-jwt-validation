@@ -33,7 +33,7 @@ public class JwkKeyConstantsGenerator implements TypedGenerator<JsonObject> {
     private final TypedGenerator<String> publicKeyUseGenerator = Generators.fixedValues("sig", "enc");
     private final TypedGenerator<String> keyOperationsGenerator = Generators.fixedValues("sign", "verify", "encrypt", "decrypt");
     private final TypedGenerator<String> algorithmGenerator = Generators.fixedValues("RS256", "ES256");
-    private final TypedGenerator<String> keyIdGenerator = Generators.strings();
+    private final TypedGenerator<String> keyIdGenerator = Generators.nonBlankStrings();
     private final CollectionGenerator<Byte> byteGenerator = Generators.asCollectionGenerator(Generators.bytes());
     private final TypedGenerator<String> bigIntegerAsBase64 = () -> Base64.getUrlEncoder().encodeToString(BigInteger.valueOf(Generators.longs().next()).toByteArray());
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.cuioss.jwt.token.util;
+package de.cuioss.jwt.token.flow;
 
 import de.cuioss.jwt.token.adapter.ClaimNames;
 import jakarta.json.JsonObject;
@@ -52,7 +52,7 @@ public class DecodedJwt {
      * @param parts     the original token parts
      * @param rawToken  the original raw token string
      */
-    DecodedJwt(JsonObject header, JsonObject body, String signature, String[] parts, String rawToken) {
+    public DecodedJwt(JsonObject header, JsonObject body, String signature, String[] parts, String rawToken) {
         this.header = header;
         this.body = body;
         this.signature = signature;

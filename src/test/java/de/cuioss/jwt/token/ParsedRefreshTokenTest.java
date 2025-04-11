@@ -28,9 +28,7 @@ import java.util.Set;
 
 import static de.cuioss.jwt.token.test.TestTokenProducer.REFRESH_TOKEN;
 import static de.cuioss.jwt.token.test.TestTokenProducer.validSignedJWTWithClaims;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @EnableTestLogger
 @DisplayName("Tests ParsedRefreshToken functionality")
@@ -68,7 +66,7 @@ class ParsedRefreshTokenTest implements ShouldBeSerializable<ParsedRefreshToken>
             assertFalse(parsedRefreshToken.isJwtFormat(), "Should not be recognized as JWT");
             assertTrue(parsedRefreshToken.getJsonWebToken().isEmpty(), "JsonWebToken should be empty");
         }
-        
+
         @Test
         @DisplayName("Should handle JWT format refresh token")
         void shouldHandleJwtFormatRefreshToken() {
@@ -132,10 +130,10 @@ class ParsedRefreshTokenTest implements ShouldBeSerializable<ParsedRefreshToken>
                     return Optional.empty();
                 }
             };
-            
+
             // Create a refresh token with JWT
             var token = new ParsedRefreshToken("jwtRawToken", jwt);
-            
+
             // Verify
             assertFalse(token.isEmpty(), "Token should not be empty");
             assertEquals("jwtRawToken", token.getRawToken(), "Token string should match original");

@@ -1,0 +1,64 @@
+/*
+ * Copyright 2023 the original author or authors.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * https://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package de.cuioss.jwt.token.domain.claim;
+
+import de.cuioss.test.juli.junit5.EnableTestLogger;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+@EnableTestLogger
+@DisplayName("Tests ClaimValueType functionality")
+class ClaimValueTypeTest {
+
+    @Test
+    @DisplayName("Should have all expected enum values")
+    void shouldHaveAllExpectedValues() {
+        // Given, When, Then
+        assertEquals(3, ClaimValueType.values().length, "Should have exactly 3 enum values");
+
+        assertNotNull(ClaimValueType.STRING);
+        assertNotNull(ClaimValueType.STRING_LIST);
+        assertNotNull(ClaimValueType.DATETIME);
+    }
+
+    @Test
+    @DisplayName("Should convert enum values to string correctly")
+    void shouldConvertToStringCorrectly() {
+        // Given, When, Then
+        assertEquals("STRING", ClaimValueType.STRING.toString());
+        assertEquals("STRING_LIST", ClaimValueType.STRING_LIST.toString());
+        assertEquals("DATETIME", ClaimValueType.DATETIME.toString());
+    }
+
+    @Test
+    @DisplayName("Should be able to get enum value by name")
+    void shouldGetEnumValueByName() {
+        // Given, When, Then
+        assertEquals(ClaimValueType.STRING, ClaimValueType.valueOf("STRING"));
+        assertEquals(ClaimValueType.STRING_LIST, ClaimValueType.valueOf("STRING_LIST"));
+        assertEquals(ClaimValueType.DATETIME, ClaimValueType.valueOf("DATETIME"));
+    }
+
+    @Test
+    @DisplayName("Should throw IllegalArgumentException for invalid enum name")
+    void shouldThrowExceptionForInvalidName() {
+        // Given, When, Then
+        assertThrows(IllegalArgumentException.class, () ->
+                ClaimValueType.valueOf("INVALID_TYPE"));
+    }
+}

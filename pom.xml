@@ -37,6 +37,7 @@
         <maven.jar.plugin.automatic.module.name>de.cuioss.jwt.token</maven.jar.plugin.automatic.module.name>
         <version.cui.parent>0.9.3</version.cui.parent>
         <version.jjwt>0.12.6</version.jjwt>
+        <version.bouncycastle>1.80</version.bouncycastle>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -76,6 +77,12 @@
                 <artifactId>caffeine</artifactId>
                 <version>3.1.8</version>
             </dependency>
+            <!-- BouncyCastle for cryptographic operations -->
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk18on</artifactId>
+                <version>${version.bouncycastle}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
     <dependencies>
@@ -111,6 +118,11 @@
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
+        </dependency>
+        <!-- BouncyCastle for cryptographic operations -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
         </dependency>
         <!-- Test -->
         <dependency>

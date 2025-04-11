@@ -17,6 +17,8 @@ package de.cuioss.jwt.token.util;
 
 import de.cuioss.jwt.token.JwksAwareTokenParserImpl;
 import de.cuioss.jwt.token.JwtParser;
+import de.cuioss.jwt.token.flow.DecodedJwt;
+import de.cuioss.jwt.token.flow.NonValidatingJwtParser;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
@@ -149,6 +151,19 @@ public class MultiIssuerJwtParser {
     public Optional<JwtParser> getParserForToken(@NonNull String token) {
         LOGGER.debug("Getting parser for token");
         return extractIssuer(token).flatMap(this::getParserForIssuer);
+    }
+
+    /**
+     * Decodes a JWT token without verifying its signature.
+     * This method is used to extract header and payload information from a token
+     * before selecting the appropriate parser for validation.
+     *
+     * @param token the token to decode
+     * @return an Optional containing the decoded token, or empty if decoding fails
+     */
+    public Optional<DecodedJwt> decodeWithoutVerification(@NonNull String token) {
+        LOGGER.debug("Decoding token without verification");
+        return inspectionParser.decode(token);
     }
 
     /**

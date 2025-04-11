@@ -17,8 +17,11 @@ package de.cuioss.jwt.token.test.generator;
 
 import de.cuioss.test.generator.Generators;
 import de.cuioss.test.generator.TypedGenerator;
+import de.cuioss.tools.string.MoreStrings;
+import de.cuioss.tools.string.Splitter;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -30,7 +33,7 @@ public class ScopeGenerator implements TypedGenerator<String> {
 
     private static final String OPENID_SCOPE = "openid";
     private static final List<String> COMMON_SCOPES = List.of(
-            "email", "profile", "offline_access", "address", "phone"
+            "email", "profile", "offline_access", "address", "phone", "groups", "roles", "custom_scope1", "user/read"
     );
 
     private final int minAdditionalScopes;
@@ -85,5 +88,15 @@ public class ScopeGenerator implements TypedGenerator<String> {
 
         // Join scopes with spaces
         return String.join(" ", scopes);
+    }
+
+    /**
+     * Splits a string of scopes into a collection of individual scopes.
+     *
+     * @param scopes the string containing space-separated scopes
+     * @return a collection of individual scopes
+     */
+    public static Collection<String> splitScopes(String scopes) {
+        return Splitter.on(' ').splitToList(MoreStrings.nullToEmpty(scopes));
     }
 }

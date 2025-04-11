@@ -17,7 +17,11 @@ package de.cuioss.jwt.token.test;
 
 import de.cuioss.jwt.token.JWTTokenLogMessages;
 import de.cuioss.jwt.token.JwtParser;
+import de.cuioss.jwt.token.ParsedAccessToken;
+import de.cuioss.jwt.token.ParsedIdToken;
+import de.cuioss.jwt.token.ParsedRefreshToken;
 import de.cuioss.jwt.token.adapter.JsonWebToken;
+import de.cuioss.jwt.token.jwks.key.KeyInfo;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
 import io.jsonwebtoken.Claims;
@@ -26,6 +30,7 @@ import io.jsonwebtoken.JwtException;
 import jakarta.json.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
@@ -154,6 +159,28 @@ public class TestJwtParser implements JwtParser {
         return this.issuer.equals(issuer);
     }
 
+    @Override
+    public Optional<ParsedAccessToken> createAccessToken(@NonNull String tokenString, KeyInfo keyInfo) {
+        return parse(tokenString).map(jwt -> new ParsedAccessToken(jwt, null));
+    }
+
+    @Override
+    public Optional<ParsedAccessToken> createAccessToken(String tokenString, KeyInfo keyInfo, String email) {
+        return parse(tokenString).map(jwt -> new ParsedAccessToken(jwt, email));
+    }
+
+    @Override
+    public Optional<ParsedIdToken> createIdToken(String tokenString, KeyInfo keyInfo) {
+        return parse(tokenString).map(ParsedIdToken::new);
+    }
+
+    @Override
+    public Optional<ParsedRefreshToken> createRefreshToken(String tokenString, KeyInfo keyInfo) {
+        return parse(tokenString)
+                .map(jwt -> new ParsedRefreshToken(tokenString, jwt))
+                .or(() -> Optional.of(new ParsedRefreshToken(tokenString)));
+    }
+
     /**
      * Custom implementation of JsonWebToken that correctly handles JSON arrays.
      */
@@ -208,7 +235,7 @@ public class TestJwtParser implements JwtParser {
         public boolean containsClaim(String claimName) {
             if ("roles".equals(claimName)) {
                 // Check if the token was created with SOME_SCOPES
-                String rawToken = null;
+                String rawToken;
 
                 // Try to get the raw token
                 rawToken = delegate.getRawToken();

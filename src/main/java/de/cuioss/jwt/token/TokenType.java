@@ -15,10 +15,18 @@
  */
 package de.cuioss.jwt.token;
 
+import de.cuioss.jwt.token.domain.claim.ClaimName;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
+
+import static de.cuioss.jwt.token.domain.claim.ClaimName.*;
 
 /**
  * Defines the supported token types within the authentication system.
@@ -32,20 +40,25 @@ import lombok.RequiredArgsConstructor;
  *   <li>{@link #UNKNOWN}: Fallback type for unrecognized or missing type claims</li>
  * </ul>
  * <p>
- * Note: The type claim implementation is specific to Keycloak and uses the "typ" claim 
+ * Note: The type claim implementation is specific to Keycloak and uses the "typ" claim
  * which is not part of the standard OAuth2/OpenID Connect specifications.
- * 
+ *
  * @author Oliver Wolff
  */
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public enum TokenType {
 
-    ACCESS_TOKEN("Bearer"), ID_TOKEN("ID"), REFRESH_TOKEN("Refresh"), UNKNOWN("unknown");
+    ACCESS_TOKEN("Bearer", new TreeSet<>(List.of(ISSUER, EXPIRATION, ISSUED_AT, SUBJECT, SCOPE))),
+    ID_TOKEN("ID", new TreeSet<>(List.of(ISSUER, EXPIRATION, ISSUED_AT, SUBJECT, AUDIENCE))),
+    REFRESH_TOKEN("Refresh", Collections.emptySortedSet()),
+    UNKNOWN("unknown", Collections.emptySortedSet());
 
     private static final CuiLogger LOGGER = new CuiLogger(TokenType.class);
 
     @Getter
     private final String typeClaimName;
+    @Getter
+    private final SortedSet<ClaimName> mandatoryClaims;
 
     public static TokenType fromTypClaim(String typeClaimName) {
         if (typeClaimName == null) {

@@ -1,0 +1,10 @@
+{
+  "iss": "https://auth.example.com",
+  "sub": "user123",
+  "aud": ["client1", "client2"],
+  "exp": 1735689600,
+  "iat": 1704153600,
+  "email": "test@example.com",
+  "scope": ["openid", "profile", "email"],
+  "preferred_username": "testuser"
+}

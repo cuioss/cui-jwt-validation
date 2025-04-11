@@ -23,13 +23,20 @@ import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
-import java.security.spec.*;
+import java.security.Security;
+import java.security.spec.ECPoint;
+import java.security.spec.ECPublicKeySpec;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.RSAPublicKeySpec;
+import java.security.spec.ECParameterSpec;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Utility class for handling JWK (JSON Web Key) operations.
  * <p>
- * This class provides methods for parsing and validating RSA and EC keys from64EncodedContent JWK format.
- * It isolates the low-level cryptographic operations from64EncodedContent the JWKSKeyLoader class.
+ * This class provides methods for parsing and validating RSA and EC keys from JWK format.
+ * It isolates the low-level cryptographic operations from the JWKSKeyLoader class.
  * <p>
  * Implements requirement: {@code CUI-JWT-8.5: Cryptographic Agility}
  * <p>
@@ -45,68 +52,133 @@ public final class JwkKeyHandler {
     private static final String RSA_KEY_TYPE = "RSA";
     private static final String EC_KEY_TYPE = "EC";
 
+    // Cache for KeyFactory instances to improve performance
+    private static final Map<String, KeyFactory> KEY_FACTORY_CACHE = new ConcurrentHashMap<>();
+
     /**
-     * Parse an RSA key from64EncodedContent a JWK.
+     * Parse an RSA key from a JWK.
      *
      * @param jwk the JWK object
      * @return the RSA public key
      * @throws InvalidKeySpecException if the key specification is invalid
      */
-    public static PublicKey parseRsaKey(JsonObject jwk) throws InvalidKeySpecException, NoSuchAlgorithmException {
+    public static PublicKey parseRsaKey(JsonObject jwk) throws InvalidKeySpecException {
         // Get the modulus and exponent
-        BigInteger exponent = JwkKeyConstants.Exponent.from(jwk).orElseThrow(() -> new InvalidKeySpecException(MESSAGE.formatted("e")));
-        BigInteger modulus = JwkKeyConstants.Modulus.from(jwk).orElseThrow(() -> new InvalidKeySpecException(MESSAGE.formatted("n")));
+        BigInteger exponent = JwkKeyConstants.Exponent.from(jwk)
+            .orElseThrow(() -> new InvalidKeySpecException(MESSAGE.formatted("e")));
+        BigInteger modulus = JwkKeyConstants.Modulus.from(jwk)
+            .orElseThrow(() -> new InvalidKeySpecException(MESSAGE.formatted("n")));
 
         // Create RSA public key
         RSAPublicKeySpec spec = new RSAPublicKeySpec(modulus, exponent);
-        KeyFactory factory = KeyFactory.getInstance(RSA_KEY_TYPE);
+        KeyFactory factory = getKeyFactory(RSA_KEY_TYPE);
         return factory.generatePublic(spec);
     }
 
     /**
-     * Parse an EC key from64EncodedContent a JWK.
+     * Parse an EC key from a JWK.
      *
      * @param jwk the JWK object
      * @return the EC public key
-     * @throws NoSuchAlgorithmException if the EC algorithm is not available
      * @throws InvalidKeySpecException  if the key specification is invalid
      */
-    public static PublicKey parseEcKey(JsonObject jwk) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        String curve = JwkKeyConstants.Curve.from(jwk).orElse("P-256");
-        BigInteger x = JwkKeyConstants.XCoordinate.from(jwk).orElseThrow(() -> new InvalidKeySpecException(MESSAGE.formatted("x")));
-        BigInteger y = JwkKeyConstants.YCoordinate.from(jwk).orElseThrow(() -> new InvalidKeySpecException(MESSAGE.formatted("y")));
+    public static PublicKey parseEcKey(JsonObject jwk) throws InvalidKeySpecException {
+        var curveOpt = JwkKeyConstants.Curve.from(jwk);
+        if (curveOpt.isEmpty()) {
+            throw new InvalidKeySpecException(MESSAGE.formatted("crv"));
+        }
+        String curve = curveOpt.get();
+        BigInteger x = JwkKeyConstants.XCoordinate.from(jwk)
+            .orElseThrow(() -> new InvalidKeySpecException(MESSAGE.formatted("x")));
+        BigInteger y = JwkKeyConstants.YCoordinate.from(jwk)
+            .orElseThrow(() -> new InvalidKeySpecException(MESSAGE.formatted("y")));
 
         // Create EC point
         ECPoint point = new ECPoint(x, y);
 
-        // Get EC parameters for the curve
+        // Get EC parameter spec for the curve
         ECParameterSpec params = getEcParameterSpec(curve);
 
         // Create EC public key
         ECPublicKeySpec spec = new ECPublicKeySpec(point, params);
-        KeyFactory factory = KeyFactory.getInstance(EC_KEY_TYPE);
+        KeyFactory factory = getKeyFactory(EC_KEY_TYPE);
         return factory.generatePublic(spec);
     }
 
     /**
-     * Get EC parameter spec for the specified curve.
+     * Get the EC parameter spec for a given curve.
      *
-     * @param curve the curve name
+     * @param curve the curve name (e.g., "P-256", "P-384", "P-521")
      * @return the EC parameter spec
      * @throws InvalidKeySpecException if the curve is not supported
      */
-    public static ECParameterSpec getEcParameterSpec(String curve) throws InvalidKeySpecException {
-        // This is a simplified implementation
-        // In a real implementation, you would use a library like Bouncy Castle
-        // to get the proper EC parameters for the curve
-        throw new InvalidKeySpecException("EC curve " + curve + " is not supported in this implementation");
+    private static ECParameterSpec getEcParameterSpec(String curve) throws InvalidKeySpecException {
+        // Ensure BouncyCastle provider is available
+        if (Security.getProvider(org.bouncycastle.jce.provider.BouncyCastleProvider.PROVIDER_NAME) == null) {
+            Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+        }
+
+        // Map JWK curve name to BouncyCastle curve name
+        String bcCurveName = switch (curve) {
+            case "P-256" -> "secp256r1";
+            case "P-384" -> "secp384r1";
+            case "P-521" -> "secp521r1";
+            default -> null;
+        };
+
+        if (bcCurveName == null) {
+            throw new InvalidKeySpecException("EC curve " + curve + " is not supported");
+        }
+
+        var bcSpec = org.bouncycastle.jce.ECNamedCurveTable.getParameterSpec(bcCurveName);
+        if (bcSpec == null) {
+            throw new InvalidKeySpecException("Bouncy Castle does not support curve: " + curve);
+        }
+
+        // Create EC parameter spec from BouncyCastle spec
+        var field = new java.security.spec.ECFieldFp(bcSpec.getCurve().getField().getCharacteristic());
+        var ellipticCurve = new java.security.spec.EllipticCurve(
+                field,
+                bcSpec.getCurve().getA().toBigInteger(),
+                bcSpec.getCurve().getB().toBigInteger(),
+                bcSpec.getSeed()
+        );
+        var generator = new ECPoint(
+                bcSpec.getG().getAffineXCoord().toBigInteger(),
+                bcSpec.getG().getAffineYCoord().toBigInteger()
+        );
+
+        return new ECParameterSpec(
+                ellipticCurve,
+                generator,
+                bcSpec.getN(),
+                bcSpec.getH().intValue()
+        );
+    }
+
+    /**
+     * Get a KeyFactory instance for the specified algorithm.
+     * Uses a cache to avoid creating new instances repeatedly.
+     *
+     * @param algorithm the algorithm name
+     * @return the KeyFactory instance
+     * @throws IllegalStateException if the algorithm is not available
+     */
+    private static KeyFactory getKeyFactory(String algorithm) {
+        return KEY_FACTORY_CACHE.computeIfAbsent(algorithm, alg -> {
+            try {
+                return KeyFactory.getInstance(alg);
+            } catch (NoSuchAlgorithmException e) {
+                throw new IllegalStateException("Failed to create KeyFactory for " + alg, e);
+            }
+        });
     }
 
     /**
      * Determine the EC algorithm based on the curve.
      *
      * @param curve the curve name
-     * @return the algorithm name
+     * @return the algorithm name, defaults to "ES256" for unknown curves
      */
     public static String determineEcAlgorithm(String curve) {
         return switch (curve) {

@@ -15,10 +15,10 @@
  */
 package de.cuioss.jwt.token;
 
+import de.cuioss.jwt.token.flow.DecodedJwt;
+import de.cuioss.jwt.token.flow.NonValidatingJwtParser;
 import de.cuioss.jwt.token.test.KeyMaterialHandler;
 import de.cuioss.jwt.token.test.TestTokenProducer;
-import de.cuioss.jwt.token.util.DecodedJwt;
-import de.cuioss.jwt.token.util.NonValidatingJwtParser;
 import de.cuioss.test.generator.Generators;
 import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.BeforeEach;

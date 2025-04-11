@@ -15,12 +15,11 @@
  */
 package de.cuioss.jwt.token;
 
-import de.cuioss.jwt.token.adapter.JsonWebToken;
+import de.cuioss.jwt.token.jwks.key.KeyInfo;
 import de.cuioss.jwt.token.util.MultiIssuerJwtParser;
 import de.cuioss.tools.base.Preconditions;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
-import io.jsonwebtoken.JwtException;
 import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -78,6 +77,7 @@ public class TokenFactory {
 
     private static final CuiLogger LOGGER = new CuiLogger(TokenFactory.class);
     public static final String NO_SUITABLE_PARSER_FOUND_FOR_TOKEN = "No suitable parser found for token";
+    public static final String NO_KEY_INFO_FOUND_FOR_TOKEN = "No key info found for token";
 
     private final MultiIssuerJwtParser tokenParser;
 
@@ -168,30 +168,7 @@ public class TokenFactory {
     }
 
     /**
-     * Creates a JsonWebToken from64EncodedContent the given token string using the appropriate parser.
-     * This method handles token validation and parsing errors.
-     *
-     * @param tokenString The token string to parse, must not be null
-     * @param parser      The parser to use for parsing the token
-     * @return An Optional containing the parsed JsonWebToken, or empty if parsing failed
-     */
-    private Optional<JsonWebToken> createJsonWebToken(String tokenString, JwtParser parser) {
-        LOGGER.trace("Parsing token '%s'", tokenString);
-        if (MoreStrings.isBlank(tokenString)) {
-            LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
-            return Optional.empty();
-        }
-        try {
-            return parser.parse(tokenString);
-        } catch (JwtException e) {
-            LOGGER.warn(e, JWTTokenLogMessages.WARN.COULD_NOT_PARSE_TOKEN.format(e.getMessage()));
-            LOGGER.trace("Offending token '%s'", tokenString);
-            return Optional.empty();
-        }
-    }
-
-    /**
-     * Creates an access token from64EncodedContent the given token string.
+     * Creates an access token from the given token string.
      *
      * @param tokenString The token string to parse, must not be null
      * @return The parsed access token, which may be empty if the token is invalid or no parser is found
@@ -202,18 +179,38 @@ public class TokenFactory {
             LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
             return Optional.empty();
         }
-        var parser = tokenParser.getParserForToken(tokenString);
-        if (parser.isPresent()) {
-            LOGGER.debug("Found parser for token, attempting to create access token");
-            return createJsonWebToken(tokenString, parser.get())
-                    .map(jwt -> new ParsedAccessToken(jwt, null));
+
+        // Decode token to get key ID or algorithm information
+        var decodedJwt = tokenParser.decodeWithoutVerification(tokenString);
+        if (decodedJwt.isEmpty()) {
+            LOGGER.warn(JWTTokenLogMessages.WARN.FAILED_TO_DECODE_JWT::format);
+            return Optional.empty();
         }
-        LOGGER.debug(NO_SUITABLE_PARSER_FOUND_FOR_TOKEN);
+
+        // Get appropriate parser
+        var parser = tokenParser.getParserForToken(tokenString);
+        if (parser.isEmpty()) {
+            LOGGER.debug(NO_SUITABLE_PARSER_FOUND_FOR_TOKEN);
+            return Optional.empty();
+        }
+
+        // Get key information
+        var jwksLoader = parser.get().getJwksLoader();
+        var keyInfo = decodedJwt.get().getKid()
+                .flatMap(jwksLoader::getKeyInfo);
+
+        // If key info is found, use it to create the token
+        if (keyInfo.isPresent()) {
+            LOGGER.debug("Found key info, creating access token");
+            return parser.get().createAccessToken(tokenString, keyInfo.get());
+        }
+
+        LOGGER.debug(NO_KEY_INFO_FOUND_FOR_TOKEN);
         return Optional.empty();
     }
 
     /**
-     * Creates an access token from64EncodedContent the given token string with an associated email.
+     * Creates an access token from the given token string with an associated email.
      *
      * @param tokenString The token string to parse, must not be null
      * @param email       The email address associated with this token, may be null
@@ -225,18 +222,38 @@ public class TokenFactory {
             LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
             return Optional.empty();
         }
-        var parser = tokenParser.getParserForToken(tokenString);
-        if (parser.isPresent()) {
-            LOGGER.debug("Found parser for token, attempting to create access token with email");
-            return createJsonWebToken(tokenString, parser.get())
-                    .map(jwt -> new ParsedAccessToken(jwt, email));
+
+        // Decode token to get key ID or algorithm information
+        var decodedJwt = tokenParser.decodeWithoutVerification(tokenString);
+        if (decodedJwt.isEmpty()) {
+            LOGGER.warn(JWTTokenLogMessages.WARN.FAILED_TO_DECODE_JWT::format);
+            return Optional.empty();
         }
-        LOGGER.debug(NO_SUITABLE_PARSER_FOUND_FOR_TOKEN);
+
+        // Get appropriate parser
+        var parser = tokenParser.getParserForToken(tokenString);
+        if (parser.isEmpty()) {
+            LOGGER.debug(NO_SUITABLE_PARSER_FOUND_FOR_TOKEN);
+            return Optional.empty();
+        }
+
+        // Get key information
+        var jwksLoader = parser.get().getJwksLoader();
+        var keyInfo = decodedJwt.get().getKid()
+                .flatMap(jwksLoader::getKeyInfo);
+
+        // If key info is found, use it to create the token
+        if (keyInfo.isPresent()) {
+            LOGGER.debug("Found key info, creating access token with email");
+            return parser.get().createAccessToken(tokenString, keyInfo.get(), email);
+        }
+
+        LOGGER.debug(NO_KEY_INFO_FOUND_FOR_TOKEN);
         return Optional.empty();
     }
 
     /**
-     * Creates an ID token from64EncodedContent the given token string.
+     * Creates an ID token from the given token string.
      *
      * @param tokenString The token string to parse, must not be null
      * @return The parsed ID token, which may be empty if the token is invalid or no parser is found
@@ -247,13 +264,33 @@ public class TokenFactory {
             LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
             return Optional.empty();
         }
-        var parser = tokenParser.getParserForToken(tokenString);
-        if (parser.isPresent()) {
-            LOGGER.debug("Found parser for token, attempting to create ID token");
-            return createJsonWebToken(tokenString, parser.get())
-                    .map(ParsedIdToken::new);
+
+        // Decode token to get key ID or algorithm information
+        var decodedJwt = tokenParser.decodeWithoutVerification(tokenString);
+        if (decodedJwt.isEmpty()) {
+            LOGGER.warn(JWTTokenLogMessages.WARN.FAILED_TO_DECODE_JWT::format);
+            return Optional.empty();
         }
-        LOGGER.debug(NO_SUITABLE_PARSER_FOUND_FOR_TOKEN);
+
+        // Get appropriate parser
+        var parser = tokenParser.getParserForToken(tokenString);
+        if (parser.isEmpty()) {
+            LOGGER.debug(NO_SUITABLE_PARSER_FOUND_FOR_TOKEN);
+            return Optional.empty();
+        }
+
+        // Get key information
+        var jwksLoader = parser.get().getJwksLoader();
+        var keyInfo = decodedJwt.get().getKid()
+                .flatMap(jwksLoader::getKeyInfo);
+
+        // If key info is found, use it to create the token
+        if (keyInfo.isPresent()) {
+            LOGGER.debug("Found key info, creating ID token");
+            return parser.get().createIdToken(tokenString, keyInfo.get());
+        }
+
+        LOGGER.debug(NO_KEY_INFO_FOUND_FOR_TOKEN);
         return Optional.empty();
     }
 
@@ -265,45 +302,34 @@ public class TokenFactory {
      */
     public Optional<ParsedRefreshToken> createRefreshToken(@NonNull String tokenString) {
         LOGGER.debug("Creating refresh token");
-        
+        if (MoreStrings.isBlank(tokenString)) {
+            LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
+            return Optional.empty();
+        }
+
         // Get parser for token
-        var parserOption = tokenParser.getParserForToken(tokenString);
-        if (parserOption.isEmpty()) {
+        var parser = tokenParser.getParserForToken(tokenString);
+        if (parser.isEmpty()) {
             LOGGER.debug(NO_SUITABLE_PARSER_FOUND_FOR_TOKEN);
             return Optional.empty();
         }
-        
-        JwtParser parser = parserOption.get();
-        
-        // Try to parse as JWT token silently (without logging warnings)
-        Optional<JsonWebToken> jsonWebToken = tryParseAsJwt(tokenString, parser);
-        
-        // Create ParsedRefreshToken with or without the JsonWebToken
-        LOGGER.debug("Creating refresh token{}",
-                jsonWebToken.isPresent() ? " with JWT content" : " as opaque string");
-        return Optional.of(new ParsedRefreshToken(tokenString, jsonWebToken.orElse(null)));
-    }
-    
-    /**
-     * Tries to parse a token as JWT without logging warnings on failure.
-     * This is used to check if a refresh token is in JWT format.
-     *
-     * @param tokenString The token string to parse
-     * @param parser The parser to use
-     * @return An Optional containing the JsonWebToken if parsing succeeded, or empty if not
-     */
-    private Optional<JsonWebToken> tryParseAsJwt(String tokenString, JwtParser parser) {
-        if (MoreStrings.isBlank(tokenString)) {
-            return Optional.empty();
+
+        // Decode token to get key ID or algorithm information
+        var decodedJwt = tokenParser.decodeWithoutVerification(tokenString);
+
+        // Get key information if possible
+        KeyInfo keyInfo = null;
+        if (decodedJwt.isPresent()) {
+            var jwksLoader = parser.get().getJwksLoader();
+            var keyInfoOpt = decodedJwt.get().getKid()
+                    .flatMap(jwksLoader::getKeyInfo);
+            if (keyInfoOpt.isPresent()) {
+                keyInfo = keyInfoOpt.get();
+            }
         }
-        
-        try {
-            // Use the parser to validate the token
-            return parser.parse(tokenString);
-        } catch (JwtException e) {
-            // Silently return empty on parsing failure
-            LOGGER.debug("Token is not a valid JWT: {}", e.getMessage());
-            return Optional.empty();
-        }
+
+        // Create refresh token with or without key info
+        return parser.get().createRefreshToken(tokenString, keyInfo);
     }
+
 }

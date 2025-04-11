@@ -15,12 +15,12 @@
  */
 package de.cuioss.jwt.token;
 
+import de.cuioss.jwt.token.flow.NonValidatingJwtParser;
 import de.cuioss.jwt.token.jwks.JwksLoader;
 import de.cuioss.jwt.token.jwks.JwksLoaderFactory;
 import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.jwt.token.test.TestTokenProducer;
 import de.cuioss.jwt.token.test.generator.IDTokenGenerator;
-import de.cuioss.jwt.token.util.NonValidatingJwtParser;
 import de.cuioss.tools.logging.CuiLogger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Tests the client confusion attack prevention feature.
  */
 class ClientConfusionAttackTest {
-    
+
     private static final CuiLogger LOGGER = new CuiLogger(ClientConfusionAttackTest.class);
 
     /**
@@ -51,7 +51,7 @@ class ClientConfusionAttackTest {
         // Use the JWKSFactory to create a proper JWKS document with the default key ID
         String jwksContent = JWKSFactory.createDefaultJwks();
         jwksLoader = JwksLoaderFactory.createInMemoryLoader(jwksContent);
-        
+
         // Print the JWKS content for debugging
         LOGGER.debug("JWKS content: " + jwksContent);
     }
@@ -62,7 +62,7 @@ class ClientConfusionAttackTest {
         // Generate a token with the default client ID
         String token = new IDTokenGenerator(false).next();
         LOGGER.debug("Token: " + token);
-        
+
         // Print the token headers using NonValidatingJwtParser to debug
         try {
             var decoder = NonValidatingJwtParser.builder().build();

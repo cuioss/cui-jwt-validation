@@ -16,22 +16,26 @@
 package de.cuioss.jwt.token;
 
 import de.cuioss.jwt.token.adapter.JsonWebToken;
+import de.cuioss.jwt.token.jwks.JwksLoader;
+import de.cuioss.jwt.token.jwks.key.KeyInfo;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
+import lombok.NonNull;
 
 import java.util.Optional;
 
 /**
- * Interface for JWT token parsing and validation.
- * Defines the contract for components that can parse and validate JWT tokens,
- * with support for issuer-specific validation.
+ * Interface for JWT token parsing, validation, and creation.
+ * Defines the contract for components that can parse, validate, and create JWT tokens,
+ * with support for issuer-specific validation and token type-specific creation.
  * <p>
  * Key features:
  * <ul>
  *   <li>Token parsing and validation</li>
  *   <li>Issuer-specific validation</li>
  *   <li>Support for multiple token issuers</li>
+ *   <li>Creation of typed tokens (Access, ID, Refresh)</li>
  * </ul>
  * <p>
  * Implementations of this interface should handle:
@@ -40,6 +44,7 @@ import java.util.Optional;
  *   <li>Token format validation</li>
  *   <li>Claim validation</li>
  *   <li>Key management</li>
+ *   <li>Token creation for different token types</li>
  * </ul>
  * <p>
  * Implements requirement: {@code CUI-JWT-1.3: Signature Validation}
@@ -74,6 +79,43 @@ public interface JwtParser {
     Optional<JsonWebToken> parse(String token) throws JwtException;
 
     /**
+     * Creates an access token from the given token string and key information.
+     *
+     * @param tokenString the token string
+     * @param keyInfo the key information for token validation
+     * @return an Optional containing the parsed access token if valid, or empty otherwise
+     */
+    Optional<ParsedAccessToken> createAccessToken(@NonNull String tokenString, @NonNull KeyInfo keyInfo);
+
+    /**
+     * Creates an access token from the given token string with an associated email.
+     *
+     * @param tokenString the token string
+     * @param keyInfo the key information for token validation
+     * @param email the email to associate with the token
+     * @return an Optional containing the parsed access token if valid, or empty otherwise
+     */
+    Optional<ParsedAccessToken> createAccessToken(@NonNull String tokenString, @NonNull KeyInfo keyInfo, String email);
+
+    /**
+     * Creates an ID token from the given token string.
+     *
+     * @param tokenString the token string
+     * @param keyInfo the key information for token validation
+     * @return an Optional containing the parsed ID token if valid, or empty otherwise
+     */
+    Optional<ParsedIdToken> createIdToken(@NonNull String tokenString, @NonNull KeyInfo keyInfo);
+
+    /**
+     * Creates a refresh token from the given token string.
+     *
+     * @param tokenString the token string
+     * @param keyInfo the key information for token validation (may be null for opaque tokens)
+     * @return an Optional containing the parsed refresh token if valid, or empty otherwise
+     */
+    Optional<ParsedRefreshToken> createRefreshToken(@NonNull String tokenString, KeyInfo keyInfo);
+
+    /**
      * Checks if this parser supports the given issuer.
      *
      * @param issuer the issuer to check
@@ -87,4 +129,13 @@ public interface JwtParser {
      * @return the issuer URL
      */
     String getIssuer();
+
+    /**
+     * Gets the JWKS loader used by this parser.
+     * 
+     * @return the JWKS loader
+     */
+    default JwksLoader getJwksLoader() {
+        throw new UnsupportedOperationException("JWKS loader not supported by this implementation");
+    }
 }

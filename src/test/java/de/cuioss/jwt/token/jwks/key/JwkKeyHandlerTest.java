@@ -237,19 +237,6 @@ class JwkKeyHandlerTest {
         assertTrue(exception.getMessage().contains("Invalid Base64 URL encoded value for 'y'"), exception.getMessage());
     }
 
-    @Test
-    void shouldThrowExceptionForUnsupportedEcCurve() {
-        // Given a valid EC JWK
-        JsonObject jwk = createEcJwk("validXCoord", "validYCoord");
-
-        // When trying to parse the EC key
-        // Then an exception should be thrown because EC curve support is not implemented
-        assertThrows(
-                InvalidKeySpecException.class,
-                () -> JwkKeyHandler.parseEcKey(jwk)
-        );
-    }
-
     @ParameterizedTest
     @ValueSource(strings = {
             "P-256", "P-384", "P-521"
@@ -286,6 +273,73 @@ class JwkKeyHandlerTest {
 
         // Then the default algorithm should be returned
         assertEquals("ES256", algorithm);
+    }
+
+    @Test
+    void shouldParseValidEcKey() throws Exception {
+        // Given a valid EC JWK (P-256)
+        // These are example values for P-256 curve (secp256r1)
+        String x = "f83OJ3D2xF4P4QJrL6Z4pWQ2vQKj6k1b6QJ6Qn6QJ6Q";
+        String y = "x_FEzRu9QJ6Qn6QJ6QJ6Qn6QJ6Qn6QJ6Qn6QJ6Qn6Q";
+        JsonObject jwk = Json.createObjectBuilder()
+                .add("kty", "EC")
+                .add("crv", "P-256")
+                .add("x", x)
+                .add("y", y)
+                .add("kid", "test-key")
+                .build();
+
+        // When parsing the key
+        Key key = JwkKeyHandler.parseEcKey(jwk);
+
+        // Then the key should be parsed correctly
+        assertNotNull(key);
+        assertEquals("EC", key.getAlgorithm());
+    }
+
+    @Test
+    void shouldRejectEcKeyWithMissingCurve() {
+        // Given an EC JWK with missing curve
+        JsonObject jwk = Json.createObjectBuilder()
+                .add("kty", "EC")
+                .add("x", "validXCoord")
+                .add("y", "validYCoord")
+                .add("kid", "test-key")
+                .build();
+
+        // When validating the key fields
+        // Then an exception should be thrown
+        InvalidKeySpecException exception = assertThrows(
+                InvalidKeySpecException.class,
+                () -> JwkKeyHandler.parseEcKey(jwk)
+        );
+
+        // And the exception message should indicate the missing field
+        assertTrue(exception.getMessage().contains("Invalid Base64 URL encoded value for 'crv'"), 
+                "Actual message: " + exception.getMessage());
+    }
+
+    @Test
+    void shouldRejectEcKeyWithUnsupportedCurve() {
+        // Given an EC JWK with unsupported curve
+        JsonObject jwk = Json.createObjectBuilder()
+                .add("kty", "EC")
+                .add("crv", "P-192") // Unsupported curve
+                .add("x", "validXCoord")
+                .add("y", "validYCoord")
+                .add("kid", "test-key")
+                .build();
+
+        // When validating the key fields
+        // Then an exception should be thrown
+        InvalidKeySpecException exception = assertThrows(
+                InvalidKeySpecException.class,
+                () -> JwkKeyHandler.parseEcKey(jwk)
+        );
+
+        // And the exception message should indicate the unsupported curve
+        assertTrue(exception.getMessage().contains("EC curve P-192 is not supported"), 
+                "Actual message: " + exception.getMessage());
     }
 
 }

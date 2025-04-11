@@ -1,4 +1,38 @@
 = Refactoring Plan: JWT Implementation Restructuring
+
+== Refactoring Status
+
+=== Completed Refactorings
+
+==== Removal of requirementSource in ClaimName
+The `requirementSource` attribute in the `ClaimName` enum has been moved to JavaDoc for each enum value, improving documentation and removing unnecessary fields. This change maintains the same information in the code while making it more maintainable.
+
+==== JwtParser Interface Consolidation
+The redundant `de.cuioss.jwt.token.domain.JwtParser` interface has been removed completely, and `de.cuioss.jwt.token.JwtParser` has been refactored to include factory methods for each token type that accept a `KeyInfo` parameter. This simplifies the API and reduces duplication.
+
+==== Token Handling Refactoring
+The token handling implementation has been refactored to use the JsonWebToken interface directly instead of going through the TokenContent hierarchy. This simplifies the API and makes it more flexible:
+
+1. ParsedAccessToken, ParsedIdToken, and ParsedRefreshToken now directly wrap JsonWebToken objects
+2. Token classes provide necessary accessors for token properties
+3. JjwtAdapter implements JsonWebToken to provide a clean abstraction over JJWT's implementation
+4. Factory methods in JwtParser now use the new implementation
+
+==== Implementation of JsonWebToken Support
+Added full JsonWebToken implementation capabilities:
+
+1. JjwtAdapter now properly implements JsonWebToken interface with all required methods
+2. Added utility methods to ensure consistent token handling
+3. Updated TokenFactory usage to work with the new JsonWebToken-based approach
+4. Implemented proper test support
+
+=== In Progress
+
+==== Test Coverage
+Still need to fix failing tests for JwtAdapterTest. These tests are failing because they depend on the old implementation structure.
+
+==== Documentation Updates
+Need to update documentation to reflect the new API structure.
 :toc:
 :toclevels: 3
 :toc-title: Table of Contents
@@ -40,438 +74,445 @@ This document outlines the plan for refactoring the JWT token handling implement
 ----
 de.cuioss.jwt.token.domain
 ├── claim
-│   ├── ClaimName.java       # Enum for standard claim names
-│   ├── ClaimValue.java      # Interface for claim values
-│   ├── StringClaimValue.java
-│   ├── SetClaimValue.java
-│   ├── DateTimeClaimValue.java
-│   └── Claim.java           # Combines ClaimName and ClaimValue
+│   ├── ClaimName.java           # Enum for standard claim names
+│   ├── ClaimValueType.java      # Enum for claim value types
+│   ├── ClaimValue.java          # Interface for claim values
+│   ├── StringClaimValue.java    # String claim value impl
+│   ├── StringListClaimValue.java # List of strings claim value impl
+│   ├── StringSetClaimValue.java # Set of strings claim value impl  
+│   ├── DateTimeClaimValue.java  # OffsetDateTime claim value impl
+│   ├── BooleanClaimValue.java   # Boolean claim value impl
+│   ├── NumberClaimValue.java    # Number claim value impl
+│   └── Claim.java               # Combines ClaimName and ClaimValue
 └── token
-    ├── TokenContent.java    # Core interface for token content
-    ├── AccessTokenContent.java
-    ├── IdTokenContent.java
-    └── RefreshTokenContent.java
+    ├── TokenContent.java        # Core interface for token content
+    ├── BaseTokenContent.java    # Base impl of TokenContent
+    ├── AccessTokenContent.java  # Access token specific content
+    ├── IdTokenContent.java      # ID token specific content
+    └── RefreshTokenContent.java # Refresh token specific content
 ----
 
-==== Implement the claim value types
+==== Implement the ClaimValueType enum
 
-[source,java]
-----
-// Base interface
-public interface ClaimValue<T> {
-    ClaimValueType getType();
-    T getValue();
-    Optional<T> getOptionalValue();
-}
+See implementation: `src/main/java/de/cuioss/jwt/token/domain/claim/ClaimValueType.java`
 
-// Enum for claim value types
-public enum ClaimValueType {
-    STRING,
-    STRING_SET,
-    DATETIME,
-    BOOLEAN,
-    NUMBER,
-    OBJECT
-}
+This enum represents the supported claim value types in the system. The implementation includes:
+- STRING: For simple string values like "iss", "sub", etc.
+- STRING_LIST: For lists of strings
+- STRING_SET: For sets of strings like roles, groups, and scopes
+- DATETIME: For timestamp values represented as OffsetDateTime
 
-// Implementation for string values
-public class StringClaimValue implements ClaimValue<String> {
-    private final String value;
-    
-    @Override
-    public ClaimValueType getType() {
-        return ClaimValueType.STRING;
-    }
-    
-    @Override
-    public String getValue() {
-        return value;
-    }
-    
-    @Override
-    public Optional<String> getOptionalValue() {
-        return Optional.ofNullable(value);
-    }
-}
+==== Implement the base ClaimValue interface
 
-// Similar implementations for other types
-----
+See implementation: `src/main/java/de/cuioss/jwt/token/domain/claim/ClaimValue.java`
 
-==== Create the `ClaimName` enum
+This interface defines the contract for all claim value types, with methods for:
+- Getting the claim value type
+- Getting the typed value
+- Checking if the value is present
+- Getting the original string representation
 
-[source,java]
-----
-public enum ClaimName {
-    // Standard JWT claims
-    ISSUER("iss", ClaimValueType.STRING),
-    SUBJECT("sub", ClaimValueType.STRING),
-    AUDIENCE("aud", ClaimValueType.STRING_SET),
-    EXPIRATION("exp", ClaimValueType.DATETIME),
-    NOT_BEFORE("nbf", ClaimValueType.DATETIME),
-    ISSUED_AT("iat", ClaimValueType.DATETIME),
-    TOKEN_ID("jti", ClaimValueType.STRING),
-    
-    // OpenID Connect claims
-    NAME("name", ClaimValueType.STRING),
-    EMAIL("email", ClaimValueType.STRING),
-    PREFERRED_USERNAME("preferred_username", ClaimValueType.STRING),
-    
-    // OAuth2 claims
-    SCOPE("scope", ClaimValueType.STRING),
-    
-    // Custom claims
-    ROLES("roles", ClaimValueType.STRING_SET),
-    TYPE("typ", ClaimValueType.STRING);
-    
-    private final String claimName;
-    private final ClaimValueType valueType;
-    
-    // Constructor, getters, etc.
-}
-----
+==== Implement the StringClaimValue class
 
-==== Create the `Claim` class
+See implementation: `src/main/java/de/cuioss/jwt/token/domain/claim/StringClaimValue.java`
 
-[source,java]
-----
-public class Claim<T> {
-    private final ClaimName name;
-    private final ClaimValue<T> value;
-    
-    public Claim(ClaimName name, ClaimValue<T> value) {
-        this.name = name;
-        this.value = value;
-    }
-    
-    // Getters, etc.
-}
+This class implements ClaimValue for string values, maintaining both the typed value and the original string representation from the token.
+
+==== Implement the StringSetClaimValue class
+
+See implementation: `src/main/java/de/cuioss/jwt/token/domain/claim/StringSetClaimValue.java`
+
+This class implements ClaimValue for sets of strings, used for roles, groups, and scopes. It maintains values in a SortedSet for consistent ordering while preserving the original string representation.
+
+==== Implement the DateTimeClaimValue class
+
+See implementation: `src/main/java/de/cuioss/jwt/token/domain/claim/DateTimeClaimValue.java`
+
+This class implements ClaimValue for date-time values, used for claims like "exp", "iat", and "nbf". It preserves the original numeric string representation from the token while offering an OffsetDateTime interface.
+
+==== Implement the ClaimName enum
+
+See implementation: `src/main/java/de/cuioss/jwt/token/domain/claim/ClaimName.java`
+
+This enum defines standard JWT claim names and their expected value types, based on RFC 7519, OpenID Connect, and OAuth 2.0 specifications. It provides:
+
+- Standard claim name strings (replaces the old ClaimNames class)
+- Expected value types for each claim
+- Mandatory status of each claim per its specification
+- Helper methods for validating claims
+- Utility methods for getting mandatory claims by token type
+
+==== Implement the Claim class
+
+See implementation: `src/main/java/de/cuioss/jwt/token/domain/claim/Claim.java`
+
+This class represents a claim in a JWT token, combining a ClaimName with a ClaimValue. It provides convenience methods for accessing the claim value and checking its presence.
+
+==== Implement the token content interfaces
+
+See implementation: `src/main/java/de/cuioss/jwt/token/domain/token/TokenContent.java`
+
+This interface defines the core contract for JWT token content, providing:
+- Access to claims and raw token data
+- Validation of mandatory claims
+- Convenience methods for common claim values (issuer, subject, expiration)
+- Token validity checking
+- Support for all token types
+
+==== Implement BaseTokenContent
+
+See implementation: `src/main/java/de/cuioss/jwt/token/domain/token/BaseTokenContent.java`
+
+This abstract class provides the base implementation of TokenContent, with:
+- Storage for claims and raw token
+- Validation of mandatory claims during construction
+- Common functionality shared by all token types
 ----
 
-==== Create the token content interfaces
+==== Implement AccessTokenContent
 
-[source,java]
-----
-public interface TokenContent {
-    Map<ClaimName, Claim<?>> getClaims();
-    
-    default Optional<Claim<?>> getClaim(ClaimName name) {
-        return Optional.ofNullable(getClaims().get(name));
-    }
-    
-    String getRawToken();
-}
+See implementation: `src/main/java/de/cuioss/jwt/token/domain/token/AccessTokenContent.java`
 
-public interface AccessTokenContent extends TokenContent {
-    Set<String> getScopes();
-    Set<String> getRoles();
-    Optional<String> getEmail();
-    Optional<String> getPreferredUsername();
-}
-----
+This class extends BaseTokenContent for OAuth 2.0 access tokens, providing:
+- Extraction and storage of scopes and roles as SortedSets
+- Email address management
+- Access token-specific validation
+
+==== Implement IdTokenContent
+
+See implementation: `src/main/java/de/cuioss/jwt/token/domain/token/IdTokenContent.java`
+
+This class extends BaseTokenContent for OpenID Connect ID tokens, providing:
+- Access to ID token specific claims like name and email
+- ID token-specific validation
+
+==== Implement RefreshTokenContent
+
+See implementation: `src/main/java/de/cuioss/jwt/token/domain/token/RefreshTokenContent.java`
+
+This class extends BaseTokenContent for OAuth 2.0 refresh tokens in JWT format, with:
+- Minimal validation requirements
+- Support for JWT-formatted refresh tokens
 
 === Step 2: Create the Implementation Package for JJWT
 
 ==== Create the JJWT implementation package
 
-[source]
-----
+The following package structure will isolate all JJWT-specific code:
+
+```
 de.cuioss.jwt.token.adapter.jjwt
-├── JjwtAdapter.java           # Replaces JwtAdapter
-├── JjwtTokenContentFactory.java
-├── JjwtClaimExtractor.java
-└── JjwtParser.java
-----
+├── JjwtAdapter.java           # Wraps JJWT's Jws<Claims>
+├── JjwtTokenContentFactory.java # Creates TokenContent from JjwtAdapter
+├── JjwtClaimExtractor.java    # Extracts claims from JJWT objects
+└── JjwtParser.java            # JJWT-specific parser implementation
+```
 
-==== Implement the `JjwtAdapter` class
+The implementations can be found in the corresponding files.
 
-[source,java]
-----
-public class JjwtAdapter {
-    private final Jws<Claims> jws;
-    private final String rawToken;
-    
-    public JjwtAdapter(Jws<Claims> jws, String rawToken) {
-        this.jws = jws;
-        this.rawToken = rawToken;
-    }
-    
-    public Jws<Claims> getJws() {
-        return jws;
-    }
-    
-    public String getRawToken() {
-        return rawToken;
-    }
-}
-----
+==== Implement the JjwtAdapter class
 
-==== Implement the `JjwtTokenContentFactory` class
+See implementation: `src/main/java/de/cuioss/jwt/token/adapter/jjwt/JjwtAdapter.java`
 
-[source,java]
-----
-public class JjwtTokenContentFactory {
-    public static AccessTokenContent createAccessTokenContent(JjwtAdapter adapter, String email) {
-        Map<ClaimName, Claim<?>> claims = extractClaims(adapter);
-        return new JjwtAccessTokenContent(claims, adapter.getRawToken(), email);
-    }
-    
-    public static IdTokenContent createIdTokenContent(JjwtAdapter adapter) {
-        Map<ClaimName, Claim<?>> claims = extractClaims(adapter);
-        return new JjwtIdTokenContent(claims, adapter.getRawToken());
-    }
-    
-    private static Map<ClaimName, Claim<?>> extractClaims(JjwtAdapter adapter) {
-        Map<ClaimName, Claim<?>> result = new HashMap<>();
-        
-        Claims jwtClaims = adapter.getJws().getPayload();
-        
-        // Extract all standard claims
-        for (ClaimName claimName : ClaimName.values()) {
-            Optional<Claim<?>> claim = JjwtClaimExtractor.extractClaim(claimName, jwtClaims);
-            claim.ifPresent(c -> result.put(claimName, c));
-        }
-        
-        return result;
-    }
-}
-----
+This class provides an adapter around JJWT's `Jws<Claims>` type, encapsulating JJWT's implementation details from the rest of the system.
 
-==== Implement the `JjwtClaimExtractor` class
+==== Implement the JjwtClaimExtractor class
 
-[source,java]
-----
-public class JjwtClaimExtractor {
-    public static Optional<Claim<?>> extractClaim(ClaimName claimName, Claims claims) {
-        String name = claimName.getClaimName();
-        Object value = claims.get(name);
-        
-        if (value == null) {
-            return Optional.empty();
-        }
-        
-        return switch (claimName.getValueType()) {
-            case STRING -> createStringClaim(claimName, value);
-            case STRING_SET -> createStringSetClaim(claimName, value);
-            case DATETIME -> createDateTimeClaim(claimName, value);
-            default -> Optional.empty();
-        };
-    }
-    
-    private static Optional<Claim<?>> createStringClaim(ClaimName name, Object value) {
-        if (value instanceof String s) {
-            return Optional.of(new Claim<>(name, new StringClaimValue(s)));
-        }
-        return Optional.of(new Claim<>(name, new StringClaimValue(value.toString())));
-    }
-    
-    // Similar methods for other claim types
-}
-----
+See implementation: `src/main/java/de/cuioss/jwt/token/adapter/jjwt/JjwtClaimExtractor.java`
+
+This utility class extracts claims from JJWT's Claims object and converts them to the domain model claim types while preserving original string representations.
+
+==== Implement the JjwtTokenContentFactory class
+
+See implementation: `src/main/java/de/cuioss/jwt/token/adapter/jjwt/JjwtTokenContentFactory.java`
+
+This factory creates TokenContent instances from JjwtAdapter objects:
+- Creates AccessTokenContent, IdTokenContent, and RefreshTokenContent from JjwtAdapter
+- Extracts claims from the JJWT Claims object
+- Delegates to JjwtClaimExtractor for specific claim extraction logic
+- Builds appropriate domain objects with the extracted claims
 
 === Step 3: Update Token Classes to Use the New Domain Model
 
-==== Refactor `ParsedAccessToken`
+==== Refactor ParsedAccessToken
 
-[source,java]
-----
-public class ParsedAccessToken {
-    private final AccessTokenContent content;
-    
-    public ParsedAccessToken(AccessTokenContent content) {
-        this.content = content;
-    }
-    
-    public Set<String> getScopes() {
-        return content.getScopes();
-    }
-    
-    public Set<String> getRoles() {
-        return content.getRoles();
-    }
-    
-    public Optional<String> getEmail() {
-        return content.getEmail();
-    }
-    
-    public String getIssuer() {
-        return content.getClaim(ClaimName.ISSUER)
-            .map(claim -> ((StringClaimValue)claim.getValue()).getValue())
-            .orElse(null);
-    }
-    
-    // Other methods that delegate to content
-}
-----
+See implementation: `src/main/java/de/cuioss/jwt/token/ParsedAccessToken.java`
 
-==== Refactor `ParsedIdToken`
+The refactored ParsedAccessToken class acts as a Data Transfer Object without dynamic computation logic:
+- Wraps an AccessTokenContent instance
+- Delegates most methods to the underlying content object
+- Provides convenient access to token properties like scopes, roles, issuer, subject
+- Returns TokenType.ACCESS_TOKEN for token type identification
+- Makes token handling more robust by separating storage from behavior
 
-[source,java]
-----
-public class ParsedIdToken {
-    private final IdTokenContent content;
-    
-    public ParsedIdToken(IdTokenContent content) {
-        this.content = content;
-    }
-    
-    // Methods that delegate to content
-}
-----
+==== Refactor ParsedIdToken
 
-==== Refactor `ParsedRefreshToken`
+See implementation: `src/main/java/de/cuioss/jwt/token/ParsedIdToken.java`
 
-[source,java]
-----
-public class ParsedRefreshToken {
-    private final String tokenString;
-    private final TokenContent content; // Optional for JWT refresh tokens
-    
-    public ParsedRefreshToken(String tokenString) {
-        this(tokenString, null);
-    }
-    
-    public ParsedRefreshToken(String tokenString, TokenContent content) {
-        this.tokenString = tokenString;
-        this.content = content;
-    }
-    
-    public boolean isJwtFormat() {
-        return content != null;
-    }
-    
-    public Optional<TokenContent> getTokenContent() {
-        return Optional.ofNullable(content);
-    }
-    
-    // Other methods
-}
-----
+The refactored ParsedIdToken class serves as a Data Transfer Object for OpenID Connect ID tokens:
+- Wraps an IdTokenContent instance
+- Delegates methods to the underlying content object
+- Provides access to ID token properties like issuer, subject, name, email
+- Returns TokenType.ID_TOKEN for token type identification
+- Implements Serializable for persistence
+
+==== Refactor ParsedRefreshToken
+
+See implementation: `src/main/java/de/cuioss/jwt/token/ParsedRefreshToken.java`
+
+The ParsedRefreshToken class can handle both opaque and JWT-formatted refresh tokens:
+- Stores the raw token string for all refresh tokens
+- Optionally stores RefreshTokenContent for JWT-formatted tokens
+- Provides methods to check token format (isJwtFormat())
+- Returns the underlying token content when in JWT format
+- Returns TokenType.REFRESH_TOKEN for token type identification
+- Implements Serializable for persistence
 
 === Step 4: Update the Factory Classes
 
-==== Update `TokenFactory`
+==== Update TokenFactory
 
-[source,java]
-----
-public interface TokenFactory {
-    Optional<ParsedAccessToken> createAccessToken(String tokenString);
-    Optional<ParsedAccessToken> createAccessToken(String tokenString, String email);
-    Optional<ParsedIdToken> createIdToken(String tokenString);
-    Optional<ParsedRefreshToken> createRefreshToken(String tokenString);
-}
-----
+See implementation: `src/main/java/de/cuioss/jwt/token/TokenFactory.java`
+
+The TokenFactory interface defines the contract for creating and validating tokens:
+- Creates access tokens from token strings with optional email association
+- Creates ID tokens from token strings
+- Creates refresh tokens from token strings
+- Returns Optional results to handle invalid or unparseable tokens safely
 
 ==== Create a JJWT-specific implementation
 
-[source,java]
-----
-public class JjwtTokenFactory implements TokenFactory {
-    private final MultiIssuerJwtParser tokenParser;
-    
-    @Override
-    public Optional<ParsedAccessToken> createAccessToken(String tokenString) {
-        return tokenParser.getParserForToken(tokenString)
-            .flatMap(parser -> createJjwtAdapter(tokenString, parser))
-            .map(adapter -> new ParsedAccessToken(
-                JjwtTokenContentFactory.createAccessTokenContent(adapter, null)
-            ));
-    }
-    
-    // Similar implementations for other methods
-    
-    private Optional<JjwtAdapter> createJjwtAdapter(String tokenString, JwtParser parser) {
-        try {
-            return parser.parseToken(tokenString)
-                .map(jws -> new JjwtAdapter(jws, tokenString));
-        } catch (JwtException e) {
-            LOGGER.warn(e, JWTTokenLogMessages.WARN.COULD_NOT_PARSE_TOKEN.format(e.getMessage()));
-            return Optional.empty();
-        }
-    }
-}
-----
+See implementation: `src/main/java/de/cuioss/jwt/token/adapter/jjwt/JjwtTokenFactory.java`
+
+The JjwtTokenFactory is a JJWT-specific implementation of the TokenFactory interface:
+- Uses MultiIssuerJwtParser to find the appropriate parser for each token
+- Creates JjwtAdapter instances to bridge between JJWT and domain model
+- Uses JjwtTokenContentFactory to create domain model objects
+- Handles empty or invalid tokens gracefully
+- Detects JWT-formatted refresh tokens vs. opaque refresh tokens
+- Provides detailed logging for token creation and parsing
 
 === Step 5: Update the JwtParser Interface
 
-==== Create a new interface that doesn't expose JJWT types
+==== Create a TokenValidator class
 
-[source,java]
-----
-public interface JwtParser {
-    Optional<TokenContent> parse(String token) throws JwtException;
-    boolean supportsIssuer(String issuer);
-    String getIssuer();
-}
-----
+See implementation: `src/main/java/de/cuioss/jwt/token/domain/token/TokenValidator.java`
 
-==== Create a bridge implementation that adapts the old interface to the new one
+The TokenValidator class provides additional validation for token instances based on RFC 7519:
+- Validates tokens against expected issuer, audience, and client ID values
+- Complements the built-in validation in TokenContent implementations 
+- Provides context-specific validation based on external configuration
+- Builds comprehensive validation error messages
+- Supports flexible constructor options for different validation requirements
 
-[source,java]
-----
-public class JjwtParserAdapter implements JwtParser {
-    private final de.cuioss.jwt.token.adapter.jjwt.JwtParser delegate;
-    
-    @Override
-    public Optional<TokenContent> parse(String token) throws JwtException {
-        return delegate.parseToken(token)
-            .map(jws -> {
-                JjwtAdapter adapter = new JjwtAdapter(jws, token);
-                return JjwtTokenContentFactory.createTokenContent(adapter);
-            });
-    }
-    
-    // Other methods delegating to the delegate
-}
-----
+==== Create a new JwtParser interface in the domain package
+
+See implementation: `src/main/java/de/cuioss/jwt/token/domain/JwtParser.java`
+
+The domain JwtParser interface abstracts away implementation details:
+- Defines methods for token parsing and validation
+- Returns domain model TokenContent objects
+- Provides issuer-related methods for multi-issuer support
+- Separates interface from implementation
+- Allows for different JWT library implementations
+
+==== Create a bridge implementation in the JJWT implementation package
+
+See implementation: `src/main/java/de/cuioss/jwt/token/adapter/jjwt/JjwtParserBridge.java`
+
+The JjwtParserBridge implements the domain JwtParser interface:
+- Acts as a bridge between the old JJWT-specific parser and the new domain model
+- Delegates to the original JwtParser implementation 
+- Converts JJWT objects to domain model objects using JjwtAdapter
+- Preserves the issuer-related functionality
+- Enables gradual migration to the new domain model
 
 == Testing Strategy
 
-. Create unit tests for each new component:
-* Tests for `ClaimValue` implementations
-* Tests for `Claim` class
-* Tests for token content classes
-* Tests for JJWT adapter classes
-* Tests for extractors
+=== Unit Tests for Domain Model
 
-. Create integration tests:
-* Tests that verify the entire flow from token string to parsed token
-* Tests for different token types and formats
-* Tests for error handling and edge cases
+==== ClaimValue Tests
 
-. Update existing tests to use the new domain model
+See implementation: `src/test/java/de/cuioss/jwt/token/domain/claim/StringClaimValueTest.java`
+
+Tests for StringClaimValue verify:
+- It returns the correct ClaimValueType
+- It handles null values properly
+- It provides the original string representation
+- It preserves the original string when provided separately
+- It implements object contract methods correctly
+
+==== StringSetClaimValue Tests
+
+See implementation: `src/test/java/de/cuioss/jwt/token/domain/claim/StringSetClaimValueTest.java`
+
+Tests for StringSetClaimValue verify:
+- It returns the correct ClaimValueType
+- It handles null values by returning empty sets
+- It provides a comma-separated string representation
+- It preserves the original string when provided separately
+- It maintains consistent ordering of values (always sorted)
+----
+
+==== DateTimeClaimValue Tests
+
+See implementation: `src/test/java/de/cuioss/jwt/token/domain/claim/DateTimeClaimValueTest.java`
+
+Tests for DateTimeClaimValue verify:
+- It returns the correct ClaimValueType
+- It handles null values properly
+- It provides epoch seconds as string representation
+- It preserves the original string when provided separately
+- It can be created from epoch seconds
+- It correctly converts between OffsetDateTime and epoch seconds
+----
+
+==== Claim Tests
+
+See implementation: `src/test/java/de/cuioss/jwt/token/domain/claim/ClaimTest.java`
+
+Tests for Claim verify:
+- It provides type-safe access to claim values
+- It implements Optional-like behavior for accessing values
+- It handles null values properly
+- It preserves the original string representation
+- It implements object contract methods correctly
+----
+
+==== ClaimName Tests
+
+See implementation: `src/test/java/de/cuioss/jwt/token/domain/claim/ClaimNameTest.java`
+
+Tests for ClaimName verify:
+- It correctly identifies mandatory claims
+- It provides token-type specific mandatory claim sets
+- It validates the presence of mandatory claims
+- It can look up enum values by claim name string
+- It includes correct requirement sources for each claim
+- It provides appropriate value types for each claim
+----
+
+==== Token Content Tests
+
+See implementations: 
+- `src/test/java/de/cuioss/jwt/token/domain/token/AccessTokenContentTest.java`
+- `src/test/java/de/cuioss/jwt/token/domain/token/IdTokenContentTest.java`
+- `src/test/java/de/cuioss/jwt/token/domain/token/RefreshTokenContentTest.java`
+
+Tests for token content classes verify:
+
+AccessTokenContent tests:
+- It extracts scopes from space-delimited scope claim
+- It extracts roles from roles claim
+- It validates mandatory claims for access tokens
+- It detects expired tokens
+- It validates tokens including scope presence
+
+IdTokenContent tests:
+- It correctly reports token type
+- It provides access to ID token-specific claims like name and email
+- It validates tokens with OpenID Connect requirements
+
+RefreshTokenContent tests:
+- It correctly reports token type
+- It validates with minimal claim requirements
+- It handles missing mandatory claims appropriately
+----
+
+=== Integration Tests
+
+==== TokenValidator Tests
+
+See implementation: `src/test/java/de/cuioss/jwt/token/domain/token/TokenValidatorTest.java`
+
+Tests for TokenValidator verify:
+- It validates tokens with matching issuer, audience, and client ID
+- It detects issuer mismatches and provides clear error messages
+- It detects audience mismatches when the token audience doesn't contain expected values
+- It detects authorized party (azp) mismatches against expected client ID
+- It detects missing authorized party claims when client ID validation is required
+----
+
+==== TokenFactory Tests
+
+See implementation: `src/test/java/de/cuioss/jwt/token/adapter/jjwt/JjwtTokenFactoryTest.java`
+
+Tests for JjwtTokenFactory verify:
+- It creates ParsedAccessToken instances with correct properties and content
+- It creates ParsedIdToken instances with correct metadata
+- It creates opaque refresh tokens when the token string isn't JWT-formatted
+- It detects and correctly handles JWT-formatted refresh tokens
+- It uses TokenGenerators to generate test tokens with realistic content
+----
 
 == Migration Strategy
 
-. Implement the new domain model and JJWT adapter classes
-. Update the factory classes to use the new model internally
-. Refactor token classes to use the new model
-. Update user-facing APIs
-. Run tests to verify everything works correctly
+1. **Implement Core Domain Model**:
+   * Create claim value types and ClaimName enum
+   * Implement token content interfaces and classes
+   * Add tests for domain model classes
+
+2. **Implement JJWT Adapter Layer**:
+   * Create JjwtAdapter and related classes
+   * Implement the bridge between JJWT and domain model
+   * Add tests for adapter layer
+
+3. **Update Token Classes**:
+   * Refactor ParsedAccessToken, ParsedIdToken, and ParsedRefreshToken
+   * Make them use the new domain model
+   * Add tests for refactored classes
+
+4. **Update TokenFactory**:
+   * Create a JJWT-specific implementation
+   * Add tests for the factory
+
+5. **Update JwtParser**:
+   * Create the new interface in the domain package
+   * Create a bridge implementation in the JJWT package
+   * Add tests for the parser
+
+6. **Update MultiIssuerJwtParser**:
+   * Make it work with the new domain model
+
+7. **Run Tests**:
+   * Verify all components work correctly
+   * Fix any issues
+
+8. **Update Documentation**:
+   * Update JavaDoc
+   * Update technical documentation
 
 == Implementation Order
 
-. Create the domain model (claim and token packages)
-. Implement the JJWT adapter classes
-. Update the factory classes
-. Refactor the token classes
-. Update the parser interfaces
-. Run tests and fix any issues
+1. Core domain model (claim and token packages)
+2. JJWT adapter layer
+3. Refactored token classes
+4. Updated factory classes
+5. New JwtParser interface
+6. Updated MultiIssuerJwtParser
+7. Tests and documentation
 
 == Benefits
 
 === Better Separation of Concerns
 * Clear separation between domain model and implementation details
 * Token classes focus on their specific functionality
+* DTO approach prevents dynamic computation in token classes
 
 === Reduced Coupling
 * Core code doesn't depend on JJWT
 * Easier to switch implementation libraries
+* Domain model is implementation-agnostic
 
 === Improved Type Safety
 * Strongly typed claim values
-* Explicit handling of optional values
+* Explicit handling of different claim types
+* Consistent handling of null values
 
 === More Maintainable Code
 * Clear package structure
 * Consistent abstraction levels
 * Better testability
+* Lombok reduces boilerplate code
+* Proper use of serialization
+* Clear distinction between domain model and implementation

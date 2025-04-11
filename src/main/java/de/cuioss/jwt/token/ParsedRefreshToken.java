@@ -26,37 +26,8 @@ import java.io.Serializable;
 import java.util.Optional;
 
 /**
- * Represents a parsed OAuth2 refresh token with basic validation support.
- * Unlike access and ID tokens, refresh tokens are treated as opaque strings
- * as per OAuth2 specification, though some implementations (like Keycloak) may use JWTs.
- * <p>
- * Key features:
- * <ul>
- *   <li>Simple token string validation</li>
- *   <li>Type-safe token representation</li>
- *   <li>Immutable and thread-safe implementation</li>
- *   <li>Optional support for JWT-formatted refresh tokens</li>
- * </ul>
- * <p>
- * Note: While OAuth2 specification treats refresh tokens as opaque strings,
- * this implementation supports Keycloak's JWT-based refresh tokens.
- * The validation is minimal and does not include JWT signature verification.
- * <p>
- * Usage example:
- * <pre>
- * TokenFactory factory = TokenFactory.builder()
- *     .addParser(parser)
- *     .build();
- * Optional&lt;ParsedRefreshToken&gt; optionalToken = factory.createRefreshToken(tokenString);
- * if (optionalToken.isPresent() &amp;&amp; !optionalToken.get().isEmpty()) {
- *     // Use the token
- *     optionalToken.get().getJsonWebToken().ifPresent(jwt -> {
- *         // Access JWT claims if the refresh token is a JWT
- *     });
- * }
- * </pre>
- *
- * @author Oliver Wolff
+ * Represents a parsed OAuth2 refresh token.
+ * Can handle both opaque refresh tokens and JWT-formatted refresh tokens.
  */
 @ToString
 public class ParsedRefreshToken implements Serializable {
@@ -68,84 +39,83 @@ public class ParsedRefreshToken implements Serializable {
 
     @Getter
     private final String tokenString;
-    
-    private final JsonWebToken jsonWebToken;
 
+    private final JsonWebToken jwtContent; // Optional for JWT refresh tokens
+    
     /**
-     * Creates a new {@link ParsedRefreshToken} from the given token string.
-     * <p>
-     * Note: This constructor does not validate the token's signature or format.
-     * It only wraps the string for type-safety purposes.
+     * Creates a new ParsedRefreshToken with the given token string.
+     * Use this constructor for opaque refresh tokens.
      *
-     * @param tokenString The raw refresh token string, may be null or empty
+     * @param tokenString the refresh token string
      */
     public ParsedRefreshToken(String tokenString) {
         this(tokenString, null);
     }
-    
+
     /**
-     * Creates a new {@link ParsedRefreshToken} from the given token string and optional JsonWebToken.
-     * <p>
-     * This constructor supports handling refresh tokens in JWT format by storing the parsed JWT
-     * for easy access to its claims.
+     * Creates a new ParsedRefreshToken with the given token string and JWT content.
+     * Use this constructor for JWT-formatted refresh tokens.
      *
-     * @param tokenString The raw refresh token string, may be null or empty
-     * @param jsonWebToken The parsed JWT if the token is in JWT format, may be null
+     * @param tokenString the refresh token string
+     * @param jwtContent the JWT content (may be null for opaque tokens)
      */
-    public ParsedRefreshToken(String tokenString, JsonWebToken jsonWebToken) {
-        if (MoreStrings.isEmpty(tokenString)) {
-            LOGGER.debug("Creating refresh token from empty token string");
-        }
+    public ParsedRefreshToken(String tokenString, JsonWebToken jwtContent) {
         this.tokenString = tokenString;
-        this.jsonWebToken = jsonWebToken;
+        this.jwtContent = jwtContent;
     }
 
     /**
-     * Indicates whether the token is empty (null or blank string).
+     * Checks if the token is empty.
      *
-     * @return {@code true} if the token is null or empty, {@code false} otherwise
+     * @return true if the token is empty, false otherwise
      */
     public boolean isEmpty() {
         return MoreStrings.isEmpty(tokenString);
     }
 
     /**
-     * Returns the type of this token.
+     * Checks if the token is in JWT format.
      *
-     * @return always {@link TokenType#REFRESH_TOKEN}
+     * @return true if the token is in JWT format, false otherwise
      */
-    public TokenType getType() {
-        return TokenType.REFRESH_TOKEN;
+    public boolean isJwtFormat() {
+        return jwtContent != null;
     }
 
     /**
-     * Returns the token as encoded String.
-     * This method is provided for consistency with the JsonWebToken interface.
+     * Gets the raw token string.
      *
-     * @return the token as encoded String.
+     * @return the raw token string
      */
     public String getRawToken() {
         return tokenString;
     }
-    
+
     /**
-     * Returns the JsonWebToken representation of this refresh token if it's in JWT format.
-     * <p>
-     * This method allows accessing JWT-specific properties if the refresh token is a JWT,
-     * while still treating it as an opaque string for compatibility with OAuth2 specifications.
+     * Gets the token content if it's in JWT format.
      *
-     * @return an Optional containing the JsonWebToken if the refresh token is in JWT format, or empty otherwise
+     * @return an Optional containing the token content if in JWT format, or empty otherwise
+     */
+    public Optional<JsonWebToken> getJwtContent() {
+        return Optional.ofNullable(jwtContent);
+    }
+
+    /**
+     * Gets the JSON Web Token if it's in JWT format.
+     * Alias for getJwtContent() for compatibility with tests.
+     *
+     * @return an Optional containing the JSON Web Token if in JWT format, or empty otherwise
      */
     public Optional<JsonWebToken> getJsonWebToken() {
-        return Optional.ofNullable(jsonWebToken);
+        return getJwtContent();
     }
-    
+
     /**
-     * Indicates whether this refresh token is in JWT format.
+     * Gets the token type.
      *
-     * @return {@code true} if the token is in JWT format and can be parsed as a JWT, {@code false} otherwise
+     * @return the token type
      */
-    public boolean isJwtFormat() {
-        return jsonWebToken != null;
+    public TokenType getType() {
+        return TokenType.REFRESH_TOKEN;
     }
 }
