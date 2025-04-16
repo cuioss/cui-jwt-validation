@@ -51,6 +51,51 @@ import java.util.function.Function;
  *   <li>Thread-safe token creation and validation</li>
  *   <li>Configurable token size limits</li>
  * </ul>
+ * <p>
+ * Usage example:
+ * <pre>
+ * // Create a JWKSKeyLoader with the JWKS content
+ * String jwksContent = JWKSFactory.createDefaultJwks();
+ * JWKSKeyLoader jwksKeyLoader = new JWKSKeyLoader(jwksContent);
+ * 
+ * // Create issuer config
+ * IssuerConfig issuerConfig = IssuerConfig.builder()
+ *         .issuer("https://example.com")
+ *         .expectedAudience("test-client")
+ *         .expectedClientId("test-client")
+ *         .jwksKeyLoader(jwksKeyLoader)
+ *         .algorithmPreferences(new AlgorithmPreferences())
+ *         .build();
+ * 
+ * // Create token factory
+ * TokenFactory tokenFactory = TokenFactory.builder()
+ *         .issuerConfigs(List.of(issuerConfig))
+ *         .config(TokenFactoryConfig.builder().build())
+ *         .build();
+ * 
+ * // Create a refresh token
+ * String refreshTokenString = "..."; // JWT token string
+ * Optional&lt;RefreshTokenContent&gt; refreshToken = tokenFactory.createRefreshToken(refreshTokenString);
+ * 
+ * // Create an access token
+ * String accessTokenString = "..."; // JWT token string
+ * Optional&lt;AccessTokenContent&gt; accessToken = tokenFactory.createAccessToken(accessTokenString);
+ * 
+ * // Create an ID token
+ * String idTokenString = "..."; // JWT token string
+ * Optional&lt;IdTokenContent&gt; idToken = tokenFactory.createIdToken(idTokenString);
+ * 
+ * // Using custom token size limits
+ * TokenFactory customFactory = TokenFactory.builder()
+ *         .issuerConfigs(List.of(issuerConfig))
+ *         .config(TokenFactoryConfig.builder()
+ *                 .maxTokenSize(1024)
+ *                 .maxPayloadSize(512)
+ *                 .build())
+ *         .build();
+ * </pre>
+ * 
+ * @since 1.0
  */
 public class TokenFactory {
 

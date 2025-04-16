@@ -20,7 +20,11 @@
  * and management with support for multiple token issuers.
  * <p>
  * Key components:
- *
+ * <ul>
+ *   <li>{@link de.cuioss.jwt.token.TokenFactory} - Main entry point for creating and validating tokens</li>
+ *   <li>{@link de.cuioss.jwt.token.TokenType} - Enumeration of supported token types</li>
+ *   <li>{@link de.cuioss.jwt.token.JWTTokenLogMessages} - Structured logging messages</li>
+ * </ul>
  * <p>
  * The package supports:
  * <ul>
@@ -32,5 +36,7 @@
  * <p>
  * Note: The implementation is primarily tested with Keycloak as the identity provider.
  * Some features may be specific to Keycloak's token implementation.
+ * 
+ * @since 1.0
  */
 package de.cuioss.jwt.token;

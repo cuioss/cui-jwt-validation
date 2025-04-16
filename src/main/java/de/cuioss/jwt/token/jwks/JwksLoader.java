@@ -22,12 +22,58 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Interface for loading JSON Web Keys (JWK) from64EncodedContent a JWKS source.
+ * Interface for loading JSON Web Keys (JWK) from a JWKS source.
  * <p>
- * Implementations can load keys from64EncodedContent different sources like HTTP endpoints or files.
+ * Implementations can load keys from different sources like HTTP endpoints or files.
  * <p>
  * This interface supports cryptographic agility by providing methods to get keys
  * along with their algorithm information.
+ * <p>
+ * Usage examples:
+ * <p>
+ * File-based JWKS loader:
+ * <pre>
+ * // Create a file-based JWKS loader
+ * String jwksFilePath = "/path/to/jwks.json";
+ * JwksLoader fileJwksLoader = JwksLoaderFactory.createFileLoader(jwksFilePath);
+ * 
+ * // Get a key by ID
+ * String keyId = "my-key-id";
+ * Optional&lt;KeyInfo&gt; keyInfo = fileJwksLoader.getKeyInfo(keyId);
+ * 
+ * // Use the key if present
+ * keyInfo.ifPresent(info -> {
+ *     PublicKey publicKey = info.getKey();
+ *     String algorithm = info.getAlgorithm();
+ *     // Use the key for signature verification
+ * });
+ * </pre>
+ * <p>
+ * HTTP-based JWKS loader:
+ * <pre>
+ * // Create an HTTP-based JWKS loader with 60-second refresh interval
+ * String jwksEndpoint = "https://example.com/.well-known/jwks.json";
+ * JwksLoader httpJwksLoader = JwksLoaderFactory.createHttpLoader(jwksEndpoint, 60, null);
+ * 
+ * // Get a key by ID
+ * Optional&lt;KeyInfo&gt; keyInfo = httpJwksLoader.getKeyInfo("my-key-id");
+ * 
+ * // Get the first available key
+ * Optional&lt;KeyInfo&gt; firstKey = httpJwksLoader.getFirstKeyInfo();
+ * 
+ * // Get all available key IDs
+ * Set&lt;String&gt; keyIds = httpJwksLoader.keySet();
+ * </pre>
+ * <p>
+ * In-memory JWKS loader:
+ * <pre>
+ * // Create an in-memory JWKS loader
+ * String jwksContent = "{\"keys\":[{\"kty\":\"RSA\",\"kid\":\"my-key-id\",\"use\":\"sig\",\"alg\":\"RS256\",\"n\":\"...\",\"e\":\"...\"}]}";
+ * JwksLoader inMemoryJwksLoader = JwksLoaderFactory.createInMemoryLoader(jwksContent);
+ * 
+ * // Get all available keys
+ * List&lt;KeyInfo&gt; allKeys = inMemoryJwksLoader.getAllKeyInfos();
+ * </pre>
  * <p>
  * Implements requirement: {@code CUI-JWT-8.5: Cryptographic Agility}
  * <p>
@@ -35,6 +81,7 @@ import java.util.Set;
  * <a href="../../../../../../../doc/specification/security.adoc">Security Specification</a>.
  * 
  * @author Oliver Wolff
+ * @since 1.0
  */
 public interface JwksLoader {
 

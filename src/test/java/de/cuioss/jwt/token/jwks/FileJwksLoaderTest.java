@@ -31,7 +31,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @EnableTestLogger(debug = {JWKSKeyLoader.class, JwksLoaderFactory.class})
 @DisplayName("Tests file-based JWKSKeyLoader functionality")
@@ -57,7 +59,7 @@ class FileJwksLoaderTest {
     }
 
     @Test
-    @DisplayName("Should load and parse JWKS from64EncodedContent file")
+    @DisplayName("Should load and parse JWKS from file")
     void shouldLoadAndParseJwks() {
         // When
         Optional<KeyInfo> keyInfo = fileJwksLoader.getKeyInfo(TEST_KID);
@@ -110,7 +112,7 @@ class FileJwksLoaderTest {
 
         // Then
         assertFalse(keyInfo.isPresent(), "Key info should not be present when file is not found");
-        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to read JWKS from64EncodedContent file");
+        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to read JWKS from file");
 
         // No cleanup needed
     }

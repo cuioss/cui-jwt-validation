@@ -77,7 +77,7 @@ class HttpJwksLoaderPerformanceTest {
     }
 
     @Test
-    @DisplayName("Should handle concurrent access from64EncodedContent multiple threads")
+    @DisplayName("Should handle concurrent access from multiple threads")
     void shouldHandleConcurrentAccess() throws InterruptedException {
         performConcurrentTest(DEFAULT_THREAD_COUNT, DEFAULT_REQUESTS_PER_THREAD, DEFAULT_PAUSE_MILLIS);
     }

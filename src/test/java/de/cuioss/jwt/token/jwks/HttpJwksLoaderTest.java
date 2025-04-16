@@ -63,7 +63,7 @@ class HttpJwksLoaderTest {
         }
 
         @Test
-        @DisplayName("Should fetch and parse JWKS from64EncodedContent remote endpoint")
+        @DisplayName("Should fetch and parse JWKS from remote endpoint")
         void shouldFetchAndParseJwks() {
             // When
             Optional<KeyInfo> keyInfo = httpJwksLoader.getKeyInfo(TEST_KID);
@@ -249,7 +249,7 @@ class HttpJwksLoaderTest {
 
             // Then
             assertFalse(keyInfo.isPresent(), "Key info should not be present when URL is invalid");
-            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to fetch JWKS from64EncodedContent URL: invalid-url");
+            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to fetch JWKS from URL: invalid-url");
         }
     }
 

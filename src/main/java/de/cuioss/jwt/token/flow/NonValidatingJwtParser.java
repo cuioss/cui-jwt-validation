@@ -46,19 +46,68 @@ import java.util.Optional;
  *   <li>Payload size validation for JSON parsing</li>
  *   <li>Standard Base64 decoding for JWT parts</li>
  *   <li>Proper character encoding handling</li>
+ *   <li>JSON depth limits to prevent stack overflow attacks</li>
+ *   <li>JSON array size limits to prevent denial of service attacks</li>
+ *   <li>JSON string size limits to prevent memory exhaustion</li>
  * </ul>
  * <p>
- * Usage example:
+ * Basic usage example:
  * <pre>
+ * // Create a parser with default settings
  * NonValidatingJwtParser parser = NonValidatingJwtParser.builder().build();
- * Optional&lt;NonValidatingJwtParser.DecodedJwt&gt; decodedJwt = parser.decode(tokenString);
+ * 
+ * // Decode a JWT token
+ * Optional&lt;DecodedJwt&gt; decodedJwt = parser.decode(tokenString);
+ * 
+ * // Access decoded JWT information
  * decodedJwt.ifPresent(jwt -> {
- *     // Access decoded JWT information
- *     jwt.getHeader().ifPresent(header -> System.out.println("Header: " + header));
- *     jwt.getBody().ifPresent(body -> System.out.println("Body: " + body));
+ *     // Access header information
+ *     jwt.getHeader().ifPresent(header -> {
+ *         String algorithm = header.getString("alg");
+ *         String tokenType = header.getString("typ");
+ *     });
+ *     
+ *     // Access payload information
+ *     jwt.getBody().ifPresent(body -> {
+ *         String subject = body.getString("sub");
+ *         String issuer = body.getString("iss");
+ *         int expirationTime = body.getInt("exp");
+ *     });
+ *     
+ *     // Access common JWT fields with convenience methods
  *     jwt.getIssuer().ifPresent(issuer -> System.out.println("Issuer: " + issuer));
- *     jwt.getKid().ifPresent(kid -> System.out.println("Kid: " + kid));
+ *     jwt.getKid().ifPresent(kid -> System.out.println("Key ID: " + kid));
+ *     
+ *     // Get the raw token
+ *     String rawToken = jwt.getRawToken();
  * });
+ * </pre>
+ * <p>
+ * Example with custom security settings:
+ * <pre>
+ * // Create a parser with custom security settings
+ * NonValidatingJwtParser customParser = NonValidatingJwtParser.builder()
+ *     .maxTokenSize(1024)  // 1KB max token size
+ *     .maxPayloadSize(512)  // 512 bytes max payload size
+ *     .maxStringSize(256)   // 256 bytes max string size
+ *     .maxArraySize(10)     // 10 elements max array size
+ *     .maxDepth(5)          // 5 levels max JSON depth
+ *     .logWarningsOnDecodeFailure(false)  // suppress warnings
+ *     .build();
+ *     
+ * // Decode a token with the custom parser
+ * Optional&lt;DecodedJwt&gt; result = customParser.decode(tokenString);
+ * </pre>
+ * <p>
+ * Example handling empty or invalid tokens:
+ * <pre>
+ * // Handle empty or null tokens
+ * Optional&lt;DecodedJwt&gt; emptyResult = parser.decode("");
+ * assertFalse(emptyResult.isPresent());
+ * 
+ * // Handle invalid token format
+ * Optional&lt;DecodedJwt&gt; invalidResult = parser.decode("invalid.token.format");
+ * assertFalse(invalidResult.isPresent());
  * </pre>
  * <p>
  * Implements requirements: {@code CUI-JWT-8.1: Token Size Limits} and {@code CUI-JWT-8.2: Safe Parsing}
@@ -67,6 +116,7 @@ import java.util.Optional;
  * <a href="../../../../../../../doc/specification/security.adoc">Security Specification</a>.
  *
  * @author Oliver Wolff
+ * @since 1.0
  */
 @ToString
 @EqualsAndHashCode

@@ -44,7 +44,7 @@ class InMemoryJwksLoaderTest {
 
 
     @Test
-    @DisplayName("Should load and parse JWKS from64EncodedContent string")
+    @DisplayName("Should load and parse JWKS from string")
     void shouldLoadAndParseJwksFromString() {
         // When
         Optional<Key> key = inMemoryJwksLoader.getKeyInfo(JWKSFactory.DEFAULT_KEY_ID).map(KeyInfo::getKey);
@@ -151,7 +151,7 @@ class InMemoryJwksLoaderTest {
     }
 
     @Test
-    @DisplayName("Should create loader from64EncodedContent factory method")
+    @DisplayName("Should create loader from factory method")
     void shouldCreateLoaderFromFactoryMethod() {
         // Given
         String jwksContent = JWKSFactory.createDefaultJwks();

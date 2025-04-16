@@ -36,6 +36,7 @@ import java.util.Optional;
  * <a href="../../../../../../../doc/specification/security.adoc">Security Specification</a>.
  *
  * @author Oliver Wolff
+ * @since 1.0
  */
 public class AlgorithmPreferences {
 
@@ -102,7 +103,7 @@ public class AlgorithmPreferences {
     }
 
     /**
-     * Gets the most preferred algorithm from64EncodedContent a list of available algorithms.
+     * Gets the most preferred algorithm from a list of available algorithms.
      *
      * @param availableAlgorithms the list of available algorithms
      * @return an Optional containing the most preferred algorithm if available, empty otherwise

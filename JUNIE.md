@@ -24,37 +24,37 @@ This file provides guidance to Junie when working with code in this repository.
 - TODOs: `doc/TODO.adoc`
 
 ## CUI Standards Documentation
-- Standards Overview: `/home/oliver/git/cui-llm-rules/standards/README.adoc`
+- Standards Overview: `https://github.com/cuioss/cui-llm-rules/tree/main/standards/README.adoc`
 
 ### Java Standards
-- Java Code Standards: `/home/oliver/git/cui-llm-rules/standards/java/java-code-standards.adoc`
-- DSL-Style Constants: `/home/oliver/git/cui-llm-rules/standards/java/dsl-style-constants.adoc`
-- Java README: `/home/oliver/git/cui-llm-rules/standards/java/README.adoc`
+- Java Code Standards: `https://github.com/cuioss/cui-llm-rules/tree/main/standards/java/java-code-standards.adoc`
+- DSL-Style Constants: `https://github.com/cuioss/cui-llm-rules/tree/main/standards/java/dsl-style-constants.adoc`
+- Java README: `https://github.com/cuioss/cui-llm-rules/tree/main/standards/java/README.adoc`
 
 ### Documentation Standards
-- General Documentation: `/home/oliver/git/cui-llm-rules/standards/documentation/general-standard.adoc`
-- Javadoc Standards: `/home/oliver/git/cui-llm-rules/standards/documentation/javadoc-standards.adoc`
-- Javadoc Maintenance: `/home/oliver/git/cui-llm-rules/standards/documentation/javadoc-maintenance.adoc`
-- README Structure: `/home/oliver/git/cui-llm-rules/standards/documentation/readme-structure.adoc`
-- Documentation README: `/home/oliver/git/cui-llm-rules/standards/documentation/README.adoc`
+- General Documentation: `https://github.com/cuioss/cui-llm-rules/tree/main/standards/documentation/general-standard.adoc`
+- Javadoc Standards: `https://github.com/cuioss/cui-llm-rules/tree/main/standards/documentation/javadoc-standards.adoc`
+- Javadoc Maintenance: `https://github.com/cuioss/cui-llm-rules/tree/main/standards/documentation/javadoc-maintenance.adoc`
+- README Structure: `https://github.com/cuioss/cui-llm-rules/tree/main/standards/documentation/readme-structure.adoc`
+- Documentation README: `https://github.com/cuioss/cui-llm-rules/tree/main/standards/documentation/README.adoc`
 
 ### Logging Standards
-- Logging Core Standards: `/home/oliver/git/cui-llm-rules/standards/logging/core-standards.adoc`
-- Logging Implementation Guide: `/home/oliver/git/cui-llm-rules/standards/logging/implementation-guide.adoc`
-- Logging Testing Guide: `/home/oliver/git/cui-llm-rules/standards/logging/testing-guide.adoc`
-- Logging README: `/home/oliver/git/cui-llm-rules/standards/logging/README.adoc`
+- Logging Core Standards: `https://github.com/cuioss/cui-llm-rules/tree/main/standards/logging/core-standards.adoc`
+- Logging Implementation Guide: `https://github.com/cuioss/cui-llm-rules/tree/main/standards/logging/implementation-guide.adoc`
+- Logging Testing Guide: `https://github.com/cuioss/cui-llm-rules/tree/main/standards/logging/testing-guide.adoc`
+- Logging README: `https://github.com/cuioss/cui-llm-rules/tree/main/standards/logging/README.adoc`
 
 ### Testing Standards
-- Testing Core Standards: `/home/oliver/git/cui-llm-rules/standards/testing/core-standards.adoc`
-- Quality Standards: `/home/oliver/git/cui-llm-rules/standards/testing/quality-standards.adoc`
-- Testing README: `/home/oliver/git/cui-llm-rules/standards/testing/README.adoc`
+- Testing Core Standards: `https://github.com/cuioss/cui-llm-rules/tree/main/standards/testing/core-standards.adoc`
+- Quality Standards: `https://github.com/cuioss/cui-llm-rules/tree/main/standards/testing/quality-standards.adoc`
+- Testing README: `https://github.com/cuioss/cui-llm-rules/tree/main/standards/testing/README.adoc`
 
 ### Requirements Standards
-- Requirements Documents: `/home/oliver/git/cui-llm-rules/standards/requirements/requirements-document.adoc`
-- Specification Documents: `/home/oliver/git/cui-llm-rules/standards/requirements/specification-documents.adoc`
-- New Project Guide: `/home/oliver/git/cui-llm-rules/standards/requirements/new-project-guide.adoc`
-- Planning: `/home/oliver/git/cui-llm-rules/standards/requirements/planning.adoc`
-- Requirements README: `/home/oliver/git/cui-llm-rules/standards/requirements/README.adoc`
+- Requirements Documents: `https://github.com/cuioss/cui-llm-rules/tree/main/standards/requirements/requirements-document.adoc`
+- Specification Documents: `https://github.com/cuioss/cui-llm-rules/tree/main/standards/requirements/specification-documents.adoc`
+- New Project Guide: `https://github.com/cuioss/cui-llm-rules/tree/main/standards/requirements/new-project-guide.adoc`
+- Planning: `https://github.com/cuioss/cui-llm-rules/tree/main/standards/requirements/planning.adoc`
+- Requirements README: `https://github.com/cuioss/cui-llm-rules/tree/main/standards/requirements/README.adoc`
 
 ## Code Style Guidelines
 - Follow package structure: reverse domain name notation (de.cuioss.jwt.token)
