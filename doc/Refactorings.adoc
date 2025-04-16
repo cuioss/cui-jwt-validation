@@ -1,0 +1,112 @@
+= Refactoring Opportunities for cui-jwt-token-handling
+
+This document outlines potential refactoring opportunities for the cui-jwt-token-handling project. Each task is actionable and includes a rationale.
+
+== Code Structure and Design
+
+=== 1. Document Bouncy Castle Usage
+*Priority:* Medium
+*Description:* Ensure that the usage of Bouncy Castle for cryptographic operations is consistently documented throughout the codebase and documentation.
+*Rationale:* Clear documentation of cryptographic dependencies is important for security reviews and understanding the library's security model.
+
+=== 2. Extract Interface for TokenFactory
+*Priority:* Medium
+*Description:* Create an interface for TokenFactory to improve testability and allow for alternative implementations.
+*Rationale:* Following the interface segregation principle would make the code more modular and easier to test with mocks.
+
+=== 3. Implement Builder Pattern Consistently
+*Priority:* Medium
+*Description:* Ensure all complex objects use the builder pattern consistently. Some classes already use Lombok's @Builder annotation, but this pattern could be extended to other classes.
+*Rationale:* Consistent use of the builder pattern improves code readability and maintainability.
+
+== Performance Improvements
+
+=== 1. Optimize Token Validation Pipeline
+*Priority:* Medium
+*Description:* Review the token validation pipeline for potential performance optimizations, particularly for high-throughput scenarios.
+*Rationale:* The current pipeline approach is well-structured but might benefit from optimizations like early termination for common failure cases.
+
+=== 2. Enhance Caching Strategy
+*Priority:* Medium
+*Description:* Review and potentially enhance the caching strategy for JWKS keys to reduce network calls and improve performance.
+*Rationale:* Efficient caching is critical for performance in multi-issuer environments.
+
+== Security Enhancements
+
+=== 1. Implement Key Rotation Alerts
+*Priority:* High
+*Description:* Add monitoring and alerting for key rotation events to ensure timely response to key changes.
+*Rationale:* Proactive monitoring of key rotation helps prevent authentication failures during key transitions.
+
+=== 2. Add Support for Additional Cryptographic Algorithms
+*Priority:* Medium
+*Description:* Extend AlgorithmPreferences to support additional modern cryptographic algorithms as they become standardized.
+*Rationale:* Staying current with cryptographic standards is essential for long-term security.
+
+=== 3. Implement Rate Limiting for Token Validation
+*Priority:* Medium
+*Description:* Add rate limiting capabilities to prevent denial-of-service attacks through excessive token validation requests.
+*Rationale:* Rate limiting is a standard security practice to prevent resource exhaustion.
+
+== Testing Improvements
+
+=== 1. Increase Test Coverage for Edge Cases
+*Priority:* High
+*Description:* Add more tests for edge cases, particularly around token expiration, clock skew, and network failures.
+*Rationale:* Comprehensive testing of edge cases improves reliability in production environments.
+
+=== 2. Add Performance Benchmarks
+*Priority:* Medium
+*Description:* Implement performance benchmarks to measure and track token validation performance over time.
+*Rationale:* Performance benchmarks help identify regressions and validate optimizations.
+
+=== 3. Enhance Integration Testing
+*Priority:* Medium
+*Description:* Expand integration tests with additional identity providers beyond Keycloak.
+*Rationale:* Testing with multiple providers ensures compatibility in diverse environments.
+
+== Dependency Management
+
+=== 1. Update to Latest Stable Dependencies
+*Priority:* Medium
+*Description:* Regularly update dependencies to their latest stable versions to benefit from bug fixes and security patches.
+*Rationale:* Keeping dependencies current reduces security vulnerabilities and ensures access to the latest features.
+
+=== 2. Minimize Runtime Dependencies
+*Priority:* Low
+*Description:* Review dependencies and mark appropriate libraries as optional or provided scope to reduce the deployment footprint.
+*Rationale:* Minimizing runtime dependencies reduces potential conflicts and improves deployment flexibility.
+
+== Documentation Improvements
+
+=== 1. Create Comprehensive JavaDoc
+*Priority:* High
+*Description:* Ensure all public classes and methods have comprehensive JavaDoc comments, including examples where appropriate.
+*Rationale:* Complete documentation improves usability and reduces the learning curve for new developers.
+
+=== 2. Add Architecture Decision Records (ADRs)
+*Priority:* Medium
+*Description:* Document key architectural decisions, particularly around security choices and multi-issuer support.
+*Rationale:* ADRs provide context for future maintainers and help preserve institutional knowledge.
+
+=== 3. Create Usage Examples
+*Priority:* Medium
+*Description:* Develop additional usage examples for common scenarios, particularly for multi-issuer environments.
+*Rationale:* Examples help users understand how to effectively use the library in real-world situations.
+
+== Future Enhancements
+
+=== 1. Support for JWT Token Issuance
+*Priority:* Low
+*Description:* Consider adding support for JWT token issuance in addition to validation.
+*Rationale:* This would make the library more comprehensive and useful for a wider range of use cases.
+
+=== 2. Add Support for OAuth 2.1 and OpenID Connect 2.0
+*Priority:* Low
+*Description:* Plan for supporting upcoming OAuth 2.1 and OpenID Connect 2.0 standards.
+*Rationale:* Staying current with evolving standards ensures long-term relevance of the library.
+
+=== 3. Implement Pluggable Validation Rules
+*Priority:* Medium
+*Description:* Create a pluggable system for custom validation rules to allow users to extend the validation pipeline.
+*Rationale:* This would increase flexibility and allow for domain-specific validation requirements.

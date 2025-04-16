@@ -12,10 +12,9 @@
     <artifactId>cui-jwt-token-handling</artifactId>
     <name>JWT Token Handling</name>
     <version>1.0.0-SNAPSHOT</version>
-    <description>A comprehensive framework for handling JWT tokens in multi-issuer environments, built on top of
-        `io.jsonwebtoken:jjwt`.
+    <description>A comprehensive framework for handling JWT tokens in multi-issuer environments.
         The module provides robust token parsing, validation, and management capabilities
-        with a focus on security and ease of use.
+        with a focus on security and ease of use, utilizing Bouncy Castle for cryptographic operations.
     </description>
     <packaging>jar</packaging>
     <url>https://github.com/cuioss/cui-jwt-token-handling/</url>

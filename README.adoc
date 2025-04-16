@@ -15,10 +15,7 @@ image:https://sonarcloud.io/api/project_badges/measure?project=cuioss_cui-jwt-to
 https://cuioss.github.io/cui-jwt-token-handling/about.html[Generated Documentation on github-pages]
 
 == What is it?
-
-== What is it?
-A comprehensive framework for handling JWT tokens in multi-issuer environments,
-built on top of `io.smallrye:smallrye-jwt`.
+A comprehensive framework for handling JWT tokens in multi-issuer environments.
 The module provides robust token parsing, validation,
 and management capabilities with a focus on security and ease of use.
 
@@ -44,7 +41,7 @@ Key features include:
 
 === TokenFactory: The Main Entry Point
 
-The link:src/main/java/de/cuioss/jwt/token/flow/TokenFactory.java[TokenFactory] serves as the primary entry point for token operations. It provides:
+The link:src/main/java/de/cuioss/jwt/token/TokenFactory.java[TokenFactory] serves as the primary entry point for token operations. It provides:
 
 * Centralized token creation and validation
 * Support for multiple token types (Access, ID, Refresh)
@@ -162,15 +159,23 @@ The module supports three token types, each with specific functionality:
 
 == Documentation
 
-* link:doc/LogMessages.adoc[Log Messages]
+The project includes comprehensive documentation:
+
+* link:doc/Requirements.adoc[Requirements] - Functional and non-functional requirements
+* link:doc/Specification.adoc[Specification] - Technical specification and architecture
+* link:doc/Threat-Model.adoc[Threat Model] - Security threat analysis and mitigations
+* link:doc/specification/technical-components.adoc[Technical Components] - Detailed component specifications
+* link:doc/specification/security.adoc[Security Specification] - Security implementation details
+* link:doc/LogMessages.adoc[Log Messages] - Logging documentation
 
 == Security Considerations
 
-* All token validation is performed using cryptographic signatures
+* All token validation is performed using cryptographic signatures via Bouncy Castle (bcprov-jdk18on)
 * Automatic key rotation prevents stale key usage
 * Token size limits prevent memory exhaustion attacks
 * Safe Base64 decoding practices
 * TLS support for secure key retrieval
+* Comprehensive threat model with STRIDE analysis
 
 == Best Practices
 

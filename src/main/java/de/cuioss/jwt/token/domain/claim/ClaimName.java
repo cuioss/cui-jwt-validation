@@ -33,7 +33,7 @@ import java.util.Optional;
  * respective specification.
  * <p>
  * This is a replacement for the org.eclipse.microprofile.jwt.ClaimNames interface
- * to allow for migration from SmallRye JWT to JJWT without changing the existing code.
+ * to provide a standardized set of JWT claim names and types.
  */
 @Getter
 @RequiredArgsConstructor
