@@ -209,7 +209,7 @@ public class TokenFactory {
         // 3. Look up the issuer config
         IssuerConfig issuerConfig = issuerConfigMap.get(issuer.get());
         if (issuerConfig == null) {
-            LOGGER.warn("No configuration found for issuer: {}", issuer.get());
+            LOGGER.warn(JWTTokenLogMessages.WARN.NO_ISSUER_CONFIG.format(issuer.get()));
             return Optional.empty();
         }
 

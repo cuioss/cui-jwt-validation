@@ -222,8 +222,7 @@ public class TokenClaimValidator {
             }
         }
 
-        LOGGER.warn("Token audience %s does not match any of the expected audiences %s",
-                tokenAudience, expectedAudience);
+        LOGGER.warn(JWTTokenLogMessages.WARN.AUDIENCE_MISMATCH.format(tokenAudience, expectedAudience));
         return false;
     }
 

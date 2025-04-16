@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.token.security;
 
+import de.cuioss.jwt.token.JWTTokenLogMessages;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.Getter;
 import lombok.NonNull;
@@ -94,7 +95,7 @@ public class AlgorithmPreferences {
 
         // Check if the algorithm is explicitly rejected
         if (REJECTED_ALGORITHMS.contains(algorithm)) {
-            LOGGER.warn("Algorithm %s is explicitly rejected for security reasons", algorithm);
+            LOGGER.warn(JWTTokenLogMessages.WARN.ALGORITHM_REJECTED.format(algorithm));
             return false;
         }
 

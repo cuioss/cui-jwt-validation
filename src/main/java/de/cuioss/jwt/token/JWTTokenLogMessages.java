@@ -131,6 +131,45 @@ public final class JWTTokenLogMessages {
                 .identifier(200)
                 .template("ClaimNames validation failed: %s")
                 .build();
+
+        public static final LogRecord SIGNATURE_VALIDATION_FAILED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(201)
+                .template("Failed to validate token signature: %s")
+                .build();
+
+        public static final LogRecord CRITICAL_JWKS_ERROR = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(202)
+                .template("Critical error loading JWKS data: %s")
+                .build();
+
+        public static final LogRecord AUTHENTICATION_FAILURE = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(203)
+                .template("Authentication failure: %s")
+                .build();
+
+        public static final LogRecord SECURITY_VIOLATION = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(204)
+                .template("Security violation detected: %s")
+                .build();
+    }
+
+    @UtilityClass
+    public static final class FATAL {
+        public static final LogRecord CRITICAL_SECURITY_BREACH = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(300)
+                .template("Critical security breach: %s")
+                .build();
+
+        public static final LogRecord FATAL_CRYPTO_ERROR = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(301)
+                .template("Fatal error in cryptographic operations: %s")
+                .build();
     }
 
     @UtilityClass
@@ -308,62 +347,86 @@ public final class JWTTokenLogMessages {
 
         public static final LogRecord JWK_MISSING_KTY = LogRecordModel.builder()
                 .prefix(PREFIX)
-                .identifier(120)
+                .identifier(123)
                 .template("JWK is missing required field 'kty'")
                 .build();
 
         public static final LogRecord TOKEN_NBF_FUTURE = LogRecordModel.builder()
                 .prefix(PREFIX)
-                .identifier(121)
+                .identifier(124)
                 .template("Token has a 'not before' claim that is more than 60 seconds in the future")
                 .build();
 
         public static final LogRecord UNKNOWN_TOKEN_TYPE = LogRecordModel.builder()
                 .prefix(PREFIX)
-                .identifier(122)
+                .identifier(125)
                 .template("Unknown token type: %s")
                 .build();
 
         public static final LogRecord FAILED_TO_READ_JWKS_FILE = LogRecordModel.builder()
                 .prefix(PREFIX)
-                .identifier(123)
+                .identifier(126)
                 .template("Failed to read JWKS from file: %s")
                 .build();
 
         public static final LogRecord MISSING_CLAIM = LogRecordModel.builder()
                 .prefix(PREFIX)
-                .identifier(124)
+                .identifier(127)
                 .template("Token is missing required claim: %s")
                 .build();
 
         public static final LogRecord TOKEN_EXPIRED = LogRecordModel.builder()
                 .prefix(PREFIX)
-                .identifier(125)
-                .template("Token from issuer '%s' has expired")
+                .identifier(134)
+                .template("Token has expired")
                 .build();
 
         public static final LogRecord INSECURE_SSL_PROTOCOL = LogRecordModel.builder()
                 .prefix(PREFIX)
-                .identifier(126)
+                .identifier(135)
                 .template("Provided SSL context uses insecure protocol: %s. Creating a secure context instead.")
                 .build();
 
         public static final LogRecord SSL_CONTEXT_CONFIG_FAILED = LogRecordModel.builder()
                 .prefix(PREFIX)
-                .identifier(127)
+                .identifier(136)
                 .template("Failed to configure secure SSL context: %s")
                 .build();
 
         public static final LogRecord AZP_MISMATCH = LogRecordModel.builder()
                 .prefix(PREFIX)
-                .identifier(132)
+                .identifier(137)
                 .template("Token authorized party '%s' does not match expected client ID '%s'")
                 .build();
 
         public static final LogRecord MISSING_RECOMMENDED_ELEMENT = LogRecordModel.builder()
                 .prefix(PREFIX)
-                .identifier(133)
+                .identifier(138)
                 .template("Missing recommended element: %s")
+                .build();
+
+        public static final LogRecord AUDIENCE_MISMATCH = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(139)
+                .template("Token audience %s does not match any of the expected audiences %s")
+                .build();
+
+        public static final LogRecord NO_ISSUER_CONFIG = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(140)
+                .template("No configuration found for issuer: %s")
+                .build();
+
+        public static final LogRecord INVALID_BASE64_CONTENT = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(141)
+                .template("Given contentKey '%s' does not resolve to a non base64 encoded String, actual content = %s")
+                .build();
+
+        public static final LogRecord ALGORITHM_REJECTED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(142)
+                .template("Algorithm %s is explicitly rejected for security reasons")
                 .build();
     }
 

@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.token.jwks.key;
 
+import de.cuioss.jwt.token.JWTTokenLogMessages;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
 import jakarta.json.JsonArray;
@@ -230,7 +231,7 @@ public class JwkKeyConstants {
         }
         String contentAsString = contentOption.get();
         if (!BASE64_URL_PATTERN.matcher(contentAsString).matches()) {
-            LOGGER.warn("given contentKey '%s' does not resolve to a non base64 encoded String, actual content ='%s', returning empty Optional", contentKey, contentAsString);
+            LOGGER.warn(JWTTokenLogMessages.WARN.INVALID_BASE64_CONTENT.format(contentKey, contentAsString));
             return Optional.empty();
         }
         return Optional.ofNullable(Base64.getUrlDecoder().decode(contentAsString));
