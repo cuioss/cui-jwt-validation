@@ -15,7 +15,6 @@
  */
 package de.cuioss.jwt.token.test;
 
-import de.cuioss.jwt.token.JwtParser;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
@@ -25,30 +24,15 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests for {@link TestTokenProducer}.
  */
 class TestTokenProducerTest {
-
-    @Test
-    void shouldGetDefaultTokenParser() {
-        JwtParser parser = TestTokenProducer.getDefaultTokenParser();
-        assertNotNull(parser);
-    }
-
-    @Test
-    void shouldGetWrongIssuerTokenParser() {
-        JwtParser parser = TestTokenProducer.getWrongIssuerTokenParser();
-        assertNotNull(parser);
-    }
-
-    @Test
-    void shouldGetWrongSignatureTokenParser() {
-        JwtParser parser = TestTokenProducer.getWrongSignatureTokenParser();
-        assertNotNull(parser);
-    }
 
     @Test
     void shouldCreateValidSignedJWTWithClaims() {
@@ -177,23 +161,4 @@ class TestTokenProducerTest {
         assertTrue(parsedToken.getPayload().containsKey("scope"));
     }
 
-    @Test
-    void shouldRejectTokenWithWrongIssuerParser() {
-        String token = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_SCOPES);
-        JwtParser parser = TestTokenProducer.getWrongIssuerTokenParser();
-
-        // The wrong issuer parser should reject the token
-        var parsedToken = parser.parse(token);
-        assertFalse(parsedToken.isPresent(), "Token should be rejected with wrong issuer parser");
-    }
-
-    @Test
-    void shouldRejectTokenWithWrongSignatureParser() {
-        String token = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_SCOPES);
-        JwtParser parser = TestTokenProducer.getWrongSignatureTokenParser();
-
-        // The wrong signature parser should reject the token
-        var parsedToken = parser.parse(token);
-        assertFalse(parsedToken.isPresent(), "Token should be rejected with wrong signature parser");
-    }
 }

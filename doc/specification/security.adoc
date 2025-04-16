@@ -20,16 +20,16 @@ _See Requirement link:../Requirements.adoc#CUI-JWT-1.3[CUI-JWT-1.3: Signature Va
 
 The following classes implement this specification:
 
-* link:../src/main/java/de/cuioss/jwt/token/JwksAwareTokenParserImpl.java[JwksAwareTokenParserImpl]
-* link:../src/main/java/de/cuioss/jwt/token/JwtParser.java[JwtParser]
+* link:../../src/main/java/de/cuioss/jwt/token/flow/TokenSignatureValidator.java[TokenSignatureValidator]
+* link:../../src/main/java/de/cuioss/jwt/token/flow/TokenFactory.java[TokenFactory]
 
 The following tests verify the implementation:
 
-* link:../src/test/java/de/cuioss/jwt/token/SignatureValidationTest.java[SignatureValidationTest] - Comprehensive tests for signature validation, including:
+* link:../../src/test/java/de/cuioss/jwt/token/flow/TokenSignatureValidatorTest.java[TokenSignatureValidatorTest] - Comprehensive tests for signature validation, including:
 ** Validation of tokens with supported algorithms (RS256)
 ** Rejection of tokens with unsupported algorithms (HS256, HS384, HS512, none)
 ** Protection against algorithm confusion attacks
-* link:../src/test/java/de/cuioss/jwt/token/JwksAwareTokenParserImplTest.java[JwksAwareTokenParserImplTest] - Tests for the JwksAwareTokenParserImpl class
+* link:../../src/test/java/de/cuioss/jwt/token/flow/TokenFactoryFlowTest.java[TokenFactoryFlowTest] - Tests for the TokenFactory class
 
 The library supports the following signature algorithms as specified in the requirements:
 
@@ -63,12 +63,25 @@ _See Requirement link:../Requirements.adoc#CUI-JWT-8.1[CUI-JWT-8.1: Token Size L
 
 The following classes implement this specification:
 
-* link:../src/main/java/de/cuioss/jwt/token/util/NonValidatingJwtParser.java[NonValidatingJwtParser]
-* link:../src/main/java/de/cuioss/jwt/token/TokenFactory.java[TokenFactory]
+* link:../../src/main/java/de/cuioss/jwt/token/flow/NonValidatingJwtParser.java[NonValidatingJwtParser]
+* link:../../src/main/java/de/cuioss/jwt/token/flow/TokenFactory.java[TokenFactory]
+* link:../../src/main/java/de/cuioss/jwt/token/flow/TokenFactoryConfig.java[TokenFactoryConfig]
 
 To prevent denial of service attacks, the library enforces a maximum token size of 8KB.
 
 Token size is checked before parsing and tokens larger than the configured limit are rejected. The default limit is set to 8KB as recommended by OAuth 2.0 JWT BCP Section 3.11.
+
+The TokenFactoryConfig class allows customizing token size limits:
+
+[source,java]
+----
+TokenFactory factory = TokenFactory.create(
+    issuerConfigs,
+    TokenFactoryConfig.builder()
+        .maxTokenSize(8 * 1024)  // 8KB
+        .maxPayloadSize(4 * 1024)  // 4KB
+        .build());
+----
 
 Refer to the implementation and associated JavaDoc for detailed behavior.
 
@@ -79,15 +92,15 @@ _See Requirement link:../Requirements.adoc#CUI-JWT-8.2[CUI-JWT-8.2: Safe Parsing
 
 The following classes implement this specification:
 
-* link:../src/main/java/de/cuioss/jwt/token/util/NonValidatingJwtParser.java[NonValidatingJwtParser]
+* link:../../src/main/java/de/cuioss/jwt/token/flow/NonValidatingJwtParser.java[NonValidatingJwtParser]
 
 The `NonValidatingJwtParser` class provides comprehensive safe parsing features to protect against common attacks such as memory exhaustion, stack overflow, and malformed input attacks.
 
-For implementation details, see the JavaDoc of the link:../src/main/java/de/cuioss/jwt/token/util/NonValidatingJwtParser.java[NonValidatingJwtParser] class.
+For implementation details, see the JavaDoc of the link:../../src/main/java/de/cuioss/jwt/token/flow/NonValidatingJwtParser.java[NonValidatingJwtParser] class.
 
 The following tests verify the implementation:
 
-* link:../src/test/java/de/cuioss/jwt/token/util/NonValidatingJwtParserTest.java[NonValidatingJwtParserTest] - Comprehensive tests for the NonValidatingJwtParser class, including:
+* link:../../src/test/java/de/cuioss/jwt/token/flow/NonValidatingJwtParserTest.java[NonValidatingJwtParserTest] - Comprehensive tests for the NonValidatingJwtParser class, including:
 ** Token size validation tests
 ** JSON depth limit tests
 ** Large JSON array handling tests
@@ -103,20 +116,23 @@ _See Requirement link:../Requirements.adoc#CUI-JWT-8.4[CUI-JWT-8.4: Claims Valid
 
 The following classes implement this specification:
 
-* link:../src/main/java/de/cuioss/jwt/token/ClaimValidator.java[ClaimValidator]
-* link:../src/main/java/de/cuioss/jwt/token/JwksAwareTokenParserImpl.java[JwksAwareTokenParserImpl]
+* link:../../src/main/java/de/cuioss/jwt/token/flow/TokenClaimValidator.java[TokenClaimValidator]
+* link:../../src/main/java/de/cuioss/jwt/token/flow/TokenHeaderValidator.java[TokenHeaderValidator]
+* link:../../src/main/java/de/cuioss/jwt/token/flow/IssuerConfig.java[IssuerConfig]
 
 The library provides comprehensive validation for standard JWT claims as defined in RFC 7519.
 
 ==== Required Claims
 
-* Issuer (iss)
-* Subject (sub)
-* Expiration Time (exp)
-* Issued At (iat)
-* Audience (aud) - validated if expected audience is provided
+* Issuer (iss) - validated by TokenHeaderValidator
+* Subject (sub) - validated by TokenClaimValidator
+* Expiration Time (exp) - validated by TokenClaimValidator
+* Issued At (iat) - validated by TokenClaimValidator
+* Not Before (nbf) - validated by TokenClaimValidator if present
+* Audience (aud) - validated by TokenClaimValidator if expected audience is provided
+* Authorized Party (azp) - validated by TokenClaimValidator if expected client ID is provided
 
-For implementation details, see the JavaDoc of the link:../src/main/java/de/cuioss/jwt/token/ClaimValidator.java[ClaimValidator] and link:../src/main/java/de/cuioss/jwt/token/JwksAwareTokenParserImpl.java[JwksAwareTokenParserImpl] classes.
+For implementation details, see the JavaDoc of the link:../../src/main/java/de/cuioss/jwt/token/flow/TokenClaimValidator.java[TokenClaimValidator] and link:../../src/main/java/de/cuioss/jwt/token/flow/TokenHeaderValidator.java[TokenHeaderValidator] classes.
 
 === Secure Communication
 _See Requirement link:../Requirements.adoc#CUI-JWT-8.3[CUI-JWT-8.3: Secure Communication]_
@@ -125,12 +141,12 @@ _See Requirement link:../Requirements.adoc#CUI-JWT-8.3[CUI-JWT-8.3: Secure Commu
 
 The following classes implement this specification:
 
-* link:../src/main/java/de/cuioss/jwt/token/jwks/HttpJwksLoader.java[HttpJwksLoader]
-* link:../src/main/java/de/cuioss/jwt/token/security/SecureSSLContextProvider.java[SecureSSLContextProvider]
+* link:../../src/main/java/de/cuioss/jwt/token/jwks/HttpJwksLoader.java[HttpJwksLoader]
+* link:../../src/main/java/de/cuioss/jwt/token/security/SecureSSLContextProvider.java[SecureSSLContextProvider]
 
 The library ensures secure communication for key retrieval by requiring TLS 1.2 or higher by default. The `SecureSSLContextProvider` class is an instance class that allows configuration of the minimum TLS version to be used. The `HttpJwksLoader` uses a builder pattern for creation, with the `SecureSSLContextProvider` instance as an optional parameter.
 
-For implementation details, see the JavaDoc of the link:../src/main/java/de/cuioss/jwt/token/jwks/HttpJwksLoader.java[HttpJwksLoader] and link:../src/main/java/de/cuioss/jwt/token/security/SecureSSLContextProvider.java[SecureSSLContextProvider] classes.
+For implementation details, see the JavaDoc of the link:../../src/main/java/de/cuioss/jwt/token/jwks/HttpJwksLoader.java[HttpJwksLoader] and link:../../src/main/java/de/cuioss/jwt/token/security/SecureSSLContextProvider.java[SecureSSLContextProvider] classes.
 
 Integration tests verify the implementation by connecting to a Keycloak server using HTTPS.
 
@@ -141,17 +157,18 @@ _See Requirement link:../Requirements.adoc#CUI-JWT-8.5[CUI-JWT-8.5: Cryptographi
 
 The following classes implement this specification:
 
-* link:../src/main/java/de/cuioss/jwt/token/security/AlgorithmPreferences.java[AlgorithmPreferences]
-* link:../src/main/java/de/cuioss/jwt/token/security/JwkKeyHandler.java[JwkKeyHandler]
-* link:../src/main/java/de/cuioss/jwt/token/jwks/KeyInfo.java[KeyInfo]
-* link:../src/main/java/de/cuioss/jwt/token/jwks/JwksLoader.java[JwksLoader]
-* link:../src/main/java/de/cuioss/jwt/token/jwks/JWKSKeyLoader.java[JWKSKeyLoader]
-* link:../src/main/java/de/cuioss/jwt/token/JwksAwareTokenParserImpl.java[JwksAwareTokenParserImpl]
+* link:../../src/main/java/de/cuioss/jwt/token/security/AlgorithmPreferences.java[AlgorithmPreferences]
+* link:../../src/main/java/de/cuioss/jwt/token/security/JwkKeyHandler.java[JwkKeyHandler]
+* link:../../src/main/java/de/cuioss/jwt/token/jwks/key/KeyInfo.java[KeyInfo]
+* link:../../src/main/java/de/cuioss/jwt/token/jwks/JwksLoader.java[JwksLoader]
+* link:../../src/main/java/de/cuioss/jwt/token/jwks/key/JWKSKeyLoader.java[JWKSKeyLoader]
+* link:../../src/main/java/de/cuioss/jwt/token/flow/TokenSignatureValidator.java[TokenSignatureValidator]
+* link:../../src/main/java/de/cuioss/jwt/token/flow/IssuerConfig.java[IssuerConfig]
 
 The cryptographic agility features include:
 
 1. Support for multiple signature algorithms (RSA, ECDSA, RSA-PSS)
-2. Configuration of preferred algorithms
+2. Configuration of preferred algorithms through IssuerConfig
 3. Key rotation and algorithm migration capabilities
 4. Storage of algorithm information with keys
 5. Selection of keys based on algorithm preferences
@@ -159,22 +176,23 @@ The cryptographic agility features include:
 
 For implementation details, see the JavaDoc of the following classes:
 
-* link:../src/main/java/de/cuioss/jwt/token/security/AlgorithmPreferences.java[AlgorithmPreferences]
-* link:../src/main/java/de/cuioss/jwt/token/security/JwkKeyHandler.java[JwkKeyHandler]
-* link:../src/main/java/de/cuioss/jwt/token/jwks/KeyInfo.java[KeyInfo]
-* link:../src/main/java/de/cuioss/jwt/token/jwks/JwksLoader.java[JwksLoader]
-* link:../src/main/java/de/cuioss/jwt/token/jwks/JWKSKeyLoader.java[JWKSKeyLoader]
-* link:../src/main/java/de/cuioss/jwt/token/JwksAwareTokenParserImpl.java[JwksAwareTokenParserImpl]
+* link:../../src/main/java/de/cuioss/jwt/token/security/AlgorithmPreferences.java[AlgorithmPreferences]
+* link:../../src/main/java/de/cuioss/jwt/token/security/JwkKeyHandler.java[JwkKeyHandler]
+* link:../../src/main/java/de/cuioss/jwt/token/jwks/key/KeyInfo.java[KeyInfo]
+* link:../../src/main/java/de/cuioss/jwt/token/jwks/JwksLoader.java[JwksLoader]
+* link:../../src/main/java/de/cuioss/jwt/token/jwks/key/JWKSKeyLoader.java[JWKSKeyLoader]
+* link:../../src/main/java/de/cuioss/jwt/token/flow/TokenSignatureValidator.java[TokenSignatureValidator]
+* link:../../src/main/java/de/cuioss/jwt/token/flow/IssuerConfig.java[IssuerConfig]
 
 The following tests verify the implementation:
 
-* link:../src/test/java/de/cuioss/jwt/token/security/JwkKeyHandlerTest.java[JwkKeyHandlerTest] - Comprehensive tests for the JwkKeyHandler class, including:
+* link:../../src/test/java/de/cuioss/jwt/token/security/JwkKeyHandlerTest.java[JwkKeyHandlerTest] - Comprehensive tests for the JwkKeyHandler class, including:
 ** Parsing and validation of RSA keys
 ** Validation of EC key fields
 ** Base64 URL encoding validation
 ** Security tests for potential attacks
-* link:../src/test/java/de/cuioss/jwt/token/jwks/InMemoryJwksLoaderTest.java[InMemoryJwksLoaderTest] - Tests for the JWKSKeyLoader with in-memory JWKS
-* link:../src/test/java/de/cuioss/jwt/token/jwks/JwksClientBenchmarkTest.java[JwksClientBenchmarkTest] - Performance tests for key retrieval
+* link:../../src/test/java/de/cuioss/jwt/token/jwks/key/JWKSKeyLoaderTest.java[JWKSKeyLoaderTest] - Tests for the JWKSKeyLoader
+* link:../../src/test/java/de/cuioss/jwt/token/flow/TokenSignatureValidatorTest.java[TokenSignatureValidatorTest] - Tests for the TokenSignatureValidator
 
 == Additional OAuth/JWT Security Considerations
 
@@ -189,12 +207,22 @@ The client confusion attack occurs when a token issued for one client is used wi
 
 ==== Implementation
 
-* The `ClaimValidator` class validates the `azp` (authorized party) claim, which identifies the client the token was issued for.
-* The `JwksAwareTokenParserImpl` class supports both audience (`aud`) and `azp` validation through the `ClaimValidator`.
-* Validation of both claims is configurable through the `JwksAwareTokenParserImpl` builder:
+* The `TokenClaimValidator` class validates the `azp` (authorized party) claim, which identifies the client the token was issued for.
+* The `IssuerConfig` class supports both audience (`aud`) and `azp` validation through configuration.
+* Validation of both claims is configurable through the `IssuerConfig` builder:
   * `expectedAudience()` - sets the expected audience for validation
   * `expectedClientId()` - sets the expected client ID for `azp` claim validation
 * For maximum security, both audience and client ID validation should be enabled.
+
+[source,java]
+----
+IssuerConfig issuerConfig = IssuerConfig.builder()
+    .issuer("https://issuer.example.com")
+    .expectedAudience("client-id")
+    .expectedClientId("client-id")
+    .jwksKeyLoader(jwksKeyLoader)
+    .build();
+----
 
 ==== Security Note
 

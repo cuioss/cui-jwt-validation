@@ -60,16 +60,19 @@
                 <groupId>io.jsonwebtoken</groupId>
                 <artifactId>jjwt-api</artifactId>
                 <version>${version.jjwt}</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>io.jsonwebtoken</groupId>
                 <artifactId>jjwt-impl</artifactId>
+                <scope>test</scope>
                 <version>${version.jjwt}</version>
             </dependency>
             <dependency>
                 <groupId>io.jsonwebtoken</groupId>
                 <artifactId>jjwt-jackson</artifactId>
                 <version>${version.jjwt}</version>
+                <scope>test</scope>
             </dependency>
             <!-- Caffeine cache -->
             <dependency>
@@ -99,20 +102,21 @@
             <groupId>jakarta.json</groupId>
             <artifactId>jakarta.json-api</artifactId>
         </dependency>
-        <!-- JJWT dependencies -->
+        <!-- JJWT dependencies. Reduced to testing -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
-            <scope>runtime</scope>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
-            <scope>runtime</scope>
+            <scope>test</scope>
         </dependency>
         <!-- Caffeine cache -->
         <dependency>

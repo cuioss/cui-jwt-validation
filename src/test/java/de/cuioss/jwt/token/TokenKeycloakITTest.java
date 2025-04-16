@@ -15,8 +15,10 @@
  */
 package de.cuioss.jwt.token;
 
-import de.cuioss.jwt.token.jwks.JwksLoader;
+import de.cuioss.jwt.token.flow.IssuerConfig;
+import de.cuioss.jwt.token.jwks.HttpJwksLoader;
 import de.cuioss.jwt.token.jwks.JwksLoaderFactory;
+import de.cuioss.jwt.token.jwks.key.JWKSKeyLoader;
 import de.cuioss.test.keycloakit.KeycloakITBase;
 import de.cuioss.test.keycloakit.TestRealm;
 import de.cuioss.tools.logging.CuiLogger;
@@ -92,11 +94,20 @@ public class TokenKeycloakITTest extends KeycloakITBase {
         LOGGER.debug(() -> "PASSWORD: " + TestRealm.ProvidedKeyStore.PASSWORD);
 
         // Create a JwksLoader with the SSLContext
-        JwksLoader jwksLoader = JwksLoaderFactory.createHttpLoader(getJWKSUrl(), 100, createSSLContextFromSSLConfig(sslConfig));
-        JwksAwareTokenParserImpl parser = new JwksAwareTokenParserImpl(jwksLoader, getIssuer());
+        HttpJwksLoader jwksLoader = (HttpJwksLoader) JwksLoaderFactory.createHttpLoader(getJWKSUrl(), 100, createSSLContextFromSSLConfig(sslConfig));
 
+        // Get the JWKSKeyLoader from the HttpJwksLoader
+        JWKSKeyLoader jwksKeyLoader = jwksLoader.resolve();
+
+        // Create an IssuerConfig
+        IssuerConfig issuerConfig = IssuerConfig.builder()
+                .issuer(getIssuer())
+                .jwksKeyLoader(jwksKeyLoader)
+                .build();
+
+        // Create the token factory
         factory = TokenFactory.builder()
-                .addParser(parser)
+                .issuerConfigs(List.of(issuerConfig))
                 .build();
     }
 
@@ -122,9 +133,11 @@ public class TokenKeycloakITTest extends KeycloakITBase {
             var accessToken = retrievedAccessToken.get();
 
             assertFalse(accessToken.isExpired(), "Token should not be expired");
-            assertTrue(accessToken.providesScopes(SCOPES_AS_LIST), "Token should provide requested scopes");
-            assertEquals(TestRealm.TestUser.EMAIL.toLowerCase(), accessToken.getEmail().get(), "Email should match test user");
-            assertEquals(TokenType.ACCESS_TOKEN, accessToken.getType(), "Token type should be ACCESS_TOKEN");
+            // Check if all scopes are present in the token
+            List<String> tokenScopes = accessToken.getScopes();
+            assertTrue(tokenScopes.containsAll(SCOPES_AS_LIST), "Token should provide requested scopes");
+            assertEquals(TestRealm.TestUser.EMAIL.toLowerCase(), accessToken.getEmail().orElse(""), "Email should match test user");
+            assertEquals(TokenType.ACCESS_TOKEN, accessToken.getTokenType(), "Token type should be ACCESS_TOKEN");
         }
     }
 
@@ -139,8 +152,8 @@ public class TokenKeycloakITTest extends KeycloakITBase {
 
             assertTrue(idToken.isPresent(), "ID token should be present");
             assertFalse(idToken.get().isExpired(), "Token should not be expired");
-            assertEquals(TestRealm.TestUser.EMAIL.toLowerCase(), idToken.get().getEmail().get(), "Email should match test user");
-            assertEquals(TokenType.ID_TOKEN, idToken.get().getType(), "Token type should be ID_TOKEN");
+            assertEquals(TestRealm.TestUser.EMAIL.toLowerCase(), idToken.get().getEmail().orElse(""), "Email should match test user");
+            assertEquals(TokenType.ID_TOKEN, idToken.get().getTokenType(), "Token type should be ID_TOKEN");
         }
     }
 
@@ -153,10 +166,8 @@ public class TokenKeycloakITTest extends KeycloakITBase {
             var tokenString = requestToken(parameterForScopedToken(SCOPES), TokenTypes.REFRESH);
             var refreshToken = factory.createRefreshToken(tokenString);
             assertTrue(refreshToken.isPresent(), "Refresh token should be present");
-            assertFalse(refreshToken.get().isEmpty(), "Refresh token should be present");
             assertNotNull(refreshToken.get().getRawToken(), "Token string should not be null");
-            assertEquals(TokenType.REFRESH_TOKEN, refreshToken.get().getType(), "Token type should be REFRESH_TOKEN");
-            assertFalse(refreshToken.get().isJwtFormat(), "As of now, while testing the token will be rejected, because keycloak JWTToken-119: Unsupported algorithm: HS512. If you see this message, please check the Keycloak version and the algorithm used.");
+            assertEquals(TokenType.REFRESH_TOKEN, refreshToken.get().getTokenType(), "Token type should be REFRESH_TOKEN");
         }
     }
 }

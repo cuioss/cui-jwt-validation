@@ -44,80 +44,97 @@ Key features include:
 
 === TokenFactory: The Main Entry Point
 
-The link:src/main/java/de/cuioss/jwt/token/TokenFactory.java[TokenFactory] serves as the primary entry point for token operations. It provides:
+The link:src/main/java/de/cuioss/jwt/token/flow/TokenFactory.java[TokenFactory] serves as the primary entry point for token operations. It provides:
 
 * Centralized token creation and validation
 * Support for multiple token types (Access, ID, Refresh)
-* Automatic parser selection based on token characteristics
+* Pipeline-based token validation
+* Support for multiple issuers
 
 [source, java]
 ----
-// Create a factory with multiple token parsers
-TokenFactory factory = TokenFactory.builder()
-        .addParser(parser1)
-        .addParser(parser2)
+// Create issuer configurations
+IssuerConfig issuer1Config = IssuerConfig.builder()
+        .issuer("https://issuer1.com")
+        .expectedAudience("client-id")
+        .expectedClientId("client-id")
+        .jwksKeyLoader(jwksKeyLoader1)
         .build();
 
+IssuerConfig issuer2Config = IssuerConfig.builder()
+        .issuer("https://issuer2.com")
+        .expectedAudience("client-id")
+        .expectedClientId("client-id")
+        .jwksKeyLoader(jwksKeyLoader2)
+        .build();
+
+// Create a factory with multiple issuer configurations
+TokenFactory factory = TokenFactory.create(
+        List.of(issuer1Config, issuer2Config),
+        TokenFactoryConfig.builder().build());
+
 // Create and validate tokens
-Optional<ParsedAccessToken> accessToken = factory.createAccessToken(tokenString);
-Optional<ParsedIdToken> idToken = factory.createIdToken(tokenString);
+Optional<AccessTokenContent> accessToken = factory.createAccessToken(tokenString);
+Optional<IdTokenContent> idToken = factory.createIdToken(tokenString);
+Optional<RefreshTokenContent> refreshToken = factory.createRefreshToken(tokenString);
 ----
 
-=== JwksAwareTokenParser: Secure Token Validation
+=== Token Validation Pipeline
 
-The link:src/main/java/de/cuioss/jwt/token/JwksAwareTokenParserImpl.java[JwksAwareTokenParserImpl] handles secure token validation using JWKS endpoints:
+The module uses a pipeline approach for token validation:
 
-* Automatic public key retrieval and caching
-* Advanced caching with HTTP 304 support, content-based caching, and fallback mechanisms
-* Configurable key refresh intervals
-* TLS support for secure key retrieval
+* link:src/main/java/de/cuioss/jwt/token/flow/TokenHeaderValidator.java[TokenHeaderValidator]: Validates token headers (algorithm, issuer)
+* link:src/main/java/de/cuioss/jwt/token/flow/TokenSignatureValidator.java[TokenSignatureValidator]: Validates token signatures using JWKS
+* link:src/main/java/de/cuioss/jwt/token/flow/TokenBuilder.java[TokenBuilder]: Creates token content objects
+* link:src/main/java/de/cuioss/jwt/token/flow/TokenClaimValidator.java[TokenClaimValidator]: Validates token claims (expiration, audience, etc.)
 
-[source, java]
-----
-// Configure a parser for a specific issuer
-JwksAwareTokenParser parser = JwksAwareTokenParser.builder()
-    .jwksIssuer("https://auth.example.com")
-    .jwksEndpoint("https://auth.example.com/.well-known/jwks.json")
-    .jwksRefreshIntervall(60)
-    .build();
-----
+This pipeline approach provides several benefits:
+
+* Better separation of concerns
+* More flexible validation process
+* Improved error handling and reporting
+* Enhanced security through comprehensive validation
 
 === Multi-Issuer Support
 
 The module provides robust support for multi-issuer environments through:
 
-* link:src/main/java/de/cuioss/jwt/token/util/MultiIssuerJwtParser.java[MultiIssuerJwtParser]: Manages multiple token parsers
-* Dynamic parser selection based on token issuer
+* Configuration of multiple issuers with IssuerConfig objects
+* Automatic issuer detection and validation
 * Thread-safe token validation
 
 [source, java]
 ----
-// Create parsers for different issuers
-JwksAwareTokenParser issuer1Parser = JwksAwareTokenParser.builder()
-    .jwksIssuer("https://issuer1.com")
-    .jwksEndpoint("https://issuer1.com/.well-known/jwks.json")
-    .build();
+// Create JWKS key loaders for different issuers
+JWKSKeyLoader issuer1KeyLoader = new JWKSKeyLoader(jwksContent1);
+JWKSKeyLoader issuer2KeyLoader = new JWKSKeyLoader(jwksContent2);
 
-JwksAwareTokenParser issuer2Parser = JwksAwareTokenParser.builder()
-    .jwksIssuer("https://issuer2.com")
-    .jwksEndpoint("https://issuer2.com/.well-known/jwks.json")
-    .build();
+// Create issuer configurations
+IssuerConfig issuer1Config = IssuerConfig.builder()
+        .issuer("https://issuer1.com")
+        .jwksKeyLoader(issuer1KeyLoader)
+        .build();
+
+IssuerConfig issuer2Config = IssuerConfig.builder()
+        .issuer("https://issuer2.com")
+        .jwksKeyLoader(issuer2KeyLoader)
+        .build();
 
 // Create a factory supporting both issuers
-TokenFactory multiIssuerFactory = TokenFactory.builder()
-        .addParser(issuer1Parser)
-        .addParser(issuer2Parser)
-        .build();
+TokenFactory factory = TokenFactory.create(
+        List.of(issuer1Config, issuer2Config),
+        TokenFactoryConfig.builder().build());
 ----
 
 == Token Architecture and Types
 
 === Architecture
 
-The module uses a flexible architecture based on composition and delegation:
+The module uses a flexible architecture based on inheritance and composition:
 
-* link:src/main/java/de/cuioss/jwt/token/adapter/JsonWebToken.java[JsonWebToken]: Core interface defining JWT token functionality
-* Token-specific classes directly implement JsonWebToken or use delegation for improved flexibility and separation of concerns
+* link:src/main/java/de/cuioss/jwt/token/domain/token/TokenContent.java[TokenContent]: Core interface defining JWT token functionality
+* link:src/main/java/de/cuioss/jwt/token/domain/token/BaseTokenContent.java[BaseTokenContent]: Abstract base class implementing common token functionality
+* link:src/main/java/de/cuioss/jwt/token/domain/token/MinimalTokenContent.java[MinimalTokenContent]: Minimal interface for tokens without claims
 
 This architecture provides several benefits:
 
@@ -125,19 +142,22 @@ This architecture provides several benefits:
 * More flexible composition
 * Reduced code duplication
 * Easier maintenance and extension
+* Type-safe claim access
 
 === Token Types
 
 The module supports three token types, each with specific functionality:
 
-* link:src/main/java/de/cuioss/jwt/token/ParsedAccessToken.java[ParsedAccessToken]: OAuth2 access token with scope and role support
-  ** Implements JsonWebToken interface directly
+* link:src/main/java/de/cuioss/jwt/token/domain/token/AccessTokenContent.java[AccessTokenContent]: OAuth2 access token with scope and role support
+  ** Extends BaseTokenContent for common token functionality
   ** Provides enhanced scope and role management
-* link:src/main/java/de/cuioss/jwt/token/ParsedIdToken.java[ParsedIdToken]: OpenID Connect ID token for user identity
-  ** Implements JsonWebToken interface directly
+  ** Supports email and preferred username claims
+* link:src/main/java/de/cuioss/jwt/token/domain/token/IdTokenContent.java[IdTokenContent]: OpenID Connect ID token for user identity
+  ** Extends BaseTokenContent for common token functionality
   ** Focuses on identity information claims
-* link:src/main/java/de/cuioss/jwt/token/ParsedRefreshToken.java[ParsedRefreshToken]: OAuth2 refresh token
-  ** Implements Serializable for basic token functionality
+  ** Provides access to name and email claims
+* link:src/main/java/de/cuioss/jwt/token/domain/token/RefreshTokenContent.java[RefreshTokenContent]: OAuth2 refresh token
+  ** Implements MinimalTokenContent interface
   ** Treats refresh tokens as opaque strings per OAuth2 specification
 
 == Documentation
@@ -155,7 +175,9 @@ The module supports three token types, each with specific functionality:
 == Best Practices
 
 1. Always use `TokenFactory` as the main entry point
-2. Configure appropriate key refresh intervals
-3. Use TLS for JWKS endpoints in production
-4. Validate token scopes and roles before granting access
-5. Handle token expiration appropriately
+2. Configure IssuerConfig with appropriate validation settings
+3. Use TokenFactoryConfig to customize token size limits
+4. Use TLS for JWKS endpoints in production
+5. Validate token scopes and roles before granting access
+6. Handle token expiration appropriately
+7. Configure expected audience and client ID for enhanced security

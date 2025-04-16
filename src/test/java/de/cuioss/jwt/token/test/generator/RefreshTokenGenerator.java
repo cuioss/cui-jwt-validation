@@ -63,7 +63,7 @@ public class RefreshTokenGenerator implements TypedGenerator<String> {
 
             // Sign with default private key (we don't have an alternative private key)
             // The "alternative" mode is indicated by the key ID in the header
-            builder.signWith(KeyMaterialHandler.getDefaultPrivateKey(), Jwts.SIG.RS256);
+            builder.signWith(KeyMaterialHandler.getDefaultPrivateKey());
 
             return builder.compact();
         } catch (Exception e) {

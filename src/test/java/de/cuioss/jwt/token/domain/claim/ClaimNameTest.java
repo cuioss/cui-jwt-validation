@@ -222,6 +222,7 @@ class ClaimNameTest {
 
     @Test
     @DisplayName("Should have correct name and value type for each enum value")
+    @SuppressWarnings("java:S5961") // owolff: Suppressing this warning as the test is designed to check enum values
     void shouldHaveCorrectNameAndValueType() {
         // Given, When, Then
         assertEquals("iss", ClaimName.ISSUER.getName());

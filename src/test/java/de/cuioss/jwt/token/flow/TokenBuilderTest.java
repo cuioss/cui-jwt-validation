@@ -16,10 +16,15 @@
 package de.cuioss.jwt.token.flow;
 
 import de.cuioss.jwt.token.TokenType;
+import de.cuioss.jwt.token.domain.claim.ClaimName;
+import de.cuioss.jwt.token.domain.token.AccessTokenContent;
+import de.cuioss.jwt.token.domain.token.IdTokenContent;
 import de.cuioss.jwt.token.domain.token.RefreshTokenContent;
 import de.cuioss.jwt.token.test.TestTokenProducer;
+import de.cuioss.jwt.token.test.generator.DecodedJwtGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
@@ -83,5 +88,97 @@ class TokenBuilderTest {
         // When/Then
         assertThrows(NullPointerException.class, () -> tokenBuilder.createRefreshToken(null),
                 "Should throw NullPointerException when rawToken is null");
+    }
+
+    @Nested
+    @DisplayName("AccessToken Tests")
+    class AccessTokenTests {
+
+        @Test
+        @DisplayName("createAccessToken should create AccessTokenContent from DecodedJwt")
+        void createAccessTokenShouldCreateAccessTokenContent() {
+            // Given a DecodedJwt with ACCESS_TOKEN type
+            DecodedJwt decodedJwt = new DecodedJwtGenerator(TokenType.ACCESS_TOKEN).next();
+
+            // When creating an AccessTokenContent
+            Optional<AccessTokenContent> result = tokenBuilder.createAccessToken(decodedJwt);
+
+            // Then
+            assertTrue(result.isPresent(), "Should return AccessTokenContent");
+            AccessTokenContent accessTokenContent = result.get();
+
+            // Verify token type
+            assertEquals(TokenType.ACCESS_TOKEN, accessTokenContent.getTokenType(), "Token type should be ACCESS_TOKEN");
+
+            // Verify raw token
+            assertEquals(decodedJwt.getRawToken(), accessTokenContent.getRawToken(), "Raw token should match");
+
+            // Verify claims are extracted
+            assertFalse(accessTokenContent.getClaims().isEmpty(), "Claims should not be empty");
+            assertTrue(accessTokenContent.getClaims().containsKey(ClaimName.SUBJECT.getName()), 
+                    "Claims should contain subject");
+            assertTrue(accessTokenContent.getClaims().containsKey(ClaimName.ISSUER.getName()), 
+                    "Claims should contain issuer");
+        }
+
+        @Test
+        @DisplayName("createAccessToken should handle DecodedJwt with missing body")
+        void createAccessTokenShouldHandleDecodedJwtWithMissingBody() {
+            // Given a DecodedJwt with null body
+            DecodedJwt decodedJwt = new DecodedJwt(null, null, null, new String[]{"", "", ""}, "test-token");
+
+            // When creating an AccessTokenContent
+            Optional<AccessTokenContent> result = tokenBuilder.createAccessToken(decodedJwt);
+
+            // Then
+            assertTrue(result.isEmpty(), "Should return empty Optional when body is missing");
+        }
+    }
+
+    @Nested
+    @DisplayName("IdToken Tests")
+    class IdTokenTests {
+
+        @Test
+        @DisplayName("createIdToken should create IdTokenContent from DecodedJwt")
+        void createIdTokenShouldCreateIdTokenContent() {
+            // Given a DecodedJwt with ID_TOKEN type
+            DecodedJwt decodedJwt = new DecodedJwtGenerator(TokenType.ID_TOKEN).next();
+
+            // When creating an IdTokenContent
+            Optional<IdTokenContent> result = tokenBuilder.createIdToken(decodedJwt);
+
+            // Then
+            assertTrue(result.isPresent(), "Should return IdTokenContent");
+            IdTokenContent idTokenContent = result.get();
+
+            // Verify token type
+            assertEquals(TokenType.ID_TOKEN, idTokenContent.getTokenType(), "Token type should be ID_TOKEN");
+
+            // Verify raw token
+            assertEquals(decodedJwt.getRawToken(), idTokenContent.getRawToken(), "Raw token should match");
+
+            // Verify claims are extracted
+            assertFalse(idTokenContent.getClaims().isEmpty(), "Claims should not be empty");
+            assertTrue(idTokenContent.getClaims().containsKey(ClaimName.SUBJECT.getName()), 
+                    "Claims should contain subject");
+            assertTrue(idTokenContent.getClaims().containsKey(ClaimName.ISSUER.getName()), 
+                    "Claims should contain issuer");
+            assertTrue(idTokenContent.getClaims().containsKey(ClaimName.AUDIENCE.getName()), 
+                    "Claims should contain audience");
+        }
+
+        @Test
+        @DisplayName("createIdToken should handle DecodedJwt with missing body")
+        void createIdTokenShouldHandleDecodedJwtWithMissingBody() {
+            // Given a DecodedJwt with null body
+            DecodedJwt decodedJwt = new DecodedJwt(null, null, null, new String[]{"", "", ""}, "test-token");
+
+            // When creating an IdTokenContent
+            Optional<IdTokenContent> result = tokenBuilder.createIdToken(decodedJwt);
+
+            // Then
+            assertTrue(result.isEmpty(), "Should return empty Optional when body is missing");
+        }
     }
 }

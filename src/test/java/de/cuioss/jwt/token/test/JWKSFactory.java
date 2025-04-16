@@ -139,45 +139,6 @@ public class JWKSFactory {
     }
 
     /**
-     * Creates a JWKS with an unsupported key type.
-     *
-     * @param keyId the key ID to use
-     * @return a JWKS JSON string with an unsupported key type
-     */
-    public static String createJwksWithUnsupportedKeyType(String keyId) {
-        return "{\"keys\":[{\"kty\":\"EC\",\"kid\":\"%s\"}]}".formatted(
-                keyId);
-    }
-
-    /**
-     * Creates a JWKS with no key ID, which should result in the default key ID being used.
-     *
-     * @return a JWKS JSON string with no key ID
-     */
-    public static String createJwksWithNoKeyId() {
-        RSAPublicKey publicKey = (RSAPublicKey) KeyMaterialHandler.getDefaultPublicKey();
-
-        // Extract the modulus and exponent
-        byte[] modulusBytes = publicKey.getModulus().toByteArray();
-        byte[] exponentBytes = publicKey.getPublicExponent().toByteArray();
-
-        // Remove leading zero byte if present (BigInteger sign bit)
-        if (modulusBytes.length > 0 && modulusBytes[0] == 0) {
-            byte[] tmp = new byte[modulusBytes.length - 1];
-            System.arraycopy(modulusBytes, 1, tmp, 0, tmp.length);
-            modulusBytes = tmp;
-        }
-
-        // Base64 URL encode
-        String n = Base64.getUrlEncoder().withoutPadding().encodeToString(modulusBytes);
-        String e = Base64.getUrlEncoder().withoutPadding().encodeToString(exponentBytes);
-
-        // Create JWKS JSON with no key ID
-        return "{\"keys\":[{\"kty\":\"RSA\",\"n\":\"%s\",\"e\":\"%s\",\"alg\":\"RS256\"}]}".formatted(
-                n, e);
-    }
-
-    /**
      * Creates an empty JWKS with no keys.
      *
      * @return an empty JWKS JSON string
@@ -195,12 +156,4 @@ public class JWKSFactory {
         return "invalid json";
     }
 
-    /**
-     * Creates a JSON object with no keys array.
-     *
-     * @return a JSON object with no keys array
-     */
-    public static String createJsonWithNoKeysArray() {
-        return "{}";
-    }
 }

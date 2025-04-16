@@ -55,7 +55,7 @@ public class IDTokenGenerator implements TypedGenerator<String> {
      * Constructor with default mode and specific client ID.
      *
      * @param useAlternativeMode whether to use alternative mode for signing
-     * @param clientId the client ID to include in the azp claim
+     * @param clientId           the client ID to include in the azp claim
      */
     public IDTokenGenerator(boolean useAlternativeMode, String clientId) {
         this.useAlternativeMode = useAlternativeMode;
@@ -87,14 +87,15 @@ public class IDTokenGenerator implements TypedGenerator<String> {
             // Only add the azp claim if clientId is not null (for testing missing azp claim)
             if (clientId != null) {
                 builder.claim("azp", clientId);
-                builder.audience().add(clientId).and();
+                // Add audience as a direct claim instead of using the audience() method
+                builder.claim("aud", clientId);
             } else {
                 // If no client ID is provided, still add a default audience
-                builder.audience().add(DEFAULT_CLIENT_ID).and();
+                builder.claim("aud", DEFAULT_CLIENT_ID);
             }
 
             // Sign with default private key
-            builder.signWith(KeyMaterialHandler.getDefaultPrivateKey(), Jwts.SIG.RS256);
+            builder.signWith(KeyMaterialHandler.getDefaultPrivateKey());
 
             return builder.compact();
         } catch (Exception e) {

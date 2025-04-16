@@ -20,27 +20,7 @@
  * and management with support for multiple token issuers.
  * <p>
  * Key components:
- * <ul>
- *   <li>Token Parsing:
- *     <ul>
- *       <li>{@link de.cuioss.jwt.token.adapter.JsonWebToken}: Core interface for JWT token handling</li>
- *       <li>{@link de.cuioss.jwt.token.ParsedAccessToken}: OAuth2 access token support</li>
- *       <li>{@link de.cuioss.jwt.token.ParsedIdToken}: OpenID Connect ID token support</li>
- *       <li>{@link de.cuioss.jwt.token.ParsedRefreshToken}: OAuth2 refresh token support</li>
- *     </ul>
- *   </li>
- *   <li>Token Management:
- *     <ul>
- *       <li>{@link de.cuioss.jwt.token.TokenFactory}: Central factory for token creation</li>
- *       <li>{@link de.cuioss.jwt.token.TokenType}: Supported token type definitions</li>
- *     </ul>
- *   </li>
- *   <li>Token Validation:
- *     <ul>
- *       <li>{@link de.cuioss.jwt.token.JwksAwareTokenParserImpl}: JWKS-based token validation</li>
- *     </ul>
- *   </li>
- * </ul>
+ *
  * <p>
  * The package supports:
  * <ul>
@@ -52,7 +32,5 @@
  * <p>
  * Note: The implementation is primarily tested with Keycloak as the identity provider.
  * Some features may be specific to Keycloak's token implementation.
- *
- * @see de.cuioss.jwt.token.util
  */
 package de.cuioss.jwt.token;

@@ -173,7 +173,6 @@ public class ClaimValue implements Serializable {
             case STRING -> forPlainString(null);
             case STRING_LIST -> forList(null, Collections.emptyList());
             case DATETIME -> forDateTime(null, null);
-            default -> throw new IllegalArgumentException("Unsupported claim value type: " + valueType);
         };
     }
 }

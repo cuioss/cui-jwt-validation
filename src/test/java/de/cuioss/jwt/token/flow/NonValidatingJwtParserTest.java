@@ -191,10 +191,8 @@ class NonValidatingJwtParserTest {
         @DisplayName("Should respect max token size")
         void shouldRespectMaxTokenSize() {
             // Create a token that exceeds the max size
-            StringBuilder largeToken = new StringBuilder();
-            largeToken.append("a".repeat(NonValidatingJwtParser.DEFAULT_MAX_TOKEN_SIZE + 1));
 
-            Optional<DecodedJwt> result = parser.decode(largeToken.toString());
+            Optional<DecodedJwt> result = parser.decode("a".repeat(NonValidatingJwtParser.DEFAULT_MAX_TOKEN_SIZE + 1));
             assertFalse(result.isPresent(), "Should not decode a token that exceeds max size");
         }
 
@@ -203,14 +201,13 @@ class NonValidatingJwtParserTest {
         void shouldRespectCustomMaxTokenSize() {
             // Create a token that exceeds the custom max size but is smaller than the default
             int customMaxSize = 1024;
-            StringBuilder largeToken = new StringBuilder();
-            largeToken.append("a".repeat(customMaxSize + 1));
+            String largeToken = "a".repeat(customMaxSize + 1);
 
             NonValidatingJwtParser customParser = NonValidatingJwtParser.builder()
                     .maxTokenSize(customMaxSize)
                     .build();
 
-            Optional<DecodedJwt> result = customParser.decode(largeToken.toString());
+            Optional<DecodedJwt> result = customParser.decode(largeToken);
             assertFalse(result.isPresent(), "Should not decode a token that exceeds custom max size");
         }
     }

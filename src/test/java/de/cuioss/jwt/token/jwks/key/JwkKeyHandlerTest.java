@@ -26,10 +26,14 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.StringReader;
 import java.security.Key;
-import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Tests for {@link JwkKeyHandler} with a focus on security aspects and potential attacks.
@@ -87,7 +91,7 @@ class JwkKeyHandlerTest {
     }
 
     @Test
-    void shouldParseValidRsaKey() throws InvalidKeySpecException, NoSuchAlgorithmException {
+    void shouldParseValidRsaKey() throws InvalidKeySpecException {
         // Given a valid RSA JWK
         JsonObject jwk = createRsaJwk();
 

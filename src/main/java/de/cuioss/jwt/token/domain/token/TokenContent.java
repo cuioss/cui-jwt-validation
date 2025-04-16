@@ -17,7 +17,6 @@ package de.cuioss.jwt.token.domain.token;
 
 import de.cuioss.jwt.token.domain.claim.ClaimName;
 import de.cuioss.jwt.token.domain.claim.ClaimValue;
-import de.cuioss.tools.logging.CuiLogger;
 
 import java.time.OffsetDateTime;
 import java.util.Map;
@@ -28,8 +27,6 @@ import java.util.Optional;
  * Provides access to claims. Raw token string and token type are provided through {@link MinimalTokenContent}.
  */
 public interface TokenContent extends MinimalTokenContent {
-
-    CuiLogger LOGGER = new CuiLogger(TokenContent.class);
 
     /**
      * Gets all claims in this token.

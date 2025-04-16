@@ -22,6 +22,7 @@ import de.cuioss.jwt.token.test.TestTokenProducer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.io.Serial;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -100,6 +101,7 @@ class BaseTokenContentTest {
      * Concrete implementation of BaseTokenContent for testing.
      */
     static class TestBaseTokenContent extends BaseTokenContent {
+        @Serial
         private static final long serialVersionUID = 1L;
 
         TestBaseTokenContent(Map<String, ClaimValue> claims, String rawToken, TokenType tokenType) {

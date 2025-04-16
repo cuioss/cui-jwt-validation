@@ -15,7 +15,7 @@
  */
 package de.cuioss.jwt.token.flow;
 
-import de.cuioss.jwt.token.adapter.ClaimNames;
+import de.cuioss.jwt.token.domain.claim.ClaimName;
 import jakarta.json.JsonObject;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -60,7 +60,7 @@ public class DecodedJwt {
         this.rawToken = rawToken;
 
         // Extract issuer from64EncodedContent body if present
-        this.issuer = body != null && body.containsKey(ClaimNames.ISSUER) ? body.getString(ClaimNames.ISSUER) : null;
+        this.issuer = body != null && body.containsKey(ClaimName.ISSUER.getName()) ? body.getString(ClaimName.ISSUER.getName()) : null;
 
         // Extract kid from64EncodedContent header if present
         this.kid = header != null && header.containsKey("kid") ? header.getString("kid") : null;

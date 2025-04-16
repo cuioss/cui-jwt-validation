@@ -41,15 +41,6 @@ public class TokenContentImpl implements TokenContent {
     private final String uniqueId;
 
     /**
-     * Constructor for creating a valid token content.
-     *
-     * @param tokenType the type of token to generate
-     */
-    public TokenContentImpl(TokenType tokenType) {
-        this(tokenType, ClaimControlParameter.defaultForTokenType(tokenType));
-    }
-
-    /**
      * Constructor for creating a token content with specific claim control parameters.
      *
      * @param tokenType the type of token to generate

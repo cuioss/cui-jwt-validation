@@ -365,33 +365,36 @@ _See link:specification/technical-components.adoc#_tokenfactory[Technical Compon
 
 *Status*: COMPLETED
 
-* All required functionality is implemented
-* Builder pattern is implemented for configuration
-* Test coverage is good
+* All required functionality is implemented using the new pipeline approach
+* Configuration is handled through IssuerConfig and TokenFactoryConfig
+* Test coverage is good with TokenFactoryFlowTest
 * Documentation is complete
+* The old TokenFactory implementation has been replaced
 
-=== JwtParser
-_See link:specification/technical-components.adoc#_jwtparser[Technical Components: JwtParser]_
+=== Token Validation Pipeline
+_See link:specification/technical-components.adoc#_token_validation_pipeline[Technical Components: Token Validation Pipeline]_
 
 *Status*: COMPLETED
 
-* Interface and implementation are complete
-* All required functionality is implemented, including:
-  * Signature validation
-  * Claims validation (iss, sub, exp, iat, nbf)
-  * Audience (aud) validation
-  * Authorized party (azp) validation for client confusion attack prevention
-* Test coverage is good with comprehensive tests for security features
+* All required components are implemented:
+  * TokenHeaderValidator - Validates token headers (algorithm, issuer)
+  * TokenSignatureValidator - Validates token signatures using JWKS
+  * TokenBuilder - Creates token content objects
+  * TokenClaimValidator - Validates token claims (expiration, audience, etc.)
+  * NonValidatingJwtParser - Provides initial token decoding without validation
+* Test coverage is good with comprehensive tests for each component
 * Documentation is complete
 
-=== MultiIssuerJwtParser
-_See link:specification/technical-components.adoc#_multiissuerjwtparser[Technical Components: MultiIssuerJwtParser]_
+=== IssuerConfig
+_See link:specification/technical-components.adoc#_issuerconfig[Technical Components: IssuerConfig]_
 
 *Status*: COMPLETED
 
 * All required functionality is implemented
+* Supports configuration of issuer, audience, client ID, and algorithm preferences
 * Test coverage is good
 * Documentation is complete
+* Replaces the old MultiIssuerJwtParser approach
 
 === JwksLoader
 _See link:specification/technical-components.adoc#_jwksloader[Technical Components: JwksLoader]_
@@ -418,27 +421,52 @@ _See link:specification/technical-components.adoc#_token_classes[Technical Compo
 |===
 |Component |Line Coverage |Branch Coverage |Method Coverage
 
-|de.cuioss.jwt.token.TokenFactory
+|de.cuioss.jwt.token.flow.TokenFactory
 |85%
 |80%
 |90%
 
-|de.cuioss.jwt.token.JwksAwareTokenParserImpl
+|de.cuioss.jwt.token.flow.TokenFactoryConfig
+|90%
+|85%
+|95%
+
+|de.cuioss.jwt.token.flow.IssuerConfig
+|90%
+|85%
+|95%
+
+|de.cuioss.jwt.token.flow.TokenHeaderValidator
+|90%
+|85%
+|95%
+
+|de.cuioss.jwt.token.flow.TokenSignatureValidator
 |85%
 |80%
 |90%
 
-|de.cuioss.jwt.token.ParsedAccessToken
+|de.cuioss.jwt.token.flow.TokenBuilder
+|70%
+|65%
+|80%
+
+|de.cuioss.jwt.token.flow.TokenClaimValidator
+|85%
+|80%
+|90%
+
+|de.cuioss.jwt.token.domain.token.AccessTokenContent
 |90%
 |85%
 |95%
 
-|de.cuioss.jwt.token.ParsedIdToken
+|de.cuioss.jwt.token.domain.token.IdTokenContent
 |90%
 |85%
 |95%
 
-|de.cuioss.jwt.token.ParsedRefreshToken
+|de.cuioss.jwt.token.domain.token.RefreshTokenContent
 |90%
 |85%
 |95%
@@ -448,7 +476,7 @@ _See link:specification/technical-components.adoc#_token_classes[Technical Compo
 |75%
 |85%
 
-|de.cuioss.jwt.token.util.MultiIssuerJwtParser
+|de.cuioss.jwt.token.jwks.key.JWKSKeyLoader
 |85%
 |80%
 |90%
@@ -514,16 +542,29 @@ _See link:specification/technical-components.adoc#_token_classes[Technical Compo
 
 === High Priority
 
+. Improve test coverage for the TokenBuilder class, specifically for creating AccessTokenContent and IdTokenContent from a DecodedJwt
+. Implement missing functionality in AccessTokenContent:
+  * Role-related functionality: `getRoles()`, `hasRole(String role)`, `determineMissingRoles(Set<String> expectedRoles)`
+  * Scope validation methods: `providesScopes(Set<String> expectedScopes)`, `providesScopesAndDebugIfScopesAreMissing(Set<String> expectedScopes, String context, CuiLogger logger)`, `determineMissingScopes(Set<String> expectedScopes)`
+  * Name-related functionality: `getName()`
+. Improve multi-issuer testing in TokenFactoryFlowTest to ensure issuer selection logic is properly tested
 . Implement ERROR and FATAL level log messages in the code
 . Implement scope upgrade attack prevention with expected scopes validation
 . Implement mutable claims attack prevention with immutable identifier enforcement
-. Implement comprehensive performance testing
-. Complete vulnerability scanning integration
 
 === Medium Priority
 
+. Remove old components after completing the implementation and testing:
+  * TokenFactory (old implementation)
+  * JwksAwareTokenParserImpl
+  * ParsedAccessToken
+  * ParsedIdToken
+  * ParsedRefreshToken
+  * MultiIssuerJwtParser
+  * JwtParser interface
+  * ClaimValidator
 . Enhance documentation for testing approach
-. Improve test coverage for edge cases
+. Implement comprehensive performance testing
 . Implement additional security hardening measures
 . Complete compliance testing
 . Add security best practices documentation for OAuth flows

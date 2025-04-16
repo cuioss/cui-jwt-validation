@@ -74,19 +74,11 @@ Set<String> groups = groupGenerator.next();
 
 The following test classes have been updated to use generators:
 
-* `ParsedAccessTokenTest`: Uses generators for access tokens, ID tokens, and other test data
 
 == Test Classes That Could Benefit from Using Generators
 
 The following test classes could benefit from using generators:
 
-* `JwksAwareTokenParserImplTest`: Could use generators for access tokens and JWKS
-* `TokenFactoryTest`: Could use generators for access tokens, ID tokens, and refresh tokens
-* `ParsedRefreshTokenTest`: Could use generators for refresh tokens
-* `ParsedTokenTest`: Could use generators for access tokens
-* `MultiIssuerJwtParserTest`: Could use generators for access tokens
-* `ParsedIdTokenTest`: Could use generators for ID tokens
-* `TestTokenProducerTest`: Could use generators for various token types
 
 == Implementation Details
 
