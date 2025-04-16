@@ -16,15 +16,9 @@
 package de.cuioss.jwt.token.flow;
 
 import de.cuioss.jwt.token.JWTTokenLogMessages;
-import de.cuioss.jwt.token.security.AlgorithmPreferences;
-import de.cuioss.tools.collect.MoreCollections;
 import de.cuioss.tools.logging.CuiLogger;
 import jakarta.annotation.Nonnull;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Singular;
-
-import java.util.Set;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Validator for JWT token headers.
@@ -32,47 +26,23 @@ import java.util.Set;
  * This class validates the following header elements:
  * <ul>
  *   <li>Algorithm (alg) - against configured AlgorithmPreferences</li>
- *   <li>Issuer (iss) - against configured expected issuers</li>
+ *   <li>Issuer (iss) - against configured expected issuer</li>
  * </ul>
  * <p>
  * The validator logs appropriate warning messages for validation failures.
  */
-@Builder
+@RequiredArgsConstructor
 public class TokenHeaderValidator {
 
     private static final CuiLogger LOGGER = new CuiLogger(TokenHeaderValidator.class);
 
-    @Getter
-    @Singular("expectedIssuer")
-    private final Set<String> expectedIssuer;
-
-    @Getter
-    @Builder.Default
-    private final AlgorithmPreferences algorithmPreferences = new AlgorithmPreferences();
+    private final IssuerConfig issuerConfig;
 
     /**
-     * Constructs a TokenHeaderValidator with the specified expected issuers and algorithm preferences.
-     *
-     * @param expectedIssuer       the expected issuer(s) of the token
-     * @param algorithmPreferences the algorithm preferences for validation
-     * @throws IllegalArgumentException if no expected issuers are provided
-     */
-    @SuppressWarnings("java:S1144") // Suppressing this warning as the constructor is private and used only in the builder
-    private TokenHeaderValidator(Set<String> expectedIssuer, AlgorithmPreferences algorithmPreferences) {
-        // Validate configuration
-        if (MoreCollections.isEmpty(expectedIssuer)) {
-            throw new IllegalArgumentException("At least one expectedIssuer must be provided");
-        }
-
-        this.expectedIssuer = expectedIssuer;
-        this.algorithmPreferences = algorithmPreferences != null ? algorithmPreferences : new AlgorithmPreferences();
-    }
-
-    /**
-     * Validates a decoded JWT token's header.
+     * Validates a decoded JWT token's header.     *
      *
      * @param decodedJwt the decoded JWT token to validate
-     * @return true if the token header is valid, false otherwise
+     * @return true if the token header is valid, false otherwise.
      */
     public boolean validate(@Nonnull DecodedJwt decodedJwt) {
         LOGGER.trace("Validating token header");
@@ -103,7 +73,7 @@ public class TokenHeaderValidator {
             return false;
         }
 
-        if (!algorithmPreferences.isSupported(algorithm.get())) {
+        if (!issuerConfig.getAlgorithmPreferences().isSupported(algorithm.get())) {
             LOGGER.warn(JWTTokenLogMessages.WARN.UNSUPPORTED_ALGORITHM.format(algorithm.get()));
             return false;
         }
@@ -118,26 +88,22 @@ public class TokenHeaderValidator {
      * @param decodedJwt the decoded JWT token
      * @return true if the issuer is valid, false otherwise
      */
+    @SuppressWarnings("java:S3655") // Suppress warning for using Optional.get()
+    // as we check for presence before calling it
     private boolean validateIssuer(DecodedJwt decodedJwt) {
-        if (expectedIssuer.isEmpty()) {
-            LOGGER.debug("No expected issuer is provided, skip validation");
-            return true;
-        }
 
-        var issuer = decodedJwt.getIssuer();
-
-        if (issuer.isEmpty()) {
+        if (decodedJwt.getIssuer().isEmpty()) {
             LOGGER.warn(JWTTokenLogMessages.WARN.MISSING_CLAIM.format("iss"));
             return false;
         }
+        var givenIssuer = decodedJwt.getIssuer().get();
 
-        boolean correctIssuer = expectedIssuer.contains(issuer.get());
-        if (!correctIssuer) {
-            LOGGER.warn(JWTTokenLogMessages.WARN.ISSUER_MISMATCH.format(issuer.get(), expectedIssuer));
+        if (!issuerConfig.getIssuer().equals(givenIssuer)) {
+            LOGGER.warn(JWTTokenLogMessages.WARN.ISSUER_MISMATCH.format(givenIssuer, issuerConfig.getIssuer()));
             return false;
         }
 
-        LOGGER.debug("Successfully validated issuer: %s", issuer.get());
+        LOGGER.debug("Successfully validated issuer: %s", givenIssuer);
         return true;
     }
 }

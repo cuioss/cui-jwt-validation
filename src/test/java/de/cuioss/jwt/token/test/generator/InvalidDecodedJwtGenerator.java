@@ -16,39 +16,32 @@
 package de.cuioss.jwt.token.test.generator;
 
 import de.cuioss.jwt.token.TokenType;
+import de.cuioss.jwt.token.domain.claim.ClaimValue;
 import de.cuioss.jwt.token.flow.DecodedJwt;
 import de.cuioss.test.generator.TypedGenerator;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 
-import java.time.Instant;
-import java.util.Date;
+import java.util.Map;
 import java.util.UUID;
 
 /**
  * Generator for invalid DecodedJwt instances.
  * Can be configured with different {@link TokenType} values and provides
  * builder-like mutators to create various invalid token scenarios.
+ * 
+ * This implementation uses InvalidTokenContentGenerator to create a TokenContent
+ * and then transforms it to a DecodedJWT.
  */
 public class InvalidDecodedJwtGenerator implements TypedGenerator<DecodedJwt> {
 
     private static final String DEFAULT_KEY_ID = "default-key-id";
-    private static final String DEFAULT_ISSUER = "test-issuer";
-    private static final String DEFAULT_SUBJECT = "test-subject";
-    private static final String DEFAULT_AUDIENCE = "test-audience";
 
-    private final TokenType tokenType;
+    private final InvalidTokenContentGenerator tokenContentGenerator;
 
-    // Mutation flags
-    private boolean missingIssuer = false;
-    private boolean missingSubject = false;
-    private boolean missingExpiration = false;
-    private boolean expiredToken = false;
-    private boolean missingIssuedAt = false;
+    // Additional flags not covered by InvalidTokenContentGenerator
     private boolean missingKeyId = false;
-    private boolean missingTokenType = false;
-    private boolean missingAudience = false;
     private String customIssuer = null;
 
     /**
@@ -57,7 +50,7 @@ public class InvalidDecodedJwtGenerator implements TypedGenerator<DecodedJwt> {
      * @param tokenType the type of token to generate
      */
     public InvalidDecodedJwtGenerator(TokenType tokenType) {
-        this.tokenType = tokenType;
+        this.tokenContentGenerator = new InvalidTokenContentGenerator(tokenType);
     }
 
     /**
@@ -73,7 +66,7 @@ public class InvalidDecodedJwtGenerator implements TypedGenerator<DecodedJwt> {
      * @return this generator for method chaining
      */
     public InvalidDecodedJwtGenerator withMissingIssuer() {
-        this.missingIssuer = true;
+        tokenContentGenerator.withMissingIssuer();
         return this;
     }
 
@@ -83,7 +76,7 @@ public class InvalidDecodedJwtGenerator implements TypedGenerator<DecodedJwt> {
      * @return this generator for method chaining
      */
     public InvalidDecodedJwtGenerator withMissingSubject() {
-        this.missingSubject = true;
+        tokenContentGenerator.withMissingSubject();
         return this;
     }
 
@@ -93,7 +86,7 @@ public class InvalidDecodedJwtGenerator implements TypedGenerator<DecodedJwt> {
      * @return this generator for method chaining
      */
     public InvalidDecodedJwtGenerator withMissingExpiration() {
-        this.missingExpiration = true;
+        tokenContentGenerator.withMissingExpiration();
         return this;
     }
 
@@ -103,7 +96,7 @@ public class InvalidDecodedJwtGenerator implements TypedGenerator<DecodedJwt> {
      * @return this generator for method chaining
      */
     public InvalidDecodedJwtGenerator withExpiredToken() {
-        this.expiredToken = true;
+        tokenContentGenerator.withExpiredToken();
         return this;
     }
 
@@ -113,7 +106,7 @@ public class InvalidDecodedJwtGenerator implements TypedGenerator<DecodedJwt> {
      * @return this generator for method chaining
      */
     public InvalidDecodedJwtGenerator withMissingIssuedAt() {
-        this.missingIssuedAt = true;
+        tokenContentGenerator.withMissingIssuedAt();
         return this;
     }
 
@@ -133,7 +126,7 @@ public class InvalidDecodedJwtGenerator implements TypedGenerator<DecodedJwt> {
      * @return this generator for method chaining
      */
     public InvalidDecodedJwtGenerator withMissingTokenType() {
-        this.missingTokenType = true;
+        tokenContentGenerator.withMissingTokenType();
         return this;
     }
 
@@ -143,7 +136,7 @@ public class InvalidDecodedJwtGenerator implements TypedGenerator<DecodedJwt> {
      * @return this generator for method chaining
      */
     public InvalidDecodedJwtGenerator withMissingAudience() {
-        this.missingAudience = true;
+        tokenContentGenerator.withMissingAudience();
         return this;
     }
 
@@ -164,102 +157,102 @@ public class InvalidDecodedJwtGenerator implements TypedGenerator<DecodedJwt> {
      * @return this generator for method chaining
      */
     public InvalidDecodedJwtGenerator reset() {
-        this.missingIssuer = false;
-        this.missingSubject = false;
-        this.missingExpiration = false;
-        this.expiredToken = false;
-        this.missingIssuedAt = false;
+        tokenContentGenerator.reset();
         this.missingKeyId = false;
-        this.missingTokenType = false;
-        this.missingAudience = false;
         this.customIssuer = null;
         return this;
+    }
+
+    /**
+     * Converts a TokenContentImpl to a DecodedJwt.
+     *
+     * @param tokenContent the token content to convert
+     * @return a DecodedJwt instance
+     */
+    protected DecodedJwt tokenContentToDecodedJwt(TokenContentImpl tokenContent) {
+        try {
+            if (!missingKeyId && customIssuer == null) {
+                // Use the toDecodedJwt method from TokenContentImpl if we don't need to customize the header or issuer
+                return tokenContent.toDecodedJwt();
+            } else {
+                // When we need to customize the header or issuer
+                // Create header with appropriate values
+                JsonObjectBuilder headerBuilder = Json.createObjectBuilder()
+                        .add("alg", "RS256")
+                        .add("typ", "JWT");
+
+                if (!missingKeyId) {
+                    headerBuilder.add("kid", DEFAULT_KEY_ID);
+                }
+
+                // Build the header
+                JsonObject header = headerBuilder.build();
+
+                // Create body from token content claims
+                JsonObjectBuilder bodyBuilder = Json.createObjectBuilder();
+
+                // Add all claims from the token content
+                for (Map.Entry<String, ClaimValue> entry : tokenContent.getClaims().entrySet()) {
+                    String claimName = entry.getKey();
+                    ClaimValue claimValue = entry.getValue();
+
+                    // Handle different claim value types
+                    switch (claimValue.getType()) {
+                        case STRING_LIST:
+                            // For list values, add as a JSON array
+                            bodyBuilder.add(claimName, Json.createArrayBuilder(claimValue.getAsList()).build());
+                            break;
+                        case DATETIME:
+                            // For date-time values, add as a number (epoch seconds)
+                            bodyBuilder.add(claimName, Long.parseLong(claimValue.getOriginalString()));
+                            break;
+                        case STRING:
+                        default:
+                            // For string values, add as a string
+                            if (claimName.equals("iss") && customIssuer != null) {
+                                // Override issuer if custom issuer is set
+                                bodyBuilder.add(claimName, customIssuer);
+                            } else {
+                                bodyBuilder.add(claimName, claimValue.getOriginalString());
+                            }
+                            break;
+                    }
+                }
+
+                // Build the body
+                JsonObject body = bodyBuilder.build();
+
+                // Create a signature (not actually used for validation in tests)
+                String signature = "test-signature";
+
+                // Generate a unique identifier for this token
+                String uniqueId = UUID.randomUUID().toString();
+
+                // Create token parts with unique identifier
+                String[] parts = new String[]{"header-part-" + uniqueId, "body-part-" + uniqueId, "signature-part-" + uniqueId};
+
+                // Use the raw token from the token content if available, otherwise create one
+                String rawToken = tokenContent.getRawToken();
+                if (rawToken == null || rawToken.isEmpty()) {
+                    rawToken = parts[0] + "." + parts[1] + "." + parts[2];
+                }
+
+                // Create and return the DecodedJwt
+                return new DecodedJwt(header, body, signature, parts, rawToken);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to convert TokenContent to DecodedJwt", e);
+        }
     }
 
     @Override
     public DecodedJwt next() {
         try {
-            // Create header with appropriate values
-            JsonObjectBuilder headerBuilder = Json.createObjectBuilder()
-                    .add("typ", "JWT");
+            // Generate an invalid token content using the InvalidTokenContentGenerator
+            TokenContentImpl tokenContent = tokenContentGenerator.next();
 
-            if (!missingKeyId) {
-                headerBuilder.add("kid", DEFAULT_KEY_ID);
-            }
-
-            // Always add algorithm for now
-            headerBuilder.add("alg", "RS256");
-
-            // Create body with appropriate values based on token type
-            JsonObjectBuilder bodyBuilder = Json.createObjectBuilder();
-
-            // Add standard claims unless they should be missing
-            if (!missingIssuer) {
-                bodyBuilder.add("iss", customIssuer != null ? customIssuer : DEFAULT_ISSUER);
-            }
-
-            if (!missingSubject) {
-                bodyBuilder.add("sub", DEFAULT_SUBJECT);
-            }
-
-            if (!missingIssuedAt) {
-                bodyBuilder.add("iat", Date.from(Instant.now()).getTime() / 1000);
-            }
-
-            if (!missingExpiration) {
-                if (expiredToken) {
-                    // Set expiration to 1 hour in the past
-                    bodyBuilder.add("exp", Date.from(Instant.now().minusSeconds(3600)).getTime() / 1000);
-                } else {
-                    // Set expiration to 1 hour in the future
-                    bodyBuilder.add("exp", Date.from(Instant.now().plusSeconds(3600)).getTime() / 1000);
-                }
-            }
-
-            bodyBuilder.add("jti", UUID.randomUUID().toString());
-
-            // Add type-specific claims
-            if (!missingTokenType) {
-                switch (tokenType) {
-                    case ACCESS_TOKEN:
-                        bodyBuilder.add("typ", TokenType.ACCESS_TOKEN.getTypeClaimName())
-                                .add("scope", "openid profile email");
-                        break;
-                    case ID_TOKEN:
-                        bodyBuilder.add("typ", TokenType.ID_TOKEN.getTypeClaimName());
-                        if (!missingAudience) {
-                            bodyBuilder.add("aud", DEFAULT_AUDIENCE);
-                        }
-                        bodyBuilder.add("email", "test@example.com");
-                        break;
-                    case REFRESH_TOKEN:
-                        bodyBuilder.add("typ", TokenType.REFRESH_TOKEN.getTypeClaimName());
-                        break;
-                    case UNKNOWN:
-                    default:
-                        bodyBuilder.add("typ", "unknown");
-                        break;
-                }
-            }
-
-            // Build the JSON objects
-            JsonObject header = headerBuilder.build();
-            JsonObject body = bodyBuilder.build();
-
-            // Create a signature (not actually used for validation in tests)
-            String signature = "test-signature";
-
-            // Generate a unique identifier for this token
-            String uniqueId = UUID.randomUUID().toString();
-
-            // Create token parts with unique identifier
-            String[] parts = new String[]{"header-part-" + uniqueId, "body-part-" + uniqueId, "signature-part-" + uniqueId};
-
-            // Create raw token with unique identifier
-            String rawToken = parts[0] + "." + parts[1] + "." + parts[2];
-
-            // Create and return the DecodedJwt
-            return new DecodedJwt(header, body, signature, parts, rawToken);
+            // Convert the token content to a DecodedJwt
+            return tokenContentToDecodedJwt(tokenContent);
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate invalid DecodedJwt", e);
         }

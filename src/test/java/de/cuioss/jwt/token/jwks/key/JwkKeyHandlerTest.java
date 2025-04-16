@@ -315,7 +315,7 @@ class JwkKeyHandlerTest {
         );
 
         // And the exception message should indicate the missing field
-        assertTrue(exception.getMessage().contains("Invalid Base64 URL encoded value for 'crv'"), 
+        assertTrue(exception.getMessage().contains("Invalid Base64 URL encoded value for 'crv'"),
                 "Actual message: " + exception.getMessage());
     }
 
@@ -338,7 +338,7 @@ class JwkKeyHandlerTest {
         );
 
         // And the exception message should indicate the unsupported curve
-        assertTrue(exception.getMessage().contains("EC curve P-192 is not supported"), 
+        assertTrue(exception.getMessage().contains("EC curve P-192 is not supported"),
                 "Actual message: " + exception.getMessage());
     }
 

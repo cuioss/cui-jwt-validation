@@ -16,15 +16,14 @@
 package de.cuioss.jwt.token.test.generator;
 
 import de.cuioss.jwt.token.TokenType;
-import de.cuioss.jwt.token.domain.token.TokenContent;
 import de.cuioss.test.generator.TypedGenerator;
 
 /**
- * Generator for valid TokenContent instances.
+ * Generator for valid TokenContentImpl instances.
  * Can be configured with different {@link TokenType} values to generate
  * appropriate token content with all required claims.
  */
-public class ValidTokenContentGenerator implements TypedGenerator<TokenContent> {
+public class ValidTokenContentGenerator implements TypedGenerator<TokenContentImpl> {
 
     private final TokenType tokenType;
 
@@ -45,7 +44,7 @@ public class ValidTokenContentGenerator implements TypedGenerator<TokenContent> 
     }
 
     @Override
-    public TokenContent next() {
+    public TokenContentImpl next() {
         // Create a new implementation of TokenContent with all valid claims
         // using the default claim control parameter for the token type
         return new TokenContentImpl(tokenType, ClaimControlParameter.defaultForTokenType(tokenType));

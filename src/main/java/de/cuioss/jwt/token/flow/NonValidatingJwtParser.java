@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Utility class for parsing JWT tokens and extracting common information from64EncodedContent them.
  * This class provides a unified way to parse JWT tokens and extract common information
  * such as the header, body, signature, issuer, and kid-header.
  * <p>

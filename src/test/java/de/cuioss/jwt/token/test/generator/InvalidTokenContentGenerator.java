@@ -16,30 +16,22 @@
 package de.cuioss.jwt.token.test.generator;
 
 import de.cuioss.jwt.token.TokenType;
-import de.cuioss.jwt.token.domain.token.TokenContent;
 import de.cuioss.test.generator.TypedGenerator;
 
 /**
- * Generator for invalid TokenContent instances.
+ * Generator for invalid TokenContentImpl instances.
  * Can be configured with different {@link TokenType} values and provides
  * builder-like mutators to create various invalid token scenarios.
  * Uses the {@link TokenContentImpl} as a base but subtracts elements
  * that need to be removed.
+ * 
+ * This implementation delegates to {@link ClaimControlParameter.Builder} for
+ * configuring which claims should be missing or invalid.
  */
-public class InvalidTokenContentGenerator implements TypedGenerator<TokenContent> {
+public class InvalidTokenContentGenerator implements TypedGenerator<TokenContentImpl> {
 
     private final TokenType tokenType;
-
-    // Mutation flags
-    private boolean missingIssuer = false;
-    private boolean missingSubject = false;
-    private boolean missingExpiration = false;
-    private boolean expiredToken = false;
-    private boolean missingIssuedAt = false;
-    private boolean missingTokenType = false;
-    private boolean missingScope = false;
-    private boolean missingAudience = false;
-    private boolean missingAuthorizedParty = false;
+    private final ClaimControlParameter.Builder claimControlBuilder;
 
     /**
      * Constructor with token type.
@@ -48,6 +40,7 @@ public class InvalidTokenContentGenerator implements TypedGenerator<TokenContent
      */
     public InvalidTokenContentGenerator(TokenType tokenType) {
         this.tokenType = tokenType;
+        this.claimControlBuilder = ClaimControlParameter.builder().tokenPrefix("invalid-token-");
     }
 
     /**
@@ -63,7 +56,7 @@ public class InvalidTokenContentGenerator implements TypedGenerator<TokenContent
      * @return this generator for method chaining
      */
     public InvalidTokenContentGenerator withMissingIssuer() {
-        this.missingIssuer = true;
+        claimControlBuilder.missingIssuer(true);
         return this;
     }
 
@@ -73,7 +66,7 @@ public class InvalidTokenContentGenerator implements TypedGenerator<TokenContent
      * @return this generator for method chaining
      */
     public InvalidTokenContentGenerator withMissingSubject() {
-        this.missingSubject = true;
+        claimControlBuilder.missingSubject(true);
         return this;
     }
 
@@ -83,7 +76,7 @@ public class InvalidTokenContentGenerator implements TypedGenerator<TokenContent
      * @return this generator for method chaining
      */
     public InvalidTokenContentGenerator withMissingExpiration() {
-        this.missingExpiration = true;
+        claimControlBuilder.missingExpiration(true);
         return this;
     }
 
@@ -93,7 +86,7 @@ public class InvalidTokenContentGenerator implements TypedGenerator<TokenContent
      * @return this generator for method chaining
      */
     public InvalidTokenContentGenerator withExpiredToken() {
-        this.expiredToken = true;
+        claimControlBuilder.expiredToken(true);
         return this;
     }
 
@@ -103,7 +96,7 @@ public class InvalidTokenContentGenerator implements TypedGenerator<TokenContent
      * @return this generator for method chaining
      */
     public InvalidTokenContentGenerator withMissingIssuedAt() {
-        this.missingIssuedAt = true;
+        claimControlBuilder.missingIssuedAt(true);
         return this;
     }
 
@@ -113,7 +106,7 @@ public class InvalidTokenContentGenerator implements TypedGenerator<TokenContent
      * @return this generator for method chaining
      */
     public InvalidTokenContentGenerator withMissingTokenType() {
-        this.missingTokenType = true;
+        claimControlBuilder.missingTokenType(true);
         return this;
     }
 
@@ -123,7 +116,7 @@ public class InvalidTokenContentGenerator implements TypedGenerator<TokenContent
      * @return this generator for method chaining
      */
     public InvalidTokenContentGenerator withMissingScope() {
-        this.missingScope = true;
+        claimControlBuilder.missingScope(true);
         return this;
     }
 
@@ -133,7 +126,7 @@ public class InvalidTokenContentGenerator implements TypedGenerator<TokenContent
      * @return this generator for method chaining
      */
     public InvalidTokenContentGenerator withMissingAudience() {
-        this.missingAudience = true;
+        claimControlBuilder.missingAudience(true);
         return this;
     }
 
@@ -143,7 +136,7 @@ public class InvalidTokenContentGenerator implements TypedGenerator<TokenContent
      * @return this generator for method chaining
      */
     public InvalidTokenContentGenerator withMissingAuthorizedParty() {
-        this.missingAuthorizedParty = true;
+        claimControlBuilder.missingAuthorizedParty(true);
         return this;
     }
 
@@ -153,33 +146,24 @@ public class InvalidTokenContentGenerator implements TypedGenerator<TokenContent
      * @return this generator for method chaining
      */
     public InvalidTokenContentGenerator reset() {
-        this.missingIssuer = false;
-        this.missingSubject = false;
-        this.missingExpiration = false;
-        this.expiredToken = false;
-        this.missingIssuedAt = false;
-        this.missingTokenType = false;
-        this.missingScope = false;
-        this.missingAudience = false;
-        this.missingAuthorizedParty = false;
+        // Create a new builder with default values
+        this.claimControlBuilder
+                .missingIssuer(false)
+                .missingSubject(false)
+                .missingExpiration(false)
+                .expiredToken(false)
+                .missingIssuedAt(false)
+                .missingTokenType(false)
+                .missingScope(false)
+                .missingAudience(false)
+                .missingAuthorizedParty(false);
         return this;
     }
 
     @Override
-    public TokenContent next() {
-        // Create a ClaimControlParameter with the specified mutations
-        ClaimControlParameter claimControl = ClaimControlParameter.builder()
-                .tokenPrefix("invalid-token-")
-                .missingIssuer(missingIssuer)
-                .missingSubject(missingSubject)
-                .missingExpiration(missingExpiration)
-                .expiredToken(expiredToken)
-                .missingIssuedAt(missingIssuedAt)
-                .missingTokenType(missingTokenType)
-                .missingScope(missingScope)
-                .missingAudience(missingAudience)
-                .missingAuthorizedParty(missingAuthorizedParty)
-                .build();
+    public TokenContentImpl next() {
+        // Build the ClaimControlParameter with the configured settings
+        ClaimControlParameter claimControl = claimControlBuilder.build();
 
         // Create a new implementation of TokenContent with the claim control parameter
         return new TokenContentImpl(tokenType, claimControl);

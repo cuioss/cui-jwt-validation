@@ -17,19 +17,22 @@ package de.cuioss.jwt.token.flow;
 
 import de.cuioss.jwt.token.security.AlgorithmPreferences;
 import de.cuioss.jwt.token.test.TestTokenProducer;
+import de.cuioss.jwt.token.test.generator.InvalidDecodedJwtGenerator;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
-import jakarta.json.Json;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests for {@link TokenHeaderValidator}.
@@ -43,94 +46,45 @@ class TokenHeaderValidatorTest {
     private static final NonValidatingJwtParser JWT_PARSER = NonValidatingJwtParser.builder().build();
 
     @Nested
-    @DisplayName("Builder Configuration Tests")
-    class BuilderConfigurationTests {
+    @DisplayName("IssuerConfig Configuration Tests")
+    class IssuerConfigConfigurationTests {
 
         @Test
         @DisplayName("Should create validator with expected issuer")
         void shouldCreateValidatorWithExpectedIssuer() {
-            // Given a builder with expected issuer
-            var builder = TokenHeaderValidator.builder()
-                    .expectedIssuer(EXPECTED_ISSUER);
+            // Given an IssuerConfig with expected issuer
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer(EXPECTED_ISSUER)
+                    .build();
 
-            // When building the validator
-            TokenHeaderValidator validator = builder.build();
-
-            // Then the validator should be created without warnings
-            assertNotNull(validator, "Validator should not be null");
-            assertFalse(validator.getExpectedIssuer().isEmpty(), "Expected issuer should not be empty");
-            assertTrue(validator.getExpectedIssuer().contains(EXPECTED_ISSUER), "Expected issuer should contain the configured value");
-            assertNotNull(validator.getAlgorithmPreferences(), "Algorithm preferences should not be null");
-        }
-
-        @Test
-        @DisplayName("Should create validator with expected issuer set")
-        void shouldCreateValidatorWithExpectedIssuerSet() {
-            // Given a builder with expected issuer as a set
-            var builder = TokenHeaderValidator.builder()
-                    .expectedIssuer(Set.of(EXPECTED_ISSUER));
-
-            // When building the validator
-            TokenHeaderValidator validator = builder.build();
+            // When creating the validator
+            TokenHeaderValidator validator = new TokenHeaderValidator(issuerConfig);
 
             // Then the validator should be created without warnings
             assertNotNull(validator, "Validator should not be null");
-            assertFalse(validator.getExpectedIssuer().isEmpty(), "Expected issuer should not be empty");
-            assertTrue(validator.getExpectedIssuer().contains(EXPECTED_ISSUER), "Expected issuer should contain the configured value");
+            assertEquals(EXPECTED_ISSUER, issuerConfig.getIssuer(), "IssuerConfig should have the expected issuer");
+            assertNotNull(issuerConfig.getAlgorithmPreferences(), "Algorithm preferences should not be null");
         }
 
         @Test
         @DisplayName("Should create validator with custom algorithm preferences")
         void shouldCreateValidatorWithCustomAlgorithmPreferences() {
-            // Given a builder with custom algorithm preferences
+            // Given an IssuerConfig with custom algorithm preferences
             var customAlgorithmPreferences = new AlgorithmPreferences(List.of("RS256", "ES256"));
-            var builder = TokenHeaderValidator.builder()
-                    .expectedIssuer(EXPECTED_ISSUER)
-                    .algorithmPreferences(customAlgorithmPreferences);
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer(EXPECTED_ISSUER)
+                    .algorithmPreferences(customAlgorithmPreferences)
+                    .build();
 
-            // When building the validator
-            TokenHeaderValidator validator = builder.build();
+            // When creating the validator
+            TokenHeaderValidator validator = new TokenHeaderValidator(issuerConfig);
 
             // Then the validator should be created with the custom algorithm preferences
             assertNotNull(validator, "Validator should not be null");
-            assertSame(customAlgorithmPreferences, validator.getAlgorithmPreferences(), "Algorithm preferences should be the same instance");
+            assertSame(customAlgorithmPreferences, issuerConfig.getAlgorithmPreferences(),
+                    "Algorithm preferences should be the same instance");
         }
 
-        @Test
-        @DisplayName("Should throw exception when missing expected issuer")
-        void shouldThrowExceptionWhenMissingExpectedIssuer() {
-            // Given a builder without expected issuer
-            var builder = TokenHeaderValidator.builder();
-
-            // When building the validator, then an exception should be thrown
-            IllegalArgumentException exception = assertThrows(
-                    IllegalArgumentException.class,
-                    builder::build,
-                    "Should throw IllegalArgumentException when no expectedIssuer is provided"
-            );
-
-            // Verify the exception message
-            assertTrue(exception.getMessage().contains("At least one expectedIssuer must be provided"),
-                    "Exception message should mention that at least one expectedIssuer is required");
-        }
-
-        @Test
-        @DisplayName("Should use default algorithm preferences when not specified")
-        void shouldUseDefaultAlgorithmPreferencesWhenNotSpecified() {
-            // Given a builder without algorithm preferences
-            var builder = TokenHeaderValidator.builder()
-                    .expectedIssuer(EXPECTED_ISSUER);
-
-            // When building the validator
-            TokenHeaderValidator validator = builder.build();
-
-            // Then the validator should use default algorithm preferences
-            assertNotNull(validator, "Validator should not be null");
-            assertNotNull(validator.getAlgorithmPreferences(), "Algorithm preferences should not be null");
-            assertEquals(AlgorithmPreferences.getDefaultPreferredAlgorithms(),
-                    validator.getAlgorithmPreferences().getPreferredAlgorithms(),
-                    "Should use default algorithm preferences");
-        }
     }
 
     @Nested
@@ -141,9 +95,10 @@ class TokenHeaderValidatorTest {
         @DisplayName("Should validate token with supported algorithm")
         void shouldValidateTokenWithSupportedAlgorithm() {
             // Given a validator with default algorithm preferences
-            TokenHeaderValidator validator = TokenHeaderValidator.builder()
-                    .expectedIssuer(EXPECTED_ISSUER)
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer(EXPECTED_ISSUER)
                     .build();
+            TokenHeaderValidator validator = new TokenHeaderValidator(issuerConfig);
 
             // And a token with a supported algorithm (RS256)
             String token = TestTokenProducer.validSignedEmptyJWT();
@@ -161,10 +116,12 @@ class TokenHeaderValidatorTest {
         @DisplayName("Should reject token with unsupported algorithm")
         void shouldRejectTokenWithUnsupportedAlgorithm() {
             // Given a validator with custom algorithm preferences that only support ES256
-            TokenHeaderValidator validator = TokenHeaderValidator.builder()
-                    .expectedIssuer(EXPECTED_ISSUER)
-                    .algorithmPreferences(new AlgorithmPreferences(List.of("ES256")))
+            var customAlgorithmPreferences = new AlgorithmPreferences(List.of("ES256"));
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer(EXPECTED_ISSUER)
+                    .algorithmPreferences(customAlgorithmPreferences)
                     .build();
+            TokenHeaderValidator validator = new TokenHeaderValidator(issuerConfig);
 
             // And a token with an unsupported algorithm (RS256)
             String token = TestTokenProducer.validSignedEmptyJWT();
@@ -186,11 +143,12 @@ class TokenHeaderValidatorTest {
         @DisplayName("Should reject token with missing algorithm")
         void shouldRejectTokenWithMissingAlgorithm() {
             // Given a validator
-            TokenHeaderValidator validator = TokenHeaderValidator.builder()
-                    .expectedIssuer(EXPECTED_ISSUER)
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer(EXPECTED_ISSUER)
                     .build();
+            TokenHeaderValidator validator = new TokenHeaderValidator(issuerConfig);
 
-            // And a token with a missing algorithm (mocked)
+            // And a token with a missing algorithm (manually created since generators always include alg)
             DecodedJwt decodedJwt = new DecodedJwt(null, null, null, new String[]{"", "", ""}, "");
 
             // When validating the token
@@ -212,9 +170,10 @@ class TokenHeaderValidatorTest {
         @DisplayName("Should validate token with expected issuer")
         void shouldValidateTokenWithExpectedIssuer() {
             // Given a validator with expected issuer
-            TokenHeaderValidator validator = TokenHeaderValidator.builder()
-                    .expectedIssuer(EXPECTED_ISSUER)
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer(EXPECTED_ISSUER)
                     .build();
+            TokenHeaderValidator validator = new TokenHeaderValidator(issuerConfig);
 
             // And a token with the expected issuer
             String token = TestTokenProducer.validSignedEmptyJWT();
@@ -233,17 +192,13 @@ class TokenHeaderValidatorTest {
         @DisplayName("Should reject token with wrong issuer")
         void shouldRejectTokenWithWrongIssuer() {
             // Given a validator with expected issuer
-            TokenHeaderValidator validator = TokenHeaderValidator.builder()
-                    .expectedIssuer(EXPECTED_ISSUER)
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer(EXPECTED_ISSUER)
                     .build();
+            TokenHeaderValidator validator = new TokenHeaderValidator(issuerConfig);
 
-            // And a token with a wrong issuer (mocked)
-            DecodedJwt decodedJwt = new DecodedJwt(
-                    Json.createObjectBuilder().add("alg", "RS256").build(),
-                    Json.createObjectBuilder().add("iss", WRONG_ISSUER).build(),
-                    null,
-                    new String[]{"", "", ""},
-                    "");
+            // And a token with a wrong issuer
+            DecodedJwt decodedJwt = new InvalidDecodedJwtGenerator().withCustomIssuer(WRONG_ISSUER).next();
 
             // When validating the token
             boolean isValid = validator.validate(decodedJwt);
@@ -260,17 +215,13 @@ class TokenHeaderValidatorTest {
         @DisplayName("Should reject token with missing issuer")
         void shouldRejectTokenWithMissingIssuer() {
             // Given a validator with expected issuer
-            TokenHeaderValidator validator = TokenHeaderValidator.builder()
-                    .expectedIssuer(EXPECTED_ISSUER)
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer(EXPECTED_ISSUER)
                     .build();
+            TokenHeaderValidator validator = new TokenHeaderValidator(issuerConfig);
 
-            // And a token with a missing issuer (mocked)
-            DecodedJwt decodedJwt = new DecodedJwt(
-                    Json.createObjectBuilder().add("alg", "RS256").build(),
-                    Json.createObjectBuilder().build(),
-                    null,
-                    new String[]{"", "", ""},
-                    "");
+            // And a token with a missing issuer
+            DecodedJwt decodedJwt = new InvalidDecodedJwtGenerator().withMissingIssuer().next();
 
             // When validating the token
             boolean isValid = validator.validate(decodedJwt);
@@ -286,9 +237,10 @@ class TokenHeaderValidatorTest {
         @DisplayName("Should validate issuer when expected issuer is configured")
         void shouldValidateIssuerWhenExpectedIssuerIsConfigured() {
             // Given a validator with an expected issuer that doesn't match the token's issuer
-            TokenHeaderValidator validator = TokenHeaderValidator.builder()
-                    .expectedIssuer("dummy-issuer")
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer("dummy-issuer")
                     .build();
+            TokenHeaderValidator validator = new TokenHeaderValidator(issuerConfig);
 
             // And a token with a different issuer
             String token = TestTokenProducer.validSignedEmptyJWT();

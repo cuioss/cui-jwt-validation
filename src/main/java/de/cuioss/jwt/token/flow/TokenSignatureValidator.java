@@ -19,19 +19,13 @@ import de.cuioss.jwt.token.JWTTokenLogMessages;
 import de.cuioss.jwt.token.jwks.JwksLoader;
 import de.cuioss.tools.logging.CuiLogger;
 import jakarta.annotation.Nonnull;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.nio.charset.StandardCharsets;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.PublicKey;
-import java.security.Security;
-import java.security.Signature;
-import java.security.SignatureException;
+import java.security.*;
 import java.util.Base64;
 
 /**
@@ -43,7 +37,7 @@ import java.util.Base64;
  * It assumes that header validation (algorithm, issuer) has already been
  * performed by {@link TokenHeaderValidator}.
  */
-@Builder
+@RequiredArgsConstructor
 public class TokenSignatureValidator {
 
     private static final CuiLogger LOGGER = new CuiLogger(TokenSignatureValidator.class);

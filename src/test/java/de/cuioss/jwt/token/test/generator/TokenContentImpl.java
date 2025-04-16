@@ -19,8 +19,12 @@ import de.cuioss.jwt.token.TokenType;
 import de.cuioss.jwt.token.domain.claim.ClaimName;
 import de.cuioss.jwt.token.domain.claim.ClaimValue;
 import de.cuioss.jwt.token.domain.token.TokenContent;
+import de.cuioss.jwt.token.flow.DecodedJwt;
 import de.cuioss.test.generator.domain.EmailGenerator;
 import de.cuioss.test.generator.domain.FullNameGenerator;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
 
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -34,6 +38,7 @@ public class TokenContentImpl implements TokenContent {
     private final String rawToken;
     private final Map<String, ClaimValue> claims;
     private final ClaimControlParameter claimControl;
+    private final String uniqueId;
 
     /**
      * Constructor for creating a valid token content.
@@ -53,8 +58,18 @@ public class TokenContentImpl implements TokenContent {
     public TokenContentImpl(TokenType tokenType, ClaimControlParameter claimControl) {
         this.tokenType = tokenType;
         this.claimControl = claimControl;
-        this.rawToken = claimControl.getTokenPrefix() + UUID.randomUUID();
+        this.uniqueId = UUID.randomUUID().toString();
+        this.rawToken = generateRawToken();
         this.claims = generateClaims();
+    }
+
+    /**
+     * Generates a properly formatted JWT raw token string.
+     * 
+     * @return a string in the format header.payload.signature
+     */
+    private String generateRawToken() {
+        return claimControl.getTokenPrefix() + uniqueId + "." + "body-part-" + uniqueId + "." + "signature-part-" + uniqueId;
     }
 
     @Override
@@ -70,6 +85,64 @@ public class TokenContentImpl implements TokenContent {
     @Override
     public Map<String, ClaimValue> getClaims() {
         return claims;
+    }
+
+    /**
+     * Converts this TokenContent to a DecodedJwt.
+     *
+     * @return a DecodedJwt instance
+     */
+    public DecodedJwt toDecodedJwt() {
+        try {
+            // Create header with appropriate values
+            JsonObjectBuilder headerBuilder = Json.createObjectBuilder()
+                    .add("alg", "RS256")
+                    .add("typ", "JWT")
+                    .add("kid", "default-key-id");
+
+            // Build the header
+            JsonObject header = headerBuilder.build();
+
+            // Create body from token content claims
+            JsonObjectBuilder bodyBuilder = Json.createObjectBuilder();
+
+            // Add all claims from the token content
+            for (Map.Entry<String, ClaimValue> entry : getClaims().entrySet()) {
+                String claimName = entry.getKey();
+                ClaimValue claimValue = entry.getValue();
+
+                // Handle different claim value types
+                switch (claimValue.getType()) {
+                    case STRING_LIST:
+                        // For list values, add as a JSON array
+                        bodyBuilder.add(claimName, Json.createArrayBuilder(claimValue.getAsList()).build());
+                        break;
+                    case DATETIME:
+                        // For date-time values, add as a number (epoch seconds)
+                        bodyBuilder.add(claimName, Long.parseLong(claimValue.getOriginalString()));
+                        break;
+                    case STRING:
+                    default:
+                        // For string values, add as a string
+                        bodyBuilder.add(claimName, claimValue.getOriginalString());
+                        break;
+                }
+            }
+
+            // Build the body
+            JsonObject body = bodyBuilder.build();
+
+            // Create a signature (not actually used for validation in tests)
+            String signature = "test-signature";
+
+            // Create token parts with unique identifier
+            String[] parts = new String[]{"header-part-" + uniqueId, "body-part-" + uniqueId, "signature-part-" + uniqueId};
+
+            // Create and return the DecodedJwt
+            return new DecodedJwt(header, body, signature, parts, rawToken);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to convert TokenContent to DecodedJwt", e);
+        }
     }
 
     private Map<String, ClaimValue> generateClaims() {
@@ -105,8 +178,8 @@ public class TokenContentImpl implements TokenContent {
                     String.valueOf(issuedAtTime.toEpochSecond()), issuedAtTime));
         }
 
-        // Add token ID
-        claimsMap.put(ClaimName.TOKEN_ID.getName(), ClaimValue.forPlainString(UUID.randomUUID().toString()));
+        // Add token ID using the stored uniqueId
+        claimsMap.put(ClaimName.TOKEN_ID.getName(), ClaimValue.forPlainString(uniqueId));
 
         // Add type-specific claims
         if (!claimControl.isMissingTokenType()) {

@@ -18,27 +18,18 @@ package de.cuioss.jwt.token.test.generator;
 import de.cuioss.jwt.token.TokenType;
 import de.cuioss.jwt.token.flow.DecodedJwt;
 import de.cuioss.test.generator.TypedGenerator;
-import jakarta.json.Json;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonObjectBuilder;
-
-import java.time.Instant;
-import java.util.Date;
-import java.util.UUID;
 
 /**
  * Generator for DecodedJwt instances.
  * Can be configured with different {@link TokenType} values to generate
  * appropriate token content.
+ * 
+ * This implementation uses ValidTokenContentGenerator to create a TokenContent
+ * and then transforms it to a DecodedJWT.
  */
 public class DecodedJwtGenerator implements TypedGenerator<DecodedJwt> {
 
-    private static final String DEFAULT_KEY_ID = "default-key-id";
-    private static final String DEFAULT_ISSUER = "test-issuer";
-    private static final String DEFAULT_SUBJECT = "test-subject";
-    private static final String DEFAULT_AUDIENCE = "test-audience";
-
-    private final TokenType tokenType;
+    private final ValidTokenContentGenerator tokenContentGenerator;
 
     /**
      * Constructor with token type.
@@ -46,7 +37,7 @@ public class DecodedJwtGenerator implements TypedGenerator<DecodedJwt> {
      * @param tokenType the type of token to generate
      */
     public DecodedJwtGenerator(TokenType tokenType) {
-        this.tokenType = tokenType;
+        this.tokenContentGenerator = new ValidTokenContentGenerator(tokenType);
     }
 
     /**
@@ -56,61 +47,29 @@ public class DecodedJwtGenerator implements TypedGenerator<DecodedJwt> {
         this(TokenType.ACCESS_TOKEN);
     }
 
+    /**
+     * Converts a TokenContentImpl to a DecodedJwt.
+     *
+     * @param tokenContent the token content to convert
+     * @return a DecodedJwt instance
+     */
+    protected DecodedJwt tokenContentToDecodedJwt(TokenContentImpl tokenContent) {
+        try {
+            // Use the toDecodedJwt method from TokenContentImpl
+            return tokenContent.toDecodedJwt();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to convert TokenContent to DecodedJwt", e);
+        }
+    }
+
     @Override
     public DecodedJwt next() {
         try {
-            // Create header with appropriate values
-            JsonObjectBuilder headerBuilder = Json.createObjectBuilder()
-                    .add("alg", "RS256")
-                    .add("typ", "JWT")
-                    .add("kid", DEFAULT_KEY_ID);
+            // Generate a valid token content using the ValidTokenContentGenerator
+            TokenContentImpl tokenContent = tokenContentGenerator.next();
 
-            // Create body with appropriate values based on token type
-            JsonObjectBuilder bodyBuilder = Json.createObjectBuilder()
-                    .add("iss", DEFAULT_ISSUER)
-                    .add("sub", DEFAULT_SUBJECT)
-                    .add("iat", Date.from(Instant.now()).getTime() / 1000)
-                    .add("exp", Date.from(Instant.now().plusSeconds(3600)).getTime() / 1000)
-                    .add("jti", UUID.randomUUID().toString());
-
-            // Add type-specific claims
-            switch (tokenType) {
-                case ACCESS_TOKEN:
-                    bodyBuilder.add("typ", TokenType.ACCESS_TOKEN.getTypeClaimName())
-                            .add("scope", "openid profile email");
-                    break;
-                case ID_TOKEN:
-                    bodyBuilder.add("typ", TokenType.ID_TOKEN.getTypeClaimName())
-                            .add("aud", DEFAULT_AUDIENCE)
-                            .add("email", "test@example.com");
-                    break;
-                case REFRESH_TOKEN:
-                    bodyBuilder.add("typ", TokenType.REFRESH_TOKEN.getTypeClaimName());
-                    break;
-                case UNKNOWN:
-                default:
-                    bodyBuilder.add("typ", "unknown");
-                    break;
-            }
-
-            // Build the JSON objects
-            JsonObject header = headerBuilder.build();
-            JsonObject body = bodyBuilder.build();
-
-            // Create a signature (not actually used for validation in tests)
-            String signature = "test-signature";
-
-            // Generate a unique identifier for this token
-            String uniqueId = UUID.randomUUID().toString();
-
-            // Create token parts with unique identifier
-            String[] parts = new String[]{"header-part-" + uniqueId, "body-part-" + uniqueId, "signature-part-" + uniqueId};
-
-            // Create raw token with unique identifier
-            String rawToken = parts[0] + "." + parts[1] + "." + parts[2];
-
-            // Create and return the DecodedJwt
-            return new DecodedJwt(header, body, signature, parts, rawToken);
+            // Convert the token content to a DecodedJwt
+            return tokenContentToDecodedJwt(tokenContent);
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate DecodedJwt", e);
         }

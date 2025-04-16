@@ -18,17 +18,15 @@ package de.cuioss.jwt.token.jwks.key;
 import jakarta.json.JsonObject;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.bouncycastle.jce.ECNamedCurveTable;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.Security;
-import java.security.spec.ECPoint;
-import java.security.spec.ECPublicKeySpec;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.RSAPublicKeySpec;
-import java.security.spec.ECParameterSpec;
+import java.security.spec.*;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -65,9 +63,9 @@ public final class JwkKeyHandler {
     public static PublicKey parseRsaKey(JsonObject jwk) throws InvalidKeySpecException {
         // Get the modulus and exponent
         BigInteger exponent = JwkKeyConstants.Exponent.from(jwk)
-            .orElseThrow(() -> new InvalidKeySpecException(MESSAGE.formatted("e")));
+                .orElseThrow(() -> new InvalidKeySpecException(MESSAGE.formatted("e")));
         BigInteger modulus = JwkKeyConstants.Modulus.from(jwk)
-            .orElseThrow(() -> new InvalidKeySpecException(MESSAGE.formatted("n")));
+                .orElseThrow(() -> new InvalidKeySpecException(MESSAGE.formatted("n")));
 
         // Create RSA public key
         RSAPublicKeySpec spec = new RSAPublicKeySpec(modulus, exponent);
@@ -80,7 +78,7 @@ public final class JwkKeyHandler {
      *
      * @param jwk the JWK object
      * @return the EC public key
-     * @throws InvalidKeySpecException  if the key specification is invalid
+     * @throws InvalidKeySpecException if the key specification is invalid
      */
     public static PublicKey parseEcKey(JsonObject jwk) throws InvalidKeySpecException {
         var curveOpt = JwkKeyConstants.Curve.from(jwk);
@@ -89,9 +87,9 @@ public final class JwkKeyHandler {
         }
         String curve = curveOpt.get();
         BigInteger x = JwkKeyConstants.XCoordinate.from(jwk)
-            .orElseThrow(() -> new InvalidKeySpecException(MESSAGE.formatted("x")));
+                .orElseThrow(() -> new InvalidKeySpecException(MESSAGE.formatted("x")));
         BigInteger y = JwkKeyConstants.YCoordinate.from(jwk)
-            .orElseThrow(() -> new InvalidKeySpecException(MESSAGE.formatted("y")));
+                .orElseThrow(() -> new InvalidKeySpecException(MESSAGE.formatted("y")));
 
         // Create EC point
         ECPoint point = new ECPoint(x, y);
@@ -114,8 +112,8 @@ public final class JwkKeyHandler {
      */
     private static ECParameterSpec getEcParameterSpec(String curve) throws InvalidKeySpecException {
         // Ensure BouncyCastle provider is available
-        if (Security.getProvider(org.bouncycastle.jce.provider.BouncyCastleProvider.PROVIDER_NAME) == null) {
-            Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
+            Security.addProvider(new BouncyCastleProvider());
         }
 
         // Map JWK curve name to BouncyCastle curve name
@@ -130,14 +128,14 @@ public final class JwkKeyHandler {
             throw new InvalidKeySpecException("EC curve " + curve + " is not supported");
         }
 
-        var bcSpec = org.bouncycastle.jce.ECNamedCurveTable.getParameterSpec(bcCurveName);
+        var bcSpec = ECNamedCurveTable.getParameterSpec(bcCurveName);
         if (bcSpec == null) {
             throw new InvalidKeySpecException("Bouncy Castle does not support curve: " + curve);
         }
 
         // Create EC parameter spec from BouncyCastle spec
-        var field = new java.security.spec.ECFieldFp(bcSpec.getCurve().getField().getCharacteristic());
-        var ellipticCurve = new java.security.spec.EllipticCurve(
+        var field = new ECFieldFp(bcSpec.getCurve().getField().getCharacteristic());
+        var ellipticCurve = new EllipticCurve(
                 field,
                 bcSpec.getCurve().getA().toBigInteger(),
                 bcSpec.getCurve().getB().toBigInteger(),

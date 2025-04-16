@@ -68,9 +68,7 @@ class TokenSignatureValidatorTest {
         JwksLoader jwksLoader = JwksLoaderFactory.createInMemoryLoader(jwksContent);
 
         // Create the validator with the in-memory JwksLoader
-        TokenSignatureValidator validator = TokenSignatureValidator.builder()
-                .jwksLoader(jwksLoader)
-                .build();
+        TokenSignatureValidator validator = new TokenSignatureValidator(jwksLoader);
 
         // Validate the signature
         boolean result = validator.validateSignature(decodedJwt);
@@ -108,9 +106,7 @@ class TokenSignatureValidatorTest {
         JwksLoader jwksLoader = JwksLoaderFactory.createInMemoryLoader(jwksContent);
 
         // Create the validator with the in-memory JwksLoader
-        TokenSignatureValidator validator = TokenSignatureValidator.builder()
-                .jwksLoader(jwksLoader)
-                .build();
+        TokenSignatureValidator validator = new TokenSignatureValidator(jwksLoader);
 
         // Validate the signature
         boolean result = validator.validateSignature(decodedJwt);
@@ -136,9 +132,7 @@ class TokenSignatureValidatorTest {
         JwksLoader jwksLoader = JwksLoaderFactory.createInMemoryLoader(jwksContent);
 
         // Create the validator with the in-memory JwksLoader
-        TokenSignatureValidator validator = TokenSignatureValidator.builder()
-                .jwksLoader(jwksLoader)
-                .build();
+        TokenSignatureValidator validator = new TokenSignatureValidator(jwksLoader);
 
         // Validate the signature
         boolean result = validator.validateSignature(decodedJwt);
@@ -164,9 +158,7 @@ class TokenSignatureValidatorTest {
         JwksLoader jwksLoader = JwksLoaderFactory.createInMemoryLoader(jwksContent);
 
         // Create the validator with the in-memory JwksLoader
-        TokenSignatureValidator validator = TokenSignatureValidator.builder()
-                .jwksLoader(jwksLoader)
-                .build();
+        TokenSignatureValidator validator = new TokenSignatureValidator(jwksLoader);
 
         // Validate the signature
         boolean result = validator.validateSignature(decodedJwt);
@@ -193,9 +185,7 @@ class TokenSignatureValidatorTest {
         JwksLoader jwksLoader = JwksLoaderFactory.createInMemoryLoader(jwksContent);
 
         // Create the validator with the in-memory JwksLoader
-        TokenSignatureValidator validator = TokenSignatureValidator.builder()
-                .jwksLoader(jwksLoader)
-                .build();
+        TokenSignatureValidator validator = new TokenSignatureValidator(jwksLoader);
 
         // Validate the signature
         boolean result = validator.validateSignature(decodedJwt);
@@ -243,9 +233,7 @@ class TokenSignatureValidatorTest {
         };
 
         // Create the validator with the custom JwksLoader
-        TokenSignatureValidator validator = TokenSignatureValidator.builder()
-                .jwksLoader(jwksLoader)
-                .build();
+        TokenSignatureValidator validator = new TokenSignatureValidator(jwksLoader);
 
         // Validate the signature
         boolean result = validator.validateSignature(decodedJwt);

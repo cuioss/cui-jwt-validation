@@ -34,7 +34,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests for {@link TokenClaimValidator}.
@@ -47,37 +49,20 @@ class TokenClaimValidatorTest {
     private static final String EXPECTED_CLIENT_ID = "test-client-id";
 
     @Nested
-    @DisplayName("Builder Tests")
-    class BuilderTests {
+    @DisplayName("Constructor Tests")
+    class ConstructorTests {
         @Test
         @DisplayName("Should create validator with all recommended elements using Sets")
         void shouldCreateValidatorWithAllRecommendedElementsUsingSets() {
-            // Given a builder with all recommended elements as Sets
-            var builder = TokenClaimValidator.builder()
+            // Given an IssuerConfig with all recommended elements as Sets
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer("test-issuer")
                     .expectedAudience(Set.of(EXPECTED_AUDIENCE))
-                    .expectedClientId(EXPECTED_CLIENT_ID);
+                    .expectedClientId(EXPECTED_CLIENT_ID)
+                    .build();
 
-            // When building the validator
-            TokenClaimValidator validator = builder.build();
-
-            // Then the validator should be created without warnings
-            assertNotNull(validator, "Validator should not be null");
-            assertNotNull(validator.getExpectedAudience(), "Expected audience should not be null");
-            assertNotNull(validator.getExpectedClientId(), "Expected client ID should not be null");
-
-            // No warnings should be logged for missing recommended elements
-        }
-
-        @Test
-        @DisplayName("Should create validator with all recommended elements using single Strings")
-        void shouldCreateValidatorWithAllRecommendedElementsUsingStrings() {
-            // Given a builder with all recommended elements as single Strings
-            var builder = TokenClaimValidator.builder()
-                    .expectedAudience(EXPECTED_AUDIENCE)
-                    .expectedClientId(EXPECTED_CLIENT_ID);
-
-            // When building the validator
-            TokenClaimValidator validator = builder.build();
+            // When creating the validator
+            TokenClaimValidator validator = new TokenClaimValidator(issuerConfig);
 
             // Then the validator should be created without warnings
             assertNotNull(validator, "Validator should not be null");
@@ -90,16 +75,18 @@ class TokenClaimValidatorTest {
         @Test
         @DisplayName("Should log warning when missing expected audience")
         void shouldLogWarningWhenMissingExpectedAudience() {
-            // Given a builder without expected audience
-            var builder = TokenClaimValidator.builder()
-                    .expectedClientId(EXPECTED_CLIENT_ID);
+            // Given an IssuerConfig without expected audience
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer("test-issuer")
+                    .expectedClientId(EXPECTED_CLIENT_ID)
+                    .build();
 
-            // When building the validator
-            TokenClaimValidator validator = builder.build();
+            // When creating the validator
+            TokenClaimValidator validator = new TokenClaimValidator(issuerConfig);
 
             // Then a warning should be logged for missing expected audience
             assertNotNull(validator, "Validator should not be null");
-            assertTrue(validator.getExpectedAudience().isEmpty(), "Expected audience should be null");
+            assertTrue(validator.getExpectedAudience().isEmpty(), "Expected audience should be empty");
 
             // Warning should be logged
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, JWTTokenLogMessages.WARN.MISSING_RECOMMENDED_ELEMENT.resolveIdentifierString());
@@ -108,16 +95,18 @@ class TokenClaimValidatorTest {
         @Test
         @DisplayName("Should log warning when missing expected client ID")
         void shouldLogWarningWhenMissingExpectedClientId() {
-            // Given a builder without expected client ID
-            var builder = TokenClaimValidator.builder()
-                    .expectedAudience(EXPECTED_AUDIENCE);
+            // Given an IssuerConfig without expected client ID
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer("test-issuer")
+                    .expectedAudience(EXPECTED_AUDIENCE)
+                    .build();
 
-            // When building the validator
-            TokenClaimValidator validator = builder.build();
+            // When creating the validator
+            TokenClaimValidator validator = new TokenClaimValidator(issuerConfig);
 
             // Then a warning should be logged for missing expected client ID
             assertNotNull(validator, "Validator should not be null");
-            assertTrue(validator.getExpectedClientId().isEmpty(), "Expected client ID should be null");
+            assertTrue(validator.getExpectedClientId().isEmpty(), "Expected client ID should be empty");
 
             // Warning should be logged
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, JWTTokenLogMessages.WARN.MISSING_RECOMMENDED_ELEMENT.resolveIdentifierString());
@@ -126,16 +115,18 @@ class TokenClaimValidatorTest {
         @Test
         @DisplayName("Should log warnings when missing all recommended elements")
         void shouldLogWarningsWhenMissingAllRecommendedElements() {
-            // Given a builder without any recommended elements
-            var builder = TokenClaimValidator.builder();
+            // Given an IssuerConfig without any recommended elements
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer("test-issuer")
+                    .build();
 
-            // When building the validator
-            TokenClaimValidator validator = builder.build();
+            // When creating the validator
+            TokenClaimValidator validator = new TokenClaimValidator(issuerConfig);
 
             // Then warnings should be logged for all missing recommended elements
             assertNotNull(validator, "Validator should not be null");
-            assertTrue(validator.getExpectedAudience().isEmpty(), "Expected audience should be null");
-            assertTrue(validator.getExpectedClientId().isEmpty(), "Expected client ID should be null");
+            assertTrue(validator.getExpectedAudience().isEmpty(), "Expected audience should be empty");
+            assertTrue(validator.getExpectedClientId().isEmpty(), "Expected client ID should be empty");
 
             // Warnings should be logged
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, JWTTokenLogMessages.WARN.MISSING_RECOMMENDED_ELEMENT.resolveIdentifierString());
@@ -151,10 +142,12 @@ class TokenClaimValidatorTest {
         @DisplayName("Should validate token with all mandatory claims")
         void shouldValidateTokenWithAllMandatoryClaims() {
             // Given a validator with expected audience and client ID
-            var validator = TokenClaimValidator.builder()
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer("test-issuer")
                     .expectedAudience(EXPECTED_AUDIENCE)
                     .expectedClientId(EXPECTED_CLIENT_ID)
                     .build();
+            var validator = new TokenClaimValidator(issuerConfig);
 
             // Create a token with all mandatory claims using the ValidTokenContentGenerator
             TokenContent tokenContent = new ValidTokenContentGenerator().next();
@@ -170,10 +163,12 @@ class TokenClaimValidatorTest {
         @DisplayName("Should fail validation for token missing mandatory claims")
         void shouldFailValidationForTokenMissingMandatoryClaims() {
             // Given a validator with expected audience and client ID
-            var validator = TokenClaimValidator.builder()
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer("test-issuer")
                     .expectedAudience(EXPECTED_AUDIENCE)
                     .expectedClientId(EXPECTED_CLIENT_ID)
                     .build();
+            var validator = new TokenClaimValidator(issuerConfig);
 
             // Create a token missing mandatory claims using the InvalidTokenContentGenerator
             TokenContent tokenContent = new InvalidTokenContentGenerator()
@@ -199,10 +194,12 @@ class TokenClaimValidatorTest {
         @DisplayName("Should validate token with matching audience")
         void shouldValidateTokenWithMatchingAudience() {
             // Given a validator with expected audience
-            var validator = TokenClaimValidator.builder()
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer("test-issuer")
                     .expectedAudience(EXPECTED_AUDIENCE)
                     .expectedClientId(EXPECTED_CLIENT_ID)
                     .build();
+            var validator = new TokenClaimValidator(issuerConfig);
 
             // When validating a token with a matching audience
             TokenContent tokenContent = new ValidTokenContentGenerator().next();
@@ -216,10 +213,12 @@ class TokenClaimValidatorTest {
         @DisplayName("Should fail validation for token with non-matching audience for ID-Tokens")
         void shouldFailValidationForTokenWithNonMatchingAudienceForID() {
             // Given a validator with expected audience
-            var validator = TokenClaimValidator.builder()
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer("test-issuer")
                     .expectedAudience(EXPECTED_AUDIENCE)
                     .expectedClientId(EXPECTED_CLIENT_ID)
                     .build();
+            var validator = new TokenClaimValidator(issuerConfig);
 
             // When validating a token with a missing audience
             TokenContent tokenContent = new InvalidTokenContentGenerator(TokenType.ID_TOKEN)
@@ -238,10 +237,12 @@ class TokenClaimValidatorTest {
         @DisplayName("Should fail validation for token with non-matching audience for Access-Tokens")
         void shouldFailValidationForTokenWithNonMatchingAudienceForAccessToken() {
             // Given a validator with expected audience
-            var validator = TokenClaimValidator.builder()
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer("test-issuer")
                     .expectedAudience(EXPECTED_AUDIENCE)
                     .expectedClientId(EXPECTED_CLIENT_ID)
                     .build();
+            var validator = new TokenClaimValidator(issuerConfig);
 
             // When validating a token with a missing audience
             TokenContent tokenContent = new InvalidTokenContentGenerator(TokenType.ACCESS_TOKEN)
@@ -261,10 +262,12 @@ class TokenClaimValidatorTest {
         @DisplayName("Should validate token with matching authorized party")
         void shouldValidateTokenWithMatchingAuthorizedParty() {
             // Given a validator with expected client ID
-            var validator = TokenClaimValidator.builder()
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer("test-issuer")
                     .expectedAudience(EXPECTED_AUDIENCE)
                     .expectedClientId(EXPECTED_CLIENT_ID)
                     .build();
+            var validator = new TokenClaimValidator(issuerConfig);
 
             // When validating a token with a matching authorized party
             TokenContent tokenContent = new ValidTokenContentGenerator().next();
@@ -278,10 +281,12 @@ class TokenClaimValidatorTest {
         @DisplayName("Should fail validation for token with missing authorized party")
         void shouldFailValidationForTokenWithMissingAuthorizedParty() {
             // Given a validator with expected client ID
-            var validator = TokenClaimValidator.builder()
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer("test-issuer")
                     .expectedAudience(EXPECTED_AUDIENCE)
                     .expectedClientId(EXPECTED_CLIENT_ID)
                     .build();
+            var validator = new TokenClaimValidator(issuerConfig);
 
             // When validating a token with a missing authorized party
             // Create a token with a missing authorized party claim
@@ -305,10 +310,12 @@ class TokenClaimValidatorTest {
         @DisplayName("Should validate token with valid not before time")
         void shouldValidateTokenWithValidNotBeforeTime() {
             // Given a validator
-            var validator = TokenClaimValidator.builder()
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer("test-issuer")
                     .expectedAudience(EXPECTED_AUDIENCE)
                     .expectedClientId(EXPECTED_CLIENT_ID)
                     .build();
+            var validator = new TokenClaimValidator(issuerConfig);
 
             // When validating a token with a valid not before time
             // Note: ValidTokenContentGenerator creates tokens with valid not before time
@@ -323,10 +330,12 @@ class TokenClaimValidatorTest {
         @DisplayName("Should fail validation for token with future not before time")
         void shouldFailValidationForTokenWithFutureNotBeforeTime() {
             // Given a validator
-            var validator = TokenClaimValidator.builder()
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer("test-issuer")
                     .expectedAudience(EXPECTED_AUDIENCE)
                     .expectedClientId(EXPECTED_CLIENT_ID)
                     .build();
+            var validator = new TokenClaimValidator(issuerConfig);
 
             // When validating a token with a future not before time
             // Create a token with a future not before time
@@ -379,10 +388,12 @@ class TokenClaimValidatorTest {
         @DisplayName("Should validate token that is not expired")
         void shouldValidateTokenThatIsNotExpired() {
             // Given a validator
-            var validator = TokenClaimValidator.builder()
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer("test-issuer")
                     .expectedAudience(EXPECTED_AUDIENCE)
                     .expectedClientId(EXPECTED_CLIENT_ID)
                     .build();
+            var validator = new TokenClaimValidator(issuerConfig);
 
             // When validating a token that is not expired
             // Note: ValidTokenContentGenerator creates tokens that are not expired by default
@@ -397,10 +408,12 @@ class TokenClaimValidatorTest {
         @DisplayName("Should fail validation for expired token")
         void shouldFailValidationForExpiredToken() {
             // Given a validator
-            var validator = TokenClaimValidator.builder()
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer("test-issuer")
                     .expectedAudience(EXPECTED_AUDIENCE)
                     .expectedClientId(EXPECTED_CLIENT_ID)
                     .build();
+            var validator = new TokenClaimValidator(issuerConfig);
 
             // When validating an expired token
             // Create a token that has already expired
