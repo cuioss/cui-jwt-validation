@@ -194,6 +194,50 @@ The following tests verify the implementation:
 * link:../../src/test/java/de/cuioss/jwt/token/jwks/key/JWKSKeyLoaderTest.java[JWKSKeyLoaderTest] - Tests for the JWKSKeyLoader
 * link:../../src/test/java/de/cuioss/jwt/token/flow/TokenSignatureValidatorTest.java[TokenSignatureValidatorTest] - Tests for the TokenSignatureValidator
 
+=== Bouncy Castle Usage
+_See Requirement link:../Requirements.adoc#CUI-JWT-8.5[CUI-JWT-8.5: Cryptographic Agility]_
+
+==== Status: IMPLEMENTED
+
+The library uses Bouncy Castle (bcprov-jdk18on) version 1.80 for cryptographic operations. Bouncy Castle was chosen for its comprehensive support of cryptographic algorithms, consistent behavior across JVM implementations, and active maintenance.
+
+==== Integration Points
+
+The following classes directly use Bouncy Castle:
+
+* link:../../src/main/java/de/cuioss/jwt/token/jwks/key/JwkKeyHandler.java[JwkKeyHandler] - Uses Bouncy Castle for:
+** Retrieving EC curve parameters via `ECNamedCurveTable`
+** Supporting a wide range of elliptic curves (P-256, P-384, P-521)
+** Converting between Bouncy Castle curve specifications and JCA specifications
+
+* link:../../src/main/java/de/cuioss/jwt/token/flow/TokenSignatureValidator.java[TokenSignatureValidator] - Uses Bouncy Castle for:
+** Signature verification of JWT tokens
+** Supporting multiple signature algorithms:
+*** RSA signatures (RS256, RS384, RS512)
+*** ECDSA signatures (ES256, ES384, ES512)
+*** RSA-PSS signatures (PS256, PS384, PS512)
+
+==== Configuration
+
+Bouncy Castle is configured as follows:
+
+* The BouncyCastleProvider is registered as a security provider in the JVM
+* Registration occurs in static initializer blocks to ensure availability
+* The provider is only registered if not already present
+* No custom configuration of the provider is performed
+
+==== Security Considerations
+
+Using Bouncy Castle provides several security benefits:
+
+* Support for modern cryptographic algorithms
+* Consistent implementation across different JVM versions
+* Regular security updates through dependency management
+* Comprehensive support for key formats and algorithms
+* Protection against algorithm substitution attacks
+
+For implementation details, see the JavaDoc of the classes that use Bouncy Castle.
+
 == Additional OAuth/JWT Security Considerations
 
 Based on research from https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html[OAuth Common Vulnerabilities (Doyensec, 2025)], this section addresses additional security considerations for JWT token handling in OAuth/OIDC scenarios.

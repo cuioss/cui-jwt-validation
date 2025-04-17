@@ -38,6 +38,15 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>
  * Implements requirement: {@code CUI-JWT-8.5: Cryptographic Agility}
  * <p>
+ * This class uses Bouncy Castle (bcprov-jdk18on) for cryptographic operations, specifically:
+ * <ul>
+ *   <li>{@link org.bouncycastle.jce.ECNamedCurveTable} - For retrieving EC curve parameters</li>
+ *   <li>{@link org.bouncycastle.jce.provider.BouncyCastleProvider} - As the security provider for cryptographic operations</li>
+ * </ul>
+ * <p>
+ * Bouncy Castle is used to support a wide range of elliptic curves (P-256, P-384, P-521) and
+ * to ensure consistent cryptographic operations across different JVM implementations.
+ * <p>
  * For more details on the security aspects, see the
  * <a href="../../../../../../../doc/specification/security.adoc">Security Specification</a>.
  *

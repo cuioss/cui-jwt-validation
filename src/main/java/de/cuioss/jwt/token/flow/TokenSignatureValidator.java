@@ -36,6 +36,23 @@ import java.util.Base64;
  * <p>
  * It assumes that header validation (algorithm, issuer) has already been
  * performed by {@link TokenHeaderValidator}.
+ * <p>
+ * This class uses Bouncy Castle (bcprov-jdk18on) for cryptographic operations, specifically:
+ * <ul>
+ *   <li>{@link org.bouncycastle.jce.provider.BouncyCastleProvider} - As the security provider for signature verification</li>
+ * </ul>
+ * <p>
+ * Bouncy Castle is registered as a security provider in the static initializer block to ensure
+ * it's available for all signature verification operations. The class uses Bouncy Castle to support
+ * a wide range of signature algorithms:
+ * <ul>
+ *   <li>RSA signatures: RS256, RS384, RS512</li>
+ *   <li>ECDSA signatures: ES256, ES384, ES512</li>
+ *   <li>RSA-PSS signatures: PS256, PS384, PS512</li>
+ * </ul>
+ * <p>
+ * Using Bouncy Castle ensures consistent cryptographic operations across different JVM implementations
+ * and provides support for modern cryptographic algorithms that may not be available in all JVM versions.
  */
 @RequiredArgsConstructor
 public class TokenSignatureValidator {
