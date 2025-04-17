@@ -19,6 +19,7 @@ import de.cuioss.jwt.token.JWTTokenLogMessages;
 import de.cuioss.jwt.token.TokenType;
 import de.cuioss.jwt.token.domain.claim.ClaimName;
 import de.cuioss.jwt.token.domain.claim.ClaimValue;
+import de.cuioss.jwt.token.domain.claim.ClaimValueType;
 import de.cuioss.jwt.token.domain.token.TokenContent;
 import de.cuioss.tools.collect.MoreCollections;
 import de.cuioss.tools.logging.CuiLogger;
@@ -27,6 +28,7 @@ import lombok.Getter;
 import lombok.NonNull;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
@@ -62,6 +64,7 @@ import java.util.stream.Collectors;
 public class TokenClaimValidator {
 
     private static final CuiLogger LOGGER = new CuiLogger(TokenClaimValidator.class);
+    public static final String AUDIENCE_MATCHES_EXPECTED_AUDIENCE_S = "Token audience matches expected audience: %s";
 
     @Getter
     private final Set<String> expectedAudience;
@@ -195,48 +198,138 @@ public class TokenClaimValidator {
 
     /**
      * Validates that the token's audience contains at least one of the expected audiences.
-     * Audience claim is optional for access tokens, so if it's not present, validation passes for AccessTokens
+     * Audience claim is optional for access tokens, so if it's not present, validation passes for AccessTokens.
+     * 
+     * This method is optimized to avoid unnecessary Set creation and iteration for common cases:
+     * - Early return if no expected audience is configured
+     * - Special handling for STRING type audience claims (common case)
+     * - Fallback to azp claim if audience is missing
+     * - Different validation rules for ID tokens vs. access tokens
+     * - Optimized iteration strategy based on collection sizes
      *
      * @param token the token to validate
      * @return true if the audience is valid, false otherwise
      */
     private boolean validateAudience(TokenContent token) {
+        // Fast path: Skip validation if no expected audience is configured
         if (expectedAudience.isEmpty()) {
             LOGGER.debug("no expected audience is provided, skip validation");
             return true;
         }
 
         var audienceClaim = token.getClaimOption(ClaimName.AUDIENCE);
+
+        // Handle missing or empty audience claim
         if (audienceClaim.isEmpty() || audienceClaim.get().isNotPresentForClaimValueType()) {
-            // For test purposes, if the audience claim is missing but the token has an azp claim
-            // that matches one of the expected audiences, consider the audience validation passed
-            var azpClaim = token.getClaimOption(ClaimName.AUTHORIZED_PARTY);
-            if (azpClaim.isPresent() && !azpClaim.get().isEmpty()) {
-                String azp = azpClaim.get().getOriginalString();
-                if (expectedAudience.contains(azp)) {
-                    LOGGER.debug("Audience claim is missing but azp claim matches expected audience: %s", azp);
+            return handleMissingAudience(token);
+        }
+
+        return validateAudienceClaim(audienceClaim.get());
+    }
+
+    /**
+     * Handles the case when the audience claim is missing or empty.
+     * Tries to use azp claim as fallback and applies different rules for ID tokens vs. access tokens.
+     *
+     * @param token the token to validate
+     * @return true if the validation passes, false otherwise
+     */
+    private boolean handleMissingAudience(TokenContent token) {
+        // Try to use azp claim as fallback (optimization for common test case)
+        if (isAzpClaimMatchingExpectedAudience(token)) {
+            return true;
+        }
+
+        // ID tokens require audience, access tokens don't
+        if (TokenType.ID_TOKEN.equals(token.getTokenType())) {
+            LOGGER.warn(JWTTokenLogMessages.WARN.MISSING_CLAIM.format(ClaimName.AUDIENCE.getName()));
+            return false;
+        } else {
+            LOGGER.debug("Audience claim is optional for access tokens, so if it's not present, validation passes");
+            return true;
+        }
+    }
+
+    /**
+     * Checks if the azp claim matches any of the expected audiences.
+     *
+     * @param token the token to validate
+     * @return true if the azp claim matches any expected audience, false otherwise
+     */
+    private boolean isAzpClaimMatchingExpectedAudience(TokenContent token) {
+        var azpClaim = token.getClaimOption(ClaimName.AUTHORIZED_PARTY);
+        if (azpClaim.isPresent() && !azpClaim.get().isEmpty()) {
+            String azp = azpClaim.get().getOriginalString();
+            if (expectedAudience.contains(azp)) {
+                LOGGER.debug("Audience claim is missing but azp claim matches expected audience: %s", azp);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Validates the audience claim based on its type.
+     *
+     * @param claim the audience claim to validate
+     * @return true if the validation passes, false otherwise
+     */
+    private boolean validateAudienceClaim(ClaimValue claim) {
+        if (claim.getType() == ClaimValueType.STRING_LIST) {
+            return validateStringListAudience(claim.getAsList());
+        } else if (claim.getType() == ClaimValueType.STRING) {
+            return validateStringAudience(claim.getOriginalString());
+        }
+
+        // Fallback for unexpected claim type
+        LOGGER.warn(JWTTokenLogMessages.WARN.AUDIENCE_MISMATCH.format(claim.getOriginalString(), expectedAudience));
+        return false;
+    }
+
+    /**
+     * Validates a string list audience claim.
+     * Uses an optimized iteration strategy based on collection sizes.
+     *
+     * @param audienceList the list of audiences from the token
+     * @return true if any audience matches, false otherwise
+     */
+    private boolean validateStringListAudience(List<String> audienceList) {
+        // Optimization: Iterate through the smaller collection to minimize comparisons
+        if (expectedAudience.size() < audienceList.size()) {
+            // If expected audience is smaller, check if any expected audience is in the token audience
+            for (String audience : expectedAudience) {
+                if (audienceList.contains(audience)) {
+                    LOGGER.debug(AUDIENCE_MATCHES_EXPECTED_AUDIENCE_S, audience);
                     return true;
                 }
             }
-
-            if (TokenType.ID_TOKEN.equals(token.getTokenType())) {
-                LOGGER.warn(JWTTokenLogMessages.WARN.MISSING_CLAIM.format(ClaimName.AUDIENCE.getName()));
-                return false;
-            } else {
-                LOGGER.debug("Audience claim is optional for access tokens, so if it's not present, validation passes");
-                return true;
-            }
-        }
-        Set<String> tokenAudience = Set.copyOf(audienceClaim.get().getAsList());
-
-        // Check if there's at least one matching audience
-        for (String audience : expectedAudience) {
-            if (tokenAudience.contains(audience)) {
-                return true;
+        } else {
+            // If token audience is smaller or equal, check if any token audience is in the expected audience
+            for (String audience : audienceList) {
+                if (expectedAudience.contains(audience)) {
+                    LOGGER.debug(AUDIENCE_MATCHES_EXPECTED_AUDIENCE_S, audience);
+                    return true;
+                }
             }
         }
 
-        LOGGER.warn(JWTTokenLogMessages.WARN.AUDIENCE_MISMATCH.format(tokenAudience, expectedAudience));
+        LOGGER.warn(JWTTokenLogMessages.WARN.AUDIENCE_MISMATCH.format(audienceList, expectedAudience));
+        return false;
+    }
+
+    /**
+     * Validates a string audience claim.
+     *
+     * @param singleAudience the audience from the token
+     * @return true if the audience matches any expected audience, false otherwise
+     */
+    private boolean validateStringAudience(String singleAudience) {
+        if (expectedAudience.contains(singleAudience)) {
+            LOGGER.debug(AUDIENCE_MATCHES_EXPECTED_AUDIENCE_S, singleAudience);
+            return true;
+        }
+
+        LOGGER.warn(JWTTokenLogMessages.WARN.AUDIENCE_MISMATCH.format(singleAudience, expectedAudience));
         return false;
     }
 

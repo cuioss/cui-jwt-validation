@@ -211,6 +211,18 @@ public class TokenFactory {
     /**
      * Processes a token through the validation pipeline.
      * 
+     * This method implements an optimized validation pipeline with early termination
+     * for common failure cases. The validation steps are ordered to fail fast:
+     * 1. Basic token format validation (empty check, decoding)
+     * 2. Issuer validation (presence and configuration lookup)
+     * 3. Header validation (algorithm)
+     * 4. Signature validation
+     * 5. Token building
+     * 6. Claim validation
+     * 
+     * Validators are only created if needed, avoiding unnecessary object creation
+     * for invalid tokens.
+     * 
      * @param tokenString the token string to process
      * @param tokenBuilder function to build the token from the decoded JWT
      * @param <T> the type of token to create
@@ -220,56 +232,56 @@ public class TokenFactory {
             String tokenString, 
             Function<DecodedJwt, Optional<T>> tokenBuilder) {
 
+        // 1. Basic token format validation - fail fast for empty tokens
         if (MoreStrings.isBlank(tokenString)) {
             LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
             return Optional.empty();
         }
 
-        // 1. Decode the token to get the issuer
+        // 2. Decode the token - fail fast for malformed tokens
         Optional<DecodedJwt> decodedJwt = jwtParser.decode(tokenString);
         if (decodedJwt.isEmpty()) {
             LOGGER.warn(JWTTokenLogMessages.WARN.FAILED_TO_DECODE_JWT::format);
             return Optional.empty();
         }
 
-        // 2. Get the issuer from the decoded token
+        // 3. Get the issuer - fail fast for missing issuer
         Optional<String> issuer = decodedJwt.get().getIssuer();
         if (issuer.isEmpty()) {
             LOGGER.warn(JWTTokenLogMessages.WARN.MISSING_CLAIM.format("iss"));
             return Optional.empty();
         }
 
-        // 3. Look up the issuer config
+        // 4. Look up the issuer config - fail fast for unknown issuer
         IssuerConfig issuerConfig = issuerConfigMap.get(issuer.get());
         if (issuerConfig == null) {
             LOGGER.warn(JWTTokenLogMessages.WARN.NO_ISSUER_CONFIG.format(issuer.get()));
             return Optional.empty();
         }
 
-        // 4. Create validators
+        // 5. Validate header - create validator only if needed
         TokenHeaderValidator headerValidator = new TokenHeaderValidator(issuerConfig);
-        TokenSignatureValidator signatureValidator = new TokenSignatureValidator(issuerConfig.getJwksKeyLoader());
-        TokenClaimValidator claimValidator = new TokenClaimValidator(issuerConfig);
-
-        // 5. Execute pipeline
         if (!headerValidator.validate(decodedJwt.get())) {
             LOGGER.debug("Token header validation failed");
             return Optional.empty();
         }
 
+        // 6. Validate signature - create validator only if needed
+        TokenSignatureValidator signatureValidator = new TokenSignatureValidator(issuerConfig.getJwksKeyLoader());
         if (!signatureValidator.validateSignature(decodedJwt.get())) {
             LOGGER.debug("Token signature validation failed");
             return Optional.empty();
         }
 
-        // 6. Build token
+        // 7. Build token - only if header and signature are valid
         Optional<T> token = tokenBuilder.apply(decodedJwt.get());
         if (token.isEmpty()) {
             LOGGER.debug("Token building failed");
             return Optional.empty();
         }
 
-        // 7. Validate claims
+        // 8. Validate claims - create validator only if token is built successfully
+        TokenClaimValidator claimValidator = new TokenClaimValidator(issuerConfig);
         @SuppressWarnings("unchecked")
         Optional<T> validatedToken = claimValidator.validate(token.get())
                 .map(validatedContent -> (T) validatedContent);

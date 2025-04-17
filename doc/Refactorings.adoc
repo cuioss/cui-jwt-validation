@@ -18,21 +18,15 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 
 == Code Structure and Design
 
-=== C3. Implement Builder Pattern Consistently
+=== C1. Reduce Cognitive Complexity in TokenClaimValidator
 [x] *Priority:* Medium
 
-*Description:* Ensure all complex objects use the builder pattern consistently. Some classes already use Lombok's @Builder annotation, but this pattern could be extended to other classes.
+*Description:* Refactor the `validateAudience` method in `TokenClaimValidator` to reduce its cognitive complexity as flagged by Sonar.
 
-*Rationale:* Consistent use of the builder pattern improves code readability and maintainability.
+*Rationale:* High cognitive complexity makes code harder to understand, maintain, and test. Breaking down complex methods into smaller, focused methods improves code quality and readability.
 
 == Performance Improvements
 
-=== P1. Optimize Token Validation Pipeline
-[ ] *Priority:* Medium
-
-*Description:* Review the token validation pipeline for potential performance optimizations, particularly for high-throughput scenarios.
-
-*Rationale:* The current pipeline approach is well-structured but might benefit from optimizations like early termination for common failure cases.
 
 === P2. Enhance Caching Strategy
 [ ] *Priority:* Medium
