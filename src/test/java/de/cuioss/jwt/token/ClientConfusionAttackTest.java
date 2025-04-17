@@ -81,16 +81,16 @@ class ClientConfusionAttackTest {
                 // Add more detailed debugging for audience claim
                 jwt.getBody().ifPresent(body -> {
                     if (body.containsKey("aud")) {
-                        LOGGER.debug("[DEBUG_LOG] Audience claim found: " + body.get("aud"));
-                        LOGGER.debug("[DEBUG_LOG] Audience claim type: " + body.get("aud").getValueType());
+                        LOGGER.debug("Audience claim found: " + body.get("aud"));
+                        LOGGER.debug("Audience claim type: " + body.get("aud").getValueType());
                     } else {
-                        LOGGER.debug("[DEBUG_LOG] No audience claim found in token");
+                        LOGGER.debug("No audience claim found in token");
                     }
 
                     if (body.containsKey("azp")) {
-                        LOGGER.debug("[DEBUG_LOG] AZP claim found: " + body.get("azp"));
+                        LOGGER.debug("AZP claim found: " + body.get("azp"));
                     } else {
-                        LOGGER.debug("[DEBUG_LOG] No azp claim found in token");
+                        LOGGER.debug("No azp claim found in token");
                     }
                 });
             });
@@ -106,9 +106,9 @@ class ClientConfusionAttackTest {
                 .jwksKeyLoader(jwksKeyLoader)
                 .build();
 
-        LOGGER.debug("[DEBUG_LOG] IssuerConfig: issuer=" + issuerConfig.getIssuer() +
-                     ", expectedAudience=" + issuerConfig.getExpectedAudience() +
-                     ", expectedClientId=" + issuerConfig.getExpectedClientId());
+        LOGGER.debug("IssuerConfig: issuer=" + issuerConfig.getIssuer() +
+                ", expectedAudience=" + issuerConfig.getExpectedAudience() +
+                ", expectedClientId=" + issuerConfig.getExpectedClientId());
 
         // Create a token factory with the issuer config
         tokenFactory = TokenFactory.builder()
@@ -173,35 +173,35 @@ class ClientConfusionAttackTest {
     void verify_audience_validation_without_azp() {
         // Generate a token with the default client ID
         String token = new IDTokenGenerator(false).next();
-        LOGGER.debug("[DEBUG_LOG] Generated token: " + token);
+        LOGGER.debug("Generated token: " + token);
 
         // Print the token headers using NonValidatingJwtParser to debug
         try {
             var decoder = NonValidatingJwtParser.builder().build();
             var decoded = decoder.decode(token);
             decoded.ifPresent(jwt -> {
-                LOGGER.debug("[DEBUG_LOG] Token headers: " + jwt.getHeader().orElse(null));
-                LOGGER.debug("[DEBUG_LOG] Token kid: " + jwt.getKid().orElse("null"));
-                LOGGER.debug("[DEBUG_LOG] Token body: " + jwt.getBody().orElse(null));
+                LOGGER.debug("Token headers: " + jwt.getHeader().orElse(null));
+                LOGGER.debug("Token kid: " + jwt.getKid().orElse("null"));
+                LOGGER.debug("Token body: " + jwt.getBody().orElse(null));
 
                 // Add more detailed debugging for audience claim
                 jwt.getBody().ifPresent(body -> {
                     if (body.containsKey("aud")) {
-                        LOGGER.debug("[DEBUG_LOG] Audience claim found: " + body.get("aud"));
-                        LOGGER.debug("[DEBUG_LOG] Audience claim type: " + body.get("aud").getValueType());
+                        LOGGER.debug("Audience claim found: " + body.get("aud"));
+                        LOGGER.debug("Audience claim type: " + body.get("aud").getValueType());
                     } else {
-                        LOGGER.debug("[DEBUG_LOG] No audience claim found in token");
+                        LOGGER.debug("No audience claim found in token");
                     }
 
                     if (body.containsKey("azp")) {
-                        LOGGER.debug("[DEBUG_LOG] AZP claim found: " + body.get("azp"));
+                        LOGGER.debug("AZP claim found: " + body.get("azp"));
                     } else {
-                        LOGGER.debug("[DEBUG_LOG] No azp claim found in token");
+                        LOGGER.debug("No azp claim found in token");
                     }
                 });
             });
         } catch (Exception e) {
-            System.err.println("[DEBUG_LOG] Error decoding token: " + e.getMessage());
+            System.err.println("Error decoding token: " + e.getMessage());
         }
 
         // Create an IssuerConfig with the correct audience but no client ID
@@ -211,9 +211,9 @@ class ClientConfusionAttackTest {
                 .jwksKeyLoader(jwksKeyLoader)
                 .build();
 
-        LOGGER.debug("[DEBUG_LOG] IssuerConfig: issuer=" + issuerConfig.getIssuer() +
-                     ", expectedAudience=" + issuerConfig.getExpectedAudience() +
-                     ", expectedClientId=" + issuerConfig.getExpectedClientId());
+        LOGGER.debug("IssuerConfig: issuer=" + issuerConfig.getIssuer() +
+                ", expectedAudience=" + issuerConfig.getExpectedAudience() +
+                ", expectedClientId=" + issuerConfig.getExpectedClientId());
 
         // Create a token factory with the issuer config
         tokenFactory = TokenFactory.builder()

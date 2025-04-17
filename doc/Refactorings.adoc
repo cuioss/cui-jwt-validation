@@ -40,7 +40,7 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 *Rationale:* Consistent use of the builder pattern improves code readability and maintainability.
 
 === C4. Change TokenFactory Constructor to Use Ellipsis for IssuerConfig
-[ ] *Priority:* Medium
+[x] *Priority:* Medium
 
 *Description:* Change the constructor in de.cuioss.jwt.token.TokenFactory#TokenFactory to use an ellipsis for IssuerConfig: TokenFactory(@TokenFactoryConfig config, IssuerConfig ... issuerConfigs). Adapt tests and configuration.
 

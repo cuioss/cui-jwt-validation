@@ -115,9 +115,9 @@ class TokenBuilderTest {
 
             // Verify claims are extracted
             assertFalse(accessTokenContent.getClaims().isEmpty(), "Claims should not be empty");
-            assertTrue(accessTokenContent.getClaims().containsKey(ClaimName.SUBJECT.getName()), 
+            assertTrue(accessTokenContent.getClaims().containsKey(ClaimName.SUBJECT.getName()),
                     "Claims should contain subject");
-            assertTrue(accessTokenContent.getClaims().containsKey(ClaimName.ISSUER.getName()), 
+            assertTrue(accessTokenContent.getClaims().containsKey(ClaimName.ISSUER.getName()),
                     "Claims should contain issuer");
         }
 
@@ -160,11 +160,11 @@ class TokenBuilderTest {
 
             // Verify claims are extracted
             assertFalse(idTokenContent.getClaims().isEmpty(), "Claims should not be empty");
-            assertTrue(idTokenContent.getClaims().containsKey(ClaimName.SUBJECT.getName()), 
+            assertTrue(idTokenContent.getClaims().containsKey(ClaimName.SUBJECT.getName()),
                     "Claims should contain subject");
-            assertTrue(idTokenContent.getClaims().containsKey(ClaimName.ISSUER.getName()), 
+            assertTrue(idTokenContent.getClaims().containsKey(ClaimName.ISSUER.getName()),
                     "Claims should contain issuer");
-            assertTrue(idTokenContent.getClaims().containsKey(ClaimName.AUDIENCE.getName()), 
+            assertTrue(idTokenContent.getClaims().containsKey(ClaimName.AUDIENCE.getName()),
                     "Claims should contain audience");
         }
 

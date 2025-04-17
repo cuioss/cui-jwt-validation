@@ -32,6 +32,7 @@ import de.cuioss.tools.string.MoreStrings;
 import lombok.Builder;
 import lombok.NonNull;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -69,7 +70,13 @@ import java.util.function.Function;
  * 
  * // Create token factory
  * TokenFactory tokenFactory = TokenFactory.builder()
- *         .issuerConfigs(List.of(issuerConfig))
+ *         .issuerConfig(issuerConfig)
+ *         .config(TokenFactoryConfig.builder().build())
+ *         .build();
+ * 
+ * // Alternatively, you can use multiple issuer configs
+ * TokenFactory multiIssuerFactory = TokenFactory.builder()
+ *         .issuerConfigs(List.of(issuerConfig1, issuerConfig2))
  *         .config(TokenFactoryConfig.builder().build())
  *         .build();
  * 
@@ -107,11 +114,11 @@ public class TokenFactory {
     /**
      * Creates a new TokenFactory with the given issuer configurations and optional factory configuration.
      *
-     * @param issuerConfigs a collection of issuer configurations, must not be null
      * @param config optional configuration for the factory, if null, default configuration will be used
+     * @param issuerConfigs varargs of issuer configurations, must not be null
      */
-    @Builder
-    public TokenFactory(@NonNull Collection<IssuerConfig> issuerConfigs, TokenFactoryConfig config) {
+    @Builder(builderClassName = "TokenFactoryBuilder")
+    public TokenFactory(TokenFactoryConfig config, @NonNull IssuerConfig... issuerConfigs) {
         TokenFactoryConfig config1 = config != null ? config : TokenFactoryConfig.builder().build();
 
         // Initialize NonValidatingJwtParser with configuration
@@ -127,7 +134,36 @@ public class TokenFactory {
             issuerConfigMap.put(issuerConfig.getIssuer(), issuerConfig);
         }
 
-        LOGGER.debug("Created TokenFactory with %d issuer configurations", issuerConfigs.size());
+        LOGGER.debug("Created TokenFactory with %d issuer configurations", issuerConfigs.length);
+    }
+
+    /**
+     * Creates a new TokenFactory with the given issuer configurations and optional factory configuration.
+     * This method is provided for backward compatibility with code that uses a Collection of IssuerConfig objects.
+     *
+     * @param issuerConfigs a collection of issuer configurations, must not be null
+     * @param config optional configuration for the factory, if null, default configuration will be used
+     * @return a new TokenFactory instance
+     */
+    public static TokenFactory fromCollection(@NonNull Collection<IssuerConfig> issuerConfigs, TokenFactoryConfig config) {
+        return new TokenFactory(config, issuerConfigs.toArray(new IssuerConfig[0]));
+    }
+
+    /**
+     * Custom builder class for TokenFactory.
+     */
+    public static class TokenFactoryBuilder {
+        /**
+         * Sets the issuer configurations from a collection.
+         * This method is provided for backward compatibility with code that uses a Collection of IssuerConfig objects.
+         *
+         * @param issuerConfigs a collection of issuer configurations, must not be null
+         * @return this builder instance
+         */
+        public TokenFactoryBuilder issuerConfigs(@NonNull Collection<IssuerConfig> issuerConfigs) {
+            this.issuerConfigs = issuerConfigs.toArray(new IssuerConfig[0]);
+            return this;
+        }
     }
 
     /**
