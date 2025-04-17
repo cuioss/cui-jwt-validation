@@ -32,7 +32,6 @@ import de.cuioss.tools.string.MoreStrings;
 import lombok.Builder;
 import lombok.NonNull;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -123,9 +122,7 @@ public class TokenFactory {
 
         // Initialize NonValidatingJwtParser with configuration
         this.jwtParser = NonValidatingJwtParser.builder()
-                .maxTokenSize(config1.getMaxTokenSize())
-                .maxPayloadSize(config1.getMaxPayloadSize())
-                .logWarningsOnDecodeFailure(config1.isLogWarningsOnDecodeFailure())
+                .config(config1)
                 .build();
 
         // Initialize issuerConfigMap with issuers as keys

@@ -192,7 +192,7 @@ class NonValidatingJwtParserTest {
         void shouldRespectMaxTokenSize() {
             // Create a token that exceeds the max size
 
-            Optional<DecodedJwt> result = parser.decode("a".repeat(NonValidatingJwtParser.DEFAULT_MAX_TOKEN_SIZE + 1));
+            Optional<DecodedJwt> result = parser.decode("a".repeat(TokenFactoryConfig.DEFAULT_MAX_TOKEN_SIZE + 1));
             assertFalse(result.isPresent(), "Should not decode a token that exceeds max size");
         }
 
@@ -203,8 +203,12 @@ class NonValidatingJwtParserTest {
             int customMaxSize = 1024;
             String largeToken = "a".repeat(customMaxSize + 1);
 
-            NonValidatingJwtParser customParser = NonValidatingJwtParser.builder()
+            TokenFactoryConfig config = TokenFactoryConfig.builder()
                     .maxTokenSize(customMaxSize)
+                    .build();
+
+            NonValidatingJwtParser customParser = NonValidatingJwtParser.builder()
+                    .config(config)
                     .build();
 
             Optional<DecodedJwt> result = customParser.decode(largeToken);
@@ -238,11 +242,11 @@ class NonValidatingJwtParserTest {
         void shouldRespectJsonDepthLimits() {
             // Create a deeply nested JSON structure that exceeds the max depth
             StringBuilder nestedJson = new StringBuilder("{");
-            for (int i = 0; i < NonValidatingJwtParser.DEFAULT_MAX_DEPTH + 1; i++) {
+            for (int i = 0; i < TokenFactoryConfig.DEFAULT_MAX_DEPTH + 1; i++) {
                 nestedJson.append("\"level").append(i).append("\":{");
             }
             // Close all the nested objects
-            nestedJson.append("}".repeat(NonValidatingJwtParser.DEFAULT_MAX_DEPTH + 1));
+            nestedJson.append("}".repeat(TokenFactoryConfig.DEFAULT_MAX_DEPTH + 1));
 
             String encodedNestedJson = Base64.getUrlEncoder().encodeToString(nestedJson.toString().getBytes(StandardCharsets.UTF_8));
             String tokenWithDeepJson = encodedNestedJson + "." + ENCODED_PAYLOAD + "." + ENCODED_SIGNATURE;
@@ -256,7 +260,7 @@ class NonValidatingJwtParserTest {
         void shouldHandleLargeJsonArrays() {
             // Create a JSON with a large array
             StringBuilder largeArrayJson = new StringBuilder("{\"array\":[");
-            for (int i = 0; i < NonValidatingJwtParser.DEFAULT_MAX_ARRAY_SIZE - 1; i++) {
+            for (int i = 0; i < TokenFactoryConfig.DEFAULT_MAX_ARRAY_SIZE - 1; i++) {
                 if (i > 0) {
                     largeArrayJson.append(",");
                 }
@@ -280,7 +284,7 @@ class NonValidatingJwtParserTest {
         @DisplayName("Should handle large JSON strings")
         void shouldHandleLargeJsonStrings() {
             // Create a JSON with a large string
-            String largeStringJson = "{\"largeString\":\"" + "a".repeat(NonValidatingJwtParser.DEFAULT_MAX_STRING_SIZE - 100) + "\"}";
+            String largeStringJson = "{\"largeString\":\"" + "a".repeat(TokenFactoryConfig.DEFAULT_MAX_STRING_SIZE - 100) + "\"}";
 
             String encodedLargeStringJson = Base64.getUrlEncoder().encodeToString(largeStringJson.getBytes(StandardCharsets.UTF_8));
             String tokenWithLargeString = encodedLargeStringJson + "." + ENCODED_PAYLOAD + "." + ENCODED_SIGNATURE;

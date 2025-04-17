@@ -18,22 +18,17 @@ package de.cuioss.jwt.token.flow;
 import de.cuioss.jwt.token.JWTTokenLogMessages;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
-import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonReader;
-import jakarta.json.JsonReaderFactory;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -85,14 +80,18 @@ import java.util.Optional;
  * <p>
  * Example with custom security settings:
  * <pre>
- * // Create a parser with custom security settings
- * NonValidatingJwtParser customParser = NonValidatingJwtParser.builder()
+ * // Create a parser with custom security settings using TokenFactoryConfig
+ * TokenFactoryConfig config = TokenFactoryConfig.builder()
  *     .maxTokenSize(1024)  // 1KB max token size
  *     .maxPayloadSize(512)  // 512 bytes max payload size
  *     .maxStringSize(256)   // 256 bytes max string size
  *     .maxArraySize(10)     // 10 elements max array size
  *     .maxDepth(5)          // 5 levels max JSON depth
  *     .logWarningsOnDecodeFailure(false)  // suppress warnings
+ *     .build();
+ *     
+ * NonValidatingJwtParser customParser = NonValidatingJwtParser.builder()
+ *     .config(config)
  *     .build();
  *     
  * // Decode a token with the custom parser
@@ -129,10 +128,15 @@ public class NonValidatingJwtParser {
      * <p>
      * You can use this builder to configure the parser with specific security settings:
      * <pre>
-     * NonValidatingJwtParser parser = NonValidatingJwtParser.builder()
+     * // Using TokenFactoryConfig
+     * TokenFactoryConfig config = TokenFactoryConfig.builder()
      *     .maxTokenSize(16 * 1024)  // 16KB
      *     .maxPayloadSize(8 * 1024)  // 8KB
      *     .logWarningsOnDecodeFailure(false)  // suppress warnings
+     *     .build();
+     * 
+     * NonValidatingJwtParser parser = NonValidatingJwtParser.builder()
+     *     .config(config)
      *     .build();
      * </pre>
      */
@@ -143,91 +147,13 @@ public class NonValidatingJwtParser {
 
     private static final CuiLogger LOGGER = new CuiLogger(NonValidatingJwtParser.class);
 
-    /**
-     * Default maximum size of a JWT token in bytes to prevent overflow attacks.
-     * 8KB as recommended by OAuth 2.0 JWT BCP Section 3.11.
-     */
-    public static final int DEFAULT_MAX_TOKEN_SIZE = 8 * 1024;
+    // No individual fields needed as they are all in the config object
 
     /**
-     * Default maximum size of decoded JSON payload in bytes.
-     * 8KB as recommended by OAuth 2.0 JWT BCP Section 3.11.
-     */
-    public static final int DEFAULT_MAX_PAYLOAD_SIZE = 8 * 1024;
-
-    /**
-     * Default maximum string size for JSON parsing.
-     */
-    public static final int DEFAULT_MAX_STRING_SIZE = 4 * 1024;
-
-    /**
-     * Default maximum array size for JSON parsing.
-     */
-    public static final int DEFAULT_MAX_ARRAY_SIZE = 64;
-
-    /**
-     * Default maximum depth for JSON parsing.
-     */
-    public static final int DEFAULT_MAX_DEPTH = 10;
-
-    /**
-     * Maximum size of a JWT token in bytes to prevent overflow attacks.
+     * Configuration for the parser, containing all security settings.
      */
     @Builder.Default
-    private final int maxTokenSize = DEFAULT_MAX_TOKEN_SIZE;
-
-    /**
-     * Maximum size of decoded JSON payload in bytes.
-     */
-    @Builder.Default
-    private final int maxPayloadSize = DEFAULT_MAX_PAYLOAD_SIZE;
-
-    /**
-     * Maximum string size for JSON parsing.
-     */
-    @Builder.Default
-    private final int maxStringSize = DEFAULT_MAX_STRING_SIZE;
-
-    /**
-     * Maximum array size for JSON parsing.
-     */
-    @Builder.Default
-    private final int maxArraySize = DEFAULT_MAX_ARRAY_SIZE;
-
-    /**
-     * Maximum depth for JSON parsing.
-     */
-    @Builder.Default
-    private final int maxDepth = DEFAULT_MAX_DEPTH;
-
-    /**
-     * Cached JsonReaderFactory with security settings.
-     * This is lazily initialized to avoid unnecessary creation.
-     */
-    @Getter(lazy = true)
-    private final JsonReaderFactory jsonReaderFactory = createJsonReaderFactory();
-
-    /**
-     * Creates a JsonReaderFactory with security settings.
-     * This method is used by the lazy getter for jsonReaderFactory.
-     *
-     * @return a JsonReaderFactory configured with security settings
-     */
-    private JsonReaderFactory createJsonReaderFactory() {
-        Map<String, Object> config = new HashMap<>();
-        // Use the correct property names for Jakarta JSON API
-        config.put("jakarta.json.stream.maxStringLength", maxStringSize);
-        config.put("jakarta.json.stream.maxArraySize", maxArraySize);
-        config.put("jakarta.json.stream.maxDepth", maxDepth);
-        return Json.createReaderFactory(config);
-    }
-
-    /**
-     * Flag to control whether warnings are logged when decoding fails.
-     * This is useful when checking if a token is a JWT without logging warnings.
-     */
-    @Builder.Default
-    private final boolean logWarningsOnDecodeFailure = true;
+    private final TokenFactoryConfig config = TokenFactoryConfig.builder().build();
 
     /**
      * Decodes a JWT token and returns a DecodedJwt object containing the decoded parts.
@@ -244,7 +170,7 @@ public class NonValidatingJwtParser {
      * or empty if the token is invalid or cannot be parsed
      */
     public Optional<DecodedJwt> decode(String token) {
-        return decode(token, logWarningsOnDecodeFailure);
+        return decode(token, config.isLogWarningsOnDecodeFailure());
     }
 
     /**
@@ -266,57 +192,115 @@ public class NonValidatingJwtParser {
      * or empty if the token is invalid or cannot be parsed
      */
     public Optional<DecodedJwt> decode(String token, boolean logWarnings) {
-        if (MoreStrings.isEmpty(token)) {
-            if (logWarnings) {
-                LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
-            }
+        // Check if token is empty
+        if (isTokenEmpty(token, logWarnings)) {
             return Optional.empty();
         }
 
-        if (token.getBytes(StandardCharsets.UTF_8).length > maxTokenSize) {
-            if (logWarnings) {
-                LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_SIZE_EXCEEDED.format(maxTokenSize));
-            }
+        // Check if token size exceeds maximum
+        if (isTokenSizeExceeded(token, logWarnings)) {
             return Optional.empty();
         }
 
+        // Split token and validate format
         String[] parts = token.split("\\.");
-        if (parts.length != 3) {
-            if (logWarnings) {
-                LOGGER.warn(JWTTokenLogMessages.WARN.INVALID_JWT_FORMAT.format(parts.length));
-            }
+        if (isInvalidTokenFormat(parts, logWarnings)) {
             return Optional.empty();
         }
 
         try {
-            // Decode the header (first part)
-            Optional<JsonObject> headerOpt = decodeJsonPart(parts[0], logWarnings);
-            if (headerOpt.isEmpty()) {
-                if (logWarnings) {
-                    LOGGER.warn(JWTTokenLogMessages.WARN.FAILED_TO_DECODE_HEADER::format);
-                }
-                return Optional.empty();
-            }
-
-            // Decode the payload (second part)
-            Optional<JsonObject> bodyOpt = decodeJsonPart(parts[1], logWarnings);
-            if (bodyOpt.isEmpty()) {
-                if (logWarnings) {
-                    LOGGER.warn(JWTTokenLogMessages.WARN.FAILED_TO_DECODE_PAYLOAD::format);
-                }
-                return Optional.empty();
-            }
-
-            // The signature part (third part) is kept as is
-            String signature = parts[2];
-
-            return Optional.of(new DecodedJwt(headerOpt.get(), bodyOpt.get(), signature, parts, token));
+            // Decode token parts
+            return decodeTokenParts(parts, token, logWarnings);
         } catch (Exception e) {
             if (logWarnings) {
                 LOGGER.warn(e, JWTTokenLogMessages.WARN.FAILED_TO_PARSE_TOKEN.format(e.getMessage()));
             }
             return Optional.empty();
         }
+    }
+
+    /**
+     * Checks if the token is empty.
+     *
+     * @param token the token to check
+     * @param logWarnings whether to log warnings
+     * @return true if the token is empty, false otherwise
+     */
+    private boolean isTokenEmpty(String token, boolean logWarnings) {
+        if (MoreStrings.isEmpty(token)) {
+            if (logWarnings) {
+                LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Checks if the token size exceeds the maximum allowed size.
+     *
+     * @param token the token to check
+     * @param logWarnings whether to log warnings
+     * @return true if the token size exceeds the maximum, false otherwise
+     */
+    private boolean isTokenSizeExceeded(String token, boolean logWarnings) {
+        if (token.getBytes(StandardCharsets.UTF_8).length > config.getMaxTokenSize()) {
+            if (logWarnings) {
+                LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_SIZE_EXCEEDED.format(config.getMaxTokenSize()));
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Checks if the token format is invalid.
+     *
+     * @param parts the token parts
+     * @param logWarnings whether to log warnings
+     * @return true if the token format is invalid, false otherwise
+     */
+    private boolean isInvalidTokenFormat(String[] parts, boolean logWarnings) {
+        if (parts.length != 3) {
+            if (logWarnings) {
+                LOGGER.warn(JWTTokenLogMessages.WARN.INVALID_JWT_FORMAT.format(parts.length));
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Decodes the token parts and creates a DecodedJwt object.
+     *
+     * @param parts the token parts
+     * @param token the original token
+     * @param logWarnings whether to log warnings
+     * @return an Optional containing the DecodedJwt if decoding is successful, or empty otherwise
+     */
+    private Optional<DecodedJwt> decodeTokenParts(String[] parts, String token, boolean logWarnings) {
+        // Decode the header (first part)
+        Optional<JsonObject> headerOpt = decodeJsonPart(parts[0], logWarnings);
+        if (headerOpt.isEmpty()) {
+            if (logWarnings) {
+                LOGGER.warn(JWTTokenLogMessages.WARN.FAILED_TO_DECODE_HEADER::format);
+            }
+            return Optional.empty();
+        }
+
+        // Decode the payload (second part)
+        Optional<JsonObject> bodyOpt = decodeJsonPart(parts[1], logWarnings);
+        if (bodyOpt.isEmpty()) {
+            if (logWarnings) {
+                LOGGER.warn(JWTTokenLogMessages.WARN.FAILED_TO_DECODE_PAYLOAD::format);
+            }
+            return Optional.empty();
+        }
+
+        // The signature part (third part) is kept as is
+        String signature = parts[2];
+
+        return Optional.of(new DecodedJwt(headerOpt.get(), bodyOpt.get(), signature, parts, token));
     }
 
     /**
@@ -334,15 +318,15 @@ public class NonValidatingJwtParser {
         try {
             byte[] decoded = Base64.getUrlDecoder().decode(encodedPart);
 
-            if (decoded.length > maxPayloadSize) {
+            if (decoded.length > config.getMaxPayloadSize()) {
                 if (logWarnings) {
-                    LOGGER.warn(JWTTokenLogMessages.WARN.DECODED_PART_SIZE_EXCEEDED.format(maxPayloadSize));
+                    LOGGER.warn(JWTTokenLogMessages.WARN.DECODED_PART_SIZE_EXCEEDED.format(config.getMaxPayloadSize()));
                 }
                 return Optional.empty();
             }
 
             // Use the cached JsonReaderFactory with security settings
-            try (JsonReader reader = getJsonReaderFactory()
+            try (JsonReader reader = config.getJsonReaderFactory()
                     .createReader(new StringReader(new String(decoded, StandardCharsets.UTF_8)))) {
                 return Optional.of(reader.readObject());
             }

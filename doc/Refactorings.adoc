@@ -9,7 +9,7 @@ After implementing any task in this document, follow these steps:
 1. Clean-Up Code: Use "./mvnw -Prewrite-prepare-release rewrite:run" -> verify with "./mvnw clean install" -> Fix if necessary and commit
 2. Clean-Up Javadoc: "./mvnw clean install -Pjavadoc" -> Fix all errors and warnings, verify until they are all corrected
 3. Verify the documentation is updated correctly
-4. Commit the changes with a sensible comment
+4. Commit the changes with a git commit. Use the task name (e.g., "C1. Document Bouncy Castle Usage") as the commit message
 5. Check the checkbox for the completed task
 
 == Task List
@@ -47,7 +47,7 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 *Rationale:* Using an ellipsis (varargs) instead of a Collection provides a more convenient API for users when they have a small number of issuer configurations.
 
 === C5. Enhance TokenFactoryConfig with NonValidatingJwtParser Attributes
-[ ] *Priority:* Medium
+[x] *Priority:* Medium
 
 *Description:* Add all attributes from NonValidatingJwtParser to the TokenFactoryConfig class, including maxStringSize, maxArraySize, and maxDepth constants. Add the creation and caching of createJsonReaderFactory. After implementing, pass only the TokenFactoryConfig object to NonValidatingJwtParser instead of individual attributes. Adapt tests and documentation accordingly.
 

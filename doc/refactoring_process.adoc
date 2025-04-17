@@ -87,7 +87,7 @@ After implementing any task in the refactoring document, follow these steps:
 1. *Clean-Up Code*: Use `./mvnw -Prewrite-prepare-release rewrite:run` -> verify with `./mvnw clean install` -> Fix if necessary and commit
 2. *Clean-Up Javadoc*: `./mvnw clean install -Pjavadoc` -> Fix all errors and warnings, verify until they are all corrected
 3. *Verify Documentation*: Ensure the documentation is updated correctly
-4. *Commit Changes*: Commit the changes with a sensible comment
+4. *Commit Changes*: Commit the changes with a git commit. Use the task name (e.g., "C1. Document Bouncy Castle Usage") as the commit message
 5. *Update Status*: Check the checkbox for the completed task in the Refactorings.adoc file
 
 This standardized process ensures:
