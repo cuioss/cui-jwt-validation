@@ -95,7 +95,7 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 == Testing Improvements
 
 === T1. Increase Test Coverage for Edge Cases
-[ ] *Priority:* High
+[x] *Priority:* High
 
 *Description:* Add more tests for edge cases, particularly around token expiration, clock skew, and network failures.
 

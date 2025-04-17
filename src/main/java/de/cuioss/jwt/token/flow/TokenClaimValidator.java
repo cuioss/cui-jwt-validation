@@ -119,8 +119,9 @@ public class TokenClaimValidator {
      * This claim is optional, so if it's not present, the validation passes.
      * <p>
      * If the claim is present, this method checks if the token's not-before time is more than 60 seconds
-     * in the future.
-     * If it is, the token is considered invalid.
+     * in the future. This 60-second window allows for clock skew between the token issuer and the token validator.
+     * If the not-before time is more than 60 seconds in the future, the token is considered invalid.
+     * If the not-before time is in the past or less than 60 seconds in the future, the token is considered valid.
      *
      * @param token the JWT claims
      * @return true if the "not before" time is valid or not present, false otherwise
@@ -132,11 +133,11 @@ public class TokenClaimValidator {
             return true;
         }
 
-        if (notBefore.get().isBefore(OffsetDateTime.now().plusSeconds(60))) {
+        if (notBefore.get().isAfter(OffsetDateTime.now().plusSeconds(60))) {
             LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_NBF_FUTURE::format);
             return false;
         }
-        LOGGER.debug("Not before claim is present,and not more than 60 seconds in the future");
+        LOGGER.debug("Not before claim is present, and not more than 60 seconds in the future");
         return true;
     }
 

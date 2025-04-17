@@ -325,7 +325,7 @@ class TokenClaimValidatorTest {
         }
 
         @Test
-        @DisplayName("Should fail validation for token with future not before time")
+        @DisplayName("Should fail validation for token with far future not before time")
         void shouldFailValidationForTokenWithFutureNotBeforeTime() {
             // Given a validator
             var issuerConfig = IssuerConfig.builder()
@@ -335,22 +335,18 @@ class TokenClaimValidatorTest {
                     .build();
             var validator = new TokenClaimValidator(issuerConfig);
 
-            // When validating a token with a future not before time
-            // Create a token with a future not before time
+            // When validating a token with a far future not before time
             TokenContent tokenWithFutureNotBefore = new InvalidTokenContentGenerator()
                     .next();
 
-            // Add a not before time that is in the past
-            // Note: The current implementation of validateNotBefore has a bug - it fails validation
-            // for tokens with a "not before" time that is in the past or less than 60 seconds in the future,
-            // which is the opposite of what it should be doing.
+            // Add a not before time that is far in the future (beyond the allowed clock skew)
             Map<String, ClaimValue> claims = new HashMap<>(tokenWithFutureNotBefore.getClaims());
-            OffsetDateTime pastTime = OffsetDateTime.now().minusMinutes(5); // 5 minutes in the past
+            OffsetDateTime futureTime = OffsetDateTime.now().plusMinutes(5); // 5 minutes in the future
             claims.put(ClaimName.NOT_BEFORE.getName(), ClaimValue.forDateTime(
-                    String.valueOf(pastTime.toEpochSecond()), pastTime));
+                    String.valueOf(futureTime.toEpochSecond()), futureTime));
 
-            // Create a custom TokenContent with the past not before time
-            TokenContent tokenWithPastNotBeforeTime = new TokenContent() {
+            // Create a custom TokenContent with the future not before time
+            TokenContent tokenWithFarFutureNotBeforeTime = new TokenContent() {
                 @Override
                 public String getRawToken() {
                     return tokenWithFutureNotBefore.getRawToken();
@@ -368,10 +364,10 @@ class TokenClaimValidatorTest {
             };
 
             // Validate the token
-            var result = validator.validate(tokenWithPastNotBeforeTime);
+            var result = validator.validate(tokenWithFarFutureNotBeforeTime);
 
             // Then the validation should fail
-            assertTrue(result.isEmpty(), "Token should be invalid with past not before time");
+            assertTrue(result.isEmpty(), "Token should be invalid with far future not before time");
 
             // Verify that the appropriate warning is logged
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN,
