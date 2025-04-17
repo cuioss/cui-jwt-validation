@@ -20,8 +20,8 @@ import de.cuioss.jwt.token.domain.claim.ClaimValue;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
 import java.io.Serial;
 import java.util.Map;
@@ -32,7 +32,7 @@ import java.util.Map;
  */
 @ToString
 @EqualsAndHashCode
-@RequiredArgsConstructor
+@SuperBuilder
 public abstract class BaseTokenContent implements TokenContent {
 
     @Serial
@@ -50,4 +50,16 @@ public abstract class BaseTokenContent implements TokenContent {
     @NonNull
     private final TokenType tokenType;
 
+    /**
+     * Constructor for BaseTokenContent.
+     *
+     * @param claims    the token claims
+     * @param rawToken  the raw token string
+     * @param tokenType the token type
+     */
+    protected BaseTokenContent(@NonNull Map<String, ClaimValue> claims, @NonNull String rawToken, @NonNull TokenType tokenType) {
+        this.claims = claims;
+        this.rawToken = rawToken;
+        this.tokenType = tokenType;
+    }
 }

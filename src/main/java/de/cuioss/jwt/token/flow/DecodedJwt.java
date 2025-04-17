@@ -17,6 +17,8 @@ package de.cuioss.jwt.token.flow;
 
 import de.cuioss.jwt.token.domain.claim.ClaimName;
 import jakarta.json.JsonObject;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
@@ -31,6 +33,8 @@ import java.util.Optional;
  */
 @ToString
 @EqualsAndHashCode
+@Builder
+@AllArgsConstructor
 public class DecodedJwt {
     private final JsonObject header;
     private final JsonObject body;

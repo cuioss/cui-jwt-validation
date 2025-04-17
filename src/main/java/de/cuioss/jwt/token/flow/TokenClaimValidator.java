@@ -22,6 +22,7 @@ import de.cuioss.jwt.token.domain.claim.ClaimValue;
 import de.cuioss.jwt.token.domain.token.TokenContent;
 import de.cuioss.tools.collect.MoreCollections;
 import de.cuioss.tools.logging.CuiLogger;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
 
@@ -57,6 +58,7 @@ import java.util.stream.Collectors;
  * <p>
  * Note: Issuer (iss) validation is handled by {@link TokenHeaderValidator}.
  */
+@Builder
 public class TokenClaimValidator {
 
     private static final CuiLogger LOGGER = new CuiLogger(TokenClaimValidator.class);
@@ -73,8 +75,19 @@ public class TokenClaimValidator {
      * @param issuerConfig the issuer configuration containing expected audience and client ID
      */
     public TokenClaimValidator(@NonNull IssuerConfig issuerConfig) {
-        this.expectedAudience = issuerConfig.getExpectedAudience();
-        this.expectedClientId = issuerConfig.getExpectedClientId();
+        this(issuerConfig.getExpectedAudience(), issuerConfig.getExpectedClientId());
+    }
+
+    /**
+     * Constructs a TokenClaimValidator with the specified expected audience and client ID.
+     * This constructor is used by the Builder.
+     *
+     * @param expectedAudience the expected audience values
+     * @param expectedClientId the expected client ID values
+     */
+    public TokenClaimValidator(Set<String> expectedAudience, Set<String> expectedClientId) {
+        this.expectedAudience = expectedAudience;
+        this.expectedClientId = expectedClientId;
 
         if (MoreCollections.isEmpty(expectedAudience)) {
             LOGGER.warn(JWTTokenLogMessages.WARN.MISSING_RECOMMENDED_ELEMENT.format("expectedAudience"));

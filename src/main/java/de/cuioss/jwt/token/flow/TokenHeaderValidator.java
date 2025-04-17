@@ -18,7 +18,7 @@ package de.cuioss.jwt.token.flow;
 import de.cuioss.jwt.token.JWTTokenLogMessages;
 import de.cuioss.tools.logging.CuiLogger;
 import jakarta.annotation.Nonnull;
-import lombok.RequiredArgsConstructor;
+import lombok.Builder;
 
 /**
  * Validator for JWT token headers.
@@ -31,12 +31,21 @@ import lombok.RequiredArgsConstructor;
  * <p>
  * The validator logs appropriate warning messages for validation failures.
  */
-@RequiredArgsConstructor
+@Builder
 public class TokenHeaderValidator {
 
     private static final CuiLogger LOGGER = new CuiLogger(TokenHeaderValidator.class);
 
     private final IssuerConfig issuerConfig;
+
+    /**
+     * Constructs a TokenHeaderValidator with the specified IssuerConfig.
+     *
+     * @param issuerConfig the issuer configuration
+     */
+    public TokenHeaderValidator(IssuerConfig issuerConfig) {
+        this.issuerConfig = issuerConfig;
+    }
 
     /**
      * Validates a decoded JWT token's header.     *

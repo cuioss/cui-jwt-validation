@@ -20,6 +20,7 @@ import de.cuioss.jwt.token.domain.claim.ClaimName;
 import de.cuioss.jwt.token.domain.claim.ClaimValue;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
 import java.io.Serial;
 import java.util.List;
@@ -32,6 +33,7 @@ import java.util.Optional;
  */
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
+@SuperBuilder
 public class IdTokenContent extends BaseTokenContent {
 
     @Serial
