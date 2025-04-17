@@ -15,7 +15,7 @@
  */
 package de.cuioss.jwt.token.flow;
 
-import de.cuioss.jwt.token.jwks.key.JWKSKeyLoader;
+import de.cuioss.jwt.token.jwks.JwksLoader;
 import de.cuioss.jwt.token.security.AlgorithmPreferences;
 import lombok.Builder;
 import lombok.NonNull;
@@ -29,7 +29,7 @@ import java.util.Set;
  * It aggregates all information needed to validate a JWT token.
  * <p>
  * This class contains the issuer URL, expected audience, expected client ID,
- * JWKSKeyLoader for loading keys and {@link AlgorithmPreferences}.
+ * JwksLoader for loading keys and {@link AlgorithmPreferences}.
  * </p>
  */
 @Builder
@@ -45,7 +45,7 @@ public class IssuerConfig {
     @Singular("expectedClientId")
     Set<String> expectedClientId;
 
-    JWKSKeyLoader jwksKeyLoader;
+    JwksLoader jwksLoader;
 
     @Builder.Default
     AlgorithmPreferences algorithmPreferences = new AlgorithmPreferences();

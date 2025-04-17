@@ -53,7 +53,11 @@ import java.util.Set;
  * <pre>
  * // Create an HTTP-based JWKS loader with 60-second refresh interval
  * String jwksEndpoint = "https://example.com/.well-known/jwks.json";
- * JwksLoader httpJwksLoader = JwksLoaderFactory.createHttpLoader(jwksEndpoint, 60, null);
+ * HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
+ *     .jwksUrl(jwksEndpoint)
+ *     .refreshIntervalSeconds(60)
+ *     .build();
+ * JwksLoader httpJwksLoader = JwksLoaderFactory.createHttpLoader(config);
  * 
  * // Get a key by ID
  * Optional&lt;KeyInfo&gt; keyInfo = httpJwksLoader.getKeyInfo("my-key-id");

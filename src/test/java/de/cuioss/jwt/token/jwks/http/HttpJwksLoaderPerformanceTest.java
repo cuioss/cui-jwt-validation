@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.cuioss.jwt.token.jwks;
+package de.cuioss.jwt.token.jwks.http;
 
 import de.cuioss.jwt.token.jwks.key.KeyInfo;
 import de.cuioss.jwt.token.test.JWKSFactory;
@@ -70,10 +70,13 @@ class HttpJwksLoaderPerformanceTest {
     void setUp(URIBuilder uriBuilder) {
         String jwksEndpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
         moduleDispatcher.setCallCounter(0);
-        httpJwksLoader = HttpJwksLoader.builder()
-                .withJwksUrl(jwksEndpoint)
-                .withRefreshInterval(REFRESH_INTERVAL_SECONDS)
+
+        HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
+                .jwksUrl(jwksEndpoint)
+                .refreshIntervalSeconds(REFRESH_INTERVAL_SECONDS)
                 .build();
+
+        httpJwksLoader = new HttpJwksLoader(config);
     }
 
     @Test

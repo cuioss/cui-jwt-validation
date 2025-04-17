@@ -267,7 +267,7 @@ public class TokenFactory {
         }
 
         // 6. Validate signature - create validator only if needed
-        TokenSignatureValidator signatureValidator = new TokenSignatureValidator(issuerConfig.getJwksKeyLoader());
+        TokenSignatureValidator signatureValidator = new TokenSignatureValidator(issuerConfig.getJwksLoader());
         if (!signatureValidator.validateSignature(decodedJwt.get())) {
             LOGGER.debug("Token signature validation failed");
             return Optional.empty();

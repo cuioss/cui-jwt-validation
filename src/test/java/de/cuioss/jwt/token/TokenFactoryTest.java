@@ -56,7 +56,7 @@ class TokenFactoryTest {
                 .issuer(ISSUER)
                 .expectedAudience(AUDIENCE)
                 .expectedClientId(CLIENT_ID)
-                .jwksKeyLoader(jwksKeyLoader)
+                .jwksLoader(jwksKeyLoader)
                 .algorithmPreferences(new AlgorithmPreferences())
                 .build();
 

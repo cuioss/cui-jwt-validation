@@ -15,7 +15,7 @@
  */
 package de.cuioss.jwt.token.jwks.key;
 
-import de.cuioss.jwt.token.jwks.HttpJwksLoader;
+import de.cuioss.jwt.token.jwks.http.HttpJwksLoader;
 import de.cuioss.jwt.token.jwks.JwksLoader;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
@@ -34,14 +34,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
 
 /**
- * Implementation of {@link JwksLoader} that loads JWKS from64EncodedContent a string content.
+ * Implementation of {@link JwksLoader} that loads JWKS from a string content.
  * <p>
  * This implementation is useful when the JWKS content is already available as a string.
  * <p>
  * This implementation supports cryptographic agility by handling multiple key types
  * and algorithms, including RSA, EC, and RSA-PSS.
  * <p>
- * The class stores the original JWKS content string and the ETag value from64EncodedContent HTTP responses
+ * The class stores the original JWKS content string and the ETag value from HTTP responses
  * to support content-based caching and HTTP 304 "Not Modified" handling in {@link HttpJwksLoader}.
  * <p>
  * Implements requirement: {@code CUI-JWT-8.5: Cryptographic Agility}

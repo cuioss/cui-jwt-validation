@@ -103,7 +103,7 @@ class ClientConfusionAttackTest {
                 .issuer(TestTokenProducer.ISSUER)
                 .expectedAudience(IDTokenGenerator.DEFAULT_CLIENT_ID)
                 .expectedClientId(IDTokenGenerator.DEFAULT_CLIENT_ID)
-                .jwksKeyLoader(jwksKeyLoader)
+                .jwksLoader(jwksKeyLoader)
                 .build();
 
         LOGGER.debug("IssuerConfig: issuer=" + issuerConfig.getIssuer() +
@@ -131,7 +131,7 @@ class ClientConfusionAttackTest {
                 .issuer(TestTokenProducer.ISSUER)
                 .expectedAudience(IDTokenGenerator.DEFAULT_CLIENT_ID)
                 .expectedClientId("wrong-client-id")
-                .jwksKeyLoader(jwksKeyLoader)
+                .jwksLoader(jwksKeyLoader)
                 .build();
 
         // Create a token factory with the issuer config
@@ -155,7 +155,7 @@ class ClientConfusionAttackTest {
                 .issuer(TestTokenProducer.ISSUER)
                 .expectedAudience(IDTokenGenerator.DEFAULT_CLIENT_ID)
                 .expectedClientId(IDTokenGenerator.DEFAULT_CLIENT_ID)
-                .jwksKeyLoader(jwksKeyLoader)
+                .jwksLoader(jwksKeyLoader)
                 .build();
 
         // Create a token factory with the issuer config
@@ -208,7 +208,7 @@ class ClientConfusionAttackTest {
         IssuerConfig issuerConfig = IssuerConfig.builder()
                 .issuer(TestTokenProducer.ISSUER)
                 .expectedAudience(IDTokenGenerator.DEFAULT_CLIENT_ID)
-                .jwksKeyLoader(jwksKeyLoader)
+                .jwksLoader(jwksKeyLoader)
                 .build();
 
         LOGGER.debug("IssuerConfig: issuer=" + issuerConfig.getIssuer() +
@@ -235,7 +235,7 @@ class ClientConfusionAttackTest {
         IssuerConfig issuerConfig = IssuerConfig.builder()
                 .issuer(TestTokenProducer.ISSUER)
                 .expectedClientId(IDTokenGenerator.DEFAULT_CLIENT_ID)
-                .jwksKeyLoader(jwksKeyLoader)
+                .jwksLoader(jwksKeyLoader)
                 .build();
 
         // Create a token factory with the issuer config
@@ -258,7 +258,7 @@ class ClientConfusionAttackTest {
         IssuerConfig issuerConfig = IssuerConfig.builder()
                 .issuer(TestTokenProducer.ISSUER)
                 .expectedClientId(IDTokenGenerator.DEFAULT_CLIENT_ID)
-                .jwksKeyLoader(jwksKeyLoader)
+                .jwksLoader(jwksKeyLoader)
                 .build();
 
         // Create a token factory with the issuer config

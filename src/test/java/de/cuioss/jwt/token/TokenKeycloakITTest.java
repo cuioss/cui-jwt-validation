@@ -16,9 +16,8 @@
 package de.cuioss.jwt.token;
 
 import de.cuioss.jwt.token.flow.IssuerConfig;
-import de.cuioss.jwt.token.jwks.HttpJwksLoader;
 import de.cuioss.jwt.token.jwks.JwksLoaderFactory;
-import de.cuioss.jwt.token.jwks.key.JWKSKeyLoader;
+import de.cuioss.jwt.token.jwks.http.HttpJwksLoaderConfig;
 import de.cuioss.test.keycloakit.KeycloakITBase;
 import de.cuioss.test.keycloakit.TestRealm;
 import de.cuioss.tools.logging.CuiLogger;
@@ -40,7 +39,10 @@ import java.util.List;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("Tests Token integration with Keycloak")
 public class TokenKeycloakITTest extends KeycloakITBase {
@@ -94,15 +96,16 @@ public class TokenKeycloakITTest extends KeycloakITBase {
         LOGGER.debug(() -> "PASSWORD: " + TestRealm.ProvidedKeyStore.PASSWORD);
 
         // Create a JwksLoader with the SSLContext
-        HttpJwksLoader jwksLoader = (HttpJwksLoader) JwksLoaderFactory.createHttpLoader(getJWKSUrl(), 100, createSSLContextFromSSLConfig(sslConfig));
-
-        // Get the JWKSKeyLoader from the HttpJwksLoader
-        JWKSKeyLoader jwksKeyLoader = jwksLoader.resolve();
+        HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
+                .jwksUrl(getJWKSUrl())
+                .refreshIntervalSeconds(100)
+                .sslContext(createSSLContextFromSSLConfig(sslConfig))
+                .build();
 
         // Create an IssuerConfig
         IssuerConfig issuerConfig = IssuerConfig.builder()
                 .issuer(getIssuer())
-                .jwksKeyLoader(jwksKeyLoader)
+                .jwksLoader(JwksLoaderFactory.createHttpLoader(config))
                 .build();
 
         // Create the token factory

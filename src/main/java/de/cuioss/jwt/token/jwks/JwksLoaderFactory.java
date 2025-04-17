@@ -16,12 +16,13 @@
 package de.cuioss.jwt.token.jwks;
 
 import de.cuioss.jwt.token.JWTTokenLogMessages;
+import de.cuioss.jwt.token.jwks.http.HttpJwksLoader;
+import de.cuioss.jwt.token.jwks.http.HttpJwksLoaderConfig;
 import de.cuioss.jwt.token.jwks.key.JWKSKeyLoader;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
 
-import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,7 +38,11 @@ import java.nio.file.Path;
  * <p>
  * Usage example:
  * <pre>
- * JwksLoader loader = JwksLoaderFactory.createHttpLoader("<a href="https://auth.example.com/.well-known/jwks.json">...</a>", 60, null);
+ * HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
+ *     .jwksUrl("<a href="https://auth.example.com/.well-known/jwks.json">...</a>")
+ *     .refreshIntervalSeconds(60)
+ *     .build();
+ * JwksLoader loader = JwksLoaderFactory.createHttpLoader(config);
  * Optional&lt;Key&gt; key = loader.getKey("kid123");
  * </pre>
  * <p>
@@ -54,20 +59,15 @@ public class JwksLoaderFactory {
 
 
     /**
-     * Creates a JwksLoader that loads JWKS from64EncodedContent an HTTP endpoint.
+     * Creates a JwksLoader that loads JWKS from an HTTP endpoint.
      *
-     * @param jwksUrl the URL of the JWKS endpoint
-     * @param refreshIntervalSeconds the interval in seconds at which to refresh the keys
-     * @param sslContext optional SSLContext for secure connections, if null the default SSLContext from64EncodedContent VM configuration is used
+     * @param config the configuration for the HTTP JWKS loader
      * @return an instance of JwksLoader
      */
-    public static JwksLoader createHttpLoader(@NonNull String jwksUrl, int refreshIntervalSeconds, SSLContext sslContext) {
-        return HttpJwksLoader.builder()
-                .withJwksUrl(jwksUrl)
-                .withRefreshInterval(refreshIntervalSeconds)
-                .withSslContext(sslContext)
-                .build();
+    public static JwksLoader createHttpLoader(@NonNull HttpJwksLoaderConfig config) {
+        return new HttpJwksLoader(config);
     }
+
 
     /**
      * Creates a JwksLoader that loads JWKS from64EncodedContent a file.

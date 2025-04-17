@@ -177,11 +177,11 @@ class TokenClaimValidatorEdgeCaseTest {
                     .issuer("test-issuer")
                     .expectedAudience(EXPECTED_AUDIENCE)
                     .expectedClientId(EXPECTED_CLIENT_ID)
-                    .jwksKeyLoader(new FailingJwksKeyLoader())
+                    .jwksLoader(new FailingJwksKeyLoader())
                     .build();
 
             // Create a TokenSignatureValidator with the failing JwksKeyLoader
-            var signatureValidator = new TokenSignatureValidator(issuerConfig.getJwksKeyLoader());
+            var signatureValidator = new TokenSignatureValidator(issuerConfig.getJwksLoader());
 
             // Create a valid token
             TokenContent validToken = createValidToken();

@@ -58,7 +58,11 @@ class JwksClientBenchmarkTest {
     @ModuleDispatcher
     void benchmarkKeyRetrieval(URIBuilder uriBuilder) {
         var jwksEndpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
-        var jwksLoader = JwksLoaderFactory.createHttpLoader(jwksEndpoint, REFRESH_INTERVAL_SECONDS, null);
+        var config = de.cuioss.jwt.token.jwks.http.HttpJwksLoaderConfig.builder()
+                .jwksUrl(jwksEndpoint)
+                .refreshIntervalSeconds(REFRESH_INTERVAL_SECONDS)
+                .build();
+        var jwksLoader = JwksLoaderFactory.createHttpLoader(config);
 
         // Warm up
         for (int i = 0; i < WARMUP_ITERATIONS; i++) {
