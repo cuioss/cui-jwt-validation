@@ -29,10 +29,8 @@ import de.cuioss.jwt.token.flow.TokenHeaderValidator;
 import de.cuioss.jwt.token.flow.TokenSignatureValidator;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
-import lombok.Builder;
 import lombok.NonNull;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -57,7 +55,7 @@ import java.util.function.Function;
  * // Create a JWKSKeyLoader with the JWKS content
  * String jwksContent = JWKSFactory.createDefaultJwks();
  * JWKSKeyLoader jwksKeyLoader = new JWKSKeyLoader(jwksContent);
- * 
+ *
  * // Create issuer config
  * IssuerConfig issuerConfig = IssuerConfig.builder()
  *         .issuer("https://example.com")
@@ -66,41 +64,37 @@ import java.util.function.Function;
  *         .jwksKeyLoader(jwksKeyLoader)
  *         .algorithmPreferences(new AlgorithmPreferences())
  *         .build();
- * 
- * // Create token factory
- * TokenFactory tokenFactory = TokenFactory.builder()
- *         .issuerConfig(issuerConfig)
- *         .config(TokenFactoryConfig.builder().build())
- *         .build();
- * 
+ *
+ * // Create token factory with a single issuer config
+ * TokenFactory tokenFactory = new TokenFactory(
+ *         TokenFactoryConfig.builder().build(),
+ *         issuerConfig);
+ *
  * // Alternatively, you can use multiple issuer configs
- * TokenFactory multiIssuerFactory = TokenFactory.builder()
- *         .issuerConfigs(List.of(issuerConfig1, issuerConfig2))
- *         .config(TokenFactoryConfig.builder().build())
- *         .build();
- * 
+ * TokenFactory multiIssuerFactory = new TokenFactory(
+ *         TokenFactoryConfig.builder().build(),
+ *         issuerConfig1, issuerConfig2);
+ *
  * // Create a refresh token
  * String refreshTokenString = "..."; // JWT token string
  * Optional&lt;RefreshTokenContent&gt; refreshToken = tokenFactory.createRefreshToken(refreshTokenString);
- * 
+ *
  * // Create an access token
  * String accessTokenString = "..."; // JWT token string
  * Optional&lt;AccessTokenContent&gt; accessToken = tokenFactory.createAccessToken(accessTokenString);
- * 
+ *
  * // Create an ID token
  * String idTokenString = "..."; // JWT token string
  * Optional&lt;IdTokenContent&gt; idToken = tokenFactory.createIdToken(idTokenString);
- * 
+ *
  * // Using custom token size limits
- * TokenFactory customFactory = TokenFactory.builder()
- *         .issuerConfigs(List.of(issuerConfig))
- *         .config(TokenFactoryConfig.builder()
- *                 .maxTokenSize(1024)
- *                 .maxPayloadSize(512)
- *                 .build())
+ * TokenFactoryConfig customConfig = TokenFactoryConfig.builder()
+ *         .maxTokenSize(1024)
+ *         .maxPayloadSize(512)
  *         .build();
+ * TokenFactory customFactory = new TokenFactory(customConfig, issuerConfig);
  * </pre>
- * 
+ *
  * @since 1.0
  */
 public class TokenFactory {
@@ -113,10 +107,9 @@ public class TokenFactory {
     /**
      * Creates a new TokenFactory with the given issuer configurations and optional factory configuration.
      *
-     * @param config optional configuration for the factory, if null, default configuration will be used
+     * @param config        optional configuration for the factory, if null, default configuration will be used
      * @param issuerConfigs varargs of issuer configurations, must not be null
      */
-    @Builder(builderClassName = "TokenFactoryBuilder")
     public TokenFactory(TokenFactoryConfig config, @NonNull IssuerConfig... issuerConfigs) {
         TokenFactoryConfig config1 = config != null ? config : TokenFactoryConfig.builder().build();
 
@@ -135,35 +128,6 @@ public class TokenFactory {
     }
 
     /**
-     * Creates a new TokenFactory with the given issuer configurations and optional factory configuration.
-     * This method is provided for backward compatibility with code that uses a Collection of IssuerConfig objects.
-     *
-     * @param issuerConfigs a collection of issuer configurations, must not be null
-     * @param config optional configuration for the factory, if null, default configuration will be used
-     * @return a new TokenFactory instance
-     */
-    public static TokenFactory fromCollection(@NonNull Collection<IssuerConfig> issuerConfigs, TokenFactoryConfig config) {
-        return new TokenFactory(config, issuerConfigs.toArray(new IssuerConfig[0]));
-    }
-
-    /**
-     * Custom builder class for TokenFactory.
-     */
-    public static class TokenFactoryBuilder {
-        /**
-         * Sets the issuer configurations from a collection.
-         * This method is provided for backward compatibility with code that uses a Collection of IssuerConfig objects.
-         *
-         * @param issuerConfigs a collection of issuer configurations, must not be null
-         * @return this builder instance
-         */
-        public TokenFactoryBuilder issuerConfigs(@NonNull Collection<IssuerConfig> issuerConfigs) {
-            this.issuerConfigs = issuerConfigs.toArray(new IssuerConfig[0]);
-            return this;
-        }
-    }
-
-    /**
      * Creates an access token from the given token string.
      *
      * @param tokenString The token string to parse, must not be null
@@ -172,8 +136,8 @@ public class TokenFactory {
     public Optional<AccessTokenContent> createAccessToken(@NonNull String tokenString) {
         LOGGER.debug("Creating access token");
         return processTokenPipeline(
-            tokenString,
-            decodedJwt -> new TokenBuilder().createAccessToken(decodedJwt)
+                tokenString,
+                decodedJwt -> new TokenBuilder().createAccessToken(decodedJwt)
         );
     }
 
@@ -186,8 +150,8 @@ public class TokenFactory {
     public Optional<IdTokenContent> createIdToken(@NonNull String tokenString) {
         LOGGER.debug("Creating ID token");
         return processTokenPipeline(
-            tokenString,
-            decodedJwt -> new TokenBuilder().createIdToken(decodedJwt)
+                tokenString,
+                decodedJwt -> new TokenBuilder().createIdToken(decodedJwt)
         );
     }
 
@@ -210,7 +174,7 @@ public class TokenFactory {
 
     /**
      * Processes a token through the validation pipeline.
-     * 
+     * <p>
      * This method implements an optimized validation pipeline with early termination
      * for common failure cases. The validation steps are ordered to fail fast:
      * 1. Basic token format validation (empty check, decoding)
@@ -219,17 +183,17 @@ public class TokenFactory {
      * 4. Signature validation
      * 5. Token building
      * 6. Claim validation
-     * 
+     * <p>
      * Validators are only created if needed, avoiding unnecessary object creation
      * for invalid tokens.
-     * 
-     * @param tokenString the token string to process
+     *
+     * @param tokenString  the token string to process
      * @param tokenBuilder function to build the token from the decoded JWT
-     * @param <T> the type of token to create
+     * @param <T>          the type of token to create
      * @return an Optional containing the validated token, or empty if validation fails
      */
     private <T extends TokenContent> Optional<T> processTokenPipeline(
-            String tokenString, 
+            String tokenString,
             Function<DecodedJwt, Optional<T>> tokenBuilder) {
 
         // 1. Basic token format validation - fail fast for empty tokens

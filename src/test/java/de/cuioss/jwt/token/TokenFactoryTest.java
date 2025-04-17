@@ -30,9 +30,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @EnableTestLogger
 @DisplayName("Tests TokenFactory functionality")
@@ -61,10 +62,8 @@ class TokenFactoryTest {
                 .build();
 
         // Create token factory
-        tokenFactory = TokenFactory.builder()
-                .issuerConfigs(List.of(issuerConfig))
-                .config(TokenFactoryConfig.builder().build())
-                .build();
+        TokenFactoryConfig config = TokenFactoryConfig.builder().build();
+        tokenFactory = new TokenFactory(config, issuerConfig);
     }
 
     @Nested
@@ -119,12 +118,10 @@ class TokenFactoryTest {
             String largeToken = "a".repeat(customMaxSize + 1);
 
             // Create TokenFactory with custom token size limits
-            var factory = TokenFactory.builder()
-                    .issuerConfigs(List.of(issuerConfig))
-                    .config(TokenFactoryConfig.builder()
-                            .maxTokenSize(customMaxSize)
-                            .build())
+            TokenFactoryConfig customConfig = TokenFactoryConfig.builder()
+                    .maxTokenSize(customMaxSize)
                     .build();
+            var factory = new TokenFactory(customConfig, issuerConfig);
 
             // Verify it rejects a token that exceeds the custom max size
             var parsedToken = factory.createAccessToken(largeToken);
@@ -136,12 +133,10 @@ class TokenFactoryTest {
         @DisplayName("Should respect custom payload size limits")
         void shouldRespectCustomPayloadSizeLimits() {
             // Create TokenFactory with custom payload size limits
-            var factory = TokenFactory.builder()
-                    .issuerConfigs(List.of(issuerConfig))
-                    .config(TokenFactoryConfig.builder()
-                            .maxPayloadSize(100)
-                            .build())
+            TokenFactoryConfig customConfig = TokenFactoryConfig.builder()
+                    .maxPayloadSize(100)
                     .build();
+            var factory = new TokenFactory(customConfig, issuerConfig);
 
             // Create a JWT with a large payload using io.jsonwebtoken
             String token = Jwts.builder().issuer(TestTokenProducer.ISSUER).subject("test-subject")

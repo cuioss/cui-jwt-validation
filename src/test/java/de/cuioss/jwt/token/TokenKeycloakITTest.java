@@ -109,9 +109,7 @@ public class TokenKeycloakITTest extends KeycloakITBase {
                 .build();
 
         // Create the token factory
-        factory = TokenFactory.builder()
-                .issuerConfigs(List.of(issuerConfig))
-                .build();
+        factory = new TokenFactory(null, issuerConfig);
     }
 
     private String requestToken(Map<String, String> parameter, String tokenType) {

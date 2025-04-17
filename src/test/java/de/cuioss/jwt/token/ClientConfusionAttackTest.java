@@ -27,7 +27,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -111,9 +110,7 @@ class ClientConfusionAttackTest {
                 ", expectedClientId=" + issuerConfig.getExpectedClientId());
 
         // Create a token factory with the issuer config
-        tokenFactory = TokenFactory.builder()
-                .issuerConfigs(List.of(issuerConfig))
-                .build();
+        tokenFactory = new TokenFactory(null, issuerConfig);
 
         // Verify the token is accepted
         Optional<IdTokenContent> result = tokenFactory.createIdToken(token);
@@ -135,9 +132,7 @@ class ClientConfusionAttackTest {
                 .build();
 
         // Create a token factory with the issuer config
-        tokenFactory = TokenFactory.builder()
-                .issuerConfigs(List.of(issuerConfig))
-                .build();
+        tokenFactory = new TokenFactory(null, issuerConfig);
 
         // Verify the token is rejected
         Optional<IdTokenContent> result = tokenFactory.createIdToken(token);
@@ -159,9 +154,7 @@ class ClientConfusionAttackTest {
                 .build();
 
         // Create a token factory with the issuer config
-        tokenFactory = TokenFactory.builder()
-                .issuerConfigs(List.of(issuerConfig))
-                .build();
+        tokenFactory = new TokenFactory(null, issuerConfig);
 
         // Verify the token is rejected
         Optional<IdTokenContent> result = tokenFactory.createIdToken(token);
@@ -216,9 +209,7 @@ class ClientConfusionAttackTest {
                 ", expectedClientId=" + issuerConfig.getExpectedClientId());
 
         // Create a token factory with the issuer config
-        tokenFactory = TokenFactory.builder()
-                .issuerConfigs(List.of(issuerConfig))
-                .build();
+        tokenFactory = new TokenFactory(null, issuerConfig);
 
         // Verify the token is accepted
         Optional<IdTokenContent> result = tokenFactory.createIdToken(token);
@@ -239,9 +230,7 @@ class ClientConfusionAttackTest {
                 .build();
 
         // Create a token factory with the issuer config
-        tokenFactory = TokenFactory.builder()
-                .issuerConfigs(List.of(issuerConfig))
-                .build();
+        tokenFactory = new TokenFactory(null, issuerConfig);
 
         // Verify the token is accepted
         Optional<IdTokenContent> result = tokenFactory.createIdToken(token);
@@ -262,9 +251,7 @@ class ClientConfusionAttackTest {
                 .build();
 
         // Create a token factory with the issuer config
-        tokenFactory = TokenFactory.builder()
-                .issuerConfigs(List.of(issuerConfig))
-                .build();
+        tokenFactory = new TokenFactory(null, issuerConfig);
 
         // Verify the token is rejected
         Optional<IdTokenContent> result = tokenFactory.createIdToken(token);
