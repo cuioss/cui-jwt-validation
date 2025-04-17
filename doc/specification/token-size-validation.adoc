@@ -55,9 +55,9 @@ Refer to the implementation and associated JavaDoc for detailed behavior.
 [source,java]
 ----
 // Create TokenFactory with default token size limits
-TokenFactory factory = TokenFactory.create(
-    issuerConfigs,
-    TokenFactoryConfig.builder().build());
+TokenFactory factory = new TokenFactory(
+    TokenFactoryConfig.builder().build(),
+    issuerConfigs);
 ----
 
 === Advanced Usage with Custom Token Size Limits
@@ -65,12 +65,12 @@ TokenFactory factory = TokenFactory.create(
 [source,java]
 ----
 // Create TokenFactory with custom token size limits
-TokenFactory factory = TokenFactory.create(
-    issuerConfigs,
+TokenFactory factory = new TokenFactory(
     TokenFactoryConfig.builder()
         .maxTokenSize(8 * 1024)  // 8KB
         .maxPayloadSize(4 * 1024)  // 4KB
-        .build());
+        .build(),
+    issuerConfigs);
 ----
 
 == Implementation Considerations

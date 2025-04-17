@@ -54,12 +54,6 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 
 *Rationale:* Performance benchmarks help identify regressions and validate optimizations.
 
-=== T3. Enhance Integration Testing
-[ ] *Priority:* Medium
-
-*Description:* Expand integration tests with additional identity providers beyond Keycloak.
-
-*Rationale:* Testing with multiple providers ensures compatibility in diverse environments.
 
 === T4. Analyze for duplicate unit-test
 [ ] *Priority:* Medium

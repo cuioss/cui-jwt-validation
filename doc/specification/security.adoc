@@ -75,12 +75,12 @@ The TokenFactoryConfig class allows customizing token size limits:
 
 [source,java]
 ----
-TokenFactory factory = TokenFactory.create(
-    issuerConfigs,
+TokenFactory factory = new TokenFactory(
     TokenFactoryConfig.builder()
         .maxTokenSize(8 * 1024)  // 8KB
         .maxPayloadSize(4 * 1024)  // 4KB
-        .build());
+        .build(),
+    issuerConfigs);
 ----
 
 Refer to the implementation and associated JavaDoc for detailed behavior.

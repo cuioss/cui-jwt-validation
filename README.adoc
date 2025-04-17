@@ -24,7 +24,9 @@ Key features include:
 * Multi-issuer support for handling tokens from different identity providers
 * Automatic JWKS (JSON Web Key Set) key management and rotation
 * Type-safe token parsing and validation
-* Role and scope-based authorization support
+* Scope-based authorization support
+* Protection against common JWT attacks
+* Configurable security settings
 * Tested compatibility with Keycloak as identity provider
 
 === Maven Coordinates
@@ -51,24 +53,17 @@ The link:src/main/java/de/cuioss/jwt/token/TokenFactory.java[TokenFactory] serve
 [source, java]
 ----
 // Create issuer configurations
-IssuerConfig issuer1Config = IssuerConfig.builder()
+IssuerConfig issuerConfig = IssuerConfig.builder()
         .issuer("https://issuer1.com")
-        .expectedAudience("client-id")
-        .expectedClientId("client-id")
-        .jwksKeyLoader(jwksKeyLoader1)
-        .build();
-
-IssuerConfig issuer2Config = IssuerConfig.builder()
-        .issuer("https://issuer2.com")
-        .expectedAudience("client-id")
-        .expectedClientId("client-id")
-        .jwksKeyLoader(jwksKeyLoader2)
+        .expectedAudience("client-id") // Can add multiple audiences with multiple calls
+        .expectedClientId("client-id") // Can add multiple client IDs with multiple calls
+        .jwksLoader(jwksLoader1)
         .build();
 
 // Create a factory with multiple issuer configurations
-TokenFactory factory = TokenFactory.create(
-        List.of(issuer1Config, issuer2Config),
-        TokenFactoryConfig.builder().build());
+TokenFactory factory = new TokenFactory(
+        TokenFactoryConfig.builder().build(),
+        issuerConfig);
 
 // Create and validate tokens
 Optional<AccessTokenContent> accessToken = factory.createAccessToken(tokenString);
@@ -85,13 +80,6 @@ The module uses a pipeline approach for token validation:
 * link:src/main/java/de/cuioss/jwt/token/flow/TokenBuilder.java[TokenBuilder]: Creates token content objects
 * link:src/main/java/de/cuioss/jwt/token/flow/TokenClaimValidator.java[TokenClaimValidator]: Validates token claims (expiration, audience, etc.)
 
-This pipeline approach provides several benefits:
-
-* Better separation of concerns
-* More flexible validation process
-* Improved error handling and reporting
-* Enhanced security through comprehensive validation
-
 === Multi-Issuer Support
 
 The module provides robust support for multi-issuer environments through:
@@ -102,25 +90,36 @@ The module provides robust support for multi-issuer environments through:
 
 [source, java]
 ----
-// Create JWKS key loaders for different issuers
-JWKSKeyLoader issuer1KeyLoader = new JWKSKeyLoader(jwksContent1);
-JWKSKeyLoader issuer2KeyLoader = new JWKSKeyLoader(jwksContent2);
+// Create JWKS loaders for different issuers
+// Option 1: HTTP-based JWKS loader with automatic key rotation
+HttpJwksLoaderConfig httpConfig = HttpJwksLoaderConfig.builder()
+        .jwksUrl("https://issuer1.com/.well-known/jwks.json")
+        .refreshIntervalSeconds(60) // Refresh keys every 60 seconds
+        .build();
+JwksLoader httpJwksLoader = JwksLoaderFactory.createHttpLoader(httpConfig);
+
+// Option 2: File-based JWKS loader
+JwksLoader fileJwksLoader = JwksLoaderFactory.createFileLoader("/path/to/jwks.json");
+
+// Option 3: In-memory JWKS loader
+String jwksContent = "{\"keys\":[{\"kty\":\"RSA\",\"kid\":\"key-id\",\"use\":\"sig\",\"alg\":\"RS256\",\"n\":\"...\",\"e\":\"...\"}]}";
+JwksLoader inMemoryJwksLoader = JwksLoaderFactory.createInMemoryLoader(jwksContent);
 
 // Create issuer configurations
 IssuerConfig issuer1Config = IssuerConfig.builder()
         .issuer("https://issuer1.com")
-        .jwksKeyLoader(issuer1KeyLoader)
+        .jwksLoader(httpJwksLoader)
         .build();
 
 IssuerConfig issuer2Config = IssuerConfig.builder()
         .issuer("https://issuer2.com")
-        .jwksKeyLoader(issuer2KeyLoader)
+        .jwksLoader(fileJwksLoader)
         .build();
 
 // Create a factory supporting both issuers
-TokenFactory factory = TokenFactory.create(
-        List.of(issuer1Config, issuer2Config),
-        TokenFactoryConfig.builder().build());
+TokenFactory factory = new TokenFactory(
+        TokenFactoryConfig.builder().build(),
+        issuer1Config, issuer2Config);
 ----
 
 == Token Architecture and Types
@@ -132,14 +131,6 @@ The module uses a flexible architecture based on inheritance and composition:
 * link:src/main/java/de/cuioss/jwt/token/domain/token/TokenContent.java[TokenContent]: Core interface defining JWT token functionality
 * link:src/main/java/de/cuioss/jwt/token/domain/token/BaseTokenContent.java[BaseTokenContent]: Abstract base class implementing common token functionality
 * link:src/main/java/de/cuioss/jwt/token/domain/token/MinimalTokenContent.java[MinimalTokenContent]: Minimal interface for tokens without claims
-
-This architecture provides several benefits:
-
-* Better separation of concerns
-* More flexible composition
-* Reduced code duplication
-* Easier maintenance and extension
-* Type-safe claim access
 
 === Token Types
 
@@ -161,28 +152,92 @@ The module supports three token types, each with specific functionality:
 
 The project includes comprehensive documentation:
 
+=== Core Documentation
+
 * link:doc/Requirements.adoc[Requirements] - Functional and non-functional requirements
 * link:doc/Specification.adoc[Specification] - Technical specification and architecture
 * link:doc/Threat-Model.adoc[Threat Model] - Security threat analysis and mitigations
+* link:doc/Implementation-Status.adoc[Implementation Status] - Current implementation status
+
+=== Technical Documentation
+
 * link:doc/specification/technical-components.adoc[Technical Components] - Detailed component specifications
 * link:doc/specification/security.adoc[Security Specification] - Security implementation details
+* link:doc/specification/token-size-validation.adoc[Token Size Validation] - Token size validation details
+* link:doc/specification/token-decryption.adoc[Token Decryption] - Token decryption implementation
+* link:doc/specification/testing.adoc[Testing] - Testing approach and methodology
+
+=== Developer Documentation
+
 * link:doc/LogMessages.adoc[Log Messages] - Logging documentation
+* link:doc/generator-usage.adoc[Generator Usage] - Usage of code generators for testing
 
 == Security Considerations
+
+=== Security Features
 
 * All token validation is performed using cryptographic signatures via Bouncy Castle (bcprov-jdk18on)
 * Automatic key rotation prevents stale key usage
 * Token size limits prevent memory exhaustion attacks
 * Safe Base64 decoding practices
 * TLS support for secure key retrieval
+* Protection against client confusion attacks
 * Comprehensive threat model with STRIDE analysis
+
+=== TokenFactoryConfig Security Settings
+
+The `TokenFactoryConfig` class provides important security settings for token processing:
+
+[source, java]
+----
+// Create a TokenFactory with custom security settings
+TokenFactoryConfig config = TokenFactoryConfig.builder()
+        .maxTokenSize(4 * 1024)        // Limit token size to 4KB (default is 8KB)
+        .maxPayloadSize(4 * 1024)      // Limit payload size to 4KB (default is 8KB)
+        .maxStringSize(2 * 1024)       // Limit JSON string size to 2KB (default is 4KB)
+        .maxArraySize(32)              // Limit JSON array size to 32 elements (default is 64)
+        .maxDepth(5)                   // Limit JSON parsing depth to 5 levels (default is 10)
+        .logWarningsOnDecodeFailure(true) // Log warnings when token decoding fails
+        .build();
+
+TokenFactory factory = new TokenFactory(
+        config,
+        issuerConfig);
+----
+
+These security settings help prevent various attacks:
+
+* `maxTokenSize`: Prevents memory exhaustion attacks from oversized tokens
+* `maxPayloadSize`: Prevents memory exhaustion attacks from oversized payloads
+* `maxStringSize`, `maxArraySize`, `maxDepth`: Prevent JSON parsing attacks
+
+For more details on security considerations, see the link:doc/Threat-Model.adoc[Threat Model] and link:doc/specification/security.adoc[Security Specification].
 
 == Best Practices
 
-1. Always use `TokenFactory` as the main entry point
-2. Configure IssuerConfig with appropriate validation settings
-3. Use TokenFactoryConfig to customize token size limits
-4. Use TLS for JWKS endpoints in production
-5. Validate token scopes and roles before granting access
-6. Handle token expiration appropriately
+=== General Recommendations
+
+1. Always use `TokenFactory` as the main entry point for all token operations
+2. Configure `IssuerConfig` with appropriate validation settings for each issuer
+3. Use `TokenFactoryConfig` to customize token size limits and security settings
+4. Use TLS for JWKS endpoints in production environments
+5. Validate token scopes and roles before granting access to protected resources
+6. Handle token expiration appropriately with proper error messages
 7. Configure expected audience and client ID for enhanced security
+
+=== Security Recommendations
+
+1. Use HTTP-based JWKS loaders with automatic key rotation in production
+2. Set appropriate refresh intervals for JWKS key rotation (e.g., 60 seconds)
+3. Configure token size limits to prevent memory exhaustion attacks
+4. Use secure TLS versions (TLS 1.2+) for JWKS endpoint communication
+5. Implement proper error handling for token validation failures
+6. Don't store sensitive information in tokens
+7. Validate all token claims, especially issuer, audience, and expiration (implicitly done)
+
+=== Performance Recommendations
+
+1. Use appropriate cache settings for JWKS keys to reduce network requests
+2. Configure adaptive window size for token validation to handle clock skew
+3. Use background refresh for JWKS keys to avoid blocking token validation
+4. Consider token size when designing your authentication architecture
