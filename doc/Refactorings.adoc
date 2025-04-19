@@ -48,21 +48,6 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 == Testing Improvements
 
 
-
-=== T4. Analyze for duplicate unit-test
-[x] *Priority:* Medium
-
-*Description:* Analyze all unit-test for duplicate tests. For each found merge them. But this must never result in a decrease of coverage.
-
-*Rationale:* Eliminating duplicate tests improves maintainability and reduces test execution time while ensuring the same level of quality assurance.
-
-=== T5. Unit-Test: Incorporate Generators
-[ ] *Priority:* Medium
-
-*Description:* Incorporate Generators where sensible. de.cuioss.jwt.token.test.generator provides a number of domain specific generators. Use de.cuioss.test.generator.Generators for other types. Annotate each unit-test using a generator with @EnableGeneratorController for enabling later reproducibility.
-
-*Rationale:* Using generators improves test quality by providing a wider range of test data and makes tests more maintainable and reproducible.
-
 == Dependency Management
 
 === D1. Update to Latest Stable Dependencies

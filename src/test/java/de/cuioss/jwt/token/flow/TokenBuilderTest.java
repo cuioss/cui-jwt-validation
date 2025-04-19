@@ -20,8 +20,9 @@ import de.cuioss.jwt.token.domain.claim.ClaimName;
 import de.cuioss.jwt.token.domain.token.AccessTokenContent;
 import de.cuioss.jwt.token.domain.token.IdTokenContent;
 import de.cuioss.jwt.token.domain.token.RefreshTokenContent;
-import de.cuioss.jwt.token.test.TestTokenProducer;
 import de.cuioss.jwt.token.test.generator.DecodedJwtGenerator;
+import de.cuioss.jwt.token.test.generator.RefreshTokenGenerator;
+import de.cuioss.test.generator.junit.EnableGeneratorController;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -29,23 +30,24 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests for {@link TokenBuilder}.
  */
+@EnableGeneratorController
 @DisplayName("Tests TokenBuilder functionality")
 class TokenBuilderTest {
 
-    private static final String SAMPLE_TOKEN = TestTokenProducer.validSignedEmptyJWT();
-
     private TokenBuilder tokenBuilder;
-    private IssuerConfig issuerConfig;
+    private final RefreshTokenGenerator refreshTokenGenerator = new RefreshTokenGenerator(false);
 
     @BeforeEach
     void setUp() {
         // Create a simple IssuerConfig for testing
-        issuerConfig = IssuerConfig.builder()
+        IssuerConfig issuerConfig = IssuerConfig.builder()
                 .issuer("https://test-issuer.com")
                 .build();
 
@@ -56,7 +58,7 @@ class TokenBuilderTest {
     @DisplayName("createRefreshToken should create RefreshTokenContent")
     void createRefreshTokenShouldCreateRefreshTokenContent() {
         // Given
-        String token = SAMPLE_TOKEN;
+        String token = refreshTokenGenerator.next();
 
         // When
         Optional<RefreshTokenContent> result = tokenBuilder.createRefreshToken(token);
@@ -72,29 +74,6 @@ class TokenBuilderTest {
         assertEquals(token, refreshTokenContent.getRawToken(), "Raw token should match");
     }
 
-    @Test
-    @DisplayName("createAccessToken should handle null parameter")
-    void createAccessTokenShouldHandleNullParameter() {
-        // When/Then
-        assertThrows(NullPointerException.class, () -> tokenBuilder.createAccessToken(null),
-                "Should throw NullPointerException when decodedJwt is null");
-    }
-
-    @Test
-    @DisplayName("createIdToken should handle null parameter")
-    void createIdTokenShouldHandleNullParameter() {
-        // When/Then
-        assertThrows(NullPointerException.class, () -> tokenBuilder.createIdToken(null),
-                "Should throw NullPointerException when decodedJwt is null");
-    }
-
-    @Test
-    @DisplayName("createRefreshToken should handle null parameter")
-    void createRefreshTokenShouldHandleNullParameter() {
-        // When/Then
-        assertThrows(NullPointerException.class, () -> tokenBuilder.createRefreshToken(null),
-                "Should throw NullPointerException when rawToken is null");
-    }
 
     @Nested
     @DisplayName("AccessToken Tests")

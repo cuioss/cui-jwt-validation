@@ -20,6 +20,7 @@ import de.cuioss.jwt.token.TokenType;
 import de.cuioss.jwt.token.domain.token.TokenContent;
 import de.cuioss.jwt.token.test.generator.InvalidTokenContentGenerator;
 import de.cuioss.jwt.token.test.generator.ValidTokenContentGenerator;
+import de.cuioss.test.generator.junit.EnableGeneratorController;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
@@ -35,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Tests for {@link TokenClaimValidator}.
  */
 @EnableTestLogger
+@EnableGeneratorController
 @DisplayName("Tests TokenClaimValidator functionality")
 class TokenClaimValidatorTest {
 

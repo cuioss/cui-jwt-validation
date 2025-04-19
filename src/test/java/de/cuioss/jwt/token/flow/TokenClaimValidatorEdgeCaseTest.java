@@ -22,8 +22,9 @@ import de.cuioss.jwt.token.domain.claim.ClaimValue;
 import de.cuioss.jwt.token.domain.token.TokenContent;
 import de.cuioss.jwt.token.jwks.key.JWKSKeyLoader;
 import de.cuioss.jwt.token.jwks.key.KeyInfo;
-import de.cuioss.jwt.token.test.generator.ClaimControlParameter;
 import de.cuioss.jwt.token.test.generator.TokenContentImpl;
+import de.cuioss.jwt.token.test.generator.ValidTokenContentGenerator;
+import de.cuioss.test.generator.junit.EnableGeneratorController;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
@@ -43,11 +44,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * and network failures.
  */
 @EnableTestLogger
+@EnableGeneratorController
 @DisplayName("Tests TokenClaimValidator edge cases")
 class TokenClaimValidatorEdgeCaseTest {
 
     private static final String EXPECTED_AUDIENCE = "test-audience";
     private static final String EXPECTED_CLIENT_ID = "test-client-id";
+
+    private final ValidTokenContentGenerator validTokenGenerator = new ValidTokenContentGenerator();
 
     @Nested
     @DisplayName("Token Expiration Edge Cases")
@@ -239,9 +243,8 @@ class TokenClaimValidatorEdgeCaseTest {
      * @return a valid TokenContent
      */
     private TokenContent createValidToken() {
-        // Create a TokenContentImpl with default valid settings
-        return new TokenContentImpl(TokenType.ACCESS_TOKEN,
-                ClaimControlParameter.defaultForTokenType(TokenType.ACCESS_TOKEN));
+        // Use the ValidTokenContentGenerator to create a valid token
+        return validTokenGenerator.next();
     }
 
     /**
