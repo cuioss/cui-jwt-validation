@@ -34,9 +34,12 @@ public class RefreshTokenGenerator implements TypedGenerator<String> {
 
     private static final String DEFAULT_KEY_ID = "default-key-id";
     private static final String ALTERNATIVE_KEY_ID = "test-key-id";
+    public static final String DEFAULT_CLIENT_ID = "test-client";
+    public static final String ALTERNATIVE_CLIENT_ID = "alternative-client";
 
     private final boolean useAlternativeMode;
     private final ScopeGenerator scopeGenerator;
+    private final String clientId;
 
     /**
      * Constructor with default mode (false = default mode, true = alternative mode).
@@ -44,8 +47,19 @@ public class RefreshTokenGenerator implements TypedGenerator<String> {
      * @param useAlternativeMode whether to use alternative mode for signing
      */
     public RefreshTokenGenerator(boolean useAlternativeMode) {
+        this(useAlternativeMode, useAlternativeMode ? ALTERNATIVE_CLIENT_ID : DEFAULT_CLIENT_ID);
+    }
+
+    /**
+     * Constructor with default mode and specific client ID.
+     *
+     * @param useAlternativeMode whether to use alternative mode for signing
+     * @param clientId           the client ID to include in the azp claim
+     */
+    public RefreshTokenGenerator(boolean useAlternativeMode, String clientId) {
         this.useAlternativeMode = useAlternativeMode;
         this.scopeGenerator = new ScopeGenerator();
+        this.clientId = clientId;
     }
 
     @Override
@@ -60,6 +74,13 @@ public class RefreshTokenGenerator implements TypedGenerator<String> {
                     .claim("scope", scope)
                     .claim("typ", "Refresh")
                     .header().add("kid", useAlternativeMode ? ALTERNATIVE_KEY_ID : DEFAULT_KEY_ID).and();
+
+            // Only add the azp claim if clientId is not null (for testing missing azp claim)
+            if (clientId != null) {
+                builder.claim("azp", clientId);
+                // Add audience as a direct claim
+                builder.claim("aud", clientId);
+            }
 
             // Sign with default private key (we don't have an alternative private key)
             // The "alternative" mode is indicated by the key ID in the header

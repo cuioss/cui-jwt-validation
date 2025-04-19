@@ -66,7 +66,7 @@ class JwksCacheManager {
      * @param cacheLoader function to load a JWKSKeyLoader when cache misses
      */
     JwksCacheManager(@NonNull HttpJwksLoaderConfig config,
-                     @NonNull Function<String, JWKSKeyLoader> cacheLoader) {
+            @NonNull Function<String, JWKSKeyLoader> cacheLoader) {
         this.config = config;
         this.lastValidResult = null;
         this.accessCount = new AtomicInteger(0);

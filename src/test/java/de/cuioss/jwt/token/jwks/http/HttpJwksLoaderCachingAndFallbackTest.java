@@ -33,8 +33,8 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests the enhancements made to HttpJwksLoader:
@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * - Content-based caching
  * - Fallback mechanisms
  */
-@EnableTestLogger(debug = {de.cuioss.jwt.token.jwks.http.HttpJwksLoader.class, JWKSKeyLoader.class})
+@EnableTestLogger(debug = {HttpJwksLoader.class, JWKSKeyLoader.class})
 @DisplayName("Tests HttpJwksLoader enhancements")
 @EnableMockWebServer
 class HttpJwksLoaderCachingAndFallbackTest {
@@ -164,7 +164,7 @@ class HttpJwksLoaderCachingAndFallbackTest {
             // The key should still be available
             assertTrue(refreshedKeyInfo.isPresent(), "Refreshed key info should be present");
             // Verify that a new request was made to the server
-            assertTrue(moduleDispatcher.getCallCounter() > initialCallCount, 
+            assertTrue(moduleDispatcher.getCallCounter() > initialCallCount,
                     "A new request should have been made to the server");
         }
     }

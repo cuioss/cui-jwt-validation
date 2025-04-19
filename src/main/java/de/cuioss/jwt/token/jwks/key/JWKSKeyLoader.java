@@ -15,8 +15,8 @@
  */
 package de.cuioss.jwt.token.jwks.key;
 
-import de.cuioss.jwt.token.jwks.http.HttpJwksLoader;
 import de.cuioss.jwt.token.jwks.JwksLoader;
+import de.cuioss.jwt.token.jwks.http.HttpJwksLoader;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
 import jakarta.json.Json;

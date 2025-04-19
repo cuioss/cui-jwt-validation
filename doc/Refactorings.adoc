@@ -37,12 +37,6 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 
 *Rationale:* Staying current with cryptographic standards is essential for long-term security.
 
-=== S3. Implement Rate Limiting for Token Validation
-[ ] *Priority:* Medium
-
-*Description:* Add rate limiting capabilities to prevent denial-of-service attacks through excessive token validation requests.
-
-*Rationale:* Rate limiting is a standard security practice to prevent resource exhaustion.
 
 == Testing Improvements
 
@@ -53,6 +47,14 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 *Description:* Implement performance benchmarks to measure and track token validation performance over time. Use de.cuioss.jwt.token.test.util.PerformanceStatistics therfore. see de.cuioss.jwt.token.jwks.http.HttpJwksLoaderPerformanceTest for usage example
 
 *Rationale:* Performance benchmarks help identify regressions and validate optimizations.
+
+
+=== T3. Implement TokenFactoryPerformanceTest
+[x] *Priority:* Medium
+
+*Description:* Create a performance test for the TokenFactory class to verify token parsing and validation performance. The test should measure the performance of creating access tokens, ID tokens, and refresh tokens under concurrent load. Use de.cuioss.jwt.token.test.util.PerformanceStatistics for tracking performance metrics, similar to HttpJwksLoaderPerformanceTest.
+
+*Rationale:* Performance testing of the TokenFactory is essential to ensure it meets the performance requirements specified in CUI-JWT-9, particularly token parsing performance (at least 1000 tokens per second) and token validation performance (at least 500 tokens per second).
 
 
 === T4. Analyze for duplicate unit-test

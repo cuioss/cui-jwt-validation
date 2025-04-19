@@ -40,8 +40,6 @@ import static de.cuioss.jwt.token.domain.claim.ClaimName.*;
  *   <li>{@link #UNKNOWN}: Fallback type for unrecognized or missing type claims</li>
  * </ul>
  * <p>
- * Note: The type claim implementation is specific to Keycloak and uses the "typ" claim
- * which is not part of the standard OAuth2/OpenID Connect specifications.
  *
  * @author Oliver Wolff
  */

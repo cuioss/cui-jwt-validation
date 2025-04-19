@@ -18,11 +18,11 @@ package de.cuioss.jwt.token.jwks.http;
 import de.cuioss.jwt.token.security.SecureSSLContextProvider;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.Builder;
-import lombok.Getter;
 import lombok.NonNull;
 
 import javax.net.ssl.SSLContext;
 import java.net.URI;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
@@ -98,7 +98,7 @@ public class HttpJwksLoaderConfig {
      *
      * @return the JWKS URI
      */
-    public URI getJwksUri() {
+    public @NonNull URI getJwksUri() {
         return jwksUri;
     }
 
@@ -116,7 +116,7 @@ public class HttpJwksLoaderConfig {
      *
      * @return the SSLContext
      */
-    public SSLContext getSslContext() {
+    public @NonNull SSLContext getSslContext() {
         return sslContext;
     }
 
@@ -165,7 +165,7 @@ public class HttpJwksLoaderConfig {
      */
     public ScheduledExecutorService getScheduledExecutorService() {
         if (scheduledExecutorService == null && refreshIntervalSeconds > 0) {
-            return java.util.concurrent.Executors.newScheduledThreadPool(1);
+            return Executors.newScheduledThreadPool(1);
         }
         return scheduledExecutorService;
     }
@@ -371,11 +371,11 @@ public class HttpJwksLoaderConfig {
             int actualBackgroundRefreshPercentage = backgroundRefreshPercentage != null ?
                     backgroundRefreshPercentage : DEFAULT_BACKGROUND_REFRESH_PERCENTAGE;
 
-            return new int[] {
-                actualMaxCacheSize,
-                actualAdaptiveWindowSize,
-                actualRequestTimeoutSeconds,
-                actualBackgroundRefreshPercentage
+            return new int[]{
+                    actualMaxCacheSize,
+                    actualAdaptiveWindowSize,
+                    actualRequestTimeoutSeconds,
+                    actualBackgroundRefreshPercentage
             };
         }
     }

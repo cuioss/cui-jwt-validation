@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.token.jwks;
 
+import de.cuioss.jwt.token.jwks.http.HttpJwksLoaderConfig;
 import de.cuioss.jwt.token.jwks.key.KeyInfo;
 import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.jwt.token.test.dispatcher.JwksResolveDispatcher;
@@ -58,7 +59,7 @@ class JwksClientBenchmarkTest {
     @ModuleDispatcher
     void benchmarkKeyRetrieval(URIBuilder uriBuilder) {
         var jwksEndpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
-        var config = de.cuioss.jwt.token.jwks.http.HttpJwksLoaderConfig.builder()
+        var config = HttpJwksLoaderConfig.builder()
                 .jwksUrl(jwksEndpoint)
                 .refreshIntervalSeconds(REFRESH_INTERVAL_SECONDS)
                 .build();

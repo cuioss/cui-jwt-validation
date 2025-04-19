@@ -24,13 +24,12 @@ import javax.net.ssl.SSLContext;
 import java.net.URI;
 import java.security.NoSuchAlgorithmException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 @EnableTestLogger
 @DisplayName("Tests HttpJwksLoaderConfig")
-@SuppressWarnings("java:S5778") // owolff: Suppressing because for a builder this is not a problem
+@SuppressWarnings("java:S5778")
+// owolff: Suppressing because for a builder this is not a problem
 class HttpJwksLoaderConfigTest {
 
     private static final String VALID_URL = "https://example.com/.well-known/jwks.json";
