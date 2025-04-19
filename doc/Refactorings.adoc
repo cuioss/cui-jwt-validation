@@ -18,6 +18,13 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 
 == Code Structure and Design
 
+=== C1. Optimize Builder Pattern Usage
+[ ] *Priority:* Medium
+
+*Description:* Avoid excessive usage of Builder-Pattern. Builder-pattern should only be used, if there are more than two parameters. Otherwise only use a constructor. Review all types and refactor accordingly. If both are present ensure, that either it is builder-only, by making the constructor private. Or remove the builder, if there are less than three parameters.
+
+*Rationale:* Optimizing the use of the Builder pattern improves code readability and maintainability by using the appropriate construction pattern based on the complexity of the object creation.
+
 
 == Performance Improvements
 
@@ -43,7 +50,7 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 
 
 === T4. Analyze for duplicate unit-test
-[ ] *Priority:* Medium
+[x] *Priority:* Medium
 
 *Description:* Analyze all unit-test for duplicate tests. For each found merge them. But this must never result in a decrease of coverage.
 
@@ -108,13 +115,6 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 [ ] *Priority:* High
 
 *Description:* Introduce a new parameter object that provides counters for relevant security events. It should be structured for counting only and not duplicate logging. The counter should be kept within TokenFactory and accessible from outside via an API. It should be passed to each relevant flow element to report corresponding events. The counter must provide a reset method and be implemented in a highly concurrent way. All unit tests must verify the corresponding event counts. Use the same numbering/naming scheme as in JWTTokenLogMessages. The implementation should be structured to simplify later integration with micrometer but should not create any dependency on it at this time.
-After implementing, ensure all relevant specificaitons are updated accordingly.
+After implementing, ensure all relevant specifications are updated accordingly.
 
 *Rationale:* Tracking security events provides valuable metrics for monitoring and auditing the system's security posture, enabling better detection of potential security issues and anomalies.
-
-=== F4. Support for Custom Claim Mappers
-[x] *Priority:* Medium
-
-*Description:* Implement the capability of adding additional de.cuioss.jwt.token.domain.claim.mapper.ClaimMapper. If they are configured they take precedence over the existing ones. They are to be configured / transported using IssuerConfig.
-
-*Rationale:* Custom claim mappers allow for more flexible handling of JWT claims, especially for non-standard claims like "role" that may be present in tokens from specific identity providers.

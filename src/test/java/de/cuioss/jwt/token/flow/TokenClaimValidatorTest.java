@@ -17,8 +17,6 @@ package de.cuioss.jwt.token.flow;
 
 import de.cuioss.jwt.token.JWTTokenLogMessages;
 import de.cuioss.jwt.token.TokenType;
-import de.cuioss.jwt.token.domain.claim.ClaimName;
-import de.cuioss.jwt.token.domain.claim.ClaimValue;
 import de.cuioss.jwt.token.domain.token.TokenContent;
 import de.cuioss.jwt.token.test.generator.InvalidTokenContentGenerator;
 import de.cuioss.jwt.token.test.generator.ValidTokenContentGenerator;
@@ -29,9 +27,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.time.OffsetDateTime;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -301,126 +296,9 @@ class TokenClaimValidatorTest {
         }
     }
 
-    @Nested
-    @DisplayName("Not Before Validation Tests")
-    class NotBeforeValidationTests {
-        @Test
-        @DisplayName("Should validate token with valid not before time")
-        void shouldValidateTokenWithValidNotBeforeTime() {
-            // Given a validator
-            var issuerConfig = IssuerConfig.builder()
-                    .issuer("test-issuer")
-                    .expectedAudience(EXPECTED_AUDIENCE)
-                    .expectedClientId(EXPECTED_CLIENT_ID)
-                    .build();
-            var validator = new TokenClaimValidator(issuerConfig);
+    // Not Before Validation Tests have been moved to TokenClaimValidatorEdgeCaseTest
+    // to avoid duplication and provide more comprehensive edge case testing
 
-            // When validating a token with a valid not before time
-            // Note: ValidTokenContentGenerator creates tokens with valid not before time
-            TokenContent tokenContent = new ValidTokenContentGenerator().next();
-            var result = validator.validate(tokenContent);
-
-            // Then the validation should pass
-            assertTrue(result.isPresent(), "Token should be valid with valid not before time");
-        }
-
-        @Test
-        @DisplayName("Should fail validation for token with far future not before time")
-        void shouldFailValidationForTokenWithFutureNotBeforeTime() {
-            // Given a validator
-            var issuerConfig = IssuerConfig.builder()
-                    .issuer("test-issuer")
-                    .expectedAudience(EXPECTED_AUDIENCE)
-                    .expectedClientId(EXPECTED_CLIENT_ID)
-                    .build();
-            var validator = new TokenClaimValidator(issuerConfig);
-
-            // When validating a token with a far future not before time
-            TokenContent tokenWithFutureNotBefore = new InvalidTokenContentGenerator()
-                    .next();
-
-            // Add a not before time that is far in the future (beyond the allowed clock skew)
-            Map<String, ClaimValue> claims = new HashMap<>(tokenWithFutureNotBefore.getClaims());
-            OffsetDateTime futureTime = OffsetDateTime.now().plusMinutes(5); // 5 minutes in the future
-            claims.put(ClaimName.NOT_BEFORE.getName(), ClaimValue.forDateTime(
-                    String.valueOf(futureTime.toEpochSecond()), futureTime));
-
-            // Create a custom TokenContent with the future not before time
-            TokenContent tokenWithFarFutureNotBeforeTime = new TokenContent() {
-                @Override
-                public String getRawToken() {
-                    return tokenWithFutureNotBefore.getRawToken();
-                }
-
-                @Override
-                public TokenType getTokenType() {
-                    return tokenWithFutureNotBefore.getTokenType();
-                }
-
-                @Override
-                public Map<String, ClaimValue> getClaims() {
-                    return claims;
-                }
-            };
-
-            // Validate the token
-            var result = validator.validate(tokenWithFarFutureNotBeforeTime);
-
-            // Then the validation should fail
-            assertTrue(result.isEmpty(), "Token should be invalid with far future not before time");
-
-            // Verify that the appropriate warning is logged
-            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN,
-                    JWTTokenLogMessages.WARN.TOKEN_NBF_FUTURE.resolveIdentifierString());
-        }
-    }
-
-    @Nested
-    @DisplayName("Expiration Validation Tests")
-    class ExpirationValidationTests {
-        @Test
-        @DisplayName("Should validate token that is not expired")
-        void shouldValidateTokenThatIsNotExpired() {
-            // Given a validator
-            var issuerConfig = IssuerConfig.builder()
-                    .issuer("test-issuer")
-                    .expectedAudience(EXPECTED_AUDIENCE)
-                    .expectedClientId(EXPECTED_CLIENT_ID)
-                    .build();
-            var validator = new TokenClaimValidator(issuerConfig);
-
-            // When validating a token that is not expired
-            // Note: ValidTokenContentGenerator creates tokens that are not expired by default
-            TokenContent tokenContent = new ValidTokenContentGenerator().next();
-            var result = validator.validate(tokenContent);
-
-            // Then the validation should pass
-            assertTrue(result.isPresent(), "Token should be valid when not expired");
-        }
-
-        @Test
-        @DisplayName("Should fail validation for expired token")
-        void shouldFailValidationForExpiredToken() {
-            // Given a validator
-            var issuerConfig = IssuerConfig.builder()
-                    .issuer("test-issuer")
-                    .expectedAudience(EXPECTED_AUDIENCE)
-                    .expectedClientId(EXPECTED_CLIENT_ID)
-                    .build();
-            var validator = new TokenClaimValidator(issuerConfig);
-
-            // When validating an expired token
-            // Create a token that has already expired
-            TokenContent tokenContent = new InvalidTokenContentGenerator()
-                    .withExpiredToken()
-                    .next();
-            var result = validator.validate(tokenContent);
-
-            // Then the validation should fail
-            assertTrue(result.isEmpty(), "Token should be invalid when expired");
-
-            // Verify that the appropriate warning is logged
-            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, JWTTokenLogMessages.WARN.TOKEN_EXPIRED.resolveIdentifierString());
-        }
-    }
+    // Expiration Validation Tests have been moved to TokenClaimValidatorEdgeCaseTest
+    // to avoid duplication and provide more comprehensive edge case testing
 }
