@@ -16,12 +16,13 @@
 package de.cuioss.jwt.token.flow;
 
 import de.cuioss.jwt.token.JWTTokenLogMessages;
-import de.cuioss.jwt.token.TokenType;
 import de.cuioss.jwt.token.domain.claim.ClaimName;
 import de.cuioss.jwt.token.domain.claim.ClaimValue;
 import de.cuioss.jwt.token.domain.token.TokenContent;
 import de.cuioss.jwt.token.jwks.key.JWKSKeyLoader;
 import de.cuioss.jwt.token.jwks.key.KeyInfo;
+import de.cuioss.jwt.token.security.SecurityEventCounter;
+import de.cuioss.jwt.token.test.generator.ClaimControlParameter;
 import de.cuioss.jwt.token.test.generator.TokenContentImpl;
 import de.cuioss.jwt.token.test.generator.ValidTokenContentGenerator;
 import de.cuioss.test.generator.junit.EnableGeneratorController;
@@ -52,6 +53,12 @@ class TokenClaimValidatorEdgeCaseTest {
     private static final String EXPECTED_CLIENT_ID = "test-client-id";
 
     private final ValidTokenContentGenerator validTokenGenerator = new ValidTokenContentGenerator();
+    private final SecurityEventCounter securityEventCounter = new SecurityEventCounter();
+
+    // Helper method to create a TokenClaimValidator with the shared SecurityEventCounter
+    private TokenClaimValidator createValidator(IssuerConfig issuerConfig) {
+        return new TokenClaimValidator(issuerConfig, securityEventCounter);
+    }
 
     @Nested
     @DisplayName("Token Expiration Edge Cases")
@@ -66,7 +73,7 @@ class TokenClaimValidatorEdgeCaseTest {
                     .expectedAudience(EXPECTED_AUDIENCE)
                     .expectedClientId(EXPECTED_CLIENT_ID)
                     .build();
-            var validator = new TokenClaimValidator(issuerConfig);
+            var validator = createValidator(issuerConfig);
 
             // When validating a token that is about to expire (5 seconds from now)
             TokenContent tokenAboutToExpire = createTokenWithExpirationTime(OffsetDateTime.now().plusSeconds(5));
@@ -85,7 +92,7 @@ class TokenClaimValidatorEdgeCaseTest {
                     .expectedAudience(EXPECTED_AUDIENCE)
                     .expectedClientId(EXPECTED_CLIENT_ID)
                     .build();
-            var validator = new TokenClaimValidator(issuerConfig);
+            var validator = createValidator(issuerConfig);
 
             // When validating a token that has just expired (5 seconds ago)
             TokenContent tokenJustExpired = createTokenWithExpirationTime(OffsetDateTime.now().minusSeconds(5));
@@ -112,7 +119,7 @@ class TokenClaimValidatorEdgeCaseTest {
                     .expectedAudience(EXPECTED_AUDIENCE)
                     .expectedClientId(EXPECTED_CLIENT_ID)
                     .build();
-            var validator = new TokenClaimValidator(issuerConfig);
+            var validator = createValidator(issuerConfig);
 
             // When validating a token with a not before time in the past
             TokenContent tokenWithPastNotBefore = createTokenWithNotBeforeTime(OffsetDateTime.now().minusMinutes(5));
@@ -131,7 +138,7 @@ class TokenClaimValidatorEdgeCaseTest {
                     .expectedAudience(EXPECTED_AUDIENCE)
                     .expectedClientId(EXPECTED_CLIENT_ID)
                     .build();
-            var validator = new TokenClaimValidator(issuerConfig);
+            var validator = createValidator(issuerConfig);
 
             // When validating a token with a not before time slightly in the future (30 seconds)
             // This should be within the allowed clock skew (60 seconds)
@@ -151,7 +158,7 @@ class TokenClaimValidatorEdgeCaseTest {
                     .expectedAudience(EXPECTED_AUDIENCE)
                     .expectedClientId(EXPECTED_CLIENT_ID)
                     .build();
-            var validator = new TokenClaimValidator(issuerConfig);
+            var validator = createValidator(issuerConfig);
 
             // When validating a token with a not before time far in the future (90 seconds)
             // This should be beyond the allowed clock skew (60 seconds)
@@ -176,16 +183,19 @@ class TokenClaimValidatorEdgeCaseTest {
             // This test simulates a network failure during key retrieval
             // by using a JwksKeyLoader that throws an exception
 
-            // Given an IssuerConfig with a JwksKeyLoader that simulates network failure
+            // Given an IssuerConfig with empty JWKS content
             var issuerConfig = IssuerConfig.builder()
                     .issuer("test-issuer")
                     .expectedAudience(EXPECTED_AUDIENCE)
                     .expectedClientId(EXPECTED_CLIENT_ID)
-                    .jwksLoader(new FailingJwksKeyLoader())
+                    .jwksContent("{}")  // Empty JWKS content
                     .build();
 
-            // Create a TokenSignatureValidator with the failing JwksKeyLoader
-            var signatureValidator = new TokenSignatureValidator(issuerConfig.getJwksLoader());
+            // Initialize the JwksLoader
+            issuerConfig.initSecurityEventCounter(securityEventCounter);
+
+            // Create a TokenSignatureValidator with a custom JwksLoader that simulates network failure
+            var signatureValidator = new TokenSignatureValidator(new FailingJwksKeyLoader(), securityEventCounter);
 
             // Create a valid token
             TokenContent validToken = createValidToken();
@@ -219,16 +229,16 @@ class TokenClaimValidatorEdgeCaseTest {
     }
 
     /**
-     * Creates a token with a specific not before time.
+     * Creates a token with a specific not-before time.
      *
-     * @param notBeforeTime the not before time to set
-     * @return a TokenContent with the specified not before time
+     * @param notBeforeTime the not-before time to set
+     * @return a TokenContent with the specified not-before time
      */
     private TokenContent createTokenWithNotBeforeTime(OffsetDateTime notBeforeTime) {
         // Create a valid token first
         TokenContent validToken = createValidToken();
 
-        // Create a new claims map with the added not before time
+        // Create a new claims map with the modified not-before time
         Map<String, ClaimValue> claims = new HashMap<>(validToken.getClaims());
         claims.put(ClaimName.NOT_BEFORE.getName(), ClaimValue.forDateTime(
                 String.valueOf(notBeforeTime.toEpochSecond()), notBeforeTime));
@@ -238,76 +248,65 @@ class TokenClaimValidatorEdgeCaseTest {
     }
 
     /**
-     * Creates a valid token for testing.
+     * Creates a valid token using the ValidTokenContentGenerator.
      *
      * @return a valid TokenContent
      */
     private TokenContent createValidToken() {
-        // Use the ValidTokenContentGenerator to create a valid token
         return validTokenGenerator.next();
     }
 
     /**
      * Custom TokenContent implementation that allows overriding claims.
      */
-    private static class CustomTokenContent implements TokenContent {
-        private final TokenContent delegate;
-        private final Map<String, ClaimValue> claims;
+    private static class CustomTokenContent extends TokenContentImpl {
+        private final Map<String, ClaimValue> customClaims;
 
-        public CustomTokenContent(TokenContent delegate, Map<String, ClaimValue> claims) {
-            this.delegate = delegate;
-            this.claims = claims;
+        public CustomTokenContent(TokenContent original, Map<String, ClaimValue> customClaims) {
+            super(original.getTokenType(), ClaimControlParameter.defaultForTokenType(original.getTokenType()));
+            this.customClaims = customClaims;
         }
 
         @Override
         public Map<String, ClaimValue> getClaims() {
-            return claims;
+            return customClaims;
         }
 
         @Override
         public String getRawToken() {
-            return delegate.getRawToken();
-        }
-
-        @Override
-        public TokenType getTokenType() {
-            return delegate.getTokenType();
+            return super.getRawToken();
         }
     }
 
     /**
-     * JWKSKeyLoader implementation that simulates network failures.
+     * A JwksKeyLoader implementation that simulates network failures.
      */
     private static class FailingJwksKeyLoader extends JWKSKeyLoader {
-
-        /**
-         * Constructor that creates a loader with empty JWKS content.
-         */
         public FailingJwksKeyLoader() {
-            super("{}"); // Empty JWKS content
+            super("{}"); // Empty JWKS
         }
 
         @Override
         public Optional<KeyInfo> getKeyInfo(String kid) {
-            // Simulate network failure by returning empty
+            // Simulate a network failure by returning an empty Optional
             return Optional.empty();
         }
 
         @Override
         public Optional<KeyInfo> getFirstKeyInfo() {
-            // Simulate network failure by returning empty
+            // Simulate a network failure by returning an empty Optional
             return Optional.empty();
         }
 
         @Override
         public List<KeyInfo> getAllKeyInfos() {
-            // Simulate network failure by returning empty list
+            // Simulate a network failure by returning an empty list
             return Collections.emptyList();
         }
 
         @Override
         public Set<String> keySet() {
-            // Simulate network failure by returning empty set
+            // Simulate a network failure by returning an empty set
             return Collections.emptySet();
         }
     }

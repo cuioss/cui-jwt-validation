@@ -21,6 +21,7 @@ import de.cuioss.jwt.token.domain.claim.ClaimName;
 import de.cuioss.jwt.token.domain.claim.ClaimValue;
 import de.cuioss.jwt.token.domain.claim.ClaimValueType;
 import de.cuioss.jwt.token.domain.token.TokenContent;
+import de.cuioss.jwt.token.security.SecurityEventCounter;
 import de.cuioss.tools.collect.MoreCollections;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.Builder;
@@ -72,14 +73,19 @@ public class TokenClaimValidator {
     @Getter
     private final Set<String> expectedClientId;
 
+    @NonNull
+    private final SecurityEventCounter securityEventCounter;
+
     /**
      * Constructs a TokenClaimValidator with the specified IssuerConfig.
      *
      * @param issuerConfig the issuer configuration containing expected audience and client ID
+     * @param securityEventCounter the counter for security events
      */
-    public TokenClaimValidator(@NonNull IssuerConfig issuerConfig) {
-        this(issuerConfig.getExpectedAudience(), issuerConfig.getExpectedClientId());
+    public TokenClaimValidator(@NonNull IssuerConfig issuerConfig, @NonNull SecurityEventCounter securityEventCounter) {
+        this(issuerConfig.getExpectedAudience(), issuerConfig.getExpectedClientId(), securityEventCounter);
     }
+
 
     /**
      * Constructs a TokenClaimValidator with the specified expected audience and client ID.
@@ -87,17 +93,21 @@ public class TokenClaimValidator {
      *
      * @param expectedAudience the expected audience values
      * @param expectedClientId the expected client ID values
+     * @param securityEventCounter the counter for security events
      */
-    public TokenClaimValidator(Set<String> expectedAudience, Set<String> expectedClientId) {
+    public TokenClaimValidator(Set<String> expectedAudience, Set<String> expectedClientId, @NonNull SecurityEventCounter securityEventCounter) {
         this.expectedAudience = expectedAudience;
         this.expectedClientId = expectedClientId;
+        this.securityEventCounter = securityEventCounter;
 
         if (MoreCollections.isEmpty(expectedAudience)) {
             LOGGER.warn(JWTTokenLogMessages.WARN.MISSING_RECOMMENDED_ELEMENT.format("expectedAudience"));
+            securityEventCounter.increment(SecurityEventCounter.EventType.MISSING_RECOMMENDED_ELEMENT);
         }
 
         if (MoreCollections.isEmpty(expectedClientId)) {
             LOGGER.warn(JWTTokenLogMessages.WARN.MISSING_RECOMMENDED_ELEMENT.format("azp claim validation (expectedClientId)"));
+            securityEventCounter.increment(SecurityEventCounter.EventType.MISSING_RECOMMENDED_ELEMENT);
         }
     }
 
@@ -151,6 +161,7 @@ public class TokenClaimValidator {
 
         if (notBefore.get().isAfter(OffsetDateTime.now().plusSeconds(60))) {
             LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_NBF_FUTURE::format);
+            securityEventCounter.increment(SecurityEventCounter.EventType.TOKEN_NBF_FUTURE);
             return false;
         }
         LOGGER.debug("Not before claim is present, and not more than 60 seconds in the future");
@@ -161,6 +172,7 @@ public class TokenClaimValidator {
         LOGGER.debug("validate expiration. Can be done directly, because ", token);
         if (token.isExpired()) {
             LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_EXPIRED::format);
+            securityEventCounter.increment(SecurityEventCounter.EventType.TOKEN_EXPIRED);
             return false;
         }
         LOGGER.debug("Token is not expired");
@@ -189,6 +201,7 @@ public class TokenClaimValidator {
         }
         if (!missingClaims.isEmpty()) {
             LOGGER.warn(JWTTokenLogMessages.WARN.MISSING_CLAIM.format(missingClaims));
+            securityEventCounter.increment(SecurityEventCounter.EventType.MISSING_CLAIM);
         } else {
             LOGGER.debug("All mandatory claims are present and set as expected");
         }
@@ -199,7 +212,7 @@ public class TokenClaimValidator {
     /**
      * Validates that the token's audience contains at least one of the expected audiences.
      * Audience claim is optional for access tokens, so if it's not present, validation passes for AccessTokens.
-     * 
+     * <p>
      * This method is optimized to avoid unnecessary Set creation and iteration for common cases:
      * - Early return if no expected audience is configured
      * - Special handling for STRING type audience claims (common case)
@@ -314,6 +327,7 @@ public class TokenClaimValidator {
         }
 
         LOGGER.warn(JWTTokenLogMessages.WARN.AUDIENCE_MISMATCH.format(audienceList, expectedAudience));
+        securityEventCounter.increment(SecurityEventCounter.EventType.AUDIENCE_MISMATCH);
         return false;
     }
 
@@ -330,6 +344,7 @@ public class TokenClaimValidator {
         }
 
         LOGGER.warn(JWTTokenLogMessages.WARN.AUDIENCE_MISMATCH.format(singleAudience, expectedAudience));
+        securityEventCounter.increment(SecurityEventCounter.EventType.AUDIENCE_MISMATCH);
         return false;
     }
 
@@ -357,12 +372,14 @@ public class TokenClaimValidator {
         var azpObj = token.getClaimOption(ClaimName.AUTHORIZED_PARTY);
         if (azpObj.isEmpty() || azpObj.get().isEmpty()) {
             LOGGER.warn(JWTTokenLogMessages.WARN.MISSING_CLAIM.format(ClaimName.AUTHORIZED_PARTY.getName()));
+            securityEventCounter.increment(SecurityEventCounter.EventType.MISSING_CLAIM);
             return false;
         }
 
         String azp = azpObj.get().getOriginalString();
         if (!expectedClientId.contains(azp)) {
             LOGGER.warn(JWTTokenLogMessages.WARN.AZP_MISMATCH.format(azp, expectedClientId));
+            securityEventCounter.increment(SecurityEventCounter.EventType.AZP_MISMATCH);
             return false;
         }
         LOGGER.debug("Successfully validated authorized party: %s", azp);

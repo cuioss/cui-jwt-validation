@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.token.flow;
 
+import de.cuioss.jwt.token.security.SecurityEventCounter;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
@@ -54,7 +55,7 @@ class NonValidatingJwtParserTest {
 
     @BeforeEach
     void setUp() {
-        parser = NonValidatingJwtParser.builder().build();
+        parser = NonValidatingJwtParser.builder().securityEventCounter(new SecurityEventCounter()).build();
     }
 
     @Nested
@@ -207,7 +208,7 @@ class NonValidatingJwtParserTest {
                     .maxTokenSize(customMaxSize)
                     .build();
 
-            NonValidatingJwtParser customParser = NonValidatingJwtParser.builder()
+            NonValidatingJwtParser customParser = NonValidatingJwtParser.builder().securityEventCounter(new SecurityEventCounter())
                     .config(config)
                     .build();
 
@@ -223,7 +224,7 @@ class NonValidatingJwtParserTest {
         @Test
         @DisplayName("Should create builder with defaults")
         void shouldCreateBuilderWithDefaults() {
-            NonValidatingJwtParser defaultParser = NonValidatingJwtParser.builder().build();
+            NonValidatingJwtParser defaultParser = NonValidatingJwtParser.builder().securityEventCounter(new SecurityEventCounter()).build();
             assertNotNull(defaultParser, "Should create a parser with default settings");
 
             // Verify it works with a valid token

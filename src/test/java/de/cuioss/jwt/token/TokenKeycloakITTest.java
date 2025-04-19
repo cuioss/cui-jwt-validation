@@ -16,7 +16,6 @@
 package de.cuioss.jwt.token;
 
 import de.cuioss.jwt.token.flow.IssuerConfig;
-import de.cuioss.jwt.token.jwks.JwksLoaderFactory;
 import de.cuioss.jwt.token.jwks.http.HttpJwksLoaderConfig;
 import de.cuioss.test.keycloakit.KeycloakITBase;
 import de.cuioss.test.keycloakit.TestRealm;
@@ -102,7 +101,7 @@ public class TokenKeycloakITTest extends KeycloakITBase {
         // Create an IssuerConfig
         IssuerConfig issuerConfig = IssuerConfig.builder()
                 .issuer(getIssuer())
-                .jwksLoader(JwksLoaderFactory.createHttpLoader(config))
+                .httpJwksLoaderConfig(config)
                 .build();
 
         // Create the token factory

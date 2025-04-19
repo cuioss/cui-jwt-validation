@@ -141,12 +141,12 @@ _See Requirement link:../Requirements.adoc#CUI-JWT-8.3[CUI-JWT-8.3: Secure Commu
 
 The following classes implement this specification:
 
-* link:../../src/main/java/de/cuioss/jwt/token/jwks/HttpJwksLoader.java[HttpJwksLoader]
+* link:../../src/main/java/de/cuioss/jwt/token/jwks/http/HttpJwksLoader.java[HttpJwksLoader]
 * link:../../src/main/java/de/cuioss/jwt/token/security/SecureSSLContextProvider.java[SecureSSLContextProvider]
 
 The library ensures secure communication for key retrieval by requiring TLS 1.2 or higher by default. The `SecureSSLContextProvider` class is an instance class that allows configuration of the minimum TLS version to be used. The `HttpJwksLoader` uses a builder pattern for creation, with the `SecureSSLContextProvider` instance as an optional parameter.
 
-For implementation details, see the JavaDoc of the link:../../src/main/java/de/cuioss/jwt/token/jwks/HttpJwksLoader.java[HttpJwksLoader] and link:../../src/main/java/de/cuioss/jwt/token/security/SecureSSLContextProvider.java[SecureSSLContextProvider] classes.
+For implementation details, see the JavaDoc of the link:../../src/main/java/de/cuioss/jwt/token/jwks/http/HttpJwksLoader.java[HttpJwksLoader] and link:../../src/main/java/de/cuioss/jwt/token/security/SecureSSLContextProvider.java[SecureSSLContextProvider] classes.
 
 Integration tests verify the implementation by connecting to a Keycloak server using HTTPS.
 
@@ -193,6 +193,86 @@ The following tests verify the implementation:
 ** Security tests for potential attacks
 * link:../../src/test/java/de/cuioss/jwt/token/jwks/key/JWKSKeyLoaderTest.java[JWKSKeyLoaderTest] - Tests for the JWKSKeyLoader
 * link:../../src/test/java/de/cuioss/jwt/token/flow/TokenSignatureValidatorTest.java[TokenSignatureValidatorTest] - Tests for the TokenSignatureValidator
+
+=== Security Events Monitoring
+_See Requirement link:../Requirements.adoc#CUI-JWT-7.3[CUI-JWT-7.3: Security Events]_
+
+==== Status: IMPLEMENTED
+
+The following classes implement this specification:
+
+* link:../../src/main/java/de/cuioss/jwt/token/security/SecurityEventCounter.java[SecurityEventCounter]
+* link:../../src/main/java/de/cuioss/jwt/token/TokenFactory.java[TokenFactory]
+* link:../../src/main/java/de/cuioss/jwt/token/flow/TokenBuilder.java[TokenBuilder]
+* link:../../src/main/java/de/cuioss/jwt/token/flow/TokenClaimValidator.java[TokenClaimValidator]
+* link:../../src/main/java/de/cuioss/jwt/token/flow/TokenHeaderValidator.java[TokenHeaderValidator]
+* link:../../src/main/java/de/cuioss/jwt/token/flow/TokenSignatureValidator.java[TokenSignatureValidator]
+* link:../../src/main/java/de/cuioss/jwt/token/flow/NonValidatingJwtParser.java[NonValidatingJwtParser]
+
+The library provides a mechanism to monitor and count security events that occur during token processing. This allows applications to track potential security issues and anomalies without duplicating logging functionality.
+
+==== Features
+
+* Thread-safe counter implementation for high concurrency environments
+* Consistent event naming scheme aligned with JWTTokenLogMessages
+* Support for all relevant security events (token validation failures, signature issues, etc.)
+* Reset capability for counters (both individual and all counters)
+* Designed for future integration with metrics systems like Micrometer
+* Fine-grained event tracking at each step of the token processing pipeline
+
+==== Usage
+
+The SecurityEventCounter is integrated with TokenFactory and accessible via a getter method. Applications can:
+
+1. Retrieve the counter from TokenFactory using `getSecurityEventCounter()`
+2. Get counts for specific event types using `getCount(EventType)`
+3. Get a snapshot of all counters using `getCounters()`
+4. Reset individual counters using `reset(EventType)`
+5. Reset all counters using `reset()`
+
+This allows applications to monitor security events and take appropriate actions based on the counts.
+
+==== Integration with Flow Elements
+
+The SecurityEventCounter is passed to all flow elements in the token processing pipeline:
+
+* TokenBuilder - Counts events during token creation
+* TokenClaimValidator - Counts claim validation failures (missing claims, audience mismatch, etc.)
+* TokenHeaderValidator - Counts header validation failures (algorithm issues, issuer mismatch)
+* TokenSignatureValidator - Counts signature validation failures (key not found, invalid signatures)
+* NonValidatingJwtParser - Counts token parsing failures (format issues, size limits)
+
+This provides a more granular view of security events, allowing for better monitoring and troubleshooting.
+
+==== Event Types
+
+The SecurityEventCounter.EventType enum defines all countable security events, including:
+
+* Token format issues (empty tokens, size exceeded, decoding failures)
+* Missing claims (required claims, recommended elements)
+* Validation failures (token expired, future tokens, audience mismatch)
+* Signature issues (validation failures, key not found)
+* Algorithm issues (unsupported algorithms, rejected algorithms)
+* JWKS issues (fetch failures, parse failures)
+* Critical security issues (security breaches, violations)
+
+==== Bidirectional Links to Log Messages
+
+Each EventType has a bidirectional link to its corresponding log message in JWTTokenLogMessages. This is implemented through the `getLogRecord()` method, which returns the appropriate LogRecord based on the event type's ID.
+
+This bidirectional linking ensures:
+
+1. Consistent error reporting between logs and metrics
+2. Easy correlation between security events and log messages
+3. Centralized management of security event definitions
+4. Simplified troubleshooting by mapping event counts to specific log messages
+
+For example, the TOKEN_EXPIRED event type (ID: 134) is linked to JWTTokenLogMessages.WARN.TOKEN_EXPIRED, ensuring that the same message template and identifier are used for both logging and event counting.
+
+The following tests verify the implementation:
+
+* link:../../src/test/java/de/cuioss/jwt/token/security/SecurityEventCounterTest.java[SecurityEventCounterTest] - Tests for the SecurityEventCounter class
+* link:../../src/test/java/de/cuioss/jwt/token/TokenFactorySecurityEventTest.java[TokenFactorySecurityEventTest] - Tests for the integration with TokenFactory
 
 === Bouncy Castle Usage
 _See Requirement link:../Requirements.adoc#CUI-JWT-8.5[CUI-JWT-8.5: Cryptographic Agility]_
@@ -260,12 +340,22 @@ The client confusion attack occurs when a token issued for one client is used wi
 
 [source,java]
 ----
+// Configure HTTP-based JWKS loading
+HttpJwksLoaderConfig httpConfig = HttpJwksLoaderConfig.builder()
+    .jwksUrl("https://issuer.example.com/.well-known/jwks.json")
+    .refreshIntervalSeconds(60)
+    .build();
+
+// Create an issuer configuration with audience and client ID validation
 IssuerConfig issuerConfig = IssuerConfig.builder()
     .issuer("https://issuer.example.com")
     .expectedAudience("client-id")
     .expectedClientId("client-id")
-    .jwksKeyLoader(jwksKeyLoader)
+    .httpJwksLoaderConfig(httpConfig)
     .build();
+
+// Create the token factory
+TokenFactory factory = new TokenFactory(null, issuerConfig);
 ----
 
 ==== Security Note

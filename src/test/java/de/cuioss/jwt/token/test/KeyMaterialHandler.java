@@ -17,6 +17,7 @@ package de.cuioss.jwt.token.test;
 
 import de.cuioss.jwt.token.jwks.JwksLoader;
 import de.cuioss.jwt.token.jwks.JwksLoaderFactory;
+import de.cuioss.jwt.token.security.SecurityEventCounter;
 import io.jsonwebtoken.Jwts;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
@@ -208,7 +209,8 @@ public class KeyMaterialHandler {
      * @return a JwksLoader instance
      */
     public static JwksLoader createDefaultJwksLoader() {
-        return JwksLoaderFactory.createInMemoryLoader(getDefaultJwksContent());
+        SecurityEventCounter securityEventCounter = new SecurityEventCounter();
+        return JwksLoaderFactory.createInMemoryLoader(getDefaultJwksContent(), securityEventCounter);
     }
 
 
@@ -218,7 +220,8 @@ public class KeyMaterialHandler {
      * @return a JwksLoader instance
      */
     public static JwksLoader createAlternativeJwksLoader() {
-        return JwksLoaderFactory.createInMemoryLoader(getAlternativeJWKSContent());
+        SecurityEventCounter securityEventCounter = new SecurityEventCounter();
+        return JwksLoaderFactory.createInMemoryLoader(getAlternativeJWKSContent(), securityEventCounter);
     }
 
 

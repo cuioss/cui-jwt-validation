@@ -16,9 +16,11 @@
 package de.cuioss.jwt.token.flow;
 
 import de.cuioss.jwt.token.JWTTokenLogMessages;
+import de.cuioss.jwt.token.security.SecurityEventCounter;
 import de.cuioss.tools.logging.CuiLogger;
 import jakarta.annotation.Nonnull;
 import lombok.Builder;
+import lombok.NonNull;
 
 /**
  * Validator for JWT token headers.
@@ -37,15 +39,23 @@ public class TokenHeaderValidator {
     private static final CuiLogger LOGGER = new CuiLogger(TokenHeaderValidator.class);
 
     private final IssuerConfig issuerConfig;
+    /**
+     * The counter for security events.
+     */
+    @NonNull
+    private final SecurityEventCounter securityEventCounter;
 
     /**
      * Constructs a TokenHeaderValidator with the specified IssuerConfig.
      *
-     * @param issuerConfig the issuer configuration
+     * @param issuerConfig         the issuer configuration
+     * @param securityEventCounter the counter for security events
      */
-    public TokenHeaderValidator(IssuerConfig issuerConfig) {
+    public TokenHeaderValidator(IssuerConfig issuerConfig, @NonNull SecurityEventCounter securityEventCounter) {
         this.issuerConfig = issuerConfig;
+        this.securityEventCounter = securityEventCounter;
     }
+
 
     /**
      * Validates a decoded JWT token's header.     *
@@ -79,11 +89,13 @@ public class TokenHeaderValidator {
 
         if (algorithm.isEmpty()) {
             LOGGER.warn(JWTTokenLogMessages.WARN.MISSING_CLAIM.format("alg"));
+            securityEventCounter.increment(SecurityEventCounter.EventType.MISSING_CLAIM);
             return false;
         }
 
         if (!issuerConfig.getAlgorithmPreferences().isSupported(algorithm.get())) {
             LOGGER.warn(JWTTokenLogMessages.WARN.UNSUPPORTED_ALGORITHM.format(algorithm.get()));
+            securityEventCounter.increment(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM);
             return false;
         }
 
@@ -103,12 +115,14 @@ public class TokenHeaderValidator {
 
         if (decodedJwt.getIssuer().isEmpty()) {
             LOGGER.warn(JWTTokenLogMessages.WARN.MISSING_CLAIM.format("iss"));
+            securityEventCounter.increment(SecurityEventCounter.EventType.MISSING_CLAIM);
             return false;
         }
         var givenIssuer = decodedJwt.getIssuer().get();
 
         if (!issuerConfig.getIssuer().equals(givenIssuer)) {
             LOGGER.warn(JWTTokenLogMessages.WARN.ISSUER_MISMATCH.format(givenIssuer, issuerConfig.getIssuer()));
+            securityEventCounter.increment(SecurityEventCounter.EventType.ISSUER_MISMATCH);
             return false;
         }
 

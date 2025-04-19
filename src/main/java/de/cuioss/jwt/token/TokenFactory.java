@@ -27,8 +27,11 @@ import de.cuioss.jwt.token.flow.TokenClaimValidator;
 import de.cuioss.jwt.token.flow.TokenFactoryConfig;
 import de.cuioss.jwt.token.flow.TokenHeaderValidator;
 import de.cuioss.jwt.token.flow.TokenSignatureValidator;
+import de.cuioss.jwt.token.jwks.JwksLoader;
+import de.cuioss.jwt.token.security.SecurityEventCounter;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
+import lombok.Getter;
 import lombok.NonNull;
 
 import java.util.HashMap;
@@ -53,13 +56,24 @@ import java.util.Optional;
  * <p>
  * Usage example:
  * <pre>
+ * // Configure HTTP-based JWKS loading
+ * HttpJwksLoaderConfig httpConfig = HttpJwksLoaderConfig.builder()
+ *     .jwksUrl("https://example.com/.well-known/jwks.json")
+ *     .refreshIntervalSeconds(60)
+ *     .build();
+ *
+ * // Create an issuer configuration
+ * IssuerConfig issuerConfig = IssuerConfig.builder()
+ *     .issuer("https://example.com")
+ *     .expectedAudience("my-client")
+ *     .httpJwksLoaderConfig(httpConfig)
+ *     .build();
+ *
+ * // Create the token factory
+ * // The factory creates a SecurityEventCounter internally and passes it to all components
  * TokenFactory tokenFactory = new TokenFactory(
- *         TokenFactoryConfig.builder().build(),
- *         IssuerConfig.builder()
- *             .issuer("https://example.com")
- *             .expectedAudience("my-client")
- *             .jwksLoader(jwksLoader)
- *             .build()
+ *     TokenFactoryConfig.builder().build(),
+ *     issuerConfig
  * );
  *
  * // Parse an access token
@@ -70,16 +84,27 @@ import java.util.Optional;
  *
  * // Parse a refresh token
  * Optional&lt;RefreshTokenContent&gt; refreshToken = tokenFactory.createRefreshToken(tokenString);
+ *
+ * // Access the security event counter for monitoring
+ * SecurityEventCounter securityEventCounter = tokenFactory.getSecurityEventCounter();
  * </pre>
  *
  * @since 1.0
  */
+@SuppressWarnings("JavadocLinkAsPlainText")
 public class TokenFactory {
 
     private static final CuiLogger LOGGER = new CuiLogger(TokenFactory.class);
 
     private final NonValidatingJwtParser jwtParser;
     private final Map<String, IssuerConfig> issuerConfigMap;
+
+    /**
+     * Counter for security events that occur during token processing.
+     * This counter is thread-safe and can be accessed from outside to monitor security events.
+     */
+    @Getter
+    private final SecurityEventCounter securityEventCounter;
 
     /**
      * Creates a new TokenFactory with the given issuer configurations and optional factory configuration.
@@ -90,14 +115,20 @@ public class TokenFactory {
     public TokenFactory(TokenFactoryConfig config, @NonNull IssuerConfig... issuerConfigs) {
         TokenFactoryConfig config1 = config != null ? config : TokenFactoryConfig.builder().build();
 
+        // Initialize security event counter
+        this.securityEventCounter = new SecurityEventCounter();
+
         // Initialize NonValidatingJwtParser with configuration
         this.jwtParser = NonValidatingJwtParser.builder()
                 .config(config1)
+                .securityEventCounter(securityEventCounter)
                 .build();
 
         // Initialize issuerConfigMap with issuers as keys
         this.issuerConfigMap = new HashMap<>();
         for (IssuerConfig issuerConfig : issuerConfigs) {
+            // Initialize the JwksLoader with the SecurityEventCounter
+            issuerConfig.initSecurityEventCounter(securityEventCounter);
             issuerConfigMap.put(issuerConfig.getIssuer(), issuerConfig);
         }
 
@@ -112,10 +143,17 @@ public class TokenFactory {
      */
     public Optional<AccessTokenContent> createAccessToken(@NonNull String tokenString) {
         LOGGER.debug("Creating access token");
-        return processTokenPipeline(
+        Optional<AccessTokenContent> result = processTokenPipeline(
                 tokenString,
                 (decodedJwt, issuerConfig) -> new TokenBuilder(issuerConfig).createAccessToken(decodedJwt)
         );
+
+        if (result.isPresent()) {
+            LOGGER.debug(JWTTokenLogMessages.DEBUG.ACCESS_TOKEN_CREATED::format);
+            securityEventCounter.increment(SecurityEventCounter.EventType.ACCESS_TOKEN_CREATED);
+        }
+
+        return result;
     }
 
     /**
@@ -126,10 +164,17 @@ public class TokenFactory {
      */
     public Optional<IdTokenContent> createIdToken(@NonNull String tokenString) {
         LOGGER.debug("Creating ID token");
-        return processTokenPipeline(
+        Optional<IdTokenContent> result = processTokenPipeline(
                 tokenString,
                 (decodedJwt, issuerConfig) -> new TokenBuilder(issuerConfig).createIdToken(decodedJwt)
         );
+
+        if (result.isPresent()) {
+            LOGGER.debug(JWTTokenLogMessages.DEBUG.ID_TOKEN_CREATED::format);
+            securityEventCounter.increment(SecurityEventCounter.EventType.ID_TOKEN_CREATED);
+        }
+
+        return result;
     }
 
     /**
@@ -143,10 +188,14 @@ public class TokenFactory {
         // For refresh tokens, we don't need the full pipeline
         if (MoreStrings.isBlank(tokenString)) {
             LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
+            securityEventCounter.increment(SecurityEventCounter.EventType.TOKEN_EMPTY);
             return Optional.empty();
         }
 
-        return new TokenBuilder(null).createRefreshToken(tokenString);
+        RefreshTokenContent refreshToken = new RefreshTokenContent(tokenString);
+        LOGGER.debug(JWTTokenLogMessages.DEBUG.REFRESH_TOKEN_CREATED::format);
+        securityEventCounter.increment(SecurityEventCounter.EventType.REFRESH_TOKEN_CREATED);
+        return Optional.of(refreshToken);
     }
 
     /**
@@ -176,6 +225,7 @@ public class TokenFactory {
         // 1. Basic token format validation - fail fast for empty tokens
         if (MoreStrings.isBlank(tokenString)) {
             LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
+            securityEventCounter.increment(SecurityEventCounter.EventType.TOKEN_EMPTY);
             return Optional.empty();
         }
 
@@ -183,6 +233,7 @@ public class TokenFactory {
         Optional<DecodedJwt> decodedJwt = jwtParser.decode(tokenString);
         if (decodedJwt.isEmpty()) {
             LOGGER.warn(JWTTokenLogMessages.WARN.FAILED_TO_DECODE_JWT::format);
+            securityEventCounter.increment(SecurityEventCounter.EventType.FAILED_TO_DECODE_JWT);
             return Optional.empty();
         }
 
@@ -190,6 +241,7 @@ public class TokenFactory {
         Optional<String> issuer = decodedJwt.get().getIssuer();
         if (issuer.isEmpty()) {
             LOGGER.warn(JWTTokenLogMessages.WARN.MISSING_CLAIM.format("iss"));
+            securityEventCounter.increment(SecurityEventCounter.EventType.MISSING_CLAIM);
             return Optional.empty();
         }
 
@@ -197,18 +249,23 @@ public class TokenFactory {
         IssuerConfig issuerConfig = issuerConfigMap.get(issuer.get());
         if (issuerConfig == null) {
             LOGGER.warn(JWTTokenLogMessages.WARN.NO_ISSUER_CONFIG.format(issuer.get()));
+            securityEventCounter.increment(SecurityEventCounter.EventType.NO_ISSUER_CONFIG);
             return Optional.empty();
         }
 
         // 5. Validate header - create validator only if needed
-        TokenHeaderValidator headerValidator = new TokenHeaderValidator(issuerConfig);
+        TokenHeaderValidator headerValidator = new TokenHeaderValidator(issuerConfig, securityEventCounter);
         if (!headerValidator.validate(decodedJwt.get())) {
             LOGGER.debug("Token header validation failed");
             return Optional.empty();
         }
 
         // 6. Validate signature - create validator only if needed
-        TokenSignatureValidator signatureValidator = new TokenSignatureValidator(issuerConfig.getJwksLoader());
+        // Initialize the JwksLoader if needed
+        issuerConfig.initSecurityEventCounter(securityEventCounter);
+        JwksLoader jwksLoader = issuerConfig.getJwksLoader();
+
+        TokenSignatureValidator signatureValidator = new TokenSignatureValidator(jwksLoader, securityEventCounter);
         if (!signatureValidator.validateSignature(decodedJwt.get())) {
             LOGGER.debug("Token signature validation failed");
             return Optional.empty();
@@ -222,7 +279,7 @@ public class TokenFactory {
         }
 
         // 8. Validate claims - create validator only if token is built successfully
-        TokenClaimValidator claimValidator = new TokenClaimValidator(issuerConfig);
+        TokenClaimValidator claimValidator = new TokenClaimValidator(issuerConfig, securityEventCounter);
         @SuppressWarnings("unchecked")
         Optional<T> validatedToken = claimValidator.validate(token.get())
                 .map(validatedContent -> (T) validatedContent);

@@ -57,7 +57,10 @@ IssuerConfig issuerConfig = IssuerConfig.builder()
         .issuer("https://issuer1.com")
         .expectedAudience("client-id") // Can add multiple audiences with multiple calls
         .expectedClientId("client-id") // Can add multiple client IDs with multiple calls
-        .jwksLoader(jwksLoader1)
+        // Configure JWKS loading (one of the following options)
+        .httpJwksLoaderConfig(httpJwksLoaderConfig) // Option 1: HTTP-based JWKS
+        // .jwksFilePath("/path/to/jwks.json") // Option 2: File-based JWKS
+        // .jwksContent(jwksContent) // Option 3: In-memory JWKS content
         .build();
 
 // Create a factory with multiple issuer configurations
@@ -90,36 +93,37 @@ The module provides robust support for multi-issuer environments through:
 
 [source, java]
 ----
-// Create JWKS loaders for different issuers
+// Create JWKS loader configurations for different issuers
 // Option 1: HTTP-based JWKS loader with automatic key rotation
 HttpJwksLoaderConfig httpConfig = HttpJwksLoaderConfig.builder()
         .jwksUrl("https://issuer1.com/.well-known/jwks.json")
         .refreshIntervalSeconds(60) // Refresh keys every 60 seconds
         .build();
-JwksLoader httpJwksLoader = JwksLoaderFactory.createHttpLoader(httpConfig);
-
-// Option 2: File-based JWKS loader
-JwksLoader fileJwksLoader = JwksLoaderFactory.createFileLoader("/path/to/jwks.json");
-
-// Option 3: In-memory JWKS loader
-String jwksContent = "{\"keys\":[{\"kty\":\"RSA\",\"kid\":\"key-id\",\"use\":\"sig\",\"alg\":\"RS256\",\"n\":\"...\",\"e\":\"...\"}]}";
-JwksLoader inMemoryJwksLoader = JwksLoaderFactory.createInMemoryLoader(jwksContent);
 
 // Create issuer configurations
 IssuerConfig issuer1Config = IssuerConfig.builder()
         .issuer("https://issuer1.com")
-        .jwksLoader(httpJwksLoader)
+        .httpJwksLoaderConfig(httpConfig) // Configure HTTP-based JWKS loading
         .build();
 
 IssuerConfig issuer2Config = IssuerConfig.builder()
         .issuer("https://issuer2.com")
-        .jwksLoader(fileJwksLoader)
+        .jwksFilePath("/path/to/jwks.json") // Configure file-based JWKS loading
         .build();
 
-// Create a factory supporting both issuers
+IssuerConfig issuer3Config = IssuerConfig.builder()
+        .issuer("https://issuer3.com")
+        .jwksContent("{\"keys\":[{\"kty\":\"RSA\",\"kid\":\"key-id\",\"use\":\"sig\",\"alg\":\"RS256\",\"n\":\"...\",\"e\":\"...\"}]}") // Configure in-memory JWKS loading
+        .build();
+
+// Create a factory supporting all issuers
+// The factory creates a SecurityEventCounter internally and passes it to all components
 TokenFactory factory = new TokenFactory(
         TokenFactoryConfig.builder().build(),
-        issuer1Config, issuer2Config);
+        issuer1Config, issuer2Config, issuer3Config);
+
+// You can access the SecurityEventCounter for monitoring security events
+SecurityEventCounter securityEventCounter = factory.getSecurityEventCounter();
 ----
 
 === Custom Claim Mappers

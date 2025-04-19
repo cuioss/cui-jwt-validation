@@ -17,6 +17,7 @@ package de.cuioss.jwt.token.jwks;
 
 import de.cuioss.jwt.token.jwks.http.HttpJwksLoaderConfig;
 import de.cuioss.jwt.token.jwks.key.KeyInfo;
+import de.cuioss.jwt.token.security.SecurityEventCounter;
 import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.jwt.token.test.dispatcher.JwksResolveDispatcher;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
@@ -63,7 +64,8 @@ class JwksClientBenchmarkTest {
                 .jwksUrl(jwksEndpoint)
                 .refreshIntervalSeconds(REFRESH_INTERVAL_SECONDS)
                 .build();
-        var jwksLoader = JwksLoaderFactory.createHttpLoader(config);
+        var securityEventCounter = new SecurityEventCounter();
+        var jwksLoader = JwksLoaderFactory.createHttpLoader(config, securityEventCounter);
 
         // Warm up
         for (int i = 0; i < WARMUP_ITERATIONS; i++) {

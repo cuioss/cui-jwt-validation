@@ -19,9 +19,7 @@ import de.cuioss.jwt.token.TokenType;
 import de.cuioss.jwt.token.domain.claim.ClaimName;
 import de.cuioss.jwt.token.domain.token.AccessTokenContent;
 import de.cuioss.jwt.token.domain.token.IdTokenContent;
-import de.cuioss.jwt.token.domain.token.RefreshTokenContent;
 import de.cuioss.jwt.token.test.generator.DecodedJwtGenerator;
-import de.cuioss.jwt.token.test.generator.RefreshTokenGenerator;
 import de.cuioss.test.generator.junit.EnableGeneratorController;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,9 +28,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for {@link TokenBuilder}.
@@ -42,7 +38,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class TokenBuilderTest {
 
     private TokenBuilder tokenBuilder;
-    private final RefreshTokenGenerator refreshTokenGenerator = new RefreshTokenGenerator(false);
 
     @BeforeEach
     void setUp() {
@@ -52,26 +47,6 @@ class TokenBuilderTest {
                 .build();
 
         tokenBuilder = new TokenBuilder(issuerConfig);
-    }
-
-    @Test
-    @DisplayName("createRefreshToken should create RefreshTokenContent")
-    void createRefreshTokenShouldCreateRefreshTokenContent() {
-        // Given
-        String token = refreshTokenGenerator.next();
-
-        // When
-        Optional<RefreshTokenContent> result = tokenBuilder.createRefreshToken(token);
-
-        // Then
-        assertTrue(result.isPresent(), "Should return RefreshTokenContent");
-        RefreshTokenContent refreshTokenContent = result.get();
-
-        // Verify token type
-        assertEquals(TokenType.REFRESH_TOKEN, refreshTokenContent.getTokenType(), "Token type should be REFRESH_TOKEN");
-
-        // Verify raw token
-        assertEquals(token, refreshTokenContent.getRawToken(), "Raw token should match");
     }
 
 

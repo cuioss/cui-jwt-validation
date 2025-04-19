@@ -16,6 +16,7 @@
 package de.cuioss.jwt.token.jwks.http;
 
 import de.cuioss.jwt.token.jwks.key.KeyInfo;
+import de.cuioss.jwt.token.security.SecurityEventCounter;
 import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.jwt.token.test.dispatcher.JwksResolveDispatcher;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
@@ -45,18 +46,22 @@ class HttpJwksLoaderTest {
     private final JwksResolveDispatcher moduleDispatcher = new JwksResolveDispatcher();
 
     private HttpJwksLoader httpJwksLoader;
+    private SecurityEventCounter securityEventCounter;
 
     @BeforeEach
     void setUp(URIBuilder uriBuilder) {
         String jwksEndpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
         moduleDispatcher.setCallCounter(0);
 
+        // Initialize the SecurityEventCounter
+        securityEventCounter = new SecurityEventCounter();
+
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
                 .jwksUrl(jwksEndpoint)
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .build();
 
-        httpJwksLoader = new HttpJwksLoader(config);
+        httpJwksLoader = new HttpJwksLoader(config, securityEventCounter);
     }
 
     @Test
@@ -83,11 +88,18 @@ class HttpJwksLoaderTest {
     @Test
     @DisplayName("Should return empty for unknown key ID")
     void shouldReturnEmptyForUnknownKeyId() {
+        // Get initial count
+        long initialCount = securityEventCounter.getCount(SecurityEventCounter.EventType.KEY_NOT_FOUND);
+
         // When
         Optional<KeyInfo> keyInfo = httpJwksLoader.getKeyInfo("unknown-kid");
 
         // Then
         assertFalse(keyInfo.isPresent(), "Key info should not be present for unknown key ID");
+
+        // Verify security event was recorded
+        assertEquals(initialCount + 1, securityEventCounter.getCount(SecurityEventCounter.EventType.KEY_NOT_FOUND),
+                "KEY_NOT_FOUND event should be incremented");
     }
 
     @Test
@@ -155,7 +167,7 @@ class HttpJwksLoaderTest {
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .build();
 
-        HttpJwksLoader invalidLoader = new HttpJwksLoader(config);
+        HttpJwksLoader invalidLoader = new HttpJwksLoader(config, securityEventCounter);
 
         // When
         Optional<KeyInfo> keyInfo = invalidLoader.getKeyInfo(TEST_KID);
@@ -195,7 +207,7 @@ class HttpJwksLoaderTest {
                 .backgroundRefreshPercentage(70)
                 .build();
 
-        HttpJwksLoader customLoader = new HttpJwksLoader(config);
+        HttpJwksLoader customLoader = new HttpJwksLoader(config, securityEventCounter);
 
         // Then
         assertNotNull(customLoader);

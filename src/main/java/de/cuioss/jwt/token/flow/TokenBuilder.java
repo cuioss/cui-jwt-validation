@@ -21,10 +21,8 @@ import de.cuioss.jwt.token.domain.claim.mapper.ClaimMapper;
 import de.cuioss.jwt.token.domain.claim.mapper.IdentityMapper;
 import de.cuioss.jwt.token.domain.token.AccessTokenContent;
 import de.cuioss.jwt.token.domain.token.IdTokenContent;
-import de.cuioss.jwt.token.domain.token.RefreshTokenContent;
 import jakarta.json.JsonObject;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,10 +31,19 @@ import java.util.Optional;
 /**
  * Builder for creating token content objects from decoded JWT tokens.
  */
-@RequiredArgsConstructor
 public class TokenBuilder {
 
+    @NonNull
     private final IssuerConfig issuerConfig;
+
+    /**
+     * Constructs a TokenBuilder with the specified IssuerConfig.
+     *
+     * @param issuerConfig the issuer configuration
+     */
+    public TokenBuilder(@NonNull IssuerConfig issuerConfig) {
+        this.issuerConfig = issuerConfig;
+    }
 
     /**
      * Creates an AccessTokenContent from a decoded JWT.
@@ -74,15 +81,6 @@ public class TokenBuilder {
         return Optional.of(new IdTokenContent(claims, decodedJwt.getRawToken()));
     }
 
-    /**
-     * Creates a RefreshTokenContent from a raw token string.
-     *
-     * @param rawToken the raw token string
-     * @return an Optional containing the RefreshTokenContent
-     */
-    public Optional<RefreshTokenContent> createRefreshToken(@NonNull String rawToken) {
-        return Optional.of(new RefreshTokenContent(rawToken));
-    }
 
     /**
      * Extracts claims from a JSON object.
@@ -96,7 +94,7 @@ public class TokenBuilder {
         // Process all keys in the JSON object
         for (String key : jsonObject.keySet()) {
             // Check if there's a custom mapper for this claim
-            if (issuerConfig != null && issuerConfig.getClaimMappers() != null && issuerConfig.getClaimMappers().containsKey(key)) {
+            if (issuerConfig.getClaimMappers() != null && issuerConfig.getClaimMappers().containsKey(key)) {
                 ClaimMapper customMapper = issuerConfig.getClaimMappers().get(key);
                 ClaimValue claimValue = customMapper.map(jsonObject, key);
                 claims.put(key, claimValue);

@@ -17,11 +17,11 @@ package de.cuioss.jwt.token.flow;
 
 import de.cuioss.jwt.token.JWTTokenLogMessages;
 import de.cuioss.jwt.token.jwks.JwksLoader;
+import de.cuioss.jwt.token.security.SecurityEventCounter;
 import de.cuioss.tools.logging.CuiLogger;
 import jakarta.annotation.Nonnull;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.nio.charset.StandardCharsets;
@@ -54,7 +54,6 @@ import java.util.Base64;
  * Using Bouncy Castle ensures consistent cryptographic operations across different JVM implementations
  * and provides support for modern cryptographic algorithms that may not be available in all JVM versions.
  */
-@RequiredArgsConstructor
 public class TokenSignatureValidator {
 
     private static final CuiLogger LOGGER = new CuiLogger(TokenSignatureValidator.class);
@@ -70,6 +69,20 @@ public class TokenSignatureValidator {
     @NonNull
     private final JwksLoader jwksLoader;
 
+    @NonNull
+    private final SecurityEventCounter securityEventCounter;
+
+    /**
+     * Constructs a TokenSignatureValidator with the specified JwksLoader and SecurityEventCounter.
+     *
+     * @param jwksLoader           the JWKS loader to use for key retrieval
+     * @param securityEventCounter the counter for security events
+     */
+    public TokenSignatureValidator(@NonNull JwksLoader jwksLoader, @NonNull SecurityEventCounter securityEventCounter) {
+        this.jwksLoader = jwksLoader;
+        this.securityEventCounter = securityEventCounter;
+    }
+
     /**
      * Validates the signature of a decoded JWT token.
      *
@@ -83,6 +96,7 @@ public class TokenSignatureValidator {
         var kid = decodedJwt.getKid();
         if (kid.isEmpty()) {
             LOGGER.warn(JWTTokenLogMessages.WARN.MISSING_CLAIM.format("kid"));
+            securityEventCounter.increment(SecurityEventCounter.EventType.MISSING_CLAIM);
             return false;
         }
 
@@ -90,6 +104,7 @@ public class TokenSignatureValidator {
         var algorithm = decodedJwt.getAlg();
         if (algorithm.isEmpty()) {
             LOGGER.warn(JWTTokenLogMessages.WARN.MISSING_CLAIM.format("alg"));
+            securityEventCounter.increment(SecurityEventCounter.EventType.MISSING_CLAIM);
             return false;
         }
 
@@ -97,6 +112,7 @@ public class TokenSignatureValidator {
         var signature = decodedJwt.getSignature();
         if (signature.isEmpty()) {
             LOGGER.warn(JWTTokenLogMessages.WARN.MISSING_CLAIM.format("signature"));
+            securityEventCounter.increment(SecurityEventCounter.EventType.MISSING_CLAIM);
             return false;
         }
 
@@ -104,12 +120,14 @@ public class TokenSignatureValidator {
         var keyInfo = jwksLoader.getKeyInfo(kid.get());
         if (keyInfo.isEmpty()) {
             LOGGER.warn(JWTTokenLogMessages.WARN.KEY_NOT_FOUND.format(kid.get()));
+            securityEventCounter.increment(SecurityEventCounter.EventType.KEY_NOT_FOUND);
             return false;
         }
 
         // Verify that the key's algorithm matches the token's algorithm
         if (!isAlgorithmCompatible(algorithm.get(), keyInfo.get().getAlgorithm())) {
             LOGGER.warn(JWTTokenLogMessages.WARN.UNSUPPORTED_ALGORITHM.format(algorithm.get()));
+            securityEventCounter.increment(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM);
             return false;
         }
 
@@ -118,6 +136,7 @@ public class TokenSignatureValidator {
             return verifySignature(decodedJwt, keyInfo.get().getKey(), algorithm.get());
         } catch (Exception e) {
             LOGGER.warn(JWTTokenLogMessages.WARN.ERROR_PARSING_TOKEN.format(e.getMessage()), e);
+            securityEventCounter.increment(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED);
             return false;
         }
     }
@@ -135,6 +154,7 @@ public class TokenSignatureValidator {
         String[] parts = decodedJwt.getParts();
         if (parts.length != 3) {
             LOGGER.warn(JWTTokenLogMessages.WARN.INVALID_JWT_FORMAT.format(parts.length));
+            securityEventCounter.increment(SecurityEventCounter.EventType.INVALID_JWT_FORMAT);
             return false;
         }
 
@@ -146,7 +166,7 @@ public class TokenSignatureValidator {
         byte[] signatureBytes = Base64.getUrlDecoder().decode(parts[2]);
 
         // Initialize the signature verifier with the appropriate algorithm
-        Signature verifier = null;
+        Signature verifier;
         boolean isValid = false;
         try {
             verifier = getSignatureVerifier(algorithm);
@@ -156,12 +176,14 @@ public class TokenSignatureValidator {
             isValid = verifier.verify(signatureBytes);
         } catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidKeyException | SignatureException e) {
             LOGGER.warn(e, JWTTokenLogMessages.WARN.ERROR_PARSING_TOKEN.format(e.getMessage()));
+            securityEventCounter.increment(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED);
         }
 
         if (isValid) {
             LOGGER.debug("Signature is valid");
         } else {
             LOGGER.warn(JWTTokenLogMessages.WARN.FAILED_TO_PARSE_TOKEN.format("Invalid signature"));
+            securityEventCounter.increment(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED);
         }
         return isValid;
     }

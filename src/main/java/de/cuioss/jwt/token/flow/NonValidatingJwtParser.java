@@ -16,6 +16,7 @@
 package de.cuioss.jwt.token.flow;
 
 import de.cuioss.jwt.token.JWTTokenLogMessages;
+import de.cuioss.jwt.token.security.SecurityEventCounter;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
 import jakarta.json.JsonObject;
@@ -23,6 +24,7 @@ import jakarta.json.JsonReader;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
@@ -50,10 +52,10 @@ import java.util.Optional;
  * <pre>
  * // Create a parser with default settings
  * NonValidatingJwtParser parser = NonValidatingJwtParser.builder().build();
- * 
+ *
  * // Decode a JWT token
  * Optional&lt;DecodedJwt&gt; decodedJwt = parser.decode(tokenString);
- * 
+ *
  * // Access decoded JWT information
  * decodedJwt.ifPresent(jwt -> {
  *     // Access header information
@@ -61,18 +63,18 @@ import java.util.Optional;
  *         String algorithm = header.getString("alg");
  *         String tokenType = header.getString("typ");
  *     });
- *     
+ *
  *     // Access payload information
  *     jwt.getBody().ifPresent(body -> {
  *         String subject = body.getString("sub");
  *         String issuer = body.getString("iss");
  *         int expirationTime = body.getInt("exp");
  *     });
- *     
+ *
  *     // Access common JWT fields with convenience methods
  *     jwt.getIssuer().ifPresent(issuer -> System.out.println("Issuer: " + issuer));
  *     jwt.getKid().ifPresent(kid -> System.out.println("Key ID: " + kid));
- *     
+ *
  *     // Get the raw token
  *     String rawToken = jwt.getRawToken();
  * });
@@ -89,11 +91,11 @@ import java.util.Optional;
  *     .maxDepth(5)          // 5 levels max JSON depth
  *     .logWarningsOnDecodeFailure(false)  // suppress warnings
  *     .build();
- *     
+ *
  * NonValidatingJwtParser customParser = NonValidatingJwtParser.builder()
  *     .config(config)
  *     .build();
- *     
+ *
  * // Decode a token with the custom parser
  * Optional&lt;DecodedJwt&gt; result = customParser.decode(tokenString);
  * </pre>
@@ -103,7 +105,7 @@ import java.util.Optional;
  * // Handle empty or null tokens
  * Optional&lt;DecodedJwt&gt; emptyResult = parser.decode("");
  * assertFalse(emptyResult.isPresent());
- * 
+ *
  * // Handle invalid token format
  * Optional&lt;DecodedJwt&gt; invalidResult = parser.decode("invalid.token.format");
  * assertFalse(invalidResult.isPresent());
@@ -134,7 +136,7 @@ public class NonValidatingJwtParser {
      *     .maxPayloadSize(8 * 1024)  // 8KB
      *     .logWarningsOnDecodeFailure(false)  // suppress warnings
      *     .build();
-     * 
+     *
      * NonValidatingJwtParser parser = NonValidatingJwtParser.builder()
      *     .config(config)
      *     .build();
@@ -154,6 +156,12 @@ public class NonValidatingJwtParser {
      */
     @Builder.Default
     private final TokenFactoryConfig config = TokenFactoryConfig.builder().build();
+
+    /**
+     * Counter for security events that occur during token processing.
+     */
+    @NonNull
+    private final SecurityEventCounter securityEventCounter;
 
     /**
      * Decodes a JWT token and returns a DecodedJwt object containing the decoded parts.
@@ -186,7 +194,7 @@ public class NonValidatingJwtParser {
      * This method allows controlling whether warnings are logged when decoding fails.
      * This is useful when checking if a token is a JWT without logging warnings.
      *
-     * @param token the JWT token string to parse
+     * @param token       the JWT token string to parse
      * @param logWarnings whether to log warnings when decoding fails
      * @return an Optional containing the DecodedJwt if parsing is successful,
      * or empty if the token is invalid or cannot be parsed
@@ -215,6 +223,7 @@ public class NonValidatingJwtParser {
             if (logWarnings) {
                 LOGGER.warn(e, JWTTokenLogMessages.WARN.FAILED_TO_PARSE_TOKEN.format(e.getMessage()));
             }
+            securityEventCounter.increment(SecurityEventCounter.EventType.FAILED_TO_DECODE_JWT);
             return Optional.empty();
         }
     }
@@ -222,7 +231,7 @@ public class NonValidatingJwtParser {
     /**
      * Checks if the token is empty.
      *
-     * @param token the token to check
+     * @param token       the token to check
      * @param logWarnings whether to log warnings
      * @return true if the token is empty, false otherwise
      */
@@ -231,6 +240,7 @@ public class NonValidatingJwtParser {
             if (logWarnings) {
                 LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_IS_EMPTY::format);
             }
+            securityEventCounter.increment(SecurityEventCounter.EventType.TOKEN_EMPTY);
             return true;
         }
         return false;
@@ -239,7 +249,7 @@ public class NonValidatingJwtParser {
     /**
      * Checks if the token size exceeds the maximum allowed size.
      *
-     * @param token the token to check
+     * @param token       the token to check
      * @param logWarnings whether to log warnings
      * @return true if the token size exceeds the maximum, false otherwise
      */
@@ -248,6 +258,7 @@ public class NonValidatingJwtParser {
             if (logWarnings) {
                 LOGGER.warn(JWTTokenLogMessages.WARN.TOKEN_SIZE_EXCEEDED.format(config.getMaxTokenSize()));
             }
+            securityEventCounter.increment(SecurityEventCounter.EventType.TOKEN_SIZE_EXCEEDED);
             return true;
         }
         return false;
@@ -256,7 +267,7 @@ public class NonValidatingJwtParser {
     /**
      * Checks if the token format is invalid.
      *
-     * @param parts the token parts
+     * @param parts       the token parts
      * @param logWarnings whether to log warnings
      * @return true if the token format is invalid, false otherwise
      */
@@ -265,6 +276,7 @@ public class NonValidatingJwtParser {
             if (logWarnings) {
                 LOGGER.warn(JWTTokenLogMessages.WARN.INVALID_JWT_FORMAT.format(parts.length));
             }
+            securityEventCounter.increment(SecurityEventCounter.EventType.INVALID_JWT_FORMAT);
             return true;
         }
         return false;
@@ -273,8 +285,8 @@ public class NonValidatingJwtParser {
     /**
      * Decodes the token parts and creates a DecodedJwt object.
      *
-     * @param parts the token parts
-     * @param token the original token
+     * @param parts       the token parts
+     * @param token       the original token
      * @param logWarnings whether to log warnings
      * @return an Optional containing the DecodedJwt if decoding is successful, or empty otherwise
      */
@@ -285,6 +297,7 @@ public class NonValidatingJwtParser {
             if (logWarnings) {
                 LOGGER.warn(JWTTokenLogMessages.WARN.FAILED_TO_DECODE_HEADER::format);
             }
+            securityEventCounter.increment(SecurityEventCounter.EventType.FAILED_TO_DECODE_HEADER);
             return Optional.empty();
         }
 
@@ -294,6 +307,7 @@ public class NonValidatingJwtParser {
             if (logWarnings) {
                 LOGGER.warn(JWTTokenLogMessages.WARN.FAILED_TO_DECODE_PAYLOAD::format);
             }
+            securityEventCounter.increment(SecurityEventCounter.EventType.FAILED_TO_DECODE_PAYLOAD);
             return Optional.empty();
         }
 
@@ -322,6 +336,7 @@ public class NonValidatingJwtParser {
                 if (logWarnings) {
                     LOGGER.warn(JWTTokenLogMessages.WARN.DECODED_PART_SIZE_EXCEEDED.format(config.getMaxPayloadSize()));
                 }
+                securityEventCounter.increment(SecurityEventCounter.EventType.DECODED_PART_SIZE_EXCEEDED);
                 return Optional.empty();
             }
 
@@ -334,6 +349,7 @@ public class NonValidatingJwtParser {
             if (logWarnings) {
                 LOGGER.warn(e, JWTTokenLogMessages.WARN.FAILED_TO_DECODE_PART.format(e.getMessage()));
             }
+            securityEventCounter.increment(SecurityEventCounter.EventType.FAILED_TO_DECODE_JWT);
             return Optional.empty();
         }
     }

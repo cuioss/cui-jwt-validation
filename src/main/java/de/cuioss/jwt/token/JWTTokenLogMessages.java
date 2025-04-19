@@ -22,7 +22,7 @@ import lombok.experimental.UtilityClass;
 /**
  * Provides logging messages for the cui-jwt-token-handling module.
  * All messages follow the format: JWTToken-[identifier]: [message]
- * 
+ *
  * @since 1.0
  */
 @UtilityClass
@@ -108,6 +108,25 @@ public final class JWTTokenLogMessages {
                 .prefix(PREFIX)
                 .identifier(13)
                 .template("Received 304 Not Modified response, using cached JWKS")
+                .build();
+
+        // Token creation success events
+        public static final LogRecord ACCESS_TOKEN_CREATED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(16)
+                .template("Successfully created access token")
+                .build();
+
+        public static final LogRecord ID_TOKEN_CREATED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(17)
+                .template("Successfully created ID token")
+                .build();
+
+        public static final LogRecord REFRESH_TOKEN_CREATED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(18)
+                .template("Successfully created refresh token")
                 .build();
 
         public static final LogRecord CONTENT_UNCHANGED = LogRecordModel.builder()

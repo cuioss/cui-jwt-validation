@@ -44,6 +44,18 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 
 *Rationale:* Staying current with cryptographic standards is essential for long-term security.
 
+=== S3. Incorporate SecurityEventCounter into JwksLoader
+[ ] *Priority:* Medium
+
+*Description:* Find a way to incorporate SecurityEventCounter into JwksLoader, particularly at object construction time. Currently, TokenFactory is the holder of SecurityEventCounter, but JwksLoader needs access to it to report JWKS-related security events. One approach could be modifying JwksLoaderFactory.createHttpLoader() to accept a SecurityEventCounter parameter (e.g., createHttpLoader(@NonNull HttpJwksLoaderConfig config, @NonNull SecurityEventCounter securityEventCounter)). The challenge is that TokenFactory creates the SecurityEventCounter but doesn't directly create the JwksLoader - this happens in IssuerConfig. Potential solutions might involve:
+
+1. Modifying IssuerConfig to accept and pass through a SecurityEventCounter
+2. Creating a callback mechanism where JwksLoader can request the SecurityEventCounter when needed
+3. Using a dependency injection approach to provide the SecurityEventCounter
+4. Implementing a factory method in TokenFactory that creates properly configured JwksLoader instances
+
+*Rationale:* Incorporating SecurityEventCounter into JwksLoader would allow for more comprehensive security event tracking, particularly for JWKS-related events like fetch failures, JSON parsing errors, and key not found situations. This would improve security monitoring and auditing capabilities.
+
 
 == Testing Improvements
 
@@ -97,7 +109,7 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 *Rationale:* This would increase flexibility and allow for domain-specific validation requirements.
 
 === S4. Implement CUI-JWT-7.3: Security Events
-[ ] *Priority:* High
+[x] *Priority:* High
 
 *Description:* Introduce a new parameter object that provides counters for relevant security events. It should be structured for counting only and not duplicate logging. The counter should be kept within TokenFactory and accessible from outside via an API. It should be passed to each relevant flow element to report corresponding events. The counter must provide a reset method and be implemented in a highly concurrent way. All unit tests must verify the corresponding event counts. Use the same numbering/naming scheme as in JWTTokenLogMessages. The implementation should be structured to simplify later integration with micrometer but should not create any dependency on it at this time.
 After implementing, ensure all relevant specifications are updated accordingly.

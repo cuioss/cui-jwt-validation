@@ -18,6 +18,7 @@ package de.cuioss.jwt.token.jwks.http;
 import de.cuioss.jwt.token.jwks.JwksLoader;
 import de.cuioss.jwt.token.jwks.key.JWKSKeyLoader;
 import de.cuioss.jwt.token.jwks.key.KeyInfo;
+import de.cuioss.jwt.token.security.SecurityEventCounter;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
 import lombok.EqualsAndHashCode;
@@ -54,8 +55,8 @@ import static de.cuioss.jwt.token.JWTTokenLogMessages.WARN;
  *
  * @author Oliver Wolff
  */
-@ToString(exclude = {"httpClient", "cacheManager", "backgroundRefreshManager"})
-@EqualsAndHashCode(exclude = {"httpClient", "cacheManager", "backgroundRefreshManager"})
+@ToString(exclude = {"httpClient", "cacheManager", "backgroundRefreshManager", "securityEventCounter"})
+@EqualsAndHashCode(exclude = {"httpClient", "cacheManager", "backgroundRefreshManager", "securityEventCounter"})
 public class HttpJwksLoader implements JwksLoader, AutoCloseable {
 
     private static final CuiLogger LOGGER = new CuiLogger(HttpJwksLoader.class);
@@ -65,18 +66,23 @@ public class HttpJwksLoader implements JwksLoader, AutoCloseable {
     private final JwksHttpClient httpClient;
     private final JwksCacheManager cacheManager;
     private final BackgroundRefreshManager backgroundRefreshManager;
+    @NonNull
+    private final SecurityEventCounter securityEventCounter;
+
 
     /**
-     * Creates a new HttpJwksLoader with the specified configuration.
+     * Creates a new HttpJwksLoader with the specified configuration and security event counter.
      *
-     * @param config the configuration
+     * @param config               the configuration
+     * @param securityEventCounter the counter for security events
      * @throws IllegalArgumentException if the configuration is null
      */
-    public HttpJwksLoader(@NonNull HttpJwksLoaderConfig config) {
+    public HttpJwksLoader(@NonNull HttpJwksLoaderConfig config, @NonNull SecurityEventCounter securityEventCounter) {
         this.config = config;
         this.httpClient = JwksHttpClient.create(config);
         this.cacheManager = new JwksCacheManager(config, this::loadJwksKeyLoader);
         this.backgroundRefreshManager = new BackgroundRefreshManager(config, cacheManager);
+        this.securityEventCounter = securityEventCounter;
 
         // Initial JWKS content fetch to populate cache
         cacheManager.resolve();
@@ -98,16 +104,23 @@ public class HttpJwksLoader implements JwksLoader, AutoCloseable {
         // Get the current ETag from the cache manager
         String etag = cacheManager.getCurrentEtag();
 
-        // Fetch JWKS content from the HTTP endpoint
-        JwksHttpClient.JwksHttpResponse response = httpClient.fetchJwksContent(etag);
+        try {
+            // Fetch JWKS content from the HTTP endpoint
+            JwksHttpClient.JwksHttpResponse response = httpClient.fetchJwksContent(etag);
 
-        // Handle 304 Not Modified response
-        if (response.isNotModified()) {
-            return cacheManager.handleNotModified();
+            // Handle 304 Not Modified response
+            if (response.isNotModified()) {
+                return cacheManager.handleNotModified();
+            }
+
+            // Update the cache with the new content
+            return cacheManager.updateCache(response.getContent(), response.getEtag().orElse(null));
+        } catch (Exception e) {
+            LOGGER.warn(e, WARN.JWKS_FETCH_FAILED.format(e.getMessage()));
+            securityEventCounter.increment(SecurityEventCounter.EventType.JWKS_FETCH_FAILED);
+            // Return the last valid result if available, or an empty JWKS
+            return cacheManager.getLastValidResult().orElse(new JWKSKeyLoader("{}"));
         }
-
-        // Update the cache with the new content
-        return cacheManager.updateCache(response.getContent(), response.getEtag().orElse(null));
     }
 
     /**
@@ -136,7 +149,13 @@ public class HttpJwksLoader implements JwksLoader, AutoCloseable {
             } catch (Exception e) {
                 // Handle connection errors gracefully
                 LOGGER.warn(e, WARN.JWKS_REFRESH_ERROR.format(e.getMessage()));
+                securityEventCounter.increment(SecurityEventCounter.EventType.JWKS_FETCH_FAILED);
             }
+        }
+
+        if (keyInfo.isEmpty()) {
+            LOGGER.warn(WARN.KEY_NOT_FOUND.format(kid));
+            securityEventCounter.increment(SecurityEventCounter.EventType.KEY_NOT_FOUND);
         }
 
         return keyInfo;

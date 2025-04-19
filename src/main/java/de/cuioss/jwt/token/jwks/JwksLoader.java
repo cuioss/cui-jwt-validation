@@ -35,7 +35,8 @@ import java.util.Set;
  * <pre>
  * // Create a file-based JWKS loader
  * String jwksFilePath = "/path/to/jwks.json";
- * JwksLoader fileJwksLoader = JwksLoaderFactory.createFileLoader(jwksFilePath);
+ * SecurityEventCounter securityEventCounter = new SecurityEventCounter();
+ * JwksLoader fileJwksLoader = JwksLoaderFactory.createFileLoader(jwksFilePath, securityEventCounter);
  * 
  * // Get a key by ID
  * String keyId = "my-key-id";
@@ -57,7 +58,8 @@ import java.util.Set;
  *     .jwksUrl(jwksEndpoint)
  *     .refreshIntervalSeconds(60)
  *     .build();
- * JwksLoader httpJwksLoader = JwksLoaderFactory.createHttpLoader(config);
+ * SecurityEventCounter securityEventCounter = new SecurityEventCounter();
+ * JwksLoader httpJwksLoader = JwksLoaderFactory.createHttpLoader(config, securityEventCounter);
  * 
  * // Get a key by ID
  * Optional&lt;KeyInfo&gt; keyInfo = httpJwksLoader.getKeyInfo("my-key-id");
@@ -73,7 +75,8 @@ import java.util.Set;
  * <pre>
  * // Create an in-memory JWKS loader
  * String jwksContent = "{\"keys\":[{\"kty\":\"RSA\",\"kid\":\"my-key-id\",\"use\":\"sig\",\"alg\":\"RS256\",\"n\":\"...\",\"e\":\"...\"}]}";
- * JwksLoader inMemoryJwksLoader = JwksLoaderFactory.createInMemoryLoader(jwksContent);
+ * SecurityEventCounter securityEventCounter = new SecurityEventCounter();
+ * JwksLoader inMemoryJwksLoader = JwksLoaderFactory.createInMemoryLoader(jwksContent, securityEventCounter);
  * 
  * // Get all available keys
  * List&lt;KeyInfo&gt; allKeys = inMemoryJwksLoader.getAllKeyInfos();
@@ -87,6 +90,7 @@ import java.util.Set;
  * @author Oliver Wolff
  * @since 1.0
  */
+@SuppressWarnings("JavadocLinkAsPlainText")
 public interface JwksLoader {
 
     /**

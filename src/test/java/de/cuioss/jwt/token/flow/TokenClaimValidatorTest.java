@@ -18,6 +18,7 @@ package de.cuioss.jwt.token.flow;
 import de.cuioss.jwt.token.JWTTokenLogMessages;
 import de.cuioss.jwt.token.TokenType;
 import de.cuioss.jwt.token.domain.token.TokenContent;
+import de.cuioss.jwt.token.security.SecurityEventCounter;
 import de.cuioss.jwt.token.test.generator.InvalidTokenContentGenerator;
 import de.cuioss.jwt.token.test.generator.ValidTokenContentGenerator;
 import de.cuioss.test.generator.junit.EnableGeneratorController;
@@ -43,6 +44,13 @@ class TokenClaimValidatorTest {
     private static final String EXPECTED_AUDIENCE = "test-audience";
     private static final String EXPECTED_CLIENT_ID = "test-client-id";
 
+    private static final SecurityEventCounter SECURITY_EVENT_COUNTER = new SecurityEventCounter();
+
+    // Helper method to create a TokenClaimValidator with the shared SecurityEventCounter
+    private TokenClaimValidator createValidator(IssuerConfig issuerConfig) {
+        return new TokenClaimValidator(issuerConfig, SECURITY_EVENT_COUNTER);
+    }
+
     @Nested
     @DisplayName("Constructor Tests")
     class ConstructorTests {
@@ -57,7 +65,7 @@ class TokenClaimValidatorTest {
                     .build();
 
             // When creating the validator
-            TokenClaimValidator validator = new TokenClaimValidator(issuerConfig);
+            TokenClaimValidator validator = createValidator(issuerConfig);
 
             // Then the validator should be created without warnings
             assertNotNull(validator, "Validator should not be null");
@@ -70,6 +78,9 @@ class TokenClaimValidatorTest {
         @Test
         @DisplayName("Should log warning when missing expected audience")
         void shouldLogWarningWhenMissingExpectedAudience() {
+            // Get initial count
+            long initialCount = SECURITY_EVENT_COUNTER.getCount(SecurityEventCounter.EventType.MISSING_RECOMMENDED_ELEMENT);
+
             // Given an IssuerConfig without expected audience
             var issuerConfig = IssuerConfig.builder()
                     .issuer("test-issuer")
@@ -77,7 +88,7 @@ class TokenClaimValidatorTest {
                     .build();
 
             // When creating the validator
-            TokenClaimValidator validator = new TokenClaimValidator(issuerConfig);
+            TokenClaimValidator validator = createValidator(issuerConfig);
 
             // Then a warning should be logged for missing expected audience
             assertNotNull(validator, "Validator should not be null");
@@ -85,11 +96,18 @@ class TokenClaimValidatorTest {
 
             // Warning should be logged
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, JWTTokenLogMessages.WARN.MISSING_RECOMMENDED_ELEMENT.resolveIdentifierString());
+
+            // Verify security event was recorded
+            assertEquals(initialCount + 1, SECURITY_EVENT_COUNTER.getCount(SecurityEventCounter.EventType.MISSING_RECOMMENDED_ELEMENT),
+                    "MISSING_RECOMMENDED_ELEMENT event should be incremented");
         }
 
         @Test
         @DisplayName("Should log warning when missing expected client ID")
         void shouldLogWarningWhenMissingExpectedClientId() {
+            // Get initial count
+            long initialCount = SECURITY_EVENT_COUNTER.getCount(SecurityEventCounter.EventType.MISSING_RECOMMENDED_ELEMENT);
+
             // Given an IssuerConfig without expected client ID
             var issuerConfig = IssuerConfig.builder()
                     .issuer("test-issuer")
@@ -97,7 +115,7 @@ class TokenClaimValidatorTest {
                     .build();
 
             // When creating the validator
-            TokenClaimValidator validator = new TokenClaimValidator(issuerConfig);
+            TokenClaimValidator validator = createValidator(issuerConfig);
 
             // Then a warning should be logged for missing expected client ID
             assertNotNull(validator, "Validator should not be null");
@@ -105,18 +123,25 @@ class TokenClaimValidatorTest {
 
             // Warning should be logged
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, JWTTokenLogMessages.WARN.MISSING_RECOMMENDED_ELEMENT.resolveIdentifierString());
+
+            // Verify security event was recorded
+            assertEquals(initialCount + 1, SECURITY_EVENT_COUNTER.getCount(SecurityEventCounter.EventType.MISSING_RECOMMENDED_ELEMENT),
+                    "MISSING_RECOMMENDED_ELEMENT event should be incremented");
         }
 
         @Test
         @DisplayName("Should log warnings when missing all recommended elements")
         void shouldLogWarningsWhenMissingAllRecommendedElements() {
+            // Get initial count
+            long initialCount = SECURITY_EVENT_COUNTER.getCount(SecurityEventCounter.EventType.MISSING_RECOMMENDED_ELEMENT);
+
             // Given an IssuerConfig without any recommended elements
             var issuerConfig = IssuerConfig.builder()
                     .issuer("test-issuer")
                     .build();
 
             // When creating the validator
-            TokenClaimValidator validator = new TokenClaimValidator(issuerConfig);
+            TokenClaimValidator validator = createValidator(issuerConfig);
 
             // Then warnings should be logged for all missing recommended elements
             assertNotNull(validator, "Validator should not be null");
@@ -127,6 +152,10 @@ class TokenClaimValidatorTest {
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, JWTTokenLogMessages.WARN.MISSING_RECOMMENDED_ELEMENT.resolveIdentifierString());
             // Multiple occurrences of the same log message with different parameters
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, JWTTokenLogMessages.WARN.MISSING_RECOMMENDED_ELEMENT.resolveIdentifierString());
+
+            // Verify security event was recorded twice (once for audience, once for client ID)
+            assertEquals(initialCount + 2, SECURITY_EVENT_COUNTER.getCount(SecurityEventCounter.EventType.MISSING_RECOMMENDED_ELEMENT),
+                    "MISSING_RECOMMENDED_ELEMENT event should be incremented twice");
         }
     }
 
@@ -142,7 +171,7 @@ class TokenClaimValidatorTest {
                     .expectedAudience(EXPECTED_AUDIENCE)
                     .expectedClientId(EXPECTED_CLIENT_ID)
                     .build();
-            var validator = new TokenClaimValidator(issuerConfig);
+            var validator = createValidator(issuerConfig);
 
             // Create a token with all mandatory claims using the ValidTokenContentGenerator
             TokenContent tokenContent = new ValidTokenContentGenerator().next();
@@ -157,13 +186,16 @@ class TokenClaimValidatorTest {
         @Test
         @DisplayName("Should fail validation for token missing mandatory claims")
         void shouldFailValidationForTokenMissingMandatoryClaims() {
+            // Get initial count
+            long initialCount = SECURITY_EVENT_COUNTER.getCount(SecurityEventCounter.EventType.MISSING_CLAIM);
+
             // Given a validator with expected audience and client ID
             var issuerConfig = IssuerConfig.builder()
                     .issuer("test-issuer")
                     .expectedAudience(EXPECTED_AUDIENCE)
                     .expectedClientId(EXPECTED_CLIENT_ID)
                     .build();
-            var validator = new TokenClaimValidator(issuerConfig);
+            var validator = createValidator(issuerConfig);
 
             // Create a token missing mandatory claims using the InvalidTokenContentGenerator
             TokenContent tokenContent = new InvalidTokenContentGenerator()
@@ -179,6 +211,10 @@ class TokenClaimValidatorTest {
 
             // Verify that the appropriate warning is logged
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, JWTTokenLogMessages.WARN.MISSING_CLAIM.resolveIdentifierString());
+
+            // Verify security event was recorded
+            assertTrue(SECURITY_EVENT_COUNTER.getCount(SecurityEventCounter.EventType.MISSING_CLAIM) > initialCount,
+                    "MISSING_CLAIM event should be incremented");
         }
     }
 
@@ -194,7 +230,7 @@ class TokenClaimValidatorTest {
                     .expectedAudience(EXPECTED_AUDIENCE)
                     .expectedClientId(EXPECTED_CLIENT_ID)
                     .build();
-            var validator = new TokenClaimValidator(issuerConfig);
+            var validator = createValidator(issuerConfig);
 
             // When validating a token with a matching audience
             TokenContent tokenContent = new ValidTokenContentGenerator().next();
@@ -207,13 +243,16 @@ class TokenClaimValidatorTest {
         @Test
         @DisplayName("Should fail validation for token with non-matching audience for ID-Tokens")
         void shouldFailValidationForTokenWithNonMatchingAudienceForID() {
+            // Get initial count
+            long initialCount = SECURITY_EVENT_COUNTER.getCount(SecurityEventCounter.EventType.MISSING_CLAIM);
+
             // Given a validator with expected audience
             var issuerConfig = IssuerConfig.builder()
                     .issuer("test-issuer")
                     .expectedAudience(EXPECTED_AUDIENCE)
                     .expectedClientId(EXPECTED_CLIENT_ID)
                     .build();
-            var validator = new TokenClaimValidator(issuerConfig);
+            var validator = createValidator(issuerConfig);
 
             // When validating a token with a missing audience
             TokenContent tokenContent = new InvalidTokenContentGenerator(TokenType.ID_TOKEN)
@@ -226,6 +265,10 @@ class TokenClaimValidatorTest {
 
             // Verify that the appropriate warning is logged
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, JWTTokenLogMessages.WARN.MISSING_CLAIM.resolveIdentifierString());
+
+            // Verify security event was recorded
+            assertEquals(initialCount + 1, SECURITY_EVENT_COUNTER.getCount(SecurityEventCounter.EventType.MISSING_CLAIM),
+                    "MISSING_CLAIM event should be incremented");
         }
 
         @Test
@@ -237,7 +280,7 @@ class TokenClaimValidatorTest {
                     .expectedAudience(EXPECTED_AUDIENCE)
                     .expectedClientId(EXPECTED_CLIENT_ID)
                     .build();
-            var validator = new TokenClaimValidator(issuerConfig);
+            var validator = createValidator(issuerConfig);
 
             // When validating a token with a missing audience
             TokenContent tokenContent = new InvalidTokenContentGenerator(TokenType.ACCESS_TOKEN)
@@ -262,7 +305,7 @@ class TokenClaimValidatorTest {
                     .expectedAudience(EXPECTED_AUDIENCE)
                     .expectedClientId(EXPECTED_CLIENT_ID)
                     .build();
-            var validator = new TokenClaimValidator(issuerConfig);
+            var validator = createValidator(issuerConfig);
 
             // When validating a token with a matching authorized party
             TokenContent tokenContent = new ValidTokenContentGenerator().next();
@@ -275,13 +318,16 @@ class TokenClaimValidatorTest {
         @Test
         @DisplayName("Should fail validation for token with missing authorized party")
         void shouldFailValidationForTokenWithMissingAuthorizedParty() {
+            // Get initial count
+            long initialCount = SECURITY_EVENT_COUNTER.getCount(SecurityEventCounter.EventType.MISSING_CLAIM);
+
             // Given a validator with expected client ID
             var issuerConfig = IssuerConfig.builder()
                     .issuer("test-issuer")
                     .expectedAudience(EXPECTED_AUDIENCE)
                     .expectedClientId(EXPECTED_CLIENT_ID)
                     .build();
-            var validator = new TokenClaimValidator(issuerConfig);
+            var validator = createValidator(issuerConfig);
 
             // When validating a token with a missing authorized party
             // Create a token with a missing authorized party claim
@@ -295,12 +341,10 @@ class TokenClaimValidatorTest {
 
             // Verify that the appropriate warning is logged
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, JWTTokenLogMessages.WARN.MISSING_CLAIM.resolveIdentifierString());
+
+            // Verify security event was recorded
+            assertEquals(initialCount + 1, SECURITY_EVENT_COUNTER.getCount(SecurityEventCounter.EventType.MISSING_CLAIM),
+                    "MISSING_CLAIM event should be incremented");
         }
     }
-
-    // Not Before Validation Tests have been moved to TokenClaimValidatorEdgeCaseTest
-    // to avoid duplication and provide more comprehensive edge case testing
-
-    // Expiration Validation Tests have been moved to TokenClaimValidatorEdgeCaseTest
-    // to avoid duplication and provide more comprehensive edge case testing
 }

@@ -22,7 +22,6 @@ import de.cuioss.jwt.token.domain.claim.mapper.JsonCollectionMapper;
 import de.cuioss.jwt.token.domain.token.AccessTokenContent;
 import de.cuioss.jwt.token.flow.IssuerConfig;
 import de.cuioss.jwt.token.flow.TokenFactoryConfig;
-import de.cuioss.jwt.token.jwks.key.JWKSKeyLoader;
 import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.jwt.token.test.KeyMaterialHandler;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
@@ -50,24 +49,23 @@ class CustomClaimMapperTest {
     private static final List<String> ROLES = Arrays.asList("admin", "user", "manager");
 
     private TokenFactory tokenFactory;
-    private IssuerConfig issuerConfig;
     private String tokenWithRoles;
+    private String jwksContent;
 
     @BeforeEach
     void setUp() {
         // Create a JWKSKeyLoader with the default JWKS content
-        String jwksContent = JWKSFactory.createDefaultJwks();
-        JWKSKeyLoader jwksKeyLoader = new JWKSKeyLoader(jwksContent);
+        jwksContent = JWKSFactory.createDefaultJwks();
 
         // Create a custom claim mapper for the "role" claim
         ClaimMapper roleMapper = new JsonCollectionMapper();
 
         // Create issuer config with the custom claim mapper
-        issuerConfig = IssuerConfig.builder()
+        IssuerConfig issuerConfig = IssuerConfig.builder()
                 .issuer(ISSUER)
                 .expectedAudience(AUDIENCE)
                 .expectedClientId(CLIENT_ID)
-                .jwksLoader(jwksKeyLoader)
+                .jwksContent(jwksContent)
                 .claimMapper(ROLE_CLAIM, roleMapper)
                 .build();
 
@@ -119,7 +117,7 @@ class CustomClaimMapperTest {
                 .issuer(ISSUER)
                 .expectedAudience(AUDIENCE)
                 .expectedClientId(CLIENT_ID)
-                .jwksLoader(issuerConfig.getJwksLoader())
+                .jwksContent(jwksContent)
                 .build();
 
         // Create token factory

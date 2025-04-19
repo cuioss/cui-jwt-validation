@@ -18,7 +18,7 @@ package de.cuioss.jwt.token;
 import de.cuioss.jwt.token.domain.token.IdTokenContent;
 import de.cuioss.jwt.token.flow.IssuerConfig;
 import de.cuioss.jwt.token.flow.NonValidatingJwtParser;
-import de.cuioss.jwt.token.jwks.key.JWKSKeyLoader;
+import de.cuioss.jwt.token.security.SecurityEventCounter;
 import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.jwt.token.test.TestTokenProducer;
 import de.cuioss.jwt.token.test.generator.IDTokenGenerator;
@@ -39,11 +39,6 @@ class ClientConfusionAttackTest {
     private static final CuiLogger LOGGER = new CuiLogger(ClientConfusionAttackTest.class);
 
     /**
-     * The JWKS key loader used for testing.
-     */
-    private JWKSKeyLoader jwksKeyLoader;
-
-    /**
      * The token factory used for testing.
      */
     private TokenFactory tokenFactory;
@@ -55,7 +50,6 @@ class ClientConfusionAttackTest {
     void setUp() {
         // Use the JWKSFactory to create a proper JWKS document with the default key ID
         String jwksContent = JWKSFactory.createDefaultJwks();
-        jwksKeyLoader = new JWKSKeyLoader(jwksContent);
 
         // Print the JWKS content for debugging
         LOGGER.debug("JWKS content: " + jwksContent);
@@ -70,7 +64,7 @@ class ClientConfusionAttackTest {
 
         // Print the token headers using NonValidatingJwtParser to debug
         try {
-            var decoder = NonValidatingJwtParser.builder().build();
+            var decoder = NonValidatingJwtParser.builder().securityEventCounter(new SecurityEventCounter()).build();
             var decoded = decoder.decode(token);
             decoded.ifPresent(jwt -> {
                 LOGGER.debug("Token headers: " + jwt.getHeader().orElse(null));
@@ -102,7 +96,7 @@ class ClientConfusionAttackTest {
                 .issuer(TestTokenProducer.ISSUER)
                 .expectedAudience(IDTokenGenerator.DEFAULT_CLIENT_ID)
                 .expectedClientId(IDTokenGenerator.DEFAULT_CLIENT_ID)
-                .jwksLoader(jwksKeyLoader)
+                .jwksContent(JWKSFactory.createDefaultJwks())
                 .build();
 
         LOGGER.debug("IssuerConfig: issuer=" + issuerConfig.getIssuer() +
@@ -128,7 +122,7 @@ class ClientConfusionAttackTest {
                 .issuer(TestTokenProducer.ISSUER)
                 .expectedAudience(IDTokenGenerator.DEFAULT_CLIENT_ID)
                 .expectedClientId("wrong-client-id")
-                .jwksLoader(jwksKeyLoader)
+                .jwksContent(JWKSFactory.createDefaultJwks())
                 .build();
 
         // Create a token factory with the issuer config
@@ -150,7 +144,7 @@ class ClientConfusionAttackTest {
                 .issuer(TestTokenProducer.ISSUER)
                 .expectedAudience(IDTokenGenerator.DEFAULT_CLIENT_ID)
                 .expectedClientId(IDTokenGenerator.DEFAULT_CLIENT_ID)
-                .jwksLoader(jwksKeyLoader)
+                .jwksContent(JWKSFactory.createDefaultJwks())
                 .build();
 
         // Create a token factory with the issuer config
@@ -170,7 +164,7 @@ class ClientConfusionAttackTest {
 
         // Print the token headers using NonValidatingJwtParser to debug
         try {
-            var decoder = NonValidatingJwtParser.builder().build();
+            var decoder = NonValidatingJwtParser.builder().securityEventCounter(new SecurityEventCounter()).build();
             var decoded = decoder.decode(token);
             decoded.ifPresent(jwt -> {
                 LOGGER.debug("Token headers: " + jwt.getHeader().orElse(null));
@@ -201,7 +195,7 @@ class ClientConfusionAttackTest {
         IssuerConfig issuerConfig = IssuerConfig.builder()
                 .issuer(TestTokenProducer.ISSUER)
                 .expectedAudience(IDTokenGenerator.DEFAULT_CLIENT_ID)
-                .jwksLoader(jwksKeyLoader)
+                .jwksContent(JWKSFactory.createDefaultJwks())
                 .build();
 
         LOGGER.debug("IssuerConfig: issuer=" + issuerConfig.getIssuer() +
@@ -226,7 +220,7 @@ class ClientConfusionAttackTest {
         IssuerConfig issuerConfig = IssuerConfig.builder()
                 .issuer(TestTokenProducer.ISSUER)
                 .expectedClientId(IDTokenGenerator.DEFAULT_CLIENT_ID)
-                .jwksLoader(jwksKeyLoader)
+                .jwksContent(JWKSFactory.createDefaultJwks())
                 .build();
 
         // Create a token factory with the issuer config
@@ -247,7 +241,7 @@ class ClientConfusionAttackTest {
         IssuerConfig issuerConfig = IssuerConfig.builder()
                 .issuer(TestTokenProducer.ISSUER)
                 .expectedClientId(IDTokenGenerator.DEFAULT_CLIENT_ID)
-                .jwksLoader(jwksKeyLoader)
+                .jwksContent(JWKSFactory.createDefaultJwks())
                 .build();
 
         // Create a token factory with the issuer config

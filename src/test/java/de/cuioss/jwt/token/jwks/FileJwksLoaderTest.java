@@ -17,6 +17,7 @@ package de.cuioss.jwt.token.jwks;
 
 import de.cuioss.jwt.token.jwks.key.JWKSKeyLoader;
 import de.cuioss.jwt.token.jwks.key.KeyInfo;
+import de.cuioss.jwt.token.security.SecurityEventCounter;
 import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
@@ -31,7 +32,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @EnableTestLogger(debug = {JWKSKeyLoader.class, JwksLoaderFactory.class})
 @DisplayName("Tests file-based JWKSKeyLoader functionality")
@@ -44,16 +47,20 @@ class FileJwksLoaderTest {
 
     private Path jwksFilePath;
     private JwksLoader fileJwksLoader;
+    private SecurityEventCounter securityEventCounter;
 
     @BeforeEach
     void setUp() throws IOException {
+        // Initialize the SecurityEventCounter
+        securityEventCounter = new SecurityEventCounter();
+
         // Create a temporary JWKS file for testing
         jwksFilePath = tempDir.resolve("jwks.json");
         String jwksContent = JWKSFactory.createDefaultJwks();
         Files.writeString(jwksFilePath, jwksContent);
 
         // Create the FileJwksLoader with the temporary file
-        fileJwksLoader = JwksLoaderFactory.createFileLoader(jwksFilePath.toString());
+        fileJwksLoader = JwksLoaderFactory.createFileLoader(jwksFilePath.toString(), securityEventCounter);
     }
 
     @Test
@@ -102,8 +109,11 @@ class FileJwksLoaderTest {
     @Test
     @DisplayName("Should handle file not found")
     void shouldHandleFileNotFound() {
+        // Get initial count
+        long initialCount = securityEventCounter.getCount(SecurityEventCounter.EventType.FAILED_TO_READ_JWKS_FILE);
+
         // Given
-        JwksLoader nonExistentFileLoader = JwksLoaderFactory.createFileLoader(tempDir.resolve("non-existent.json").toString());
+        JwksLoader nonExistentFileLoader = JwksLoaderFactory.createFileLoader(tempDir.resolve("non-existent.json").toString(), securityEventCounter);
 
         // When
         Optional<KeyInfo> keyInfo = nonExistentFileLoader.getKeyInfo(TEST_KID);
@@ -112,16 +122,21 @@ class FileJwksLoaderTest {
         assertFalse(keyInfo.isPresent(), "Key info should not be present when file is not found");
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to read JWKS from file");
 
+        // Verify security event was recorded
+        assertEquals(initialCount + 1, securityEventCounter.getCount(SecurityEventCounter.EventType.FAILED_TO_READ_JWKS_FILE),
+                "FAILED_TO_READ_JWKS_FILE event should be incremented");
+
         // No cleanup needed
     }
 
     @Test
     @DisplayName("Should handle invalid JWKS format")
     void shouldHandleInvalidJwksFormat() throws IOException {
+
         // Given
         Path invalidJwksPath = tempDir.resolve("invalid-jwks.json");
         Files.writeString(invalidJwksPath, JWKSFactory.createInvalidJson());
-        JwksLoader invalidJwksLoader = JwksLoaderFactory.createFileLoader(invalidJwksPath.toString());
+        JwksLoader invalidJwksLoader = JwksLoaderFactory.createFileLoader(invalidJwksPath.toString(), securityEventCounter);
 
         // When
         Optional<KeyInfo> keyInfo = invalidJwksLoader.getKeyInfo(TEST_KID);
@@ -130,7 +145,6 @@ class FileJwksLoaderTest {
         assertFalse(keyInfo.isPresent(), "Key info should not be present when JWKS is invalid");
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to parse JWKS JSON");
 
-        // No cleanup needed
     }
 
     @Test
@@ -140,7 +154,7 @@ class FileJwksLoaderTest {
         Path missingFieldsJwksPath = tempDir.resolve("missing-fields-jwks.json");
         String missingFieldsJwksContent = JWKSFactory.createJwksWithMissingFields(TEST_KID);
         Files.writeString(missingFieldsJwksPath, missingFieldsJwksContent);
-        JwksLoader missingFieldsJwksLoader = JwksLoaderFactory.createFileLoader(missingFieldsJwksPath.toString());
+        JwksLoader missingFieldsJwksLoader = JwksLoaderFactory.createFileLoader(missingFieldsJwksPath.toString(), securityEventCounter);
 
         // When
         Optional<KeyInfo> keyInfo = missingFieldsJwksLoader.getKeyInfo(TEST_KID);
@@ -164,7 +178,7 @@ class FileJwksLoaderTest {
         Files.writeString(jwksFilePath, updatedJwksContent);
 
         // Create a new FileJwksLoader to force refresh
-        JwksLoader newLoader = JwksLoaderFactory.createFileLoader(jwksFilePath.toString());
+        JwksLoader newLoader = JwksLoaderFactory.createFileLoader(jwksFilePath.toString(), securityEventCounter);
 
         // Then - verify the old key is no longer available and the new key is
         Optional<KeyInfo> oldKeyInfo = newLoader.getKeyInfo(TEST_KID);

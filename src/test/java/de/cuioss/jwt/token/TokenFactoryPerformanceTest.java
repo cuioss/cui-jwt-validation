@@ -17,8 +17,6 @@ package de.cuioss.jwt.token;
 
 import de.cuioss.jwt.token.flow.IssuerConfig;
 import de.cuioss.jwt.token.flow.TokenFactoryConfig;
-import de.cuioss.jwt.token.jwks.key.JWKSKeyLoader;
-import de.cuioss.jwt.token.security.AlgorithmPreferences;
 import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.jwt.token.test.TestTokenProducer;
 import de.cuioss.jwt.token.test.generator.AccessTokenGenerator;
@@ -74,15 +72,13 @@ class TokenFactoryPerformanceTest {
     void setUp() {
         // Create a JWKSKeyLoader with the default JWKS content
         String jwksContent = JWKSFactory.createDefaultJwks();
-        JWKSKeyLoader jwksKeyLoader = new JWKSKeyLoader(jwksContent);
 
         // Create issuer config
         IssuerConfig issuerConfig = IssuerConfig.builder()
                 .issuer(ISSUER)
                 .expectedAudience(AUDIENCE)
                 .expectedClientId(CLIENT_ID)
-                .jwksLoader(jwksKeyLoader)
-                .algorithmPreferences(new AlgorithmPreferences())
+                .jwksContent(jwksContent)
                 .build();
 
         // Create token factory
