@@ -17,12 +17,14 @@ package de.cuioss.jwt.token.flow;
 
 import de.cuioss.jwt.token.domain.claim.ClaimName;
 import de.cuioss.jwt.token.domain.claim.ClaimValue;
+import de.cuioss.jwt.token.domain.claim.mapper.ClaimMapper;
 import de.cuioss.jwt.token.domain.claim.mapper.IdentityMapper;
 import de.cuioss.jwt.token.domain.token.AccessTokenContent;
 import de.cuioss.jwt.token.domain.token.IdTokenContent;
 import de.cuioss.jwt.token.domain.token.RefreshTokenContent;
 import jakarta.json.JsonObject;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,7 +33,10 @@ import java.util.Optional;
 /**
  * Builder for creating token content objects from decoded JWT tokens.
  */
+@RequiredArgsConstructor
 public class TokenBuilder {
+
+    private final IssuerConfig issuerConfig;
 
     /**
      * Creates an AccessTokenContent from a decoded JWT.
@@ -90,16 +95,23 @@ public class TokenBuilder {
 
         // Process all keys in the JSON object
         for (String key : jsonObject.keySet()) {
-            // Try to map using known ClaimName
-            Optional<ClaimName> claimNameOption = ClaimName.fromString(key);
-            if (claimNameOption.isPresent()) {
-                ClaimName claimName = claimNameOption.get();
-                ClaimValue claimValue = claimName.map(jsonObject);
+            // Check if there's a custom mapper for this claim
+            if (issuerConfig != null && issuerConfig.getClaimMappers() != null && issuerConfig.getClaimMappers().containsKey(key)) {
+                ClaimMapper customMapper = issuerConfig.getClaimMappers().get(key);
+                ClaimValue claimValue = customMapper.map(jsonObject, key);
                 claims.put(key, claimValue);
             } else {
-                // Use IdentityMapper for unknown claims
-                ClaimValue claimValue = new IdentityMapper().map(jsonObject, key);
-                claims.put(key, claimValue);
+                // Try to map using known ClaimName
+                Optional<ClaimName> claimNameOption = ClaimName.fromString(key);
+                if (claimNameOption.isPresent()) {
+                    ClaimName claimName = claimNameOption.get();
+                    ClaimValue claimValue = claimName.map(jsonObject);
+                    claims.put(key, claimValue);
+                } else {
+                    // Use IdentityMapper for unknown claims
+                    ClaimValue claimValue = new IdentityMapper().map(jsonObject, key);
+                    claims.put(key, claimValue);
+                }
             }
         }
 

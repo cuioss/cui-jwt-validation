@@ -34,65 +34,42 @@ import lombok.NonNull;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 
 /**
- * Factory for creating and validating OAuth2/OpenID Connect tokens with multi-issuer support.
- * This implementation uses the elements of the package de.cuioss.jwt.token.flow for token
- * transformation and validation.
+ * Main entry point for creating and validating JWT tokens.
  * <p>
- * Key features:
- * <ul>
- *   <li>Support for multiple token issuers</li>
- *   <li>Pipeline-based token validation</li>
- *   <li>Creation of typed token instances ({@link AccessTokenContent}, {@link IdTokenContent}, {@link RefreshTokenContent})</li>
- *   <li>Thread-safe token creation and validation</li>
- *   <li>Configurable token size limits</li>
- * </ul>
+ * This class provides methods for creating different types of tokens from
+ * JWT strings, handling the validation and parsing process.
+ * <p>
+ * The factory uses a pipeline approach to validate tokens:
+ * <ol>
+ *   <li>Basic token format validation</li>
+ *   <li>Issuer validation</li>
+ *   <li>Header validation</li>
+ *   <li>Signature validation</li>
+ *   <li>Token building</li>
+ *   <li>Claim validation</li>
+ * </ol>
  * <p>
  * Usage example:
  * <pre>
- * // Create a JWKSKeyLoader with the JWKS content
- * String jwksContent = JWKSFactory.createDefaultJwks();
- * JWKSKeyLoader jwksKeyLoader = new JWKSKeyLoader(jwksContent);
- *
- * // Create issuer config
- * IssuerConfig issuerConfig = IssuerConfig.builder()
- *         .issuer("https://example.com")
- *         .expectedAudience("test-client")
- *         .expectedClientId("test-client")
- *         .jwksKeyLoader(jwksKeyLoader)
- *         .algorithmPreferences(new AlgorithmPreferences())
- *         .build();
- *
- * // Create token factory with a single issuer config
  * TokenFactory tokenFactory = new TokenFactory(
  *         TokenFactoryConfig.builder().build(),
- *         issuerConfig);
+ *         IssuerConfig.builder()
+ *             .issuer("https://example.com")
+ *             .expectedAudience("my-client")
+ *             .jwksLoader(jwksLoader)
+ *             .build()
+ * );
  *
- * // Alternatively, you can use multiple issuer configs
- * TokenFactory multiIssuerFactory = new TokenFactory(
- *         TokenFactoryConfig.builder().build(),
- *         issuerConfig1, issuerConfig2);
+ * // Parse an access token
+ * Optional&lt;AccessTokenContent&gt; accessToken = tokenFactory.createAccessToken(tokenString);
  *
- * // Create a refresh token
- * String refreshTokenString = "..."; // JWT token string
- * Optional&lt;RefreshTokenContent&gt; refreshToken = tokenFactory.createRefreshToken(refreshTokenString);
+ * // Parse an ID token
+ * Optional&lt;IdTokenContent&gt; idToken = tokenFactory.createIdToken(tokenString);
  *
- * // Create an access token
- * String accessTokenString = "..."; // JWT token string
- * Optional&lt;AccessTokenContent&gt; accessToken = tokenFactory.createAccessToken(accessTokenString);
- *
- * // Create an ID token
- * String idTokenString = "..."; // JWT token string
- * Optional&lt;IdTokenContent&gt; idToken = tokenFactory.createIdToken(idTokenString);
- *
- * // Using custom token size limits
- * TokenFactoryConfig customConfig = TokenFactoryConfig.builder()
- *         .maxTokenSize(1024)
- *         .maxPayloadSize(512)
- *         .build();
- * TokenFactory customFactory = new TokenFactory(customConfig, issuerConfig);
+ * // Parse a refresh token
+ * Optional&lt;RefreshTokenContent&gt; refreshToken = tokenFactory.createRefreshToken(tokenString);
  * </pre>
  *
  * @since 1.0
@@ -137,7 +114,7 @@ public class TokenFactory {
         LOGGER.debug("Creating access token");
         return processTokenPipeline(
                 tokenString,
-                decodedJwt -> new TokenBuilder().createAccessToken(decodedJwt)
+                (decodedJwt, issuerConfig) -> new TokenBuilder(issuerConfig).createAccessToken(decodedJwt)
         );
     }
 
@@ -151,7 +128,7 @@ public class TokenFactory {
         LOGGER.debug("Creating ID token");
         return processTokenPipeline(
                 tokenString,
-                decodedJwt -> new TokenBuilder().createIdToken(decodedJwt)
+                (decodedJwt, issuerConfig) -> new TokenBuilder(issuerConfig).createIdToken(decodedJwt)
         );
     }
 
@@ -169,7 +146,7 @@ public class TokenFactory {
             return Optional.empty();
         }
 
-        return new TokenBuilder().createRefreshToken(tokenString);
+        return new TokenBuilder(null).createRefreshToken(tokenString);
     }
 
     /**
@@ -188,13 +165,13 @@ public class TokenFactory {
      * for invalid tokens.
      *
      * @param tokenString  the token string to process
-     * @param tokenBuilder function to build the token from the decoded JWT
+     * @param tokenBuilder function to build the token from the decoded JWT and issuer config
      * @param <T>          the type of token to create
      * @return an Optional containing the validated token, or empty if validation fails
      */
     private <T extends TokenContent> Optional<T> processTokenPipeline(
             String tokenString,
-            Function<DecodedJwt, Optional<T>> tokenBuilder) {
+            TokenBuilderFunction<T> tokenBuilder) {
 
         // 1. Basic token format validation - fail fast for empty tokens
         if (MoreStrings.isBlank(tokenString)) {
@@ -238,7 +215,7 @@ public class TokenFactory {
         }
 
         // 7. Build token - only if header and signature are valid
-        Optional<T> token = tokenBuilder.apply(decodedJwt.get());
+        Optional<T> token = tokenBuilder.apply(decodedJwt.get(), issuerConfig);
         if (token.isEmpty()) {
             LOGGER.debug("Token building failed");
             return Optional.empty();
@@ -257,5 +234,15 @@ public class TokenFactory {
         }
 
         return validatedToken;
+    }
+
+    /**
+     * Functional interface for building tokens with issuer config.
+     *
+     * @param <T> the type of token to create
+     */
+    @FunctionalInterface
+    private interface TokenBuilderFunction<T> {
+        Optional<T> apply(DecodedJwt decodedJwt, IssuerConfig issuerConfig);
     }
 }

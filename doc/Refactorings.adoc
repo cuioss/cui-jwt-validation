@@ -41,21 +41,6 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 == Testing Improvements
 
 
-=== T2. Add Performance Benchmarks
-[ ] *Priority:* Medium
-
-*Description:* Implement performance benchmarks to measure and track token validation performance over time. Use de.cuioss.jwt.token.test.util.PerformanceStatistics therfore. see de.cuioss.jwt.token.jwks.http.HttpJwksLoaderPerformanceTest for usage example
-
-*Rationale:* Performance benchmarks help identify regressions and validate optimizations.
-
-
-=== T3. Implement TokenFactoryPerformanceTest
-[x] *Priority:* Medium
-
-*Description:* Create a performance test for the TokenFactory class to verify token parsing and validation performance. The test should measure the performance of creating access tokens, ID tokens, and refresh tokens under concurrent load. Use de.cuioss.jwt.token.test.util.PerformanceStatistics for tracking performance metrics, similar to HttpJwksLoaderPerformanceTest.
-
-*Rationale:* Performance testing of the TokenFactory is essential to ensure it meets the performance requirements specified in CUI-JWT-9, particularly token parsing performance (at least 1000 tokens per second) and token validation performance (at least 500 tokens per second).
-
 
 === T4. Analyze for duplicate unit-test
 [ ] *Priority:* Medium
@@ -96,20 +81,6 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 
 *Rationale:* Complete documentation improves usability and reduces the learning curve for new developers.
 
-=== DOC2. Add Architecture Decision Records (ADRs)
-[ ] *Priority:* Medium
-
-*Description:* Document key architectural decisions, particularly around security choices and multi-issuer support.
-
-*Rationale:* ADRs provide context for future maintainers and help preserve institutional knowledge.
-
-=== DOC3. Create Usage Examples
-[ ] *Priority:* Medium
-
-*Description:* Develop additional usage examples for common scenarios, particularly for multi-issuer environments.
-
-*Rationale:* Examples help users understand how to effectively use the library in real-world situations.
-
 == Future Enhancements
 
 === F1. Support for JWT Token Issuance
@@ -137,5 +108,13 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 [ ] *Priority:* High
 
 *Description:* Introduce a new parameter object that provides counters for relevant security events. It should be structured for counting only and not duplicate logging. The counter should be kept within TokenFactory and accessible from outside via an API. It should be passed to each relevant flow element to report corresponding events. The counter must provide a reset method and be implemented in a highly concurrent way. All unit tests must verify the corresponding event counts. Use the same numbering/naming scheme as in JWTTokenLogMessages. The implementation should be structured to simplify later integration with micrometer but should not create any dependency on it at this time.
+After implementing, ensure all relevant specificaitons are updated accordingly.
 
 *Rationale:* Tracking security events provides valuable metrics for monitoring and auditing the system's security posture, enabling better detection of potential security issues and anomalies.
+
+=== F4. Support for Custom Claim Mappers
+[x] *Priority:* Medium
+
+*Description:* Implement the capability of adding additional de.cuioss.jwt.token.domain.claim.mapper.ClaimMapper. If they are configured they take precedence over the existing ones. They are to be configured / transported using IssuerConfig.
+
+*Rationale:* Custom claim mappers allow for more flexible handling of JWT claims, especially for non-standard claims like "role" that may be present in tokens from specific identity providers.

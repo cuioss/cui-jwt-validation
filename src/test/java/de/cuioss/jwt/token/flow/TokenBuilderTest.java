@@ -40,10 +40,16 @@ class TokenBuilderTest {
     private static final String SAMPLE_TOKEN = TestTokenProducer.validSignedEmptyJWT();
 
     private TokenBuilder tokenBuilder;
+    private IssuerConfig issuerConfig;
 
     @BeforeEach
     void setUp() {
-        tokenBuilder = new TokenBuilder();
+        // Create a simple IssuerConfig for testing
+        issuerConfig = IssuerConfig.builder()
+                .issuer("https://test-issuer.com")
+                .build();
+
+        tokenBuilder = new TokenBuilder(issuerConfig);
     }
 
     @Test

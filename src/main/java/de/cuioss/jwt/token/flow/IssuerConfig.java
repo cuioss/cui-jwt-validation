@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.token.flow;
 
+import de.cuioss.jwt.token.domain.claim.mapper.ClaimMapper;
 import de.cuioss.jwt.token.jwks.JwksLoader;
 import de.cuioss.jwt.token.security.AlgorithmPreferences;
 import lombok.Builder;
@@ -22,6 +23,7 @@ import lombok.NonNull;
 import lombok.Singular;
 import lombok.Value;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -49,5 +51,12 @@ public class IssuerConfig {
 
     @Builder.Default
     AlgorithmPreferences algorithmPreferences = new AlgorithmPreferences();
+
+    /**
+     * Custom claim mappers that take precedence over the default ones.
+     * The key is the claim name, and the value is the mapper to use for that claim.
+     */
+    @Singular("claimMapper")
+    Map<String, ClaimMapper> claimMappers;
 
 }

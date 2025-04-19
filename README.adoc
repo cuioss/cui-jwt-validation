@@ -122,6 +122,36 @@ TokenFactory factory = new TokenFactory(
         issuer1Config, issuer2Config);
 ----
 
+=== Custom Claim Mappers
+
+The module supports custom claim mappers that take precedence over the default ones:
+
+* Configure custom ClaimMapper instances for specific claims
+* Handle non-standard claims like "role" from specific identity providers
+* Extend the system with custom claim mapping logic
+
+[source, java]
+----
+// Create a custom claim mapper for the "role" claim
+ClaimMapper roleMapper = new JsonCollectionMapper();
+
+// Add the custom mapper to the issuer configuration
+IssuerConfig issuerConfig = IssuerConfig.builder()
+        .issuer("https://issuer.com")
+        .jwksLoader(jwksLoader)
+        // Add custom claim mapper for "role" claim
+        .claimMapper("role", roleMapper)
+        .build();
+
+// Create a factory with the configured issuer
+TokenFactory factory = new TokenFactory(
+        TokenFactoryConfig.builder().build(),
+        issuerConfig);
+
+// The custom mapper will be used when processing tokens with the "role" claim
+Optional<AccessTokenContent> accessToken = factory.createAccessToken(tokenString);
+----
+
 == Token Architecture and Types
 
 === Architecture
