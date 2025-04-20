@@ -34,14 +34,18 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests compliance with the OAuth 2.0 JWT Best Current Practices.
  * <p>
  * This test class verifies that the library correctly implements the requirements
  * specified in OAuth 2.0 JWT Best Current Practices.
- * 
+ *
  * @see <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-jwt-bcp-09">OAuth 2.0 JWT Best Current Practices</a>
  */
 @DisplayName("OAuth 2.0 JWT Best Practices Compliance Tests")
@@ -193,7 +197,7 @@ class OAuth2JWTBestPracticesComplianceTest {
             Optional<AccessTokenContent> result = tokenFactory.createAccessToken(tamperedToken);
 
             // Then
-            assertFalse(result.isPresent(), "Token with invalid signature should be rejected");
+            assertFalse(result.isPresent(), "Token with invalid signature should be rejected, offending token: " + tamperedToken);
         }
     }
 
