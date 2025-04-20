@@ -38,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests compliance with the OAuth 2.0 JWT Best Current Practices.
- * 
+ * <p>
  * This test class verifies that the library correctly implements the requirements
  * specified in OAuth 2.0 JWT Best Current Practices.
  * 
@@ -186,10 +186,11 @@ class OAuth2JWTBestPracticesComplianceTest {
             // Given
             String token = accessTokenGenerator.next();
             // Tamper with the signature by changing the last character
-            token = token.substring(0, token.length() - 1) + (token.charAt(token.length() - 1) == 'A' ? 'B' : 'A');
+            String tamperedToken = token.substring(0, token.length() - 1) + (token.charAt(token.length() - 1) == 'A' ? 'B' : 'A');
 
+            assertNotEquals(tamperedToken, token, "Token should be tampered");
             // When
-            Optional<AccessTokenContent> result = tokenFactory.createAccessToken(token);
+            Optional<AccessTokenContent> result = tokenFactory.createAccessToken(tamperedToken);
 
             // Then
             assertFalse(result.isPresent(), "Token with invalid signature should be rejected");
