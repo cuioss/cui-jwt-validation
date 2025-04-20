@@ -102,12 +102,12 @@ public class ClaimValue implements Serializable {
         return null == originalString;
     }
 
-    /***
-     * Checks if the claim value is present for the current {@link ClaimValueType}.
-     * For STRING_LIST, it checks if the list is not empty.
-     * For DATETIME, it checks if the dateTime is not null.
+    /**
+     * Checks if the claim value is NOT present for the current {@link ClaimValueType}.
+     * For STRING_LIST, it checks if the list is empty.
+     * For DATETIME, it checks if the dateTime is null.
      *
-     * @return true if the claim value is present for the claim value type, false otherwise
+     * @return true if the claim value is NOT present for the claim value type, false otherwise
      */
     public boolean isNotPresentForClaimValueType() {
         if (isPresent()) {

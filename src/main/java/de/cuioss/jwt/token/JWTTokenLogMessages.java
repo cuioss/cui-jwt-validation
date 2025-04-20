@@ -30,6 +30,11 @@ public final class JWTTokenLogMessages {
 
     private static final String PREFIX = "JWTToken";
 
+    /**
+     * Contains debug-level log messages for informational and diagnostic purposes.
+     * These messages are typically used for tracing program flow and providing
+     * detailed information about normal operations.
+     */
     @UtilityClass
     public static final class DEBUG {
         public static final LogRecord SSL_CONTEXT_PROTOCOL = LogRecordModel.builder()
@@ -143,6 +148,11 @@ public final class JWTTokenLogMessages {
 
     }
 
+    /**
+     * Contains error-level log messages for significant problems that require attention.
+     * These messages indicate failures that impact functionality but don't necessarily
+     * prevent the application from continuing to run.
+     */
     @UtilityClass
     public static final class ERROR {
         public static final LogRecord CLAIMS_VALIDATION_FAILED = LogRecordModel.builder()
@@ -176,6 +186,11 @@ public final class JWTTokenLogMessages {
                 .build();
     }
 
+    /**
+     * Contains fatal-level log messages for critical errors that prevent the application
+     * from functioning correctly. These messages indicate severe problems that typically
+     * require immediate attention and may result in application shutdown.
+     */
     @UtilityClass
     public static final class FATAL {
         public static final LogRecord CRITICAL_SECURITY_BREACH = LogRecordModel.builder()
@@ -191,6 +206,11 @@ public final class JWTTokenLogMessages {
                 .build();
     }
 
+    /**
+     * Contains info-level log messages for general operational information.
+     * These messages provide high-level information about the normal operation
+     * of the application that is useful for monitoring.
+     */
     @UtilityClass
     public static final class INFO {
         public static final LogRecord CONFIGURED_JWKS = LogRecordModel.builder()
@@ -200,6 +220,11 @@ public final class JWTTokenLogMessages {
                 .build();
     }
 
+    /**
+     * Contains warning-level log messages for potential issues that don't prevent
+     * normal operation but may indicate problems. These messages highlight situations
+     * that should be monitored or addressed to prevent future errors.
+     */
     @UtilityClass
     public static final class WARN {
         public static final LogRecord FALLBACK_TO_LAST_VALID_JWKS_HTTP_ERROR = LogRecordModel.builder()

@@ -58,6 +58,16 @@ public enum TokenType {
     @Getter
     private final SortedSet<ClaimName> mandatoryClaims;
 
+    /**
+     * Resolves a TokenType from a type claim string value.
+     * <p>
+     * This method performs a case-insensitive comparison of the provided type claim name
+     * against the known token types. If no match is found, it logs a warning and returns
+     * the {@link #UNKNOWN} token type.
+     *
+     * @param typeClaimName the string value of the type claim, may be null
+     * @return the matching TokenType, or {@link #UNKNOWN} if no match is found or the input is null
+     */
     public static TokenType fromTypClaim(String typeClaimName) {
         if (typeClaimName == null) {
             return UNKNOWN;
