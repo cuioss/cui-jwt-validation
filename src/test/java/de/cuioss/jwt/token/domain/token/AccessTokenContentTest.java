@@ -19,6 +19,8 @@ import de.cuioss.jwt.token.TokenType;
 import de.cuioss.jwt.token.domain.claim.ClaimName;
 import de.cuioss.jwt.token.domain.claim.ClaimValue;
 import de.cuioss.jwt.token.test.TestTokenProducer;
+import de.cuioss.jwt.token.test.generator.ScopeGenerator;
+import de.cuioss.tools.logging.CuiLogger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -32,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Tests AccessTokenContent functionality")
 class AccessTokenContentTest {
 
+    private static final CuiLogger LOGGER = new CuiLogger(AccessTokenContentTest.class);
     private static final String SAMPLE_TOKEN = TestTokenProducer.validSignedEmptyJWT();
     private static final String TEST_EMAIL = "test@example.com";
     private static final List<String> TEST_SCOPES = Arrays.asList("openid", "profile", "email");
@@ -190,4 +193,157 @@ class AccessTokenContentTest {
         assertTrue(preferredUsername.isEmpty(), "Preferred username should be empty");
     }
 
+    @Test
+    @DisplayName("Should return true when token provides all expected scopes")
+    void shouldReturnTrueWhenTokenProvidesAllExpectedScopes() {
+        // Given an AccessTokenContent with scopes
+        ScopeGenerator scopeGenerator = new ScopeGenerator(3, 5);
+        String scopeString = scopeGenerator.next();
+        Collection<String> allScopes = ScopeGenerator.splitScopes(scopeString);
+
+        Map<String, ClaimValue> claims = new HashMap<>();
+        claims.put(ClaimName.SCOPE.getName(), ClaimValue.forList(allScopes.toString(), new ArrayList<>(allScopes)));
+        var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
+
+        // When checking if token provides a subset of scopes
+        List<String> expectedScopes = new ArrayList<>(allScopes);
+        if (expectedScopes.size() > 1) {
+            expectedScopes = expectedScopes.subList(0, expectedScopes.size() - 1);
+        }
+        boolean result = accessTokenContent.providesScopes(expectedScopes);
+
+        // Then the result should be true
+        assertTrue(result, "Token should provide all expected scopes");
+    }
+
+    @Test
+    @DisplayName("Should return false when token does not provide all expected scopes")
+    void shouldReturnFalseWhenTokenDoesNotProvideAllExpectedScopes() {
+        // Given an AccessTokenContent with scopes
+        ScopeGenerator scopeGenerator = new ScopeGenerator(2, 4);
+        String scopeString = scopeGenerator.next();
+        Collection<String> scopes = ScopeGenerator.splitScopes(scopeString);
+
+        Map<String, ClaimValue> claims = new HashMap<>();
+        claims.put(ClaimName.SCOPE.getName(), ClaimValue.forList(scopes.toString(), new ArrayList<>(scopes)));
+        var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
+
+        // When checking if token provides scopes including one that's not in the token
+        List<String> expectedScopes = new ArrayList<>(scopes);
+        expectedScopes.add("non_existent_scope");
+        boolean result = accessTokenContent.providesScopes(expectedScopes);
+
+        // Then the result should be false
+        assertFalse(result, "Token should not provide all expected scopes");
+    }
+
+    @Test
+    @DisplayName("Should return true when no expected scopes are provided")
+    void shouldReturnTrueWhenNoExpectedScopesAreProvided() {
+        // Given an AccessTokenContent with scopes
+        Map<String, ClaimValue> claims = new HashMap<>();
+        claims.put(ClaimName.SCOPE.getName(), ClaimValue.forList(TEST_SCOPES.toString(), TEST_SCOPES));
+        var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
+
+        // When checking if token provides empty list of scopes
+        boolean result = accessTokenContent.providesScopes(Collections.emptyList());
+
+        // Then the result should be true
+        assertTrue(result, "Token should provide all expected scopes when none are expected");
+    }
+
+    @Test
+    @DisplayName("Should return true when token provides all expected scopes with debug logging")
+    void shouldReturnTrueWhenTokenProvidesAllExpectedScopesWithDebugLogging() {
+        // Given an AccessTokenContent with scopes
+        ScopeGenerator scopeGenerator = new ScopeGenerator(3, 5);
+        String scopeString = scopeGenerator.next();
+        Collection<String> allScopes = ScopeGenerator.splitScopes(scopeString);
+
+        Map<String, ClaimValue> claims = new HashMap<>();
+        claims.put(ClaimName.SCOPE.getName(), ClaimValue.forList(allScopes.toString(), new ArrayList<>(allScopes)));
+        var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
+
+        // When checking if token provides a subset of scopes with debug logging
+        List<String> expectedScopes = new ArrayList<>(allScopes);
+        if (expectedScopes.size() > 1) {
+            expectedScopes = expectedScopes.subList(0, expectedScopes.size() - 1);
+        }
+        boolean result = accessTokenContent.providesScopesAndDebugIfScopesAreMissing(
+                expectedScopes, "Test context", LOGGER);
+
+        // Then the result should be true
+        assertTrue(result, "Token should provide all expected scopes");
+    }
+
+    @Test
+    @DisplayName("Should return false when token does not provide all expected scopes with debug logging")
+    void shouldReturnFalseWhenTokenDoesNotProvideAllExpectedScopesWithDebugLogging() {
+        // Given an AccessTokenContent with scopes
+        ScopeGenerator scopeGenerator = new ScopeGenerator(2, 4);
+        String scopeString = scopeGenerator.next();
+        Collection<String> scopes = ScopeGenerator.splitScopes(scopeString);
+
+        Map<String, ClaimValue> claims = new HashMap<>();
+        claims.put(ClaimName.SCOPE.getName(), ClaimValue.forList(scopes.toString(), new ArrayList<>(scopes)));
+        var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
+
+        // When checking if token provides scopes including one that's not in the token with debug logging
+        List<String> expectedScopes = new ArrayList<>(scopes);
+        expectedScopes.add("non_existent_scope");
+        boolean result = accessTokenContent.providesScopesAndDebugIfScopesAreMissing(
+                expectedScopes, "Test context", LOGGER);
+
+        // Then the result should be false
+        assertFalse(result, "Token should not provide all expected scopes");
+    }
+
+    @Test
+    @DisplayName("Should return empty set when token provides all expected scopes")
+    void shouldReturnEmptySetWhenTokenProvidesAllExpectedScopes() {
+        // Given an AccessTokenContent with scopes
+        ScopeGenerator scopeGenerator = new ScopeGenerator(3, 5);
+        String scopeString = scopeGenerator.next();
+        Collection<String> allScopes = ScopeGenerator.splitScopes(scopeString);
+
+        Map<String, ClaimValue> claims = new HashMap<>();
+        claims.put(ClaimName.SCOPE.getName(), ClaimValue.forList(allScopes.toString(), new ArrayList<>(allScopes)));
+        var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
+
+        // When determining missing scopes for a subset of the token's scopes
+        List<String> expectedScopes = new ArrayList<>(allScopes);
+        if (expectedScopes.size() > 1) {
+            expectedScopes = expectedScopes.subList(0, expectedScopes.size() - 1);
+        }
+        Set<String> missingScopes = accessTokenContent.determineMissingScopes(expectedScopes);
+
+        // Then the result should be an empty set
+        assertTrue(missingScopes.isEmpty(), "There should be no missing scopes");
+    }
+
+    @Test
+    @DisplayName("Should return set of missing scopes when token does not provide all expected scopes")
+    void shouldReturnSetOfMissingScopesWhenTokenDoesNotProvideAllExpectedScopes() {
+        // Given an AccessTokenContent with scopes
+        ScopeGenerator scopeGenerator = new ScopeGenerator(2, 4);
+        String scopeString = scopeGenerator.next();
+        Collection<String> scopes = ScopeGenerator.splitScopes(scopeString);
+
+        Map<String, ClaimValue> claims = new HashMap<>();
+        claims.put(ClaimName.SCOPE.getName(), ClaimValue.forList(scopes.toString(), new ArrayList<>(scopes)));
+        var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
+
+        // When determining missing scopes including ones that are not in the token
+        List<String> expectedScopes = new ArrayList<>(scopes);
+        String missingScope1 = "non_existent_scope1";
+        String missingScope2 = "non_existent_scope2";
+        expectedScopes.add(missingScope1);
+        expectedScopes.add(missingScope2);
+        Set<String> missingScopes = accessTokenContent.determineMissingScopes(expectedScopes);
+
+        // Then the result should contain the missing scopes
+        assertEquals(2, missingScopes.size(), "There should be exactly 2 missing scopes");
+        assertTrue(missingScopes.contains(missingScope1), "Missing scopes should contain " + missingScope1);
+        assertTrue(missingScopes.contains(missingScope2), "Missing scopes should contain " + missingScope2);
+    }
 }

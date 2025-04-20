@@ -18,14 +18,19 @@ package de.cuioss.jwt.token.domain.token;
 import de.cuioss.jwt.token.TokenType;
 import de.cuioss.jwt.token.domain.claim.ClaimName;
 import de.cuioss.jwt.token.domain.claim.ClaimValue;
+import de.cuioss.tools.logging.CuiLogger;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 import java.io.Serial;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Represents the content of an OAuth 2.0 access token.
@@ -35,6 +40,8 @@ import java.util.Optional;
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
 public class AccessTokenContent extends BaseTokenContent {
+    
+    private static final CuiLogger LOGGER = new CuiLogger(AccessTokenContent.class);
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -98,5 +105,54 @@ public class AccessTokenContent extends BaseTokenContent {
      */
     public Optional<String> getPreferredUsername() {
         return getClaimOption(ClaimName.PREFERRED_USERNAME).map(ClaimValue::getOriginalString);
+    }
+
+    /**
+     * @param expectedScopes to be checked
+     * @return boolean indicating whether the token provides all given Scopes
+     */
+    public boolean providesScopes(Collection<String> expectedScopes) {
+        if (null == expectedScopes || expectedScopes.isEmpty()) {
+            LOGGER.debug("No scopes to check against");
+            return true;
+        }
+        var availableScopes = getScopes();
+        @SuppressWarnings("SlowListContainsAll") // owolff: The implementation already uses a Set
+        var result = availableScopes.containsAll(expectedScopes);
+        LOGGER.debug("Scope check result=%s (expected=%s, available=%s)", result, expectedScopes, availableScopes);
+        return result;
+    }
+
+    /**
+     * @param expectedScopes to be checked
+     * @param logContext     Usually
+     * @return boolean indicating whether the token provides all given Scopes. In contrast to
+     * {@link #providesScopes(Collection)} it log on debug the corresponding scopes
+     */
+    public boolean providesScopesAndDebugIfScopesAreMissing(Collection<String> expectedScopes, String logContext,
+                                                            CuiLogger logger) {
+        Set<String> delta = determineMissingScopes(expectedScopes);
+        if (delta.isEmpty()) {
+            logger.trace("All expected scopes are present: {}, {}", expectedScopes, logContext);
+            return true;
+        }
+        logger.debug(
+                "Current Token does not provide all needed scopes:\nMissing in token='{}',\nExpected='{}'\nPresent in Token='{}', {}",
+                delta, expectedScopes, getScopes(), logContext);
+        return false;
+    }
+
+    /**
+     * @param expectedScopes to be checked
+     * @return an empty-Set in case the token provides all expectedScopes, otherwise a
+     * {@link TreeSet} containing all missing scopes.
+     */
+    public Set<String> determineMissingScopes(Collection<String> expectedScopes) {
+        if (providesScopes(expectedScopes)) {
+            return Collections.emptySet();
+        }
+        Set<String> scopeDelta = new TreeSet<>(expectedScopes);
+        getScopes().forEach(scopeDelta::remove);
+        return scopeDelta;
     }
 }
