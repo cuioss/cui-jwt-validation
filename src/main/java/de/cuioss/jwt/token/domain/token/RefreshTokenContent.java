@@ -16,6 +16,7 @@
 package de.cuioss.jwt.token.domain.token;
 
 import de.cuioss.jwt.token.TokenType;
+import de.cuioss.jwt.token.domain.claim.ClaimValue;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
@@ -23,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
 import java.io.Serial;
+import java.util.Map;
 
 /**
  * Represents the content of an OAuth 2.0 refresh token in JWT format.
@@ -39,6 +41,16 @@ public class RefreshTokenContent implements MinimalTokenContent {
     @Getter
     @NonNull
     private final String rawToken;
+
+    /**
+     * For cases the idp returns a JWT as refresh token, this method returns a non-validated-claims-representation
+     * of the token.
+     * <em>Note:</em> This is token is not validated in any way
+     * It is never null but be empty
+     */
+    @Getter
+    @NonNull
+    private final Map<String, ClaimValue> claims;
 
     /**
      * Gets the token type.

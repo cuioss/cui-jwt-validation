@@ -38,7 +38,10 @@ import java.util.List;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("Tests Token integration with Keycloak")
 public class TokenKeycloakITTest extends KeycloakITBase {
@@ -165,6 +168,7 @@ public class TokenKeycloakITTest extends KeycloakITBase {
             assertTrue(refreshToken.isPresent(), "Refresh token should be present");
             assertNotNull(refreshToken.get().getRawToken(), "Token string should not be null");
             assertEquals(TokenType.REFRESH_TOKEN, refreshToken.get().getTokenType(), "Token type should be REFRESH_TOKEN");
+            assertFalse(refreshToken.get().getClaims().isEmpty());
         }
     }
 }

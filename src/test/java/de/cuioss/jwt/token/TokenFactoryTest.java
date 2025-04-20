@@ -74,6 +74,30 @@ class TokenFactoryTest {
             assertTrue(parsedToken.isPresent(), "Token should be present");
             assertNotNull(parsedToken.get().getRawToken(), "Token string should not be null");
             assertEquals(token, parsedToken.get().getRawToken(), "Raw token should match input");
+
+            // Verify claims are extracted
+            assertNotNull(parsedToken.get().getClaims(), "Claims should not be null");
+            assertFalse(parsedToken.get().getClaims().isEmpty(), "Claims should not be empty");
+
+            // The test token should have standard claims
+            assertTrue(parsedToken.get().getClaims().containsKey("sub"), "Claims should contain subject");
+            assertTrue(parsedToken.get().getClaims().containsKey("iss"), "Claims should contain issuer");
+        }
+
+        @Test
+        @DisplayName("Should create refresh token with empty claims for non-JWT token")
+        void shouldCreateRefreshTokenWithEmptyClaimsForNonJwtToken() {
+            // A non-JWT token (just a random string)
+            var token = "not-a-jwt-token";
+            var parsedToken = tokenFactory.createRefreshToken(token);
+
+            assertTrue(parsedToken.isPresent(), "Token should be present");
+            assertNotNull(parsedToken.get().getRawToken(), "Token string should not be null");
+            assertEquals(token, parsedToken.get().getRawToken(), "Raw token should match input");
+
+            // Verify claims are empty
+            assertNotNull(parsedToken.get().getClaims(), "Claims should not be null");
+            assertTrue(parsedToken.get().getClaims().isEmpty(), "Claims should be empty for non-JWT token");
         }
 
         @Test

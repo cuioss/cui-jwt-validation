@@ -115,4 +115,20 @@ public class TokenBuilder {
 
         return claims;
     }
+
+    /**
+     * Extracts claims for a refresh token from a JSON object.
+     *
+     * @param jsonObject the JSON object containing claims
+     * @return a map of claim names to claim values
+     */
+    public static Map<String, ClaimValue> extractClaimsForRefreshToken(@NonNull JsonObject jsonObject) {
+        Map<String, ClaimValue> claims = new HashMap<>();
+        for (String key : jsonObject.keySet()) {
+            // Use IdentityMapper for unknown claims
+            ClaimValue claimValue = new IdentityMapper().map(jsonObject, key);
+            claims.put(key, claimValue);
+        }
+        return claims;
+    }
 }

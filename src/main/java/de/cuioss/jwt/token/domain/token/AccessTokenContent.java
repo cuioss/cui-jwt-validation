@@ -24,13 +24,7 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 import java.io.Serial;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * Represents the content of an OAuth 2.0 access token.
@@ -40,7 +34,7 @@ import java.util.TreeSet;
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
 public class AccessTokenContent extends BaseTokenContent {
-    
+
     private static final CuiLogger LOGGER = new CuiLogger(AccessTokenContent.class);
 
     @Serial
@@ -130,7 +124,7 @@ public class AccessTokenContent extends BaseTokenContent {
      * {@link #providesScopes(Collection)} it log on debug the corresponding scopes
      */
     public boolean providesScopesAndDebugIfScopesAreMissing(Collection<String> expectedScopes, String logContext,
-                                                            CuiLogger logger) {
+            CuiLogger logger) {
         Set<String> delta = determineMissingScopes(expectedScopes);
         if (delta.isEmpty()) {
             logger.trace("All expected scopes are present: {}, {}", expectedScopes, logContext);

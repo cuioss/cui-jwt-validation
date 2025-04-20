@@ -17,15 +17,20 @@ package de.cuioss.jwt.token.flow;
 
 import de.cuioss.jwt.token.TokenType;
 import de.cuioss.jwt.token.domain.claim.ClaimName;
+import de.cuioss.jwt.token.domain.claim.ClaimValue;
 import de.cuioss.jwt.token.domain.token.AccessTokenContent;
 import de.cuioss.jwt.token.domain.token.IdTokenContent;
 import de.cuioss.jwt.token.test.generator.DecodedJwtGenerator;
 import de.cuioss.test.generator.junit.EnableGeneratorController;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -139,6 +144,55 @@ class TokenBuilderTest {
 
             // Then
             assertTrue(result.isEmpty(), "Should return empty Optional when body is missing");
+        }
+    }
+
+    @Nested
+    @DisplayName("RefreshToken Claims Tests")
+    class RefreshTokenClaimsTests {
+
+        @Test
+        @DisplayName("extractClaimsForRefreshToken should extract claims from JsonObject")
+        void extractClaimsForRefreshTokenShouldExtractClaims() {
+            // Given a JsonObject with claims
+            JsonObjectBuilder builder = Json.createObjectBuilder();
+            builder.add("sub", "test-subject");
+            builder.add("iss", "test-issuer");
+            builder.add("custom-claim", "custom-value");
+            JsonObject jsonObject = builder.build();
+
+            // When extracting claims
+            Map<String, ClaimValue> claims = TokenBuilder.extractClaimsForRefreshToken(jsonObject);
+
+            // Then
+            assertNotNull(claims, "Claims should not be null");
+            assertFalse(claims.isEmpty(), "Claims should not be empty");
+            assertEquals(3, claims.size(), "Should extract all claims");
+
+            // Verify standard claims
+            assertTrue(claims.containsKey("sub"), "Claims should contain subject");
+            assertEquals("test-subject", claims.get("sub").getOriginalString(), "Subject claim value should match");
+
+            assertTrue(claims.containsKey("iss"), "Claims should contain issuer");
+            assertEquals("test-issuer", claims.get("iss").getOriginalString(), "Issuer claim value should match");
+
+            // Verify custom claim
+            assertTrue(claims.containsKey("custom-claim"), "Claims should contain custom claim");
+            assertEquals("custom-value", claims.get("custom-claim").getOriginalString(), "Custom claim value should match");
+        }
+
+        @Test
+        @DisplayName("extractClaimsForRefreshToken should handle empty JsonObject")
+        void extractClaimsForRefreshTokenShouldHandleEmptyJsonObject() {
+            // Given an empty JsonObject
+            JsonObject jsonObject = Json.createObjectBuilder().build();
+
+            // When extracting claims
+            Map<String, ClaimValue> claims = TokenBuilder.extractClaimsForRefreshToken(jsonObject);
+
+            // Then
+            assertNotNull(claims, "Claims should not be null");
+            assertTrue(claims.isEmpty(), "Claims should be empty");
         }
     }
 }

@@ -16,25 +16,25 @@
 package de.cuioss.jwt.token.domain.token;
 
 import de.cuioss.jwt.token.TokenType;
+import de.cuioss.jwt.token.domain.claim.ClaimValue;
 import de.cuioss.jwt.token.test.TestTokenProducer;
+import de.cuioss.jwt.token.test.generator.ClaimValueGenerator;
 import de.cuioss.test.generator.Generators;
-import de.cuioss.test.valueobjects.ValueObjectTest;
-import de.cuioss.test.valueobjects.api.contracts.VerifyConstructor;
-import de.cuioss.test.valueobjects.api.property.PropertyConfig;
-import de.cuioss.test.valueobjects.api.property.PropertyReflectionConfig;
+import de.cuioss.test.valueobjects.junit5.contracts.ShouldHandleObjectContracts;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for {@link RefreshTokenContent}.
  */
-@PropertyReflectionConfig(skip = true)
-@PropertyConfig(name = "rawToken", propertyClass = String.class, required = true)
-@VerifyConstructor(of = "rawToken")
 @DisplayName("Tests RefreshTokenContent functionality")
-class RefreshTokenContentTest extends ValueObjectTest<RefreshTokenContent> {
+class RefreshTokenContentTest implements ShouldHandleObjectContracts<RefreshTokenContent> {
 
     private static final String SAMPLE_TOKEN = TestTokenProducer.validSignedEmptyJWT();
 
@@ -43,27 +43,47 @@ class RefreshTokenContentTest extends ValueObjectTest<RefreshTokenContent> {
     void shouldCreateRefreshTokenContentWithValidToken() {
         // Given a valid token
         var token = SAMPLE_TOKEN;
+        Map<String, ClaimValue> claims = Collections.emptyMap();
 
         // When creating a RefreshTokenContent
-        var refreshTokenContent = new RefreshTokenContent(token);
+        var refreshTokenContent = new RefreshTokenContent(token, claims);
 
         // Then the content should be correctly initialized
         assertNotNull(refreshTokenContent, "RefreshTokenContent should not be null");
         assertEquals(token, refreshTokenContent.getRawToken(), "Raw token should match");
         assertEquals(TokenType.REFRESH_TOKEN, refreshTokenContent.getTokenType(), "Token type should be REFRESH_TOKEN");
+        assertNotNull(refreshTokenContent.getClaims(), "Claims should not be null");
+        assertTrue(refreshTokenContent.getClaims().isEmpty(), "Claims should be empty");
     }
 
     @Test
-    @DisplayName("Should throw NullPointerException when token is null")
-    void shouldThrowExceptionWhenTokenIsNull() {
-        // When creating a RefreshTokenContent with null token
-        // Then an exception should be thrown
-        assertThrows(NullPointerException.class, () -> new RefreshTokenContent(null),
-                "Should throw NullPointerException for null token");
+    @DisplayName("Should create RefreshTokenContent with claims")
+    void shouldCreateRefreshTokenContentWithClaims() {
+        // Given a valid token and claims
+        var token = SAMPLE_TOKEN;
+        Map<String, ClaimValue> claims = new HashMap<>();
+        String testValue = "test-value";
+        claims.put("test-claim", ClaimValue.forPlainString(testValue));
+
+        // When creating a RefreshTokenContent
+        var refreshTokenContent = new RefreshTokenContent(token, claims);
+
+        // Then the content should be correctly initialized with claims
+        assertNotNull(refreshTokenContent, "RefreshTokenContent should not be null");
+        assertEquals(token, refreshTokenContent.getRawToken(), "Raw token should match");
+        assertEquals(TokenType.REFRESH_TOKEN, refreshTokenContent.getTokenType(), "Token type should be REFRESH_TOKEN");
+        assertNotNull(refreshTokenContent.getClaims(), "Claims should not be null");
+        assertFalse(refreshTokenContent.getClaims().isEmpty(), "Claims should not be empty");
+        assertTrue(refreshTokenContent.getClaims().containsKey("test-claim"), "Claims should contain test-claim");
+        assertEquals(testValue, refreshTokenContent.getClaims().get("test-claim").getOriginalString(), "Claim value should match");
     }
 
     @Override
-    protected RefreshTokenContent anyValueObject() {
-        return new RefreshTokenContent(Generators.nonEmptyStrings().next());
+    public RefreshTokenContent getUnderTest() {
+        Map<String, ClaimValue> anyClaims = new HashMap<>();
+        for (int i = 0; i < Generators.integers(0, 5).next(); i++) {
+            anyClaims.put(Generators.nonEmptyStrings().next(), new ClaimValueGenerator().next());
+        }
+        return new RefreshTokenContent(Generators.nonEmptyStrings().next(), anyClaims);
     }
 }

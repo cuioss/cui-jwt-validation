@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.token;
 
+import de.cuioss.jwt.token.domain.claim.ClaimValue;
 import de.cuioss.jwt.token.domain.token.AccessTokenContent;
 import de.cuioss.jwt.token.domain.token.IdTokenContent;
 import de.cuioss.jwt.token.domain.token.RefreshTokenContent;
@@ -34,6 +35,7 @@ import de.cuioss.tools.string.MoreStrings;
 import lombok.Getter;
 import lombok.NonNull;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -183,6 +185,7 @@ public class TokenFactory {
      * @param tokenString The token string to parse, must not be null
      * @return The parsed refresh token, which may be empty if the token is invalid or no parser is found
      */
+    @SuppressWarnings("java:S3655") // owolff: false positive: isPresent is checked
     public Optional<RefreshTokenContent> createRefreshToken(@NonNull String tokenString) {
         LOGGER.debug("Creating refresh token");
         // For refresh tokens, we don't need the full pipeline
@@ -191,8 +194,13 @@ public class TokenFactory {
             securityEventCounter.increment(SecurityEventCounter.EventType.TOKEN_EMPTY);
             return Optional.empty();
         }
-
-        RefreshTokenContent refreshToken = new RefreshTokenContent(tokenString);
+        Map<String, ClaimValue> claims = Collections.emptyMap();
+        var decoded = jwtParser.decode(tokenString, false);
+        if (decoded.isPresent() && decoded.get().getBody().isPresent()) {
+            LOGGER.debug("Adding claims, because of being a JWT");
+            claims = TokenBuilder.extractClaimsForRefreshToken(decoded.get().getBody().get());
+        }
+        var refreshToken = new RefreshTokenContent(tokenString, claims);
         LOGGER.debug(JWTTokenLogMessages.DEBUG.REFRESH_TOKEN_CREATED::format);
         securityEventCounter.increment(SecurityEventCounter.EventType.REFRESH_TOKEN_CREATED);
         return Optional.of(refreshToken);
