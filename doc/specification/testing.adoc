@@ -71,15 +71,13 @@ Unit tests have been implemented for the core functionality, but additional test
 
 The following test classes implement these unit tests:
 
-* link:../src/test/java/de/cuioss/jwt/token/JwksAwareTokenParserImplTest.java[JwksAwareTokenParserImplTest.java] - Tests for the JWKS-aware token parser
-* link:../src/test/java/de/cuioss/jwt/token/ParsedTokenTest.java[ParsedTokenTest.java] - Tests for the ParsedToken base class
-* link:../src/test/java/de/cuioss/jwt/token/ParsedAccessTokenTest.java[ParsedAccessTokenTest.java] - Tests for the ParsedAccessToken class
-* link:../src/test/java/de/cuioss/jwt/token/ParsedIdTokenTest.java[ParsedIdTokenTest.java] - Tests for the ParsedIdToken class
-* link:../src/test/java/de/cuioss/jwt/token/ParsedRefreshTokenTest.java[ParsedRefreshTokenTest.java] - Tests for the ParsedRefreshToken class
-* link:../src/test/java/de/cuioss/jwt/token/TokenFactoryTest.java[TokenFactoryTest.java] - Tests for the TokenFactory
-* link:../src/test/java/de/cuioss/jwt/token/jwks/HttpJwksLoaderTest.java[HttpJwksLoaderTest.java] - Tests for the HTTP JWKS loader
-* link:../src/test/java/de/cuioss/jwt/token/jwks/FileJwksLoaderTest.java[FileJwksLoaderTest.java] - Tests for the file-based JWKS loader
-* link:../src/test/java/de/cuioss/jwt/token/jwks/InMemoryJwksLoaderTest.java[InMemoryJwksLoaderTest.java] - Tests for the in-memory JWKS loader
+* link:../../src/test/java/de/cuioss/jwt/token/TokenFactoryTest.java[TokenFactoryTest.java] - Tests for the TokenFactory
+* link:../../src/test/java/de/cuioss/jwt/token/TokenTypeTest.java[TokenTypeTest.java] - Tests for token type enumeration
+* link:../../src/test/java/de/cuioss/jwt/token/domain/token/BaseTokenContentTest.java[BaseTokenContentTest.java] - Tests for the base token content
+* link:../../src/test/java/de/cuioss/jwt/token/domain/token/AccessTokenContentTest.java[AccessTokenContentTest.java] - Tests for access token content
+* link:../../src/test/java/de/cuioss/jwt/token/domain/token/IdTokenContentTest.java[IdTokenContentTest.java] - Tests for ID token content
+* link:../../src/test/java/de/cuioss/jwt/token/domain/token/RefreshTokenContentTest.java[RefreshTokenContentTest.java] - Tests for refresh token content
+* link:../../src/test/java/de/cuioss/jwt/token/CustomClaimMapperTest.java[CustomClaimMapperTest.java] - Tests for custom claim mapping
 
 These tests cover:
 
@@ -156,7 +154,7 @@ Integration tests have been implemented to verify compatibility with Keycloak as
 
 The following test class implements integration tests with Keycloak:
 
-* link:../src/test/java/de/cuioss/jwt/token/TokenKeycloakITTest.java[TokenKeycloakITTest.java] - Integration tests with Keycloak
+* link:../../src/test/java/de/cuioss/jwt/token/TokenKeycloakITTest.java[TokenKeycloakITTest.java] - Integration tests with Keycloak
 
 These tests cover:
 
@@ -178,68 +176,47 @@ Refer to the implementation and associated JavaDoc for detailed behavior.
 === Security Testing
 _See Requirement link:../Requirements.adoc#CUI-JWT-8[CUI-JWT-8: Security]_
 
-==== Status: NOT IMPLEMENTED
+==== Status: IMPLEMENTED
 
-Comprehensive security testing needs to be implemented to verify the security aspects of the JWT token handling library.
+Comprehensive security testing has been implemented to verify the security aspects of the JWT token handling library.
 
-The security tests will include:
+The following test classes implement these security tests:
+
+* link:../../src/test/java/de/cuioss/jwt/token/ClientConfusionAttackTest.java[ClientConfusionAttackTest.java] - Tests for client confusion attacks
+* link:../../src/test/java/de/cuioss/jwt/token/TokenFactorySecurityEventTest.java[TokenFactorySecurityEventTest.java] - Tests for security event tracking
+
+These tests cover:
 
 1. Token validation bypass tests
 2. Algorithm confusion attack tests
-3. Key disclosure vulnerability tests
-4. Signature verification bypass tests
-5. Token cracking resistance tests
+3. Signature verification bypass tests
+4. Security event tracking and monitoring
 
-==== Planned Test Cases
-
-The following test cases are planned for implementation:
-
-1. **Algorithm Confusion Attack Tests**:
-   * Test with "none" algorithm
-   * Test with algorithm switching
-   * Test with symmetric/asymmetric algorithm confusion
-
-2. **Signature Verification Bypass Tests**:
-   * Test with empty signature
-   * Test with modified header
-   * Test with modified payload but valid signature
-
-3. **Key Disclosure Tests**:
-   * Test for key information leakage
-   * Test for private key protection
-
-These tests will follow the OWASP JWT Security Cheat Sheet recommendations and best practices for JWT security testing.
 
 === Performance Testing
 _See Requirement link:../Requirements.adoc#CUI-JWT-12.4[CUI-JWT-12.4: Performance Testing]_
 
-==== Status: NOT IMPLEMENTED
+==== Status: IMPLEMENTED
 
-Performance testing needs to be implemented to verify that the JWT token handling library meets the performance requirements.
+Performance testing has been implemented to verify that the JWT token handling library meets the performance requirements.
 
-The performance tests will verify:
+The following test class implements performance testing:
 
-1. Token parsing performance (at least 1000 tokens per second)
-2. Token validation performance (at least 500 tokens per second)
-3. Key retrieval and caching performance (no more than 100ms overhead per new key)
+* link:../../src/test/java/de/cuioss/jwt/token/TokenFactoryPerformanceTest.java[TokenFactoryPerformanceTest.java] - Tests for token parsing and validation performance
 
-==== Planned Test Cases
+These tests cover:
 
-The following test cases are planned for implementation:
+1. Token parsing performance for different token types
+2. Concurrent token validation performance
+3. Mixed token type processing performance
+4. Performance statistics collection and analysis
 
-1. **Token Parsing Performance Tests**:
-   * Parse 10,000 tokens and measure throughput
-   * Measure average parsing time per token
+The implementation uses concurrent testing to simulate real-world load scenarios and measures:
 
-2. **Token Validation Performance Tests**:
-   * Validate 10,000 tokens and measure throughput
-   * Measure average validation time per token
-
-3. **Key Retrieval Performance Tests**:
-   * Measure key retrieval time
-   * Measure key caching effectiveness
-
-These tests will use JMH (Java Microbenchmark Harness) or similar benchmarking tools to ensure accurate and reliable performance measurements.
+1. Throughput (tokens processed per second)
+2. Average processing time per token
+3. Success rate under load
+4. Performance under different concurrency levels
 
 === Logging Tests
 _See Requirement link:../Requirements.adoc#CUI-JWT-7[CUI-JWT-7: Logging]_
@@ -298,17 +275,35 @@ This implementation satisfies the requirement for regular vulnerability scanning
 === Compliance Testing
 _See Requirement link:../Requirements.adoc#CUI-JWT-12.6[CUI-JWT-12.6: Compliance Testing]_
 
-==== Status: NOT IMPLEMENTED
+==== Status: IMPLEMENTED
 
-Compliance tests need to be implemented to verify that the JWT token handling library adheres to the standards and best practices defined in various specifications.
+Compliance tests have been implemented to verify that the JWT token handling library adheres to the standards and best practices defined in various specifications.
 
-==== Planned Test Classes
+The following test classes implement these compliance tests:
 
-Based on the requirements in CUI-JWT-12.6, the following compliance test classes are planned for implementation:
+* link:../../src/test/java/de/cuioss/jwt/token/RFC7519JWTComplianceTest.java[RFC7519JWTComplianceTest.java] - Tests compliance with the JWT specification defined in RFC 7519
+* link:../../src/test/java/de/cuioss/jwt/token/OpenIDConnectComplianceTest.java[OpenIDConnectComplianceTest.java] - Tests compliance with OpenID Connect Certification requirements
+* link:../../src/test/java/de/cuioss/jwt/token/OAuth2JWTBestPracticesComplianceTest.java[OAuth2JWTBestPracticesComplianceTest.java] - Tests compliance with OAuth 2.0 JWT Best Current Practices
 
-* `RFC7519JWTComplianceTest` - Tests compliance with the JWT specification defined in RFC 7519
-* `OpenIDConnectComplianceTest` - Tests compliance with OpenID Connect Certification requirements
-* `OAuth2JWTBestPracticesComplianceTest` - Tests compliance with OAuth 2.0 JWT Best Current Practices
+These tests cover:
+
+1. **RFC 7519 JWT Compliance**:
+   * JWT format and structure validation
+   * Registered claim names handling
+   * Token validation rules
+   * JWT claims set processing
+
+2. **OpenID Connect Compliance**:
+   * ID Token required and optional claims
+   * Standard claims handling
+   * Token validation according to OpenID Connect Core 1.0
+
+3. **OAuth 2.0 JWT Best Practices Compliance**:
+   * Audience validation
+   * Issuer validation
+   * Signature validation
+   * Token lifetime validation
+   * Token size limits
 
 ==== Test Class Naming Convention
 

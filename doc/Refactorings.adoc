@@ -55,6 +55,7 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 [ ] *Priority:* Medium
 
 *Description:* Enhance unit test coverage to meet the minimum requirement of 80% code coverage. Focus on:
+
 1. Edge cases for token parsing and validation
 2. Error handling scenarios
 3. Comprehensive testing of all public methods
@@ -62,8 +63,24 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 *Rationale:* Comprehensive unit testing ensures the library functions correctly and helps prevent regressions.
 
 
-=== T5. Implement CUI-JWT-12.6: Compliance Testing
+=== T3. Implement CUI-JWT-7: Logging Tests
 [ ] *Priority:* Medium
+
+*Description:* Implement comprehensive logging tests to verify that the JWT token handling library logs appropriate information at the correct log levels. This includes:
+
+1. Testing logging of successful token validation
+2. Testing logging of successful key retrieval
+3. Testing logging of successful token creation
+4. Testing logging of token validation failures
+5. Testing logging of key retrieval failures
+6. Testing logging of token creation failures
+
+The tests should follow CUI logging test requirements using `cui-test-juli-logger` and `de.cuioss.test.juli.TestLogLevel`.
+
+*Rationale:* Proper logging is essential for monitoring, debugging, and security auditing of the JWT token handling library.
+
+=== T5. Implement CUI-JWT-12.6: Compliance Testing
+[x] *Priority:* Medium
 
 *Description:* Implement compliance testing to verify that the library adheres to the standards and best practices defined in:
 
@@ -71,18 +88,12 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 2. OpenID Connect Certification requirements
 3. OAuth 2.0 JWT Best Current Practices
 
+See doc/specification/testing.adoc for details
+
 *Rationale:* Compliance testing ensures the library works correctly with standard-compliant identity providers and consumers.
 
 
 == Dependency Management
-
-
-=== D2. Minimize Runtime Dependencies
-[x] *Priority:* Low
-
-*Description:* Review dependencies and mark appropriate libraries as optional or provided scope to reduce the deployment footprint.
-
-*Rationale:* Minimizing runtime dependencies reduces potential conflicts and improves deployment flexibility.
 
 == Documentation Improvements
 
