@@ -18,10 +18,12 @@ package de.cuioss.jwt.token.jwks.http;
 import de.cuioss.jwt.token.jwks.key.JWKSKeyLoader;
 import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
+import de.cuioss.tools.concurrent.ConcurrentTools;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -132,6 +134,8 @@ class JwksCacheManagerTest {
         // Then
         assertNotNull(initialResult);
         assertNotNull(refreshedResult);
+        // Starting with Java 21 wie nee a slight delay here.
+        ConcurrentTools.sleepUninterruptedly(Duration.ofMillis(100));
         assertTrue(loaderCallCount.get() > initialCallCount, "Cache loader should be called again after refresh");
     }
 
