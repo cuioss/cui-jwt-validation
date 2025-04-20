@@ -191,7 +191,6 @@ The project includes comprehensive documentation:
 * link:doc/Requirements.adoc[Requirements] - Functional and non-functional requirements
 * link:doc/Specification.adoc[Specification] - Technical specification and architecture
 * link:doc/Threat-Model.adoc[Threat Model] - Security threat analysis and mitigations
-* link:doc/Implementation-Status.adoc[Implementation Status] - Current implementation status
 
 === Technical Documentation
 
@@ -204,7 +203,6 @@ The project includes comprehensive documentation:
 === Developer Documentation
 
 * link:doc/LogMessages.adoc[Log Messages] - Logging documentation
-* link:doc/generator-usage.adoc[Generator Usage] - Usage of code generators for testing
 
 == Security Considerations
 

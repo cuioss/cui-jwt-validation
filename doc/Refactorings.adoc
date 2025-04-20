@@ -18,14 +18,6 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 
 == Code Structure and Design
 
-=== C1. Optimize Builder Pattern Usage
-[ ] *Priority:* Medium
-
-*Description:* Avoid excessive usage of Builder-Pattern. Builder-pattern should only be used, if there are more than two parameters. Otherwise only use a constructor. Review all types and refactor accordingly. If both are present ensure, that either it is builder-only, by making the constructor private. Or remove the builder, if there are less than three parameters.
-
-*Rationale:* Optimizing the use of the Builder pattern improves code readability and maintainability by using the appropriate construction pattern based on the complexity of the object creation.
-
-
 == Performance Improvements
 
 == Security Enhancements
@@ -44,30 +36,46 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 
 *Rationale:* Staying current with cryptographic standards is essential for long-term security.
 
-=== S3. Incorporate SecurityEventCounter into JwksLoader
+== Testing Improvements
+
+=== T1. Implement CUI-JWT-12.1: Security Testing
+[ ] *Priority:* High
+
+*Description:* Implement comprehensive security testing for the JWT token handling library. This includes:
+
+1. Token validation bypass tests
+2. Algorithm confusion attack tests
+3. Key disclosure vulnerability tests
+4. Signature verification bypass tests
+5. Token cracking resistance tests
+
+*Rationale:* Security testing is essential to ensure the library is resistant to common JWT security vulnerabilities.
+
+=== T2. Complete CUI-JWT-12.2: Unit Testing
 [ ] *Priority:* Medium
 
-*Description:* Find a way to incorporate SecurityEventCounter into JwksLoader, particularly at object construction time. Currently, TokenFactory is the holder of SecurityEventCounter, but JwksLoader needs access to it to report JWKS-related security events. One approach could be modifying JwksLoaderFactory.createHttpLoader() to accept a SecurityEventCounter parameter (e.g., createHttpLoader(@NonNull HttpJwksLoaderConfig config, @NonNull SecurityEventCounter securityEventCounter)). The challenge is that TokenFactory creates the SecurityEventCounter but doesn't directly create the JwksLoader - this happens in IssuerConfig. Potential solutions might involve:
+*Description:* Enhance unit test coverage to meet the minimum requirement of 80% code coverage. Focus on:
+1. Edge cases for token parsing and validation
+2. Error handling scenarios
+3. Comprehensive testing of all public methods
 
-1. Modifying IssuerConfig to accept and pass through a SecurityEventCounter
-2. Creating a callback mechanism where JwksLoader can request the SecurityEventCounter when needed
-3. Using a dependency injection approach to provide the SecurityEventCounter
-4. Implementing a factory method in TokenFactory that creates properly configured JwksLoader instances
-
-*Rationale:* Incorporating SecurityEventCounter into JwksLoader would allow for more comprehensive security event tracking, particularly for JWKS-related events like fetch failures, JSON parsing errors, and key not found situations. This would improve security monitoring and auditing capabilities.
+*Rationale:* Comprehensive unit testing ensures the library functions correctly and helps prevent regressions.
 
 
-== Testing Improvements
+=== T5. Implement CUI-JWT-12.6: Compliance Testing
+[ ] *Priority:* Medium
+
+*Description:* Implement compliance testing to verify that the library adheres to the standards and best practices defined in:
+
+1. RFC 7519 JWT specification
+2. OpenID Connect Certification requirements
+3. OAuth 2.0 JWT Best Current Practices
+
+*Rationale:* Compliance testing ensures the library works correctly with standard-compliant identity providers and consumers.
 
 
 == Dependency Management
 
-=== D1. Update to Latest Stable Dependencies
-[ ] *Priority:* Medium
-
-*Description:* Regularly update dependencies to their latest stable versions to benefit from bug fixes and security patches.
-
-*Rationale:* Keeping dependencies current reduces security vulnerabilities and ensures access to the latest features.
 
 === D2. Minimize Runtime Dependencies
 [ ] *Priority:* Low
@@ -108,10 +116,13 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 
 *Rationale:* This would increase flexibility and allow for domain-specific validation requirements.
 
-=== S4. Implement CUI-JWT-7.3: Security Events
-[x] *Priority:* High
+=== F4. Implement CUI-JWT-1.4: Token Decryption
+[ ] *Priority:* Low
 
-*Description:* Introduce a new parameter object that provides counters for relevant security events. It should be structured for counting only and not duplicate logging. The counter should be kept within TokenFactory and accessible from outside via an API. It should be passed to each relevant flow element to report corresponding events. The counter must provide a reset method and be implemented in a highly concurrent way. All unit tests must verify the corresponding event counts. Use the same numbering/naming scheme as in JWTTokenLogMessages. The implementation should be structured to simplify later integration with micrometer but should not create any dependency on it at this time.
-After implementing, ensure all relevant specifications are updated accordingly.
+*Description:* Implement support for decryption of encrypted JWT tokens (JWE) as defined in RFC 7516. This includes:
+1. Parser modifications to recognize and handle JWE tokens
+2. Data model extensions to support JWE structure
+3. Key management extensions for encryption keys
+4. Security considerations for JWE tokens
 
-*Rationale:* Tracking security events provides valuable metrics for monitoring and auditing the system's security posture, enabling better detection of potential security issues and anomalies.
+*Rationale:* Supporting encrypted tokens would enhance the security of sensitive information in tokens and provide a more comprehensive JWT handling solution.

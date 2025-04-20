@@ -280,6 +280,21 @@ The following test cases are planned for implementation:
 
 These tests will ensure that the library logs appropriate information at the correct log levels for both successful operations and error scenarios.
 
+=== Vulnerability Scanning
+_See Requirement link:../Requirements.adoc#CUI-JWT-12.5[CUI-JWT-12.5: Vulnerability Scanning]_
+
+==== Status: IMPLEMENTED
+
+Vulnerability scanning has been implemented using GitHub Dependabot, which is configured to scan Maven dependencies weekly and create pull requests for updates. This ensures that the library is regularly checked for security vulnerabilities in its dependencies.
+
+The Dependabot configuration can be found in `.github/dependabot.yml` and includes:
+
+* Weekly scanning of Maven dependencies
+* Automatic creation of pull requests for security updates
+* Notifications for security vulnerabilities
+
+This implementation satisfies the requirement for regular vulnerability scanning of third-party dependencies as specified in CUI-JWT-12.5.
+
 === Compliance Testing
 _See Requirement link:../Requirements.adoc#CUI-JWT-12.6[CUI-JWT-12.6: Compliance Testing]_
 

@@ -228,3 +228,18 @@ The following tests verify the implementation:
 * link:../../src/test/java/de/cuioss/jwt/token/domain/token/AccessTokenContentTest.java[AccessTokenContentTest]
 * link:../../src/test/java/de/cuioss/jwt/token/domain/token/IdTokenContentTest.java[IdTokenContentTest]
 * link:../../src/test/java/de/cuioss/jwt/token/domain/token/RefreshTokenContentTest.java[RefreshTokenContentTest]
+
+=== Dependency Management
+_See Requirement link:../Requirements.adoc#CUI-JWT-8[CUI-JWT-8: Security]_
+
+==== Status: IMPLEMENTED
+
+The library implements automated dependency management to ensure that dependencies are kept up-to-date with the latest security patches and bug fixes. This is implemented using GitHub Dependabot, which is configured to scan Maven dependencies weekly and create pull requests for updates.
+
+The Dependabot configuration can be found in `.github/dependabot.yml` and includes:
+
+* Weekly scanning of Maven dependencies
+* Automatic creation of pull requests for dependency updates
+* Prioritization of security updates
+
+This implementation ensures that the library's dependencies are regularly updated to their latest stable versions, reducing security vulnerabilities and ensuring access to the latest features.
