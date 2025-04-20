@@ -39,6 +39,23 @@ Key features include:
     </dependency>
 ----
 
+==== Runtime Dependencies
+
+This library requires an implementation of the `jakarta.json-api` to be present at runtime.
+The library itself includes the API as a provided dependency,
+but you need to provide an implementation such as Eclipse Parsson:
+
+[source,xml]
+----
+    <dependency>
+        <groupId>org.eclipse.parsson</groupId>
+        <artifactId>parsson</artifactId>
+        <version>1.1.1</version> <!-- Use appropriate version -->
+    </dependency>
+----
+
+Alternatively, you can use any other Jakarta JSON API implementation.
+
 == Core Components
 
 === TokenFactory: The Main Entry Point

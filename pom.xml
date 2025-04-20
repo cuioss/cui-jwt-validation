@@ -92,14 +92,25 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
         </dependency>
+        <dependency>
+            <groupId>jakarta.json</groupId>
+            <artifactId>jakarta.json-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <!-- Caffeine cache -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+        <!-- BouncyCastle for cryptographic operations -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+        </dependency>
         <!-- Unit testing -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.json</groupId>
-            <artifactId>jakarta.json-api</artifactId>
         </dependency>
         <!-- JJWT dependencies. Reduced to testing -->
         <dependency>
@@ -117,20 +128,11 @@
             <artifactId>jjwt-jackson</artifactId>
             <scope>test</scope>
         </dependency>
-        <!-- Caffeine cache -->
-        <dependency>
-            <groupId>com.github.ben-manes.caffeine</groupId>
-            <artifactId>caffeine</artifactId>
-        </dependency>
-        <!-- BouncyCastle for cryptographic operations -->
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk18on</artifactId>
-        </dependency>
         <!-- Test -->
         <dependency>
             <groupId>de.cuioss.test</groupId>
             <artifactId>cui-test-mockwebserver-junit5</artifactId>
+            <scope>test</scope>
         </dependency>
         <!-- Implementation of jakarta.json-api-->
         <dependency>
@@ -146,22 +148,27 @@
         <dependency>
             <groupId>de.cuioss.test</groupId>
             <artifactId>cui-test-value-objects</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.rest-assured</groupId>
             <artifactId>rest-assured</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>jakarta.servlet</groupId>
             <artifactId>jakarta.servlet-api</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>de.cuioss.test</groupId>
             <artifactId>cui-test-generator</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>de.cuioss.test</groupId>
             <artifactId>cui-test-juli-logger</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>de.cuioss.test</groupId>

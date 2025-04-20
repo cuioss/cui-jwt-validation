@@ -78,7 +78,7 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 
 
 === D2. Minimize Runtime Dependencies
-[ ] *Priority:* Low
+[x] *Priority:* Low
 
 *Description:* Review dependencies and mark appropriate libraries as optional or provided scope to reduce the deployment footprint.
 
