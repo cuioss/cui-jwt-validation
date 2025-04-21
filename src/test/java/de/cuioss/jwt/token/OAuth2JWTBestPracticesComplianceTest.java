@@ -18,16 +18,21 @@ package de.cuioss.jwt.token;
 import de.cuioss.jwt.token.domain.token.AccessTokenContent;
 import de.cuioss.jwt.token.flow.IssuerConfig;
 import de.cuioss.jwt.token.flow.TokenFactoryConfig;
+import de.cuioss.jwt.token.flow.TokenSignatureValidator;
 import de.cuioss.jwt.token.security.AlgorithmPreferences;
 import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.jwt.token.test.KeyMaterialHandler;
 import de.cuioss.jwt.token.test.TestTokenProducer;
 import de.cuioss.jwt.token.test.generator.AccessTokenGenerator;
+import de.cuioss.test.generator.junit.EnableGeneratorController;
+import de.cuioss.test.generator.junit.parameterized.TypeGeneratorSource;
+import de.cuioss.test.juli.junit5.EnableTestLogger;
 import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -48,6 +53,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *
  * @see <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-jwt-bcp-09">OAuth 2.0 JWT Best Current Practices</a>
  */
+@EnableGeneratorController
 @DisplayName("OAuth 2.0 JWT Best Practices Compliance Tests")
 class OAuth2JWTBestPracticesComplianceTest {
 
@@ -69,7 +75,6 @@ class OAuth2JWTBestPracticesComplianceTest {
                 .expectedAudience(AUDIENCE)
                 .expectedClientId(CLIENT_ID)
                 .jwksContent(jwksContent)
-                .algorithmPreferences(new AlgorithmPreferences())
                 .build();
 
         // Create token factory
@@ -169,6 +174,7 @@ class OAuth2JWTBestPracticesComplianceTest {
 
     @Nested
     @DisplayName("Section 3.3: Validation of Signature")
+    @EnableTestLogger(trace = TokenSignatureValidator.class)
     class SignatureValidationTests {
 
         @Test
@@ -184,11 +190,11 @@ class OAuth2JWTBestPracticesComplianceTest {
             assertTrue(result.isPresent(), "Token with valid signature should be parsed successfully");
         }
 
-        @Test
         @DisplayName("3.3: Reject token with invalid signature")
-        void shouldRejectTokenWithInvalidSignature() {
-            // Given
-            String token = accessTokenGenerator.next();
+        @ParameterizedTest
+        @TypeGeneratorSource(value = AccessTokenGenerator.class, count = 10)
+        void shouldRejectTokenWithInvalidSignature(String token) {
+
             // Tamper with the signature by changing the last character
             String tamperedToken = token.substring(0, token.length() - 1) + (token.charAt(token.length() - 1) == 'A' ? 'B' : 'A');
 

@@ -46,6 +46,14 @@ public class AccessTokenGenerator implements TypedGenerator<String> {
     private final String clientId;
 
     /**
+     * Default constructor (default mode).
+     * Generates a JWT access token string.
+     */
+    public AccessTokenGenerator() {
+        this(false);
+    }
+
+    /**
      * Constructor with default mode (false = default mode, true = alternative mode).
      *
      * @param useAlternativeMode whether to use alternative mode for signing

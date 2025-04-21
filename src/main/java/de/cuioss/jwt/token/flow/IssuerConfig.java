@@ -22,11 +22,12 @@ import de.cuioss.jwt.token.jwks.http.HttpJwksLoaderConfig;
 import de.cuioss.jwt.token.security.AlgorithmPreferences;
 import de.cuioss.jwt.token.security.SecurityEventCounter;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.Singular;
-import lombok.Value;
+import lombok.ToString;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -43,11 +44,10 @@ import java.util.Set;
  * </p>
  */
 @Builder
-@Value
+@Getter
+@EqualsAndHashCode
+@ToString
 public class IssuerConfig {
-
-    // Static map to store JwksLoader instances for IssuerConfig objects
-    private static final Map<IssuerConfig, JwksLoader> JWKS_LOADER_MAP = new HashMap<>();
 
     @NonNull
     String issuer;
@@ -88,6 +88,13 @@ public class IssuerConfig {
     Map<String, ClaimMapper> claimMappers;
 
     /**
+     * The JwksLoader instance used for loading JWKS keys.
+     * This is initialized in the initSecurityEventCounter method.
+     * Therefore, any configured will be overridden
+     */
+    JwksLoader jwksLoader;
+
+    /**
      * Initializes the JwksLoader if it's not already initialized.
      * This method should be called by TokenFactory before using the JwksLoader.
      * It will initialize the JwksLoader based on the first available configuration in the following order:
@@ -99,41 +106,20 @@ public class IssuerConfig {
      * @throws IllegalStateException if no configuration is present
      */
     public void initSecurityEventCounter(@NonNull SecurityEventCounter securityEventCounter) {
-        // Check if we already have a JwksLoader for this IssuerConfig in the map
-        if (JWKS_LOADER_MAP.containsKey(this)) {
-            return;
-        }
 
-        JwksLoader loader;
 
         // Initialize JwksLoader based on the first available configuration
         if (httpJwksLoaderConfig != null) {
-            loader = JwksLoaderFactory.createHttpLoader(httpJwksLoaderConfig, securityEventCounter);
+            jwksLoader = JwksLoaderFactory.createHttpLoader(httpJwksLoaderConfig, securityEventCounter);
         } else if (jwksFilePath != null) {
-            loader = JwksLoaderFactory.createFileLoader(jwksFilePath, securityEventCounter);
+            jwksLoader = JwksLoaderFactory.createFileLoader(jwksFilePath, securityEventCounter);
         } else if (jwksContent != null) {
-            loader = JwksLoaderFactory.createInMemoryLoader(jwksContent, securityEventCounter);
+            jwksLoader = JwksLoaderFactory.createInMemoryLoader(jwksContent, securityEventCounter);
         } else {
             // Throw exception if no configuration is present
             throw new IllegalStateException("No JwksLoader configuration is present. One of httpJwksLoaderConfig, jwksFilePath, or jwksContent must be provided");
         }
 
-        // Store the JwksLoader in the map
-        JWKS_LOADER_MAP.put(this, loader);
     }
 
-    /**
-     * Gets the JwksLoader for this IssuerConfig.
-     * This method should be called after initSecurityEventCounter has been called.
-     *
-     * @return the JwksLoader for this IssuerConfig
-     * @throws IllegalStateException if the JwksLoader has not been initialized
-     */
-    public JwksLoader getJwksLoader() {
-        JwksLoader loader = JWKS_LOADER_MAP.get(this);
-        if (loader == null) {
-            throw new IllegalStateException("JwksLoader has not been initialized. Call initSecurityEventCounter first.");
-        }
-        return loader;
-    }
 }

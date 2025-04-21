@@ -111,7 +111,7 @@ public class JwksLoaderFactory {
         LOGGER.debug("Resolving key loader for in-memory JWKS data");
         try {
             JWKSKeyLoader keyLoader = new JWKSKeyLoader(jwksContent);
-            LOGGER.debug("Successfully loaded %s keys", keyLoader.keySet().size());
+            LOGGER.debug("Successfully loaded %s key(s)", keyLoader.keySet().size());
             return keyLoader;
         } catch (Exception e) {
             LOGGER.warn(e, JWTTokenLogMessages.WARN.JWKS_JSON_PARSE_FAILED.format(e.getMessage()));

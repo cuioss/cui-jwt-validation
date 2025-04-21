@@ -63,13 +63,13 @@ public class DecodedJwt {
         this.parts = parts;
         this.rawToken = rawToken;
 
-        // Extract issuer from64EncodedContent body if present
+        // Extract issuer from body if present
         this.issuer = body != null && body.containsKey(ClaimName.ISSUER.getName()) ? body.getString(ClaimName.ISSUER.getName()) : null;
 
-        // Extract kid from64EncodedContent header if present
+        // Extract kid from header if present
         this.kid = header != null && header.containsKey("kid") ? header.getString("kid") : null;
 
-        // Extract alg from64EncodedContent header if present
+        // Extract alg from header if present
         this.alg = header != null && header.containsKey("alg") ? header.getString("alg") : null;
     }
 
@@ -110,7 +110,7 @@ public class DecodedJwt {
     }
 
     /**
-     * Gets the kid (key ID) from64EncodedContent the JWT token header.
+     * Gets the kid (key ID) from the JWT token header.
      *
      * @return an Optional containing the kid if present
      */
@@ -119,7 +119,7 @@ public class DecodedJwt {
     }
 
     /**
-     * Gets the alg (algorithm) from64EncodedContent the JWT token header.
+     * Gets the alg (algorithm) from the JWT token header.
      *
      * @return an Optional containing the algorithm if present
      */

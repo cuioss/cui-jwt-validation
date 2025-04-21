@@ -90,7 +90,7 @@ public class TokenSignatureValidator {
      * @return true if the signature is valid, false otherwise
      */
     public boolean validateSignature(@Nonnull DecodedJwt decodedJwt) {
-        LOGGER.trace("Validating token signature");
+        LOGGER.debug("Validating token signature");
 
         // Get the kid from the token header
         var kid = decodedJwt.getKid();
@@ -133,6 +133,7 @@ public class TokenSignatureValidator {
 
         // Verify the signature
         try {
+            LOGGER.debug("All checks passed, verifying signature");
             return verifySignature(decodedJwt, keyInfo.get().getKey(), algorithm.get());
         } catch (Exception e) {
             LOGGER.warn(JWTTokenLogMessages.WARN.ERROR_PARSING_TOKEN.format(e.getMessage()), e);
@@ -150,6 +151,7 @@ public class TokenSignatureValidator {
      * @return true if the signature is valid, false otherwise
      */
     private boolean verifySignature(DecodedJwt decodedJwt, PublicKey publicKey, String algorithm) {
+        LOGGER.trace("Verifying signature:\nDecodedJwt: %s\nPublicKey: %s\nAlgorithm: %s", decodedJwt, publicKey, algorithm);
         // Get the parts of the token
         String[] parts = decodedJwt.getParts();
         if (parts.length != 3) {
