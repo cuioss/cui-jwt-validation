@@ -172,6 +172,8 @@ The following test classes implement these security tests:
 
 * link:../../src/test/java/de/cuioss/jwt/token/ClientConfusionAttackTest.java[ClientConfusionAttackTest.java] - Tests for client confusion attacks
 * link:../../src/test/java/de/cuioss/jwt/token/TokenFactorySecurityEventTest.java[TokenFactorySecurityEventTest.java] - Tests for security event tracking
+* link:../../src/test/java/de/cuioss/jwt/token/security/KeyDisclosureVulnerabilityTest.java[KeyDisclosureVulnerabilityTest.java] - Tests for key disclosure vulnerabilities
+* link:../../src/test/java/de/cuioss/jwt/token/security/TokenCrackingResistanceTest.java[TokenCrackingResistanceTest.java] - Tests for token cracking resistance
 
 These tests cover:
 
@@ -179,6 +181,8 @@ These tests cover:
 2. Algorithm confusion attack tests
 3. Signature verification bypass tests
 4. Security event tracking and monitoring
+5. Key disclosure vulnerability tests
+6. Token cracking resistance tests
 
 
 === Performance Testing

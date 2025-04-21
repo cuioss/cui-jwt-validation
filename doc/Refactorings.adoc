@@ -49,7 +49,20 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 4. Signature verification bypass tests
 5. Token cracking resistance tests
 
+*Status:* Partially implemented. The following tests are still open:
+
+- Key disclosure vulnerability tests
+- Token cracking resistance tests
+
+The following tests have been implemented:
+
+- Token validation bypass tests (in OAuth2JWTBestPracticesComplianceTest.java)
+- Algorithm confusion attack tests (in ClientConfusionAttackTest.java)
+- Signature verification bypass tests (in OAuth2JWTBestPracticesComplianceTest.java using JwtTokenTamperingUtil.java)
+
 *Rationale:* Security testing is essential to ensure the library is resistant to common JWT security vulnerabilities.
+
+After implementing, make sure that doc/specification/testing.adoc is updated properly.
 
 === T2. Complete CUI-JWT-12.2: Unit Testing
 [ ] *Priority:* Medium
@@ -78,20 +91,6 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 The tests should follow CUI logging test requirements using `cui-test-juli-logger` and `de.cuioss.test.juli.TestLogLevel`.
 
 *Rationale:* Proper logging is essential for monitoring, debugging, and security auditing of the JWT token handling library.
-
-=== T5. Implement CUI-JWT-12.6: Compliance Testing
-[x] *Priority:* Medium
-
-*Description:* Implement compliance testing to verify that the library adheres to the standards and best practices defined in:
-
-1. RFC 7519 JWT specification
-2. OpenID Connect Certification requirements
-3. OAuth 2.0 JWT Best Current Practices
-
-See doc/specification/testing.adoc for details
-
-*Rationale:* Compliance testing ensures the library works correctly with standard-compliant identity providers and consumers.
-
 
 == Dependency Management
 
