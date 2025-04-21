@@ -17,15 +17,20 @@ package de.cuioss.jwt.token.flow;
 
 import de.cuioss.jwt.token.JWTTokenLogMessages;
 import de.cuioss.jwt.token.jwks.JwksLoader;
+import de.cuioss.jwt.token.security.BouncyCastleProviderSingleton;
 import de.cuioss.jwt.token.security.SecurityEventCounter;
 import de.cuioss.tools.logging.CuiLogger;
 import jakarta.annotation.Nonnull;
 import lombok.Getter;
 import lombok.NonNull;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.nio.charset.StandardCharsets;
-import java.security.*;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.security.SignatureException;
 import java.util.Base64;
 
 /**
@@ -57,13 +62,6 @@ import java.util.Base64;
 public class TokenSignatureValidator {
 
     private static final CuiLogger LOGGER = new CuiLogger(TokenSignatureValidator.class);
-
-    static {
-        // Register BouncyCastle provider if not already registered
-        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
-            Security.addProvider(new BouncyCastleProvider());
-        }
-    }
 
     @Getter
     @NonNull
@@ -210,7 +208,7 @@ public class TokenSignatureValidator {
             case "PS512" -> "SHA512withRSAandMGF1";
             default -> throw new IllegalArgumentException("Unsupported algorithm: " + algorithm);
         };
-        return Signature.getInstance(jcaAlgorithm, BouncyCastleProvider.PROVIDER_NAME);
+        return Signature.getInstance(jcaAlgorithm, BouncyCastleProviderSingleton.getInstance().getProviderName());
     }
 
     /**

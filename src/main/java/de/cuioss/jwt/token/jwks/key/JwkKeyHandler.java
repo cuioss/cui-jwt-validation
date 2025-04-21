@@ -15,18 +15,23 @@
  */
 package de.cuioss.jwt.token.jwks.key;
 
+import de.cuioss.jwt.token.security.BouncyCastleProviderSingleton;
 import jakarta.json.JsonObject;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.bouncycastle.jce.ECNamedCurveTable;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
-import java.security.Security;
-import java.security.spec.*;
+import java.security.spec.ECFieldFp;
+import java.security.spec.ECParameterSpec;
+import java.security.spec.ECPoint;
+import java.security.spec.ECPublicKeySpec;
+import java.security.spec.EllipticCurve;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.RSAPublicKeySpec;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -120,10 +125,8 @@ public final class JwkKeyHandler {
      * @throws InvalidKeySpecException if the curve is not supported
      */
     private static ECParameterSpec getEcParameterSpec(String curve) throws InvalidKeySpecException {
-        // Ensure BouncyCastle provider is available
-        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
-            Security.addProvider(new BouncyCastleProvider());
-        }
+        // Ensure BouncyCastle provider is available using the singleton
+        BouncyCastleProviderSingleton.getInstance();
 
         // Map JWK curve name to BouncyCastle curve name
         String bcCurveName = switch (curve) {
