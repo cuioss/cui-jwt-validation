@@ -43,6 +43,13 @@ public class IDTokenGenerator implements TypedGenerator<String> {
     private final String clientId;
 
     /**
+     * Default constructor
+     */
+    public IDTokenGenerator() {
+        this(false);
+    }
+
+    /**
      * Constructor with default mode (false = default mode, true = alternative mode).
      *
      * @param useAlternativeMode whether to use alternative mode for signing

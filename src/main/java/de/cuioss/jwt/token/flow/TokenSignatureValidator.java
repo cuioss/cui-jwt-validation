@@ -164,28 +164,29 @@ public class TokenSignatureValidator {
 
         // Get the signature bytes
         byte[] signatureBytes = Base64.getUrlDecoder().decode(parts[2]);
+        LOGGER.trace("signatureBytes: %s", Base64.getUrlEncoder().encodeToString(signatureBytes));
 
         // Initialize the signature verifier with the appropriate algorithm
-        Signature verifier;
-        boolean isValid = false;
         try {
-            verifier = getSignatureVerifier(algorithm);
+            Signature verifier = getSignatureVerifier(algorithm);
             verifier.initVerify(publicKey);
             verifier.update(dataBytes);
             // Verify the signature
-            isValid = verifier.verify(signatureBytes);
+            boolean isValid = verifier.verify(signatureBytes);
+            if (isValid) {
+                LOGGER.debug("Signature is valid");
+            } else {
+                LOGGER.warn(JWTTokenLogMessages.WARN.FAILED_TO_PARSE_TOKEN.format("Invalid signature"));
+                securityEventCounter.increment(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED);
+            }
+            return isValid;
         } catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidKeyException | SignatureException e) {
             LOGGER.warn(e, JWTTokenLogMessages.WARN.ERROR_PARSING_TOKEN.format(e.getMessage()));
             securityEventCounter.increment(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED);
+            return false;
         }
 
-        if (isValid) {
-            LOGGER.debug("Signature is valid");
-        } else {
-            LOGGER.warn(JWTTokenLogMessages.WARN.FAILED_TO_PARSE_TOKEN.format("Invalid signature"));
-            securityEventCounter.increment(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED);
-        }
-        return isValid;
+
     }
 
     /**

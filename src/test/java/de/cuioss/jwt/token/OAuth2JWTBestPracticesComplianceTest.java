@@ -24,6 +24,8 @@ import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.jwt.token.test.KeyMaterialHandler;
 import de.cuioss.jwt.token.test.TestTokenProducer;
 import de.cuioss.jwt.token.test.generator.AccessTokenGenerator;
+import de.cuioss.jwt.token.test.generator.IDTokenGenerator;
+import de.cuioss.jwt.token.test.generator.JwtTokenTamperingUtil;
 import de.cuioss.test.generator.junit.EnableGeneratorController;
 import de.cuioss.test.generator.junit.parameterized.TypeGeneratorSource;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
@@ -190,17 +192,33 @@ class OAuth2JWTBestPracticesComplianceTest {
             assertTrue(result.isPresent(), "Token with valid signature should be parsed successfully");
         }
 
-        @DisplayName("3.3: Reject token with invalid signature")
+        @DisplayName("3.3b: Reject access-token with invalid signature")
         @ParameterizedTest
-        @TypeGeneratorSource(value = AccessTokenGenerator.class, count = 10)
-        void shouldRejectTokenWithInvalidSignature(String token) {
+        @TypeGeneratorSource(value = AccessTokenGenerator.class, count = 50)
+        void shouldRejectAccessTokenWithInvalidSignature(String token) {
 
             // Tamper with the signature by changing the last character
-            String tamperedToken = token.substring(0, token.length() - 1) + (token.charAt(token.length() - 1) == 'A' ? 'B' : 'A');
+            String tamperedToken = JwtTokenTamperingUtil.tamperWithToken(token);
 
             assertNotEquals(tamperedToken, token, "Token should be tampered");
             // When
-            Optional<AccessTokenContent> result = tokenFactory.createAccessToken(tamperedToken);
+            var result = tokenFactory.createAccessToken(tamperedToken);
+
+            // Then
+            assertFalse(result.isPresent(), "Token with invalid signature should be rejected, offending token: " + tamperedToken);
+        }
+
+        @DisplayName("3.3b: Reject id-token with invalid signature")
+        @ParameterizedTest
+        @TypeGeneratorSource(value = IDTokenGenerator.class, count = 50)
+        void shouldRejectIDTokenWithInvalidSignature(String token) {
+
+            // Tamper with the signature by changing the last character
+            String tamperedToken = JwtTokenTamperingUtil.tamperWithToken(token);
+
+            assertNotEquals(tamperedToken, token, "Token should be tampered");
+            // When
+            var result = tokenFactory.createIdToken(tamperedToken);
 
             // Then
             assertFalse(result.isPresent(), "Token with invalid signature should be rejected, offending token: " + tamperedToken);
