@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.cuioss.jwt.token.test.generator;
+package de.cuioss.jwt.token.test;
 
 import de.cuioss.test.generator.Generators;
 import de.cuioss.test.generator.TypedGenerator;
@@ -29,8 +29,6 @@ import java.util.Objects;
 /**
  * Utility class for tampering with JWT tokens for testing purposes.
  * Provides methods to apply different tampering strategies to tokens.
- * <p>
- * Based on best practices for testing JWT signature tampering as documented in Test-Failure.adoc.
  */
 public class JwtTokenTamperingUtil {
 
@@ -119,7 +117,6 @@ public class JwtTokenTamperingUtil {
             case DIFFERENT_SIGNATURE -> useDifferentSignature(token);
             case INVALID_KID -> changeKeyIdToInvalid(token);
             case REMOVE_KID -> removeKeyId(token);
-            default -> throw new IllegalArgumentException("Unknown tampering strategy: " + strategy);
         };
     }
 
@@ -130,12 +127,48 @@ public class JwtTokenTamperingUtil {
      * @return the tampered token
      */
     private static String modifySignatureLastChar(String token) {
-        if (token.length() <= 1) {
+        String[] parts = token.split("\\.");
+        if (parts.length != 3) {
+            return token; // Not a valid JWT token
+        }
+
+        String signature = parts[2];
+        if (signature.isEmpty()) {
             return token;
         }
-        char lastChar = token.charAt(token.length() - 1);
-        char newChar = (lastChar == 'A') ? 'B' : 'A';
-        return token.substring(0, token.length() - 1) + newChar;
+
+        // Ensure we make a significant change to the signature
+        // Instead of just changing the last character, we'll modify multiple characters
+        // or use a completely different approach if the signature is very short
+        if (signature.length() <= 2) {
+            // For very short signatures, use a completely different approach
+            return useDifferentSignature(token);
+        } else if (signature.length() <= 5) {
+            // For short signatures, modify the last two characters
+            char lastChar = signature.charAt(signature.length() - 1);
+            char secondLastChar = signature.charAt(signature.length() - 2);
+            char newLastChar = (lastChar == 'A') ? 'B' : 'A';
+            char newSecondLastChar = (secondLastChar == 'C') ? 'D' : 'C';
+            String tamperedSignature = signature.substring(0, signature.length() - 2)
+                    + newSecondLastChar + newLastChar;
+            return parts[0] + "." + parts[1] + "." + tamperedSignature;
+        } else {
+            // For longer signatures, modify the last character and a character in the middle
+            char lastChar = signature.charAt(signature.length() - 1);
+            int middleIndex = signature.length() / 2;
+            char middleChar = signature.charAt(middleIndex);
+
+            char newLastChar = (lastChar == 'A') ? 'B' : 'A';
+            char newMiddleChar = (middleChar == 'X') ? 'Y' : 'X';
+
+            String tamperedSignature = signature.substring(0, middleIndex)
+                    + newMiddleChar
+                    + signature.substring(middleIndex + 1, signature.length() - 1)
+                    + newLastChar;
+
+            LOGGER.debug("Original signature: %s, Tampered signature: %s", signature, tamperedSignature);
+            return parts[0] + "." + parts[1] + "." + tamperedSignature;
+        }
     }
 
     /**

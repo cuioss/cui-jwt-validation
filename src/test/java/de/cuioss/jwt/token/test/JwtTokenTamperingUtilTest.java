@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.cuioss.jwt.token.test.generator;
+package de.cuioss.jwt.token.test;
 
 import de.cuioss.jwt.token.TokenFactory;
 import de.cuioss.jwt.token.domain.token.AccessTokenContent;
@@ -21,9 +21,9 @@ import de.cuioss.jwt.token.domain.token.IdTokenContent;
 import de.cuioss.jwt.token.flow.IssuerConfig;
 import de.cuioss.jwt.token.flow.TokenFactoryConfig;
 import de.cuioss.jwt.token.security.AlgorithmPreferences;
-import de.cuioss.jwt.token.test.JWKSFactory;
-import de.cuioss.jwt.token.test.TestTokenProducer;
-import de.cuioss.jwt.token.test.generator.JwtTokenTamperingUtil.TamperingStrategy;
+import de.cuioss.jwt.token.test.JwtTokenTamperingUtil.TamperingStrategy;
+import de.cuioss.jwt.token.test.generator.AccessTokenGenerator;
+import de.cuioss.jwt.token.test.generator.IDTokenGenerator;
 import de.cuioss.test.generator.junit.EnableGeneratorController;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,9 +34,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test class for {@link JwtTokenTamperingUtil}.

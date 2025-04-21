@@ -25,7 +25,7 @@ import de.cuioss.jwt.token.test.KeyMaterialHandler;
 import de.cuioss.jwt.token.test.TestTokenProducer;
 import de.cuioss.jwt.token.test.generator.AccessTokenGenerator;
 import de.cuioss.jwt.token.test.generator.IDTokenGenerator;
-import de.cuioss.jwt.token.test.generator.JwtTokenTamperingUtil;
+import de.cuioss.jwt.token.test.JwtTokenTamperingUtil;
 import de.cuioss.test.generator.junit.EnableGeneratorController;
 import de.cuioss.test.generator.junit.parameterized.TypeGeneratorSource;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
@@ -41,11 +41,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests compliance with the OAuth 2.0 JWT Best Current Practices.

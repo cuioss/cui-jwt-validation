@@ -15,8 +15,8 @@
  */
 package de.cuioss.jwt.token.security;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import de.cuioss.tools.logging.CuiLogger;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.security.Provider;
 import java.security.Security;
@@ -37,6 +37,7 @@ import java.security.Security;
  * Signature signature = Signature.getInstance(algorithm, providerName);
  * </pre>
  */
+@SuppressWarnings("java:S6548") // owolff: A singleton here is ok and better than the alternative: static initializer
 public class BouncyCastleProviderSingleton {
 
     private static final CuiLogger LOGGER = new CuiLogger(BouncyCastleProviderSingleton.class);

@@ -114,36 +114,24 @@ The following test cases will be implemented:
    * Handle network failures
    * Handle invalid keys
 
-==== Example Test
+==== Example Tests
 
-[source,java]
-----
-@Test
-void shouldParseValidToken() {
-    // Given
-    String token = createValidToken();
+The following test classes demonstrate token parsing and validation:
 
-    // When
-    Optional<ParsedToken> result = tokenFactory.createToken(token);
+* link:../../src/test/java/de/cuioss/jwt/token/TokenFactoryTest.java[TokenFactoryTest.java] - Contains tests for token creation and validation:
+** `shouldCreateAccessToken()` - Tests creating and parsing an access token
+** `shouldCreateIdToken()` - Tests creating and parsing an ID token
+** `shouldCreateRefreshToken()` - Tests creating and parsing a refresh token
+** `shouldHandleInvalidTokenFormat()` - Tests handling invalid token formats
+** `shouldHandleUnknownIssuer()` - Tests handling unknown issuers
 
-    // Then
-    assertTrue(result.isPresent());
-    assertEquals("test-subject", result.get().getSubject());
-    assertEquals("test-issuer", result.get().getIssuer());
-}
+* link:../../src/test/java/de/cuioss/jwt/token/RFC7519JWTComplianceTest.java[RFC7519JWTComplianceTest.java] - Contains tests for RFC 7519 compliance:
+** `shouldValidateTokenSignature()` - Tests validating token signatures
+** `shouldRejectInvalidSignature()` - Tests rejecting tokens with invalid signatures
 
-@Test
-void shouldReturnEmptyForInvalidSignature() {
-    // Given
-    String token = createTokenWithInvalidSignature();
-
-    // When
-    Optional<ParsedToken> result = tokenFactory.createToken(token);
-
-    // Then
-    assertFalse(result.isPresent());
-}
-----
+* link:../../src/test/java/de/cuioss/jwt/token/OAuth2JWTBestPracticesComplianceTest.java[OAuth2JWTBestPracticesComplianceTest.java] - Contains tests for OAuth 2.0 JWT Best Practices compliance:
+** `shouldRejectAccessTokenWithInvalidSignature()` - Tests rejecting access tokens with invalid signatures
+** `shouldRejectIDTokenWithInvalidSignature()` - Tests rejecting ID tokens with invalid signatures
 
 === Integration Testing with TestContainers
 _See Requirement link:../Requirements.adoc#CUI-JWT-12.3[CUI-JWT-12.3: Integration Testing]_
@@ -284,6 +272,7 @@ The following test classes implement these compliance tests:
 * link:../../src/test/java/de/cuioss/jwt/token/RFC7519JWTComplianceTest.java[RFC7519JWTComplianceTest.java] - Tests compliance with the JWT specification defined in RFC 7519
 * link:../../src/test/java/de/cuioss/jwt/token/OpenIDConnectComplianceTest.java[OpenIDConnectComplianceTest.java] - Tests compliance with OpenID Connect Certification requirements
 * link:../../src/test/java/de/cuioss/jwt/token/OAuth2JWTBestPracticesComplianceTest.java[OAuth2JWTBestPracticesComplianceTest.java] - Tests compliance with OAuth 2.0 JWT Best Current Practices
+* link:../../src/test/java/de/cuioss/jwt/token/test/JwtTokenTamperingUtil.java[JwtTokenTamperingUtil.java] - Utility class for tampering with JWT tokens for testing purposes
 
 These tests cover:
 
@@ -304,6 +293,41 @@ These tests cover:
    * Signature validation
    * Token lifetime validation
    * Token size limits
+
+==== JWT Token Tampering Testing
+
+The link:../../src/test/java/de/cuioss/jwt/token/test/JwtTokenTamperingUtil.java[JwtTokenTamperingUtil] class provides a comprehensive approach to testing JWT token signature tampering. This utility implements best practices for testing JWT signature tampering as documented in Test-Failure.adoc.
+
+The class provides the following tampering strategies:
+
+* **MODIFY_SIGNATURE_LAST_CHAR**: Modifies the last character of the signature
+* **MODIFY_SIGNATURE_RANDOM_CHAR**: Modifies a random character in the signature
+* **REMOVE_SIGNATURE**: Removes the signature entirely
+* **ALGORITHM_NONE**: Changes the algorithm in the header to 'none'
+* **ALGORITHM_DOWNGRADE**: Changes the algorithm in the header from RS256 to HS256
+* **DIFFERENT_SIGNATURE**: Uses a completely different signature
+* **INVALID_KID**: Changes the key ID (kid) in the header to an invalid value
+* **REMOVE_KID**: Removes the key ID (kid) from the header
+
+The utility is used in the OAuth2JWTBestPracticesComplianceTest class to verify that tokens with tampered signatures are properly rejected:
+
+[source, java]
+----
+// In OAuth2JWTBestPracticesComplianceTest.SignatureValidationTests
+@DisplayName("3.3b: Reject access-token with invalid signature")
+@ParameterizedTest
+@TypeGeneratorSource(value = AccessTokenGenerator.class, count = 50)
+void shouldRejectAccessTokenWithInvalidSignature(String token) {
+    // Tamper with the token using one of the tampering strategies
+    String tamperedToken = JwtTokenTamperingUtil.tamperWithToken(token);
+
+    // Verify that the tampered token is rejected
+    var result = tokenFactory.createAccessToken(tamperedToken);
+    assertFalse(result.isPresent(), "Token with invalid signature should be rejected");
+}
+----
+
+This approach ensures comprehensive testing of the library's ability to detect and reject tampered tokens, which is critical for security.
 
 ==== Test Class Naming Convention
 

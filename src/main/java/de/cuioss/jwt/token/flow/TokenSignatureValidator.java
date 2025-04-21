@@ -25,12 +25,7 @@ import lombok.Getter;
 import lombok.NonNull;
 
 import java.nio.charset.StandardCharsets;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.PublicKey;
-import java.security.Signature;
-import java.security.SignatureException;
+import java.security.*;
 import java.util.Base64;
 
 /**
@@ -164,7 +159,6 @@ public class TokenSignatureValidator {
 
         // Get the signature bytes
         byte[] signatureBytes = Base64.getUrlDecoder().decode(parts[2]);
-        LOGGER.trace("signatureBytes: %s", Base64.getUrlEncoder().encodeToString(signatureBytes));
 
         // Initialize the signature verifier with the appropriate algorithm
         try {
