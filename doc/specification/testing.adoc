@@ -184,6 +184,35 @@ These tests cover:
 5. Key disclosure vulnerability tests
 6. Token cracking resistance tests
 
+==== Key Disclosure Vulnerability Tests
+
+The link:../../src/test/java/de/cuioss/jwt/token/security/KeyDisclosureVulnerabilityTest.java[KeyDisclosureVulnerabilityTest.java] class verifies that private keys are not exposed and that sensitive key material is properly protected. Key disclosure vulnerabilities can lead to complete compromise of the JWT token security model, as an attacker with access to private keys can forge valid tokens.
+
+This test class verifies:
+
+* JwksLoader only exposes public keys, never private keys
+* JWKS content does not contain private key material
+* Private keys are not serializable (to prevent accidental disclosure)
+* Private key files have restricted permissions
+* Private keys are not logged
+* JWKS endpoints use HTTPS for secure transmission
+* JWKSKeyLoader only loads public keys
+
+Testing uses a combination of direct API inspection, reflection, file system checks, and serialization attempts to verify that private keys are properly protected throughout the library.
+
+==== Token Cracking Resistance Tests
+
+The link:../../src/test/java/de/cuioss/jwt/token/security/TokenCrackingResistanceTest.java[TokenCrackingResistanceTest.java] class verifies that tokens use strong cryptographic algorithms and have sufficient entropy to resist cracking attempts. Token cracking refers to attempts to forge or predict JWT signatures, which would allow attackers to create valid tokens without possessing the private key.
+
+This test class verifies:
+
+* Tokens use strong cryptographic algorithms (RS256, RS384, RS512, ES256, ES384, ES512, PS256, PS384, PS512)
+* Tokens have sufficient entropy in their header and payload
+* Tokens are resistant to brute force attacks
+* Only approved algorithms are used
+* Token signatures are unpredictable
+
+Testing uses a combination of algorithm verification, entropy calculation using Shannon entropy, signature tampering, and multiple token generation to ensure that tokens are cryptographically secure and resistant to various attack vectors.
 
 === Performance Testing
 _See Requirement link:../Requirements.adoc#CUI-JWT-12.4[CUI-JWT-12.4: Performance Testing]_

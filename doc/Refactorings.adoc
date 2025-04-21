@@ -38,29 +38,6 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 
 == Testing Improvements
 
-=== T1. Implement CUI-JWT-12.1: Security Testing
-[x] *Priority:* High
-
-*Description:* Implement comprehensive security testing for the JWT token handling library. This includes:
-
-1. Token validation bypass tests
-2. Algorithm confusion attack tests
-3. Key disclosure vulnerability tests
-4. Signature verification bypass tests
-5. Token cracking resistance tests
-
-*Status:* Fully implemented. The following tests have been implemented:
-
-- Token validation bypass tests (in OAuth2JWTBestPracticesComplianceTest.java)
-- Algorithm confusion attack tests (in ClientConfusionAttackTest.java)
-- Signature verification bypass tests (in OAuth2JWTBestPracticesComplianceTest.java using JwtTokenTamperingUtil.java)
-- Key disclosure vulnerability tests (in KeyDisclosureVulnerabilityTest.java)
-- Token cracking resistance tests (in TokenCrackingResistanceTest.java)
-
-*Rationale:* Security testing is essential to ensure the library is resistant to common JWT security vulnerabilities.
-
-After implementing, make sure that doc/specification/testing.adoc is updated properly.
-
 === T2. Complete CUI-JWT-12.2: Unit Testing
 [ ] *Priority:* Medium
 
