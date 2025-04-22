@@ -472,6 +472,12 @@ public final class JWTTokenLogMessages {
                 .identifier(142)
                 .template("Algorithm %s is explicitly rejected for security reasons")
                 .build();
+
+        public static final LogRecord KEY_ROTATION_DETECTED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(143)
+                .template("Key rotation detected: JWKS content has changed")
+                .build();
     }
 
 }

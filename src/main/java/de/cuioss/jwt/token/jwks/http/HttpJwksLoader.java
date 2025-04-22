@@ -114,7 +114,16 @@ public class HttpJwksLoader implements JwksLoader, AutoCloseable {
             }
 
             // Update the cache with the new content
-            return cacheManager.updateCache(response.getContent(), response.getEtag().orElse(null));
+            JwksCacheManager.KeyRotationResult result = cacheManager.updateCache(
+                    response.getContent(), response.getEtag().orElse(null));
+
+            // Check if key rotation was detected
+            if (result.isKeyRotationDetected()) {
+                LOGGER.warn(WARN.KEY_ROTATION_DETECTED::format);
+                securityEventCounter.increment(SecurityEventCounter.EventType.KEY_ROTATION_DETECTED);
+            }
+
+            return result.getKeyLoader();
         } catch (Exception e) {
             LOGGER.warn(e, WARN.JWKS_FETCH_FAILED.format(e.getMessage()));
             securityEventCounter.increment(SecurityEventCounter.EventType.JWKS_FETCH_FAILED);

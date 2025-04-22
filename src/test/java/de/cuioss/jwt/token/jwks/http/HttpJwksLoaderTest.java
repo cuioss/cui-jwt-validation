@@ -224,4 +224,33 @@ class HttpJwksLoaderTest {
         // Clean up
         customLoader.close();
     }
+
+    @Test
+    @DisplayName("Should detect key rotation and log warning")
+    void shouldDetectKeyRotationAndLogWarning() {
+        // Get initial count of key rotation events
+        long initialRotationCount = securityEventCounter.getCount(SecurityEventCounter.EventType.KEY_ROTATION_DETECTED);
+
+        // First, get a key to ensure the cache is populated
+        Optional<KeyInfo> initialKeyInfo = httpJwksLoader.getKeyInfo(TEST_KID);
+        assertTrue(initialKeyInfo.isPresent(), "Initial key info should be present");
+
+        // Switch to a different key to simulate key rotation
+        moduleDispatcher.switchToOtherPublicKey();
+
+        // Force a refresh of the cache
+        try {
+            // Access private method to force refresh
+            java.lang.reflect.Method refreshMethod = HttpJwksLoader.class.getDeclaredMethod("loadJwksKeyLoader", String.class);
+            refreshMethod.setAccessible(true);
+            refreshMethod.invoke(httpJwksLoader, "jwks:" + httpJwksLoader.getConfig().getJwksUri());
+        } catch (Exception e) {
+            fail("Failed to invoke refresh method: " + e.getMessage());
+        }
+
+        // Verify that the key rotation event was recorded
+        assertEquals(initialRotationCount + 1,
+                securityEventCounter.getCount(SecurityEventCounter.EventType.KEY_ROTATION_DETECTED),
+                "KEY_ROTATION_DETECTED event should be incremented");
+    }
 }

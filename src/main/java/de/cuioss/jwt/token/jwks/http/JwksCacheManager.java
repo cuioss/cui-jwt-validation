@@ -82,17 +82,17 @@ class JwksCacheManager {
             // Use custom expiry to implement adaptive caching
             builder.expireAfter(new Expiry<String, JWKSKeyLoader>() {
                 @Override
-                public long expireAfterCreate(String key, JWKSKeyLoader value, long currentTime) {
+                public long expireAfterCreate(@NonNull String key, @NonNull JWKSKeyLoader value, long currentTime) {
                     return TimeUnit.SECONDS.toNanos(config.getRefreshIntervalSeconds());
                 }
 
                 @Override
-                public long expireAfterUpdate(String key, JWKSKeyLoader value, long currentTime, long currentDuration) {
+                public long expireAfterUpdate(@NonNull String key, @NonNull JWKSKeyLoader value, long currentTime, long currentDuration) {
                     return currentDuration;
                 }
 
                 @Override
-                public long expireAfterRead(String key, JWKSKeyLoader value, long currentTime, long currentDuration) {
+                public long expireAfterRead(@NonNull String key, @NonNull JWKSKeyLoader value, long currentTime, long currentDuration) {
                     // Implement adaptive caching: extend expiration time for frequently accessed keys
                     int localAccessCount = JwksCacheManager.this.accessCount.get();
                     int localHitCount = JwksCacheManager.this.hitCount.get();
@@ -122,7 +122,7 @@ class JwksCacheManager {
      * @return the cache key
      */
     String getCacheKey() {
-        return CACHE_KEY_PREFIX + config.getJwksUri().toString();
+        return CACHE_KEY_PREFIX + config.getJwksUri();
     }
 
     /**
@@ -186,15 +186,15 @@ class JwksCacheManager {
      *
      * @param jwksContent the new JWKS content
      * @param etag        the ETag from the response, may be null
-     * @return the new JWKSKeyLoader
+     * @return a pair containing the new JWKSKeyLoader and a boolean indicating if key rotation was detected
      */
-    JWKSKeyLoader updateCache(String jwksContent, String etag) {
+    KeyRotationResult updateCache(String jwksContent, String etag) {
         // Content-based caching: if content hasn't changed and we have a valid previous result, return it
         if (lastValidResult != null &&
                 lastValidResult.isNotEmpty() &&
                 jwksContent.equals(lastValidResult.getOriginalString())) {
             LOGGER.debug(DEBUG.CONTENT_UNCHANGED::format);
-            return lastValidResult;
+            return new KeyRotationResult(lastValidResult, false);
         }
 
         // Create new JWKSKeyLoader with the content and etag
@@ -202,15 +202,39 @@ class JwksCacheManager {
 
         // Only update lastValidResult if the new loader has valid keys
         if (newLoader.isNotEmpty()) {
+            boolean keyRotationDetected = lastValidResult != null && lastValidResult.isNotEmpty() &&
+                    !newLoader.keySet().equals(lastValidResult.keySet());
             lastValidResult = newLoader;
             currentEtag = etag;
+            return new KeyRotationResult(newLoader, keyRotationDetected);
         } else if (lastValidResult != null && lastValidResult.isNotEmpty()) {
             // If new loader is empty but we have a valid previous result, log warning and return previous
             LOGGER.warn(WARN.FALLBACK_TO_LAST_VALID_JWKS_EMPTY::format);
-            return lastValidResult;
+            return new KeyRotationResult(lastValidResult, false);
         }
 
-        return newLoader;
+        return new KeyRotationResult(newLoader, false);
+    }
+
+    /**
+     * Simple class to hold the result of a cache update operation.
+     */
+    static class KeyRotationResult {
+        private final JWKSKeyLoader keyLoader;
+        private final boolean keyRotationDetected;
+
+        KeyRotationResult(JWKSKeyLoader keyLoader, boolean keyRotationDetected) {
+            this.keyLoader = keyLoader;
+            this.keyRotationDetected = keyRotationDetected;
+        }
+
+        JWKSKeyLoader getKeyLoader() {
+            return keyLoader;
+        }
+
+        boolean isKeyRotationDetected() {
+            return keyRotationDetected;
+        }
     }
 
     /**

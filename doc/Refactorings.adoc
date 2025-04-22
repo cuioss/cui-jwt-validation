@@ -23,7 +23,7 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 == Security Enhancements
 
 === S1. Implement Key Rotation Alerts
-[ ] *Priority:* High
+[x] *Priority:* High
 
 *Description:* Add monitoring and alerting for key rotation events to ensure timely response to key changes. Implement this by introducing an new LogRecord on WARN that transports this information. Add a corresponding security event as well. Ensure that the writing of that Log-Statement and security event is explicitly tested in the corresponding unit-test. Because of its nature this is only relevant for the HttpJwksLoader.
 
