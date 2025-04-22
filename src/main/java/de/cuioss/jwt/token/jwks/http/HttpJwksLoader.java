@@ -123,6 +123,11 @@ public class HttpJwksLoader implements JwksLoader, AutoCloseable {
                 securityEventCounter.increment(SecurityEventCounter.EventType.KEY_ROTATION_DETECTED);
             }
 
+            // Log successful loading and parsing of JWKS
+            LOGGER.info(de.cuioss.jwt.token.JWTTokenLogMessages.INFO.JWKS_LOADED.format(
+                    config.getJwksUri().toString(),
+                    result.getKeyLoader().keySet().size()));
+
             return result.getKeyLoader();
         } catch (Exception e) {
             LOGGER.warn(e, WARN.JWKS_FETCH_FAILED.format(e.getMessage()));
@@ -157,7 +162,7 @@ public class HttpJwksLoader implements JwksLoader, AutoCloseable {
                 keyInfo = keyLoader.getKeyInfo(kid);
             } catch (Exception e) {
                 // Handle connection errors gracefully
-                LOGGER.warn(e, WARN.JWKS_REFRESH_ERROR.format(e.getMessage()));
+                LOGGER.warn(e, WARN.JWKS_FETCH_FAILED.format(e.getMessage()));
                 securityEventCounter.increment(SecurityEventCounter.EventType.JWKS_FETCH_FAILED);
             }
         }

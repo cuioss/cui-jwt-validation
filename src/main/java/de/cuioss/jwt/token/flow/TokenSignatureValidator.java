@@ -129,7 +129,7 @@ public class TokenSignatureValidator {
             LOGGER.debug("All checks passed, verifying signature");
             return verifySignature(decodedJwt, keyInfo.get().getKey(), algorithm.get());
         } catch (Exception e) {
-            LOGGER.warn(JWTTokenLogMessages.WARN.ERROR_PARSING_TOKEN.format(e.getMessage()), e);
+            LOGGER.warn(JWTTokenLogMessages.ERROR.SIGNATURE_VALIDATION_FAILED.format(e.getMessage()), e);
             securityEventCounter.increment(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED);
             return false;
         }
@@ -170,12 +170,12 @@ public class TokenSignatureValidator {
             if (isValid) {
                 LOGGER.debug("Signature is valid");
             } else {
-                LOGGER.warn(JWTTokenLogMessages.WARN.FAILED_TO_PARSE_TOKEN.format("Invalid signature"));
+                LOGGER.warn(JWTTokenLogMessages.ERROR.SIGNATURE_VALIDATION_FAILED.format("Invalid signature"));
                 securityEventCounter.increment(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED);
             }
             return isValid;
         } catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidKeyException | SignatureException e) {
-            LOGGER.warn(e, JWTTokenLogMessages.WARN.ERROR_PARSING_TOKEN.format(e.getMessage()));
+            LOGGER.warn(e, JWTTokenLogMessages.ERROR.SIGNATURE_VALIDATION_FAILED.format(e.getMessage()));
             securityEventCounter.increment(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED);
             return false;
         }

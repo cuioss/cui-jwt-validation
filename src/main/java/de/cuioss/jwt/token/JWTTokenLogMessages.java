@@ -39,111 +39,93 @@ public final class JWTTokenLogMessages {
     public static final class DEBUG {
         public static final LogRecord SSL_CONTEXT_PROTOCOL = LogRecordModel.builder()
                 .prefix(PREFIX)
-                .identifier(1)
+                .identifier(500)
                 .template("Provided SSL context uses protocol: %s")
                 .build();
 
         public static final LogRecord USING_SSL_CONTEXT = LogRecordModel.builder()
                 .prefix(PREFIX)
-                .identifier(2)
+                .identifier(501)
                 .template("Using provided SSL context with protocol: %s")
                 .build();
 
         public static final LogRecord CREATED_SECURE_CONTEXT = LogRecordModel.builder()
                 .prefix(PREFIX)
-                .identifier(3)
+                .identifier(502)
                 .template("Created secure SSL context with %s")
                 .build();
 
         public static final LogRecord NO_SSL_CONTEXT = LogRecordModel.builder()
                 .prefix(PREFIX)
-                .identifier(4)
+                .identifier(503)
                 .template("No SSL context provided, created secure SSL context with %s")
-                .build();
-
-        public static final LogRecord FALLBACK_SSL_CONTEXT = LogRecordModel.builder()
-                .prefix(PREFIX)
-                .identifier(5)
-                .template("Falling back to provided SSL context")
-                .build();
-
-        public static final LogRecord DEFAULT_SSL_CONTEXT = LogRecordModel.builder()
-                .prefix(PREFIX)
-                .identifier(6)
-                .template("Using default SSL context from VM configuration")
                 .build();
 
         public static final LogRecord INITIALIZED_JWKS_LOADER = LogRecordModel.builder()
                 .prefix(PREFIX)
-                .identifier(7)
+                .identifier(504)
                 .template("Initialized HttpJwksLoader with URL: %s, refresh interval: %s seconds")
                 .build();
 
         public static final LogRecord RESOLVING_KEY_LOADER = LogRecordModel.builder()
                 .prefix(PREFIX)
-                .identifier(8)
+                .identifier(505)
                 .template("Resolving key loader for JWKS endpoint: %s")
                 .build();
 
         public static final LogRecord REFRESHING_KEYS = LogRecordModel.builder()
                 .prefix(PREFIX)
-                .identifier(9)
+                .identifier(506)
                 .template("Refreshing keys from JWKS endpoint: %s")
                 .build();
 
         public static final LogRecord FETCHED_JWKS = LogRecordModel.builder()
                 .prefix(PREFIX)
-                .identifier(10)
+                .identifier(507)
                 .template("Successfully fetched JWKS from URL: %s")
                 .build();
 
         public static final LogRecord KEY_ID_EMPTY = LogRecordModel.builder()
                 .prefix(PREFIX)
-                .identifier(11)
+                .identifier(508)
                 .template("Key ID is null or empty")
                 .build();
 
         public static final LogRecord KEY_NOT_FOUND_REFRESHING = LogRecordModel.builder()
                 .prefix(PREFIX)
-                .identifier(12)
+                .identifier(509)
                 .template("Key with ID %s not found, refreshing keys")
                 .build();
 
         public static final LogRecord RECEIVED_304_NOT_MODIFIED = LogRecordModel.builder()
                 .prefix(PREFIX)
-                .identifier(13)
+                .identifier(510)
                 .template("Received 304 Not Modified response, using cached JWKS")
+                .build();
+
+        public static final LogRecord CONTENT_UNCHANGED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(511)
+                .template("JWKS content unchanged, using existing key loader")
                 .build();
 
         // Token creation success events
         public static final LogRecord ACCESS_TOKEN_CREATED = LogRecordModel.builder()
                 .prefix(PREFIX)
-                .identifier(16)
+                .identifier(512)
                 .template("Successfully created access token")
                 .build();
 
         public static final LogRecord ID_TOKEN_CREATED = LogRecordModel.builder()
                 .prefix(PREFIX)
-                .identifier(17)
+                .identifier(513)
                 .template("Successfully created ID token")
                 .build();
 
         public static final LogRecord REFRESH_TOKEN_CREATED = LogRecordModel.builder()
                 .prefix(PREFIX)
-                .identifier(18)
+                .identifier(514)
                 .template("Successfully created refresh token")
-                .build();
-
-        public static final LogRecord CONTENT_UNCHANGED = LogRecordModel.builder()
-                .prefix(PREFIX)
-                .identifier(14)
-                .template("JWKS content unchanged, using existing key loader")
-                .build();
-
-        public static final LogRecord ADDING_IF_NONE_MATCH_HEADER = LogRecordModel.builder()
-                .prefix(PREFIX)
-                .identifier(15)
-                .template("Adding If-None-Match header: %s")
                 .build();
 
     }
@@ -155,54 +137,10 @@ public final class JWTTokenLogMessages {
      */
     @UtilityClass
     public static final class ERROR {
-        public static final LogRecord CLAIMS_VALIDATION_FAILED = LogRecordModel.builder()
-                .prefix(PREFIX)
-                .identifier(200)
-                .template("ClaimNames validation failed: %s")
-                .build();
-
         public static final LogRecord SIGNATURE_VALIDATION_FAILED = LogRecordModel.builder()
                 .prefix(PREFIX)
                 .identifier(201)
                 .template("Failed to validate token signature: %s")
-                .build();
-
-        public static final LogRecord CRITICAL_JWKS_ERROR = LogRecordModel.builder()
-                .prefix(PREFIX)
-                .identifier(202)
-                .template("Critical error loading JWKS data: %s")
-                .build();
-
-        public static final LogRecord AUTHENTICATION_FAILURE = LogRecordModel.builder()
-                .prefix(PREFIX)
-                .identifier(203)
-                .template("Authentication failure: %s")
-                .build();
-
-        public static final LogRecord SECURITY_VIOLATION = LogRecordModel.builder()
-                .prefix(PREFIX)
-                .identifier(204)
-                .template("Security violation detected: %s")
-                .build();
-    }
-
-    /**
-     * Contains fatal-level log messages for critical errors that prevent the application
-     * from functioning correctly. These messages indicate severe problems that typically
-     * require immediate attention and may result in application shutdown.
-     */
-    @UtilityClass
-    public static final class FATAL {
-        public static final LogRecord CRITICAL_SECURITY_BREACH = LogRecordModel.builder()
-                .prefix(PREFIX)
-                .identifier(300)
-                .template("Critical security breach: %s")
-                .build();
-
-        public static final LogRecord FATAL_CRYPTO_ERROR = LogRecordModel.builder()
-                .prefix(PREFIX)
-                .identifier(301)
-                .template("Fatal error in cryptographic operations: %s")
                 .build();
     }
 
@@ -213,10 +151,16 @@ public final class JWTTokenLogMessages {
      */
     @UtilityClass
     public static final class INFO {
-        public static final LogRecord CONFIGURED_JWKS = LogRecordModel.builder()
+        public static final LogRecord TOKEN_FACTORY_INITIALIZED = LogRecordModel.builder()
                 .prefix(PREFIX)
                 .identifier(1)
-                .template("Initializing JWKS lookup, jwks-endpoint='%s', refresh-interval='%s', issuer='%s'")
+                .template("TokenFactory initialized with %d issuer configurations")
+                .build();
+
+        public static final LogRecord JWKS_LOADED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(2)
+                .template("Successfully loaded and parsed JWKS from %s with %d keys")
                 .build();
     }
 
@@ -227,11 +171,6 @@ public final class JWTTokenLogMessages {
      */
     @UtilityClass
     public static final class WARN {
-        public static final LogRecord FALLBACK_TO_LAST_VALID_JWKS_HTTP_ERROR = LogRecordModel.builder()
-                .prefix(PREFIX)
-                .identifier(128)
-                .template("Falling back to last valid JWKS due to HTTP error: %s")
-                .build();
 
         public static final LogRecord FALLBACK_TO_LAST_VALID_JWKS_EMPTY = LogRecordModel.builder()
                 .prefix(PREFIX)
@@ -243,12 +182,6 @@ public final class JWTTokenLogMessages {
                 .prefix(PREFIX)
                 .identifier(130)
                 .template("Falling back to last valid JWKS due to exception: %s")
-                .build();
-
-        public static final LogRecord FALLBACK_TO_LAST_VALID_JWKS_INTERRUPTED = LogRecordModel.builder()
-                .prefix(PREFIX)
-                .identifier(131)
-                .template("Falling back to last valid JWKS due to interrupted exception")
                 .build();
 
         public static final LogRecord TOKEN_SIZE_EXCEEDED = LogRecordModel.builder()
@@ -263,11 +196,6 @@ public final class JWTTokenLogMessages {
                 .template("The given token was empty, request will be rejected")
                 .build();
 
-        public static final LogRecord COULD_NOT_PARSE_TOKEN = LogRecordModel.builder()
-                .prefix(PREFIX)
-                .identifier(102)
-                .template("Unable to parse token due to ParseException: %s")
-                .build();
 
         public static final LogRecord KEY_NOT_FOUND = LogRecordModel.builder()
                 .prefix(PREFIX)
@@ -311,17 +239,7 @@ public final class JWTTokenLogMessages {
                 .template("Failed to decode JWT token")
                 .build();
 
-        public static final LogRecord NO_KEYS_AVAILABLE = LogRecordModel.builder()
-                .prefix(PREFIX)
-                .identifier(110)
-                .template("No keys available in JWKS")
-                .build();
 
-        public static final LogRecord ERROR_PARSING_TOKEN = LogRecordModel.builder()
-                .prefix(PREFIX)
-                .identifier(111)
-                .template("Error parsing token: %s")
-                .build();
 
         public static final LogRecord INVALID_JWT_FORMAT = LogRecordModel.builder()
                 .prefix(PREFIX)
@@ -341,11 +259,6 @@ public final class JWTTokenLogMessages {
                 .template("Failed to decode payload part")
                 .build();
 
-        public static final LogRecord FAILED_TO_PARSE_TOKEN = LogRecordModel.builder()
-                .prefix(PREFIX)
-                .identifier(115)
-                .template("Failed to parse token: %s")
-                .build();
 
         public static final LogRecord DECODED_PART_SIZE_EXCEEDED = LogRecordModel.builder()
                 .prefix(PREFIX)
@@ -353,11 +266,6 @@ public final class JWTTokenLogMessages {
                 .template("Decoded part exceeds maximum size limit of %s bytes")
                 .build();
 
-        public static final LogRecord FAILED_TO_DECODE_PART = LogRecordModel.builder()
-                .prefix(PREFIX)
-                .identifier(117)
-                .template("Failed to decode part: %s")
-                .build();
 
         public static final LogRecord FAILED_TO_FETCH_JWKS = LogRecordModel.builder()
                 .prefix(PREFIX)
@@ -371,17 +279,6 @@ public final class JWTTokenLogMessages {
                 .template("Unsupported algorithm: %s")
                 .build();
 
-        public static final LogRecord NO_SUPPORTED_ALGORITHM = LogRecordModel.builder()
-                .prefix(PREFIX)
-                .identifier(120)
-                .template("No supported algorithm available")
-                .build();
-
-        public static final LogRecord NO_KEY_FOR_ALGORITHM = LogRecordModel.builder()
-                .prefix(PREFIX)
-                .identifier(121)
-                .template("No key available for algorithm: %s")
-                .build();
 
         public static final LogRecord JWKS_MISSING_KEYS = LogRecordModel.builder()
                 .prefix(PREFIX)
@@ -431,11 +328,6 @@ public final class JWTTokenLogMessages {
                 .template("Provided SSL context uses insecure protocol: %s. Creating a secure context instead.")
                 .build();
 
-        public static final LogRecord SSL_CONTEXT_CONFIG_FAILED = LogRecordModel.builder()
-                .prefix(PREFIX)
-                .identifier(136)
-                .template("Failed to configure secure SSL context: %s")
-                .build();
 
         public static final LogRecord AZP_MISMATCH = LogRecordModel.builder()
                 .prefix(PREFIX)

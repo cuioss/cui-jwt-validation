@@ -74,17 +74,12 @@ public class SecurityEventCounter {
 
         // Algorithm issues
         UNSUPPORTED_ALGORITHM(JWTTokenLogMessages.WARN.UNSUPPORTED_ALGORITHM),
-        ALGORITHM_REJECTED(JWTTokenLogMessages.WARN.ALGORITHM_REJECTED),
 
         // JWKS issues
         JWKS_FETCH_FAILED(JWTTokenLogMessages.WARN.JWKS_FETCH_FAILED),
         JWKS_JSON_PARSE_FAILED(JWTTokenLogMessages.WARN.JWKS_JSON_PARSE_FAILED),
         FAILED_TO_READ_JWKS_FILE(JWTTokenLogMessages.WARN.FAILED_TO_READ_JWKS_FILE),
         KEY_ROTATION_DETECTED(JWTTokenLogMessages.WARN.KEY_ROTATION_DETECTED),
-
-        // Critical security issues
-        CRITICAL_SECURITY_BREACH(JWTTokenLogMessages.FATAL.CRITICAL_SECURITY_BREACH),
-        SECURITY_VIOLATION(JWTTokenLogMessages.ERROR.SECURITY_VIOLATION),
 
         // Successful operations
         ACCESS_TOKEN_CREATED(JWTTokenLogMessages.DEBUG.ACCESS_TOKEN_CREATED),

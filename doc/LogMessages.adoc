@@ -8,40 +8,19 @@ All messages follow the format: JWTToken-[identifier]: [message]
 
 The log message levels follow these identifier ranges:
 
-* DEBUG Level: 001-099
 * INFO Level: 001-099
 * WARN Level: 100-199
 * ERROR Level: 200-299
-* FATAL Level: 300-399
 
-== DEBUG Level (001-099)
-
-[cols="1,1,2,2", options="header"]
-|===
-|ID |Component |Message |Description
-|JWTToken-001 |SSL |Provided SSL context uses protocol: %s |Logged when an SSL context is provided
-|JWTToken-002 |SSL |Using provided SSL context with protocol: %s |Logged when using a provided SSL context
-|JWTToken-003 |SSL |Created secure SSL context with %s |Logged when a secure SSL context is created
-|JWTToken-004 |SSL |No SSL context provided, created secure SSL context with %s |Logged when no SSL context is provided and a secure one is created
-|JWTToken-005 |SSL |Falling back to provided SSL context |Logged when falling back to a provided SSL context
-|JWTToken-006 |SSL |Using default SSL context from VM configuration |Logged when using the default SSL context
-|JWTToken-007 |JWKS |Initialized HttpJwksLoader with URL: %s, refresh interval: %s seconds |Logged when initializing the HttpJwksLoader
-|JWTToken-008 |JWKS |Resolving key loader for JWKS endpoint: %s |Logged when resolving a key loader for a JWKS endpoint
-|JWTToken-009 |JWKS |Refreshing keys from JWKS endpoint: %s |Logged when refreshing keys from a JWKS endpoint
-|JWTToken-010 |JWKS |Successfully fetched JWKS from URL: %s |Logged when successfully fetching JWKS from a URL
-|JWTToken-011 |JWKS |Key ID is null or empty |Logged when a key ID is null or empty
-|JWTToken-012 |JWKS |Key with ID %s not found, refreshing keys |Logged when a key with the specified ID is not found and keys are being refreshed
-|JWTToken-013 |JWKS |Received 304 Not Modified response, using cached JWKS |Logged when receiving a 304 Not Modified response
-|JWTToken-014 |JWKS |JWKS content unchanged, using existing key loader |Logged when JWKS content is unchanged
-|JWTToken-015 |JWKS |Adding If-None-Match header: %s |Logged when adding an If-None-Match header
-|===
+Note: Only log level INFO and above are documented in this file.
 
 == INFO Level (001-099)
 
 [cols="1,1,2,2", options="header"]
 |===
 |ID |Component |Message |Description
-|JWTToken-001 |JWKS |Initializing JWKS lookup, jwks-endpoint='%s', refresh-interval='%s', issuer='%s' |Logged during startup when configuring JWKS-based token validation
+|JWTToken-001 |TOKEN |TokenFactory initialized with %d issuer configurations |Logged when TokenFactory is initialized with issuer configurations
+|JWTToken-002 |JWKS |Successfully loaded and parsed JWKS from %s with %d keys |Logged when JWKS is successfully loaded and parsed from a remote endpoint
 |===
 
 == WARN Level (100-199)
@@ -51,7 +30,6 @@ The log message levels follow these identifier ranges:
 |ID |Component |Message |Description
 |JWTToken-100 |TOKEN |Token exceeds maximum size limit of %s bytes, token will be rejected |Logged when a token is rejected due to size constraints
 |JWTToken-101 |TOKEN |The given token was empty, request will be rejected |Logged when an empty or null token is provided
-|JWTToken-102 |TOKEN |Unable to parse token due to ParseException: %s |Logged when token parsing fails due to format or content issues
 |JWTToken-103 |TOKEN |No key found with ID: %s |Logged when a key with the specified ID cannot be found in the JWKS
 |JWTToken-104 |TOKEN |Token issuer '%s' does not match expected issuer '%s' |Logged when the issuer in the token does not match the expected issuer
 |JWTToken-105 |JWKS |Failed to fetch JWKS: HTTP %s |Logged when there is an HTTP error fetching the JWKS
@@ -59,37 +37,29 @@ The log message levels follow these identifier ranges:
 |JWTToken-107 |JWKS |Failed to parse RSA key with ID %s: %s |Logged when there is an error parsing an RSA key from the JWKS
 |JWTToken-108 |JWKS |Failed to parse JWKS JSON: %s |Logged when there is an error parsing the JWKS JSON
 |JWTToken-109 |TOKEN |Failed to decode JWT token |Logged when the JWT token cannot be decoded
-|JWTToken-110 |JWKS |No keys available in JWKS |Logged when no keys are available in the JWKS
-|JWTToken-111 |TOKEN |Error parsing token: %s |Logged when there is a general error parsing the token
 |JWTToken-112 |TOKEN |Invalid JWT token format: expected 3 parts but got %s |Logged when the JWT token format is invalid
 |JWTToken-113 |TOKEN |Failed to decode header part |Logged when the header part of the JWT token cannot be decoded
 |JWTToken-114 |TOKEN |Failed to decode payload part |Logged when the payload part of the JWT token cannot be decoded
-|JWTToken-115 |TOKEN |Failed to parse token: %s |Logged when there is an error parsing the token
 |JWTToken-116 |TOKEN |Decoded part exceeds maximum size limit of %s bytes |Logged when a decoded part of the token exceeds the maximum size limit
-|JWTToken-117 |TOKEN |Failed to decode part: %s |Logged when a part of the token cannot be decoded
 |JWTToken-118 |JWKS |Failed to fetch JWKS from URL: %s |Logged when there is an error fetching the JWKS from the URL
-|JWTToken-119 |JWKS |JWKS JSON does not contain 'keys' array or 'kty' field |Logged when the JWKS JSON is missing required fields
-|JWTToken-120 |JWKS |JWK is missing required field 'kty' |Logged when a JWK is missing the required 'kty' field
-|JWTToken-121 |TOKEN |Token has a 'not before' claim that is more than 60 seconds in the future |Logged when a token has a 'not before' claim that is too far in the future
-|JWTToken-122 |TOKEN |Unknown token type: %s |Logged when an unknown token type is encountered
-|JWTToken-123 |JWKS |Failed to read JWKS from file: %s |Logged when there is an error reading the JWKS from a file
-|JWTToken-124 |TOKEN |Token is missing required claim: %s |Logged when a token is missing a required claim
-|JWTToken-125 |TOKEN |Token from issuer '%s' has expired |Logged when a token has expired
-|JWTToken-126 |SSL |Provided SSL context uses insecure protocol: %s. Creating a secure context instead. |Logged when an insecure SSL protocol is detected
-|JWTToken-127 |SSL |Failed to configure secure SSL context: %s |Logged when there is an error configuring a secure SSL context
-|JWTToken-128 |JWKS |Falling back to last valid JWKS due to HTTP error: %s |Logged when falling back to the last valid JWKS due to an HTTP error
+|JWTToken-119 |TOKEN |Unsupported algorithm: %s |Logged when an unsupported algorithm is encountered
+|JWTToken-122 |JWKS |JWKS JSON does not contain 'keys' array or 'kty' field |Logged when the JWKS JSON is missing required fields
+|JWTToken-123 |JWKS |JWK is missing required field 'kty' |Logged when a JWK is missing the required 'kty' field
+|JWTToken-124 |TOKEN |Token has a 'not before' claim that is more than 60 seconds in the future |Logged when a token has a 'not before' claim that is too far in the future
+|JWTToken-125 |TOKEN |Unknown token type: %s |Logged when an unknown token type is encountered
+|JWTToken-126 |JWKS |Failed to read JWKS from file: %s |Logged when there is an error reading the JWKS from a file
+|JWTToken-127 |TOKEN |Token is missing required claim: %s |Logged when a token is missing a required claim
 |JWTToken-129 |JWKS |New JWKS response has no valid keys, falling back to previous valid keys |Logged when the new JWKS response has no valid keys
 |JWTToken-130 |JWKS |Falling back to last valid JWKS due to exception: %s |Logged when falling back to the last valid JWKS due to an exception
-|JWTToken-131 |JWKS |Falling back to last valid JWKS due to interrupted exception |Logged when falling back to the last valid JWKS due to an interrupted exception
-|JWTToken-132 |TOKEN |Token authorized party '%s' does not match expected client ID '%s' |Logged when the azp claim in the token does not match the expected client ID
-|JWTToken-133 |TOKEN |Missing recommended element: %s |Logged when a recommended element is missing from the token
 |JWTToken-134 |TOKEN |Token has expired |Logged when a token has expired
 |JWTToken-135 |SSL |Provided SSL context uses insecure protocol: %s. Creating a secure context instead. |Logged when an insecure SSL protocol is detected
-|JWTToken-136 |SSL |Failed to configure secure SSL context: %s |Logged when there is an error configuring a secure SSL context
+|JWTToken-137 |TOKEN |Token authorized party '%s' does not match expected client ID '%s' |Logged when the azp claim in the token does not match the expected client ID
+|JWTToken-138 |TOKEN |Missing recommended element: %s |Logged when a recommended element is missing from the token
 |JWTToken-139 |TOKEN |Token audience %s does not match any of the expected audiences %s |Logged when the audience in the token does not match any of the expected audiences
 |JWTToken-140 |TOKEN |No configuration found for issuer: %s |Logged when no configuration is found for the issuer
 |JWTToken-141 |JWKS |Given contentKey '%s' does not resolve to a non base64 encoded String, actual content = %s |Logged when a content key does not resolve to a base64 encoded string
 |JWTToken-142 |TOKEN |Algorithm %s is explicitly rejected for security reasons |Logged when an algorithm is explicitly rejected for security reasons
+|JWTToken-143 |JWKS |Key rotation detected: JWKS content has changed |Logged when key rotation is detected in the JWKS content
 |===
 
 == ERROR Level (200-299)
@@ -97,25 +67,14 @@ The log message levels follow these identifier ranges:
 [cols="1,1,2,2", options="header"]
 |===
 |ID |Component |Message |Description
-|JWTToken-200 |TOKEN |Failed to validate token signature: %s |Logged when a token signature validation fails
-|JWTToken-201 |JWKS |Critical error loading JWKS data: %s |Logged when there is a critical error loading JWKS data that prevents token validation
-|JWTToken-202 |TOKEN |Authentication failure: %s |Logged when token authentication fails for security reasons
-|JWTToken-203 |JWKS |Security violation detected: %s |Logged when a potential security violation is detected in the token validation process
+|JWTToken-201 |TOKEN |Failed to validate token signature: %s |Logged when a token signature validation fails
 |===
 
-== FATAL Level (300-399)
-
-[cols="1,1,2,2", options="header"]
-|===
-|ID |Component |Message |Description
-|JWTToken-300 |TOKEN |Critical security breach: %s |Logged when a critical security breach is detected
-|JWTToken-301 |JWKS |Fatal error in cryptographic operations: %s |Logged when there is a fatal error in cryptographic operations
-|===
 
 == Implementation Status
 
-* All DEBUG level messages are fully implemented
-* All INFO level messages are fully implemented
-* All WARN level messages are fully implemented
-* All ERROR level messages are fully implemented
-* All FATAL level messages are fully implemented
+* All INFO level messages (001-099) are fully implemented and documented in this file
+* All WARN level messages (100-199) are fully implemented and documented in this file
+* All ERROR level messages (200-299) are fully implemented and documented in this file
+
+Note: This document only includes log messages with level INFO and above. DEBUG level messages (500-599) are implemented in the code but not documented here.

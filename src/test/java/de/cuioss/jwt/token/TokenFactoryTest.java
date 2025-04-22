@@ -16,7 +16,6 @@
 package de.cuioss.jwt.token;
 
 import de.cuioss.jwt.token.domain.token.AccessTokenContent;
-import de.cuioss.jwt.token.domain.token.IdTokenContent;
 import de.cuioss.jwt.token.domain.token.RefreshTokenContent;
 import de.cuioss.jwt.token.flow.IssuerConfig;
 import de.cuioss.jwt.token.flow.TokenFactoryConfig;
@@ -36,7 +35,10 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @EnableTestLogger
 @DisplayName("Tests TokenFactory functionality")
@@ -342,6 +344,36 @@ class TokenFactoryTest {
             // And a warning should be logged about key issues
             // The exact message might vary, but we should see a warning related to keys
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "key");
+        }
+
+        @Test
+        @DisplayName("Should log info message when TokenFactory is initialized")
+        void shouldLogInfoMessageWhenTokenFactoryIsInitialized() {
+            // Create multiple issuer configs to test the count in the log message
+            IssuerConfig issuerConfig1 = IssuerConfig.builder()
+                    .issuer(ISSUER)
+                    .expectedAudience(AUDIENCE)
+                    .expectedClientId(CLIENT_ID)
+                    .jwksContent(JWKSFactory.createDefaultJwks())
+                    .build();
+
+            IssuerConfig issuerConfig2 = IssuerConfig.builder()
+                    .issuer("https://another-issuer.com")
+                    .expectedAudience(AUDIENCE)
+                    .expectedClientId(CLIENT_ID)
+                    .jwksContent(JWKSFactory.createDefaultJwks())
+                    .build();
+
+            // Create a new token factory with multiple issuer configs
+            new TokenFactory(
+                    TokenFactoryConfig.builder().build(), 
+                    issuerConfig1, 
+                    issuerConfig2);
+
+            // Verify that the appropriate info message is logged
+            LogAsserts.assertLogMessagePresent(
+                    TestLogLevel.INFO, 
+                    JWTTokenLogMessages.INFO.TOKEN_FACTORY_INITIALIZED.format(2));
         }
     }
 }

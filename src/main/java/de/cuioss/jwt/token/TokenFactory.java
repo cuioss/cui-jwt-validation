@@ -135,6 +135,7 @@ public class TokenFactory {
         }
 
         LOGGER.debug("Created TokenFactory with %d issuer configurations", issuerConfigs.length);
+        LOGGER.info(JWTTokenLogMessages.INFO.TOKEN_FACTORY_INITIALIZED.format(issuerConfigs.length));
     }
 
     /**

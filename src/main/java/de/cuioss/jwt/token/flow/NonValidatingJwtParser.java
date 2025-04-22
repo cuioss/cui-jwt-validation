@@ -221,7 +221,7 @@ public class NonValidatingJwtParser {
             return decodeTokenParts(parts, token, logWarnings);
         } catch (Exception e) {
             if (logWarnings) {
-                LOGGER.warn(e, JWTTokenLogMessages.WARN.FAILED_TO_PARSE_TOKEN.format(e.getMessage()));
+                LOGGER.warn(e, JWTTokenLogMessages.WARN.FAILED_TO_DECODE_JWT.format());
             }
             securityEventCounter.increment(SecurityEventCounter.EventType.FAILED_TO_DECODE_JWT);
             return Optional.empty();
@@ -347,7 +347,7 @@ public class NonValidatingJwtParser {
             }
         } catch (Exception e) {
             if (logWarnings) {
-                LOGGER.warn(e, JWTTokenLogMessages.WARN.FAILED_TO_DECODE_PART.format(e.getMessage()));
+                LOGGER.warn(e, JWTTokenLogMessages.WARN.FAILED_TO_DECODE_JWT.format());
             }
             securityEventCounter.increment(SecurityEventCounter.EventType.FAILED_TO_DECODE_JWT);
             return Optional.empty();

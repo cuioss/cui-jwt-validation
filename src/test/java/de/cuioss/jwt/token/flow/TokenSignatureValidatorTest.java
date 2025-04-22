@@ -120,7 +120,7 @@ class TokenSignatureValidatorTest {
 
         // Assert that the signature is invalid
         assertFalse(result, "Token with invalid signature should be rejected");
-        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to parse token: Invalid signature");
+        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to validate token signature: Invalid signature");
 
         // Verify security event was recorded
         assertTrue(securityEventCounter.getCount(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED) > initialCount,

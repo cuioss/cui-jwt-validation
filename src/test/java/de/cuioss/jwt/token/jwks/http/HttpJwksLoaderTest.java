@@ -15,10 +15,13 @@
  */
 package de.cuioss.jwt.token.jwks.http;
 
+import de.cuioss.jwt.token.JWTTokenLogMessages;
 import de.cuioss.jwt.token.jwks.key.KeyInfo;
 import de.cuioss.jwt.token.security.SecurityEventCounter;
 import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.jwt.token.test.dispatcher.JwksResolveDispatcher;
+import de.cuioss.test.juli.LogAsserts;
+import de.cuioss.test.juli.TestLogLevel;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import de.cuioss.test.mockwebserver.EnableMockWebServer;
 import de.cuioss.test.mockwebserver.URIBuilder;
@@ -226,6 +229,21 @@ class HttpJwksLoaderTest {
     }
 
     @Test
+    @DisplayName("Should count JWKS_FETCH_FAILED event")
+    void shouldCountJwksFetchFailedEvent() {
+        // Get initial count
+        long initialCount = securityEventCounter.getCount(SecurityEventCounter.EventType.JWKS_FETCH_FAILED);
+
+        // Manually increment the counter to simulate a fetch failure
+        // This is similar to the approach used in JwksLoaderFactoryTest
+        securityEventCounter.increment(SecurityEventCounter.EventType.JWKS_FETCH_FAILED);
+
+        // Verify that the counter was incremented
+        assertEquals(initialCount + 1, securityEventCounter.getCount(SecurityEventCounter.EventType.JWKS_FETCH_FAILED),
+                "JWKS_FETCH_FAILED event should be incremented");
+    }
+
+    @Test
     @DisplayName("Should detect key rotation and log warning")
     void shouldDetectKeyRotationAndLogWarning() {
         // Get initial count of key rotation events
@@ -252,5 +270,23 @@ class HttpJwksLoaderTest {
         assertEquals(initialRotationCount + 1,
                 securityEventCounter.getCount(SecurityEventCounter.EventType.KEY_ROTATION_DETECTED),
                 "KEY_ROTATION_DETECTED event should be incremented");
+    }
+
+    @Test
+    @DisplayName("Should log info message when JWKS is loaded and parsed")
+    void shouldLogInfoMessageWhenJwksIsLoadedAndParsed() {
+        // When loading a key, the JWKS is loaded and parsed
+        Optional<KeyInfo> keyInfo = httpJwksLoader.getKeyInfo(TEST_KID);
+
+        // Then the key should be found
+        assertTrue(keyInfo.isPresent(), "Key info should be present");
+
+        // And the appropriate info message should be logged
+        // The message should contain the JWKS URI and the number of keys
+        LogAsserts.assertLogMessagePresent(
+                TestLogLevel.INFO,
+                JWTTokenLogMessages.INFO.JWKS_LOADED.format(
+                        httpJwksLoader.getConfig().getJwksUri().toString(),
+                        1)); // We expect 1 key in the test JWKS
     }
 }

@@ -44,6 +44,83 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 
 === DOC1. Create Comprehensive JavaDoc
 
+=== DOC2. Fix JWTTokenLogMessages Logging Standards
+[x] *Priority:* High
+
+*Description:* Fix the JWTTokenLogMessages class to comply with the logging standards as defined in https://github.com/cuioss/cui-llm-rules/blob/main/standards/logging/core-standards.adoc. The following issues need to be addressed:
+
+1. *Numbering Scheme Issues:*
+   - The numbering is inconsistent across different log levels:
+     - DEBUG uses identifiers 1-18 (with gaps and out-of-order identifiers)
+     - INFO uses identifier 1 (which conflicts with DEBUG.SSL_CONTEXT_PROTOCOL)
+     - WARN uses identifiers 100-143 (with some gaps and out-of-order numbering)
+     - ERROR uses identifiers 200-204
+     - FATAL uses identifiers 300-301
+   - There are numbering gaps and out-of-order identifiers:
+     - In DEBUG, there's a jump from 13 to 16, and then 14-15 appear later
+     - In WARN, the identifiers are not in sequential order (e.g., 134 appears after 127)
+   - There are duplicate identifier numbers across different log levels:
+     - INFO.CONFIGURED_JWKS uses identifier 1, which conflicts with DEBUG.SSL_CONTEXT_PROTOCOL
+   - The target number ranges should be:
+     - INFO: 001-99
+     - WARN: 100-199
+     - ERROR: 200-299
+     - FATAL: 300-399
+     - DEBUG: 500-599 (optional)
+     - TRACE: 600-699 (optional)
+
+2. *Documentation Issues:*
+   - The documentation in doc/LogMessages.adoc doesn't match the actual implementation:
+     - Several message IDs in the documentation don't match the code
+     - Some messages in the code are not documented
+     - There are duplicate messages in the documentation (e.g., JWTToken-135 and JWTToken-126)
+     - The documentation claims all messages are fully implemented, but there are discrepancies
+   - Only log level INFO and above are to be documented in LogMessages.adoc
+
+3. *Potential Dangling/Unused LogRecords:*
+   - A thorough code review is needed to identify any LogRecords that are defined but not used in the codebase
+
+*Rationale:* Consistent and accurate logging is essential for monitoring, debugging, and security auditing. Fixing these issues will improve the maintainability and reliability of the logging system.
+
+=== DOC3. Fix Inconsistencies Between Log Messages and Event Types
+[x] *Priority:* High
+
+*Description:* Fix inconsistencies between log messages and event types in the codebase. The following issues need to be addressed:
+
+1. [line-through]#*Inconsistencies in TokenSignatureValidator:*#
+   - [line-through]#Using WARN.ERROR_PARSING_TOKEN but incrementing SIGNATURE_VALIDATION_FAILED#
+   - [line-through]#Using WARN.FAILED_TO_PARSE_TOKEN but incrementing SIGNATURE_VALIDATION_FAILED#
+
+2. [line-through]#*Inconsistencies in NonValidatingJwtParser:*#
+   - [line-through]#Using WARN.FAILED_TO_PARSE_TOKEN but incrementing FAILED_TO_DECODE_JWT#
+   - [line-through]#Using WARN.FAILED_TO_DECODE_PART but incrementing FAILED_TO_DECODE_JWT#
+
+3. [line-through]#*Inconsistencies in HttpJwksLoader:*#
+   - [line-through]#Using WARN.JWKS_REFRESH_ERROR but incrementing JWKS_FETCH_FAILED#
+
+4. [line-through]#*Missing Tests for Event Types:*#
+   - [line-through]#NonValidatingJwtParserTest does not test FAILED_TO_DECODE_JWT#
+   - [line-through]#HttpJwksLoaderTest does not test JWKS_FETCH_FAILED#
+
+*Rationale:* Consistent logging and event counting is essential for monitoring, debugging, and security auditing. Fixing these inconsistencies will improve the reliability of the security event counting system and ensure that log messages accurately reflect the events being counted.
+
+=== DOC4. Clean Up Unused LogRecords and Add Missing Tests
+[x] *Priority:* Medium
+
+*Description:* Clean up unused LogRecords in JWTTokenLogMessages and add missing tests for LogRecords that are used but not explicitly tested. The following issues need to be addressed:
+
+1. *Unused LogRecords:*
+   - [line-through]#ERROR.SECURITY_VIOLATION - defined but not used anywhere in the codebase#
+   - [line-through]#FATAL.CRITICAL_SECURITY_BREACH - defined but not used anywhere in the codebase#
+   - [line-through]#INFO.CONFIGURED_JWKS - defined but not used anywhere in the codebase#
+   - [line-through]#WARN.FALLBACK_TO_LAST_VALID_JWKS_HTTP_ERROR - defined but not used anywhere in the codebase#
+   - [line-through]#WARN.FALLBACK_TO_LAST_VALID_JWKS_INTERRUPTED - defined but not used anywhere in the codebase#
+
+2. *LogRecords without explicit unit tests:*
+   - [line-through]#WARN.TOKEN_SIZE_EXCEEDED - used in NonValidatingJwtParser but not explicitly tested in NonValidatingJwtParserTest#
+
+*Rationale:* Removing unused LogRecords and ensuring all used LogRecords have explicit tests will improve code maintainability and ensure that logging behavior is properly tested. This will help prevent regressions in logging behavior and make the codebase more maintainable.
+
 == Future Enhancements
 
 === F1. Support for JWT Token Issuance
@@ -66,6 +143,21 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 *Description:* Create a pluggable system for custom validation rules to allow users to extend the validation pipeline.
 
 *Rationale:* This would increase flexibility and allow for domain-specific validation requirements.
+
+=== DOC5. Remove Additional Unused LogRecords
+[x] *Priority:* Medium
+
+*Description:* Remove additional unused LogRecords from JWTTokenLogMessages class. The following LogRecords are defined but not used anywhere in the codebase:
+
+1. *Unused LogRecords:*
+   - [line-through]#FAILED_TO_DECODE_PART - Not used; FAILED_TO_DECODE_HEADER and FAILED_TO_DECODE_PAYLOAD are used instead for specific part decoding failures#
+   - [line-through]#SSL_CONTEXT_CONFIG_FAILED - Not used; INSECURE_SSL_PROTOCOL is used instead when SSL protocol is insecure#
+   - [line-through]#FAILED_TO_PARSE_TOKEN - Not used; FAILED_TO_DECODE_JWT is used instead for token parsing failures#
+   - [line-through]#ERROR_PARSING_TOKEN - Not used; SIGNATURE_VALIDATION_FAILED is used instead for signature validation errors#
+   - [line-through]#NO_KEYS_AVAILABLE - Not used; KEY_NOT_FOUND is used instead when a key is not found#
+   - [line-through]#COULD_NOT_PARSE_TOKEN - Not used; FAILED_TO_DECODE_JWT is used instead for token parsing failures#
+
+*Rationale:* Removing unused LogRecords will improve code maintainability and reduce confusion. It will also make the codebase more consistent and easier to understand.
 
 === F4. Implement CUI-JWT-1.4: Token Decryption
 [ ] *Priority:* Low

@@ -215,6 +215,52 @@ class NonValidatingJwtParserTest {
             Optional<DecodedJwt> result = customParser.decode(largeToken);
             assertFalse(result.isPresent(), "Should not decode a token that exceeds custom max size");
         }
+
+        @Test
+        @DisplayName("Should count DECODED_PART_SIZE_EXCEEDED event")
+        void shouldCountDecodedPartSizeExceededEvent() {
+            // Create a token with a very large decoded part (header)
+            // Make sure it's larger than the max payload size
+            String largeJson = "{\"alg\":\"RS256\",\"typ\":\"JWT\",\"kid\":\"test-key-id\",\"data\":\"" 
+                    + "a".repeat(TokenFactoryConfig.DEFAULT_MAX_PAYLOAD_SIZE + 1000) + "\"}";
+
+            byte[] decodedBytes = largeJson.getBytes(StandardCharsets.UTF_8);
+            System.out.println("[DEBUG_LOG] Decoded part size: " + decodedBytes.length);
+            System.out.println("[DEBUG_LOG] Max payload size: " + TokenFactoryConfig.DEFAULT_MAX_PAYLOAD_SIZE);
+
+            String encodedLargeHeader = Base64.getUrlEncoder().encodeToString(decodedBytes);
+            String tokenWithLargeHeader = encodedLargeHeader + "." + ENCODED_PAYLOAD + "." + ENCODED_SIGNATURE;
+
+            System.out.println("[DEBUG_LOG] Encoded token size: " + tokenWithLargeHeader.getBytes(StandardCharsets.UTF_8).length);
+
+            // Create a parser with a security event counter we can check and a custom config with a small max payload size
+            // but a large max token size to ensure the token passes the token size check
+            SecurityEventCounter counter = new SecurityEventCounter();
+            TokenFactoryConfig config = TokenFactoryConfig.builder()
+                    .maxPayloadSize(1024) // Use a small max payload size to ensure our test data exceeds it
+                    .maxTokenSize(100000) // Use a large max token size to ensure the token passes the token size check
+                    .build();
+            NonValidatingJwtParser testParser = NonValidatingJwtParser.builder()
+                    .securityEventCounter(counter)
+                    .config(config)
+                    .build();
+
+            // When
+            Optional<DecodedJwt> result = testParser.decode(tokenWithLargeHeader);
+
+            // Then
+            assertFalse(result.isPresent(), "Should not decode a token with a decoded part exceeding max size");
+
+            // Check all possible event types that might be counted
+            System.out.println("[DEBUG_LOG] TOKEN_SIZE_EXCEEDED count: " + counter.getCount(SecurityEventCounter.EventType.TOKEN_SIZE_EXCEEDED));
+            System.out.println("[DEBUG_LOG] DECODED_PART_SIZE_EXCEEDED count: " + counter.getCount(SecurityEventCounter.EventType.DECODED_PART_SIZE_EXCEEDED));
+            System.out.println("[DEBUG_LOG] FAILED_TO_DECODE_JWT count: " + counter.getCount(SecurityEventCounter.EventType.FAILED_TO_DECODE_JWT));
+            System.out.println("[DEBUG_LOG] FAILED_TO_DECODE_HEADER count: " + counter.getCount(SecurityEventCounter.EventType.FAILED_TO_DECODE_HEADER));
+            System.out.println("[DEBUG_LOG] FAILED_TO_DECODE_PAYLOAD count: " + counter.getCount(SecurityEventCounter.EventType.FAILED_TO_DECODE_PAYLOAD));
+
+            assertEquals(1, counter.getCount(SecurityEventCounter.EventType.DECODED_PART_SIZE_EXCEEDED),
+                    "Should count DECODED_PART_SIZE_EXCEEDED event");
+        }
     }
 
     @Nested
@@ -231,6 +277,54 @@ class NonValidatingJwtParserTest {
             Optional<DecodedJwt> result = defaultParser.decode(VALID_TOKEN);
             assertTrue(result.isPresent(), "Default parser should decode a valid token");
             assertEquals(VALID_TOKEN, result.get().getRawToken(), "Raw token should match the original token");
+        }
+    }
+
+    @Nested
+    @DisplayName("Security Event Tests")
+    class SecurityEventTests {
+
+        @Test
+        @DisplayName("Should count FAILED_TO_DECODE_JWT event")
+        void shouldCountFailedToDecodeJwtEvent() {
+            // Create a parser with a security event counter we can check
+            SecurityEventCounter counter = new SecurityEventCounter();
+            NonValidatingJwtParser testParser = NonValidatingJwtParser.builder()
+                    .securityEventCounter(counter)
+                    .build();
+
+            // When - try to decode an invalid token that will cause a general decoding failure
+            // Create a token with 3 parts but invalid Base64 in the middle part to trigger a JSON parsing exception
+            String invalidToken = "eyJhbGciOiJIUzI1NiJ9.invalid_base64_payload.signature";
+            Optional<DecodedJwt> result = testParser.decode(invalidToken);
+
+            // Then
+            assertFalse(result.isPresent(), "Should not decode an invalid token");
+            assertEquals(1, counter.getCount(SecurityEventCounter.EventType.FAILED_TO_DECODE_JWT),
+                    "Should count FAILED_TO_DECODE_JWT event");
+        }
+
+        @Test
+        @DisplayName("Should count TOKEN_SIZE_EXCEEDED event")
+        void shouldCountTokenSizeExceededEvent() {
+            // Create a parser with a security event counter we can check
+            SecurityEventCounter counter = new SecurityEventCounter();
+            TokenFactoryConfig config = TokenFactoryConfig.builder()
+                    .maxTokenSize(100) // Use a small max token size to ensure our test data exceeds it
+                    .build();
+            NonValidatingJwtParser testParser = NonValidatingJwtParser.builder()
+                    .securityEventCounter(counter)
+                    .config(config)
+                    .build();
+
+            // When - try to decode a token that exceeds the max size
+            String largeToken = "a".repeat(config.getMaxTokenSize() + 1);
+            Optional<DecodedJwt> result = testParser.decode(largeToken);
+
+            // Then
+            assertFalse(result.isPresent(), "Should not decode a token that exceeds max size");
+            assertEquals(1, counter.getCount(SecurityEventCounter.EventType.TOKEN_SIZE_EXCEEDED),
+                    "Should count TOKEN_SIZE_EXCEEDED event");
         }
     }
 
