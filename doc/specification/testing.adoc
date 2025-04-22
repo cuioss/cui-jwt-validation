@@ -81,7 +81,6 @@ The following test classes implement these unit tests:
 * link:../../src/test/java/de/cuioss/jwt/token/flow/TokenFactoryConfigTest.java[TokenFactoryConfigTest.java] - Tests for TokenFactoryConfig
 * link:../../src/test/java/de/cuioss/jwt/token/flow/DecodedJwtTest.java[DecodedJwtTest.java] - Tests for DecodedJwt
 * link:../../src/test/java/de/cuioss/jwt/token/security/BouncyCastleProviderSingletonTest.java[BouncyCastleProviderSingletonTest.java] - Tests for BouncyCastleProviderSingleton
-* link:../../src/test/java/de/cuioss/jwt/token/JWTTokenLogMessagesTest.java[JWTTokenLogMessagesTest.java] - Tests for JWTTokenLogMessages
 * link:../../src/test/java/de/cuioss/jwt/token/jwks/JwksLoaderFactoryTest.java[JwksLoaderFactoryTest.java] - Tests for JwksLoaderFactory
 
 These tests cover:
@@ -247,29 +246,17 @@ The implementation uses concurrent testing to simulate real-world load scenarios
 === Logging Tests
 _See Requirement link:../Requirements.adoc#CUI-JWT-7[CUI-JWT-7: Logging]_
 
-==== Status: NOT IMPLEMENTED
+==== Status: IMPLEMENTED
 
-Comprehensive logging tests need to be implemented to verify that the JWT token handling library logs appropriate information at the correct log levels.
+Comprehensive logging tests have been implemented to verify that the JWT token handling library logs appropriate information at the correct log levels.
 
-The logging tests will follow CUI logging test requirements:
+The following test classes implement these logging tests:
 
-1. Use `cui-test-juli-logger` for testing
-2. Use `de.cuioss.test.juli.TestLogLevel` for log levels
-3. Test coverage required for INFO/WARN/ERROR/FATAL logs
-4. Follow LogAsserts guidelines:
-   * First argument must be TestLogLevel
-   * Only assertNoLogMessagePresent needs Logger parameter
-   * Use appropriate assertion methods:
-     * assertLogMessagePresent: Exact match
-     * assertLogMessagePresentContaining: Partial match
-     * assertNoLogMessagePresent: Absence check
-     * assertSingleLogMessagePresent: Single occurrence
-5. Test both successful and error scenarios
-6. Use LogRecord#resolveIdentifierString for message verification
+* link:../../src/test/java/de/cuioss/jwt/token/TokenFactoryTest.java[TokenFactoryTest.java] - Contains a nested class `TokenLoggingTests` with tests for token-related logging
+* link:../../src/test/java/de/cuioss/jwt/token/flow/TokenClaimValidatorTest.java[TokenClaimValidatorTest.java] - Contains tests that verify logging for claim validation
+* link:../../src/test/java/de/cuioss/jwt/token/flow/TokenSignatureValidatorTest.java[TokenSignatureValidatorTest.java] - Contains tests that verify logging for signature validation
 
-==== Planned Test Cases
-
-The following test cases are planned for implementation:
+These tests cover:
 
 1. **Success Scenario Logging Tests**:
    * Test logging of successful token validation
@@ -281,7 +268,31 @@ The following test cases are planned for implementation:
    * Test logging of key retrieval failures
    * Test logging of token creation failures
 
-These tests will ensure that the library logs appropriate information at the correct log levels for both successful operations and error scenarios.
+The implementation follows CUI logging test requirements:
+
+1. Uses `cui-test-juli-logger` for testing
+2. Uses `de.cuioss.test.juli.TestLogLevel` for log levels
+3. Provides test coverage for INFO/WARN/ERROR/FATAL logs
+4. Follows LogAsserts guidelines:
+   * First argument is TestLogLevel
+   * Uses appropriate assertion methods:
+     * assertLogMessagePresent: For exact matches
+     * assertLogMessagePresentContaining: For partial matches
+     * assertNoLogMessagePresent: For absence checks
+5. Tests both successful and error scenarios
+6. Uses LogRecord#resolveIdentifierString for message verification
+
+==== Example Tests
+
+The following test methods demonstrate the logging test approach:
+
+* `shouldLogWarningWhenTokenIsEmpty()` - Tests that a warning is logged when an empty token is provided
+* `shouldLogWarningWhenTokenFormatIsInvalid()` - Tests that a warning is logged when a token has an invalid format
+* `shouldLogWarningWhenTokenValidationFails()` - Tests that a warning is logged when token validation fails
+* `shouldLogWarningWhenTokenIsMissingClaims()` - Tests that a warning is logged when a token is missing required claims
+* `shouldLogWarningWhenKeyIsNotFound()` - Tests that a warning is logged when a key is not found
+
+These tests ensure that the library logs appropriate information at the correct log levels for both successful operations and error scenarios.
 
 === Vulnerability Scanning
 _See Requirement link:../Requirements.adoc#CUI-JWT-12.5[CUI-JWT-12.5: Vulnerability Scanning]_
