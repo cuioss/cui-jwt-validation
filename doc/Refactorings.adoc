@@ -25,7 +25,7 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 === S1. Implement Key Rotation Alerts
 [ ] *Priority:* High
 
-*Description:* Add monitoring and alerting for key rotation events to ensure timely response to key changes.
+*Description:* Add monitoring and alerting for key rotation events to ensure timely response to key changes. Implement this by introducing an new LogRecord on WARN that transports this information. Add a corresponding security event as well. Ensure that the writing of that Log-Statement and security event is explicitly tested in the corresponding unit-test. Because of its nature this is only relevant for the HttpJwksLoader.
 
 *Rationale:* Proactive monitoring of key rotation helps prevent authentication failures during key transitions.
 
@@ -38,57 +38,11 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 
 == Testing Improvements
 
-=== T2. Complete CUI-JWT-12.2: Unit Testing
-[x] *Priority:* Medium
-
-*Description:* Enhance unit test coverage to meet the minimum requirement of 80% code coverage.
-Standards, see:
-
- * https://github.com/cuioss/cui-llm-rules/blob/main/standards/testing/core-standards.adoc
-* https://github.com/cuioss/cui-llm-rules/blob/main/standards/testing/quality-standards.adoc
-
-Focus on:
-
-1. Edge cases for token parsing and validation
-2. Error handling scenarios
-3. Comprehensive testing of all public methods
-
-*Rationale:* Comprehensive unit testing ensures the library functions correctly and helps prevent regressions.
-
-
-=== T3. Implement CUI-JWT-7: Logging Tests
-[x] *Priority:* Medium
-
-*Description:* Implement comprehensive logging tests to verify that the JWT token handling library logs appropriate information at the correct log levels. This includes:
-
-1. Testing logging of successful token validation
-2. Testing logging of successful key retrieval
-3. Testing logging of successful token creation
-4. Testing logging of token validation failures
-5. Testing logging of key retrieval failures
-6. Testing logging of token creation failures
-
-The tests should follow CUI logging test requirements using `cui-test-juli-logger` and `de.cuioss.test.juli.TestLogLevel`.
-Standards, see:
-
- * https://github.com/cuioss/cui-llm-rules/blob/main/standards/logging/testing-guide.adoc
-
-*Rationale:* Proper logging is essential for monitoring, debugging, and security auditing of the JWT token handling library.
-
 == Dependency Management
 
 == Documentation Improvements
 
 === DOC1. Create Comprehensive JavaDoc
-[ ] *Priority:* High
-
-*Description:* Ensure all public classes and methods have comprehensive JavaDoc comments, including examples where appropriate.
-Standards, see:
-
-* https://github.com/cuioss/cui-llm-rules/blob/main/standards/documentation/general-standard.adoc
-* https://github.com/cuioss/cui-llm-rules/blob/main/standards/documentation/javadoc-standards.adoc
-
-*Rationale:* Complete documentation improves usability and reduces the learning curve for new developers.
 
 == Future Enhancements
 

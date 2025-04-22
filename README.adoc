@@ -16,6 +16,8 @@ https://cuioss.github.io/cui-jwt-token-handling/about.html[Generated Documentati
 
 == What is it?
 A comprehensive framework for handling JWT tokens in multi-issuer environments.
+The core idea is to leverage offline-validation of JWT tokens.
+
 The module provides robust token parsing, validation,
 and management capabilities with a focus on security and ease of use.
 

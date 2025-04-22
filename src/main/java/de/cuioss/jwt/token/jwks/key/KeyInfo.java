@@ -38,19 +38,47 @@ import java.security.PublicKey;
 public class KeyInfo {
 
     /**
-     * The key.
+     * The public key used for JWT signature verification.
+     * <p>
+     * This is the cryptographic key extracted from the JWK that will be used
+     * to verify the signature of JWT tokens. It's typically an RSA or EC public key.
      */
     @Getter
     @NonNull
     PublicKey key;
 
     /**
-     * The algorithm used by the key.
+     * The algorithm identifier associated with this key.
+     * <p>
+     * This field contains the algorithm name (e.g., "RS256", "ES384") that should be
+     * used with this key for signature verification. The algorithm must match the
+     * "alg" header in the JWT token for successful verification.
+     * <p>
+     * Common values include:
+     * <ul>
+     *   <li>RS256 - RSA Signature with SHA-256</li>
+     *   <li>RS384 - RSA Signature with SHA-384</li>
+     *   <li>RS512 - RSA Signature with SHA-512</li>
+     *   <li>ES256 - ECDSA Signature with SHA-256</li>
+     *   <li>ES384 - ECDSA Signature with SHA-384</li>
+     *   <li>ES512 - ECDSA Signature with SHA-512</li>
+     * </ul>
      */
     @Getter
     @NonNull
     String algorithm;
 
+    /**
+     * The unique identifier for this key.
+     * <p>
+     * This is the "kid" (Key ID) value from the JWK, which is used to identify
+     * the specific key within a JWKS. When verifying a JWT token, the "kid" in the
+     * token header is matched against this value to select the correct key for
+     * signature verification.
+     * <p>
+     * Key IDs are particularly important in environments with key rotation, where
+     * multiple valid keys may exist simultaneously.
+     */
     @Getter
     @NonNull
     String keyId;
