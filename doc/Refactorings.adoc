@@ -39,9 +39,15 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 == Testing Improvements
 
 === T2. Complete CUI-JWT-12.2: Unit Testing
-[ ] *Priority:* Medium
+[x] *Priority:* Medium
 
-*Description:* Enhance unit test coverage to meet the minimum requirement of 80% code coverage. Focus on:
+*Description:* Enhance unit test coverage to meet the minimum requirement of 80% code coverage.
+Standards, see:
+
+ * https://github.com/cuioss/cui-llm-rules/blob/main/standards/testing/core-standards.adoc
+* https://github.com/cuioss/cui-llm-rules/blob/main/standards/testing/quality-standards.adoc
+
+Focus on:
 
 1. Edge cases for token parsing and validation
 2. Error handling scenarios
@@ -63,6 +69,9 @@ Each task is numbered with a prefix indicating its category (e.g., "implement ta
 6. Testing logging of token creation failures
 
 The tests should follow CUI logging test requirements using `cui-test-juli-logger` and `de.cuioss.test.juli.TestLogLevel`.
+Standards, see:
+
+ * https://github.com/cuioss/cui-llm-rules/blob/main/standards/logging/testing-guide.adoc
 
 *Rationale:* Proper logging is essential for monitoring, debugging, and security auditing of the JWT token handling library.
 
@@ -74,6 +83,10 @@ The tests should follow CUI logging test requirements using `cui-test-juli-logge
 [ ] *Priority:* High
 
 *Description:* Ensure all public classes and methods have comprehensive JavaDoc comments, including examples where appropriate.
+Standards, see:
+
+* https://github.com/cuioss/cui-llm-rules/blob/main/standards/documentation/general-standard.adoc
+* https://github.com/cuioss/cui-llm-rules/blob/main/standards/documentation/javadoc-standards.adoc
 
 *Rationale:* Complete documentation improves usability and reduces the learning curve for new developers.
 

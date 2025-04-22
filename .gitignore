@@ -10,3 +10,4 @@
 .asciidoctorconfig.adoc
 .qodo
 **/.vscode/
+.output.txt
