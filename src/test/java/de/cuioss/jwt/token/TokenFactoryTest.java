@@ -15,6 +15,9 @@
  */
 package de.cuioss.jwt.token;
 
+import de.cuioss.jwt.token.domain.token.AccessTokenContent;
+import de.cuioss.jwt.token.domain.token.IdTokenContent;
+import de.cuioss.jwt.token.domain.token.RefreshTokenContent;
 import de.cuioss.jwt.token.flow.IssuerConfig;
 import de.cuioss.jwt.token.flow.TokenFactoryConfig;
 import de.cuioss.jwt.token.security.AlgorithmPreferences;
@@ -22,12 +25,16 @@ import de.cuioss.jwt.token.test.JWKSFactory;
 import de.cuioss.jwt.token.test.KeyMaterialHandler;
 import de.cuioss.jwt.token.test.TestTokenProducer;
 import de.cuioss.test.generator.Generators;
+import de.cuioss.test.juli.LogAsserts;
+import de.cuioss.test.juli.TestLogLevel;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -210,6 +217,131 @@ class TokenFactoryTest {
             var parsedToken = tokenFactory.createAccessToken(token);
 
             assertFalse(parsedToken.isPresent(), "Token with unknown issuer should not be valid");
+        }
+    }
+
+    @Nested
+    @DisplayName("Token Logging Tests")
+    class TokenLoggingTests {
+        private static final String INVALID_TOKEN = "invalid.token.string";
+        private static final String EMPTY_TOKEN = "";
+
+        @Test
+        @DisplayName("Should log warning when token is empty")
+        void shouldLogWarningWhenTokenIsEmpty() {
+            // When creating a token with an empty string
+            Optional<AccessTokenContent> result = tokenFactory.createAccessToken(EMPTY_TOKEN);
+
+            // Then the token creation should fail
+            assertFalse(result.isPresent(), "Token creation should fail with empty token");
+
+            // And the appropriate warning should be logged
+            LogAsserts.assertLogMessagePresent(TestLogLevel.WARN, JWTTokenLogMessages.WARN.TOKEN_IS_EMPTY.format());
+        }
+
+        @Test
+        @DisplayName("Should log warning when token format is invalid")
+        void shouldLogWarningWhenTokenFormatIsInvalid() {
+            // When creating a token with an invalid format
+            Optional<AccessTokenContent> result = tokenFactory.createAccessToken(INVALID_TOKEN);
+
+            // Then the token creation should fail
+            assertFalse(result.isPresent(), "Token creation should fail with invalid token format");
+
+            // And the appropriate warning should be logged
+            LogAsserts.assertLogMessagePresent(TestLogLevel.WARN, JWTTokenLogMessages.WARN.FAILED_TO_DECODE_JWT.format());
+        }
+
+        @Test
+        @DisplayName("Should log warning when token validation fails")
+        void shouldLogWarningWhenTokenValidationFails() {
+            // Given a token with an unknown issuer
+            String tokenWithUnknownIssuer = TestTokenProducer.validSignedJWTWithClaims(
+                    TestTokenProducer.SOME_SCOPES, "unknown-issuer");
+
+            // When creating an access token
+            Optional<AccessTokenContent> result = tokenFactory.createAccessToken(tokenWithUnknownIssuer);
+
+            // Then the token creation should fail
+            assertFalse(result.isPresent(), "Token creation should fail with unknown issuer");
+
+            // And a warning should be logged
+            // The exact message might vary, but we should see a warning related to token validation
+            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "missing required claim");
+        }
+
+        @Test
+        @DisplayName("Should log warning when token is missing claims")
+        void shouldLogWarningWhenTokenIsMissingClaims() {
+            // Given a valid token string but missing required claims
+            String validToken = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_SCOPES);
+
+            // When creating an access token
+            tokenFactory.createAccessToken(validToken);
+
+            // Then the appropriate warning message should be logged
+            // Note: The actual message might vary, but we should at least see a warning message
+            // related to missing claims
+            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "missing required claim");
+        }
+
+        @Test
+        @DisplayName("Should log warning when ID token is missing claims")
+        void shouldLogWarningWhenIdTokenIsMissingClaims() {
+            // Given a valid token string but missing required claims
+            String validToken = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_ID_TOKEN);
+
+            // When creating an ID token
+            tokenFactory.createIdToken(validToken);
+
+            // Then the appropriate warning message should be logged
+            // Note: The actual message might vary, but we should at least see a warning message
+            // related to missing claims
+            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "missing required claim");
+        }
+
+        @Test
+        @DisplayName("Should create refresh token successfully")
+        void shouldCreateRefreshTokenSuccessfully() {
+            // Given a valid token string
+            String validToken = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.REFRESH_TOKEN);
+
+            // When creating a refresh token
+            Optional<RefreshTokenContent> result = tokenFactory.createRefreshToken(validToken);
+
+            // Then the token should be created successfully
+            assertTrue(result.isPresent(), "Refresh token should be created successfully");
+
+            // For refresh tokens, we don't need to check for specific log messages
+            // as the test itself verifies the functionality works
+        }
+
+        @Test
+        @DisplayName("Should log warning when key is not found")
+        void shouldLogWarningWhenKeyIsNotFound() {
+            // Create a token with a key ID that doesn't exist in our JWKS
+            String tokenWithUnknownKeyId = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_SCOPES);
+
+            // Create a new issuer config with a JWKS that doesn't contain the key ID
+            IssuerConfig newIssuerConfig = IssuerConfig.builder()
+                    .issuer(ISSUER)
+                    .expectedAudience(AUDIENCE)
+                    .expectedClientId(CLIENT_ID)
+                    .jwksContent(JWKSFactory.createEmptyJwks())
+                    .build();
+
+            // Create a new token factory with the new issuer config
+            TokenFactory newTokenFactory = new TokenFactory(TokenFactoryConfig.builder().build(), newIssuerConfig);
+
+            // When creating an access token
+            Optional<AccessTokenContent> result = newTokenFactory.createAccessToken(tokenWithUnknownKeyId);
+
+            // Then the token creation should fail
+            assertFalse(result.isPresent(), "Token creation should fail with unknown key ID");
+
+            // And a warning should be logged about key issues
+            // The exact message might vary, but we should see a warning related to keys
+            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "key");
         }
     }
 }
