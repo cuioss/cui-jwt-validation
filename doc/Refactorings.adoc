@@ -57,7 +57,7 @@ Focus on:
 
 
 === T3. Implement CUI-JWT-7: Logging Tests
-[ ] *Priority:* Medium
+[x] *Priority:* Medium
 
 *Description:* Implement comprehensive logging tests to verify that the JWT token handling library logs appropriate information at the correct log levels. This includes:
 
