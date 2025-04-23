@@ -60,6 +60,7 @@ The token validation pipeline replaces the previous JwtParser interface with a m
 * `NonValidatingJwtParser` - Provides initial token decoding without validation
 
 This pipeline approach provides several benefits:
+
 * Better separation of concerns
 * More flexible validation process
 * Improved error handling and reporting
@@ -99,6 +100,7 @@ The `IssuerConfig` class replaces the previous MultiIssuerJwtParser approach wit
 The IssuerConfig uses a lazy initialization approach for the JwksLoader. Instead of requiring a pre-initialized JwksLoader, it accepts configuration parameters and initializes the appropriate JwksLoader when needed. This initialization happens through the `initSecurityEventCounter` method, which is called by TokenFactory and passes the SecurityEventCounter to the JwksLoader.
 
 This approach provides several benefits:
+
 * Simplified configuration - no need to create JwksLoader instances separately
 * Consistent SecurityEventCounter usage across all components
 * Centralized management of JwksLoader initialization

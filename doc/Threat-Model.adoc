@@ -22,30 +22,25 @@ The JWT token handling library operates within the following context:
 
 == Data Flow Diagram
 
-[plantuml]
+[ditaa]
 ....
-@startuml
-!define ICONURL https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/v2.4.0
-
-skinparam componentStyle uml2
-
-actor "User" as user
-component "Application" as app
-component "JWT Token Handling Library" as jwt
-database "Key Cache" as cache
-cloud "Identity Provider" as idp
-cloud "JWKS Endpoint" as jwks
-
-user -> app : Request with token
-app -> jwt : Validate token
-jwt -> cache : Get key
-cache -> jwt : Return key (if exists)
-jwt -> jwks : Fetch keys (if not in cache)
-jwks -> jwt : Return keys
-jwt -> app : Validation result
-app -> user : Response
-
-@enduml
++------+     +-------------+     +---------------------+
+| User |---->| Application |---->| JWT Token Handling  |
++------+     +-------------+     | Library             |
+   ^               ^             +---------------------+
+   |               |                    |        ^
+   |               |                    v        |
+   |               |             +----------+    |
+   |               |             | Key Cache|    |
+   |               |             +----------+    |
+   |               |                    |        |
+   |               |                    v        |
+   |               |             +-------------+ |
+   |               |             | JWKS        | |
+   |               |             | Endpoint    |-+
+   |               |             +-------------+
+   |               |
+   +---------------+
 ....
 
 == STRIDE Threat Analysis
