@@ -154,13 +154,13 @@ public final class JWTTokenLogMessages {
         public static final LogRecord TOKEN_FACTORY_INITIALIZED = LogRecordModel.builder()
                 .prefix(PREFIX)
                 .identifier(1)
-                .template("TokenFactory initialized with %d issuer configurations")
+                .template("TokenFactory initialized with %s issuer configurations")
                 .build();
 
         public static final LogRecord JWKS_LOADED = LogRecordModel.builder()
                 .prefix(PREFIX)
                 .identifier(2)
-                .template("Successfully loaded and parsed JWKS from %s with %d keys")
+                .template("Successfully loaded and parsed JWKS from %s with %s keys")
                 .build();
     }
 

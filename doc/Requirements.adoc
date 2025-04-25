@@ -34,6 +34,8 @@ The library must provide robust token parsing and validation capabilities in acc
 
 The library must support standard JWT token structure with header, payload, and signature as defined in RFC 7519 (May 2015).
 
+image::plantuml/token-structure.png[JWT Token Structure]
+
 [#CUI-JWT-1.2]
 ==== CUI-JWT-1.2: Token Types
 
@@ -42,6 +44,8 @@ The library must support different token types as defined in https://datatracker
 * Access tokens
 * ID tokens
 * Refresh tokens
+
+image::plantuml/token-types.png[JWT Token Types]
 
 [#CUI-JWT-1.3]
 ==== CUI-JWT-1.3: Signature Validation
@@ -123,6 +127,8 @@ The refresh token representation must provide:
 
 The library must support tokens from multiple issuers.
 
+image::plantuml/multi-issuer-support.png[Multi-Issuer Support]
+
 [#CUI-JWT-3.1]
 ==== CUI-JWT-3.1: Issuer Configuration
 
@@ -142,6 +148,8 @@ Validate that tokens come from trusted issuers.
 === CUI-JWT-4: Key Management
 
 The library must support public key management for token validation in accordance with https://datatracker.ietf.org/doc/html/rfc7517[RFC 7517 - JSON Web Key (JWK)] (May 2015).
+
+image::plantuml/key-management.png[Key Management]
 
 [#CUI-JWT-4.1]
 ==== CUI-JWT-4.1: JWKS Endpoint Support

@@ -11,15 +11,14 @@ Gate Status]]
 image:https://sonarcloud.io/api/project_badges/measure?project=cuioss_cui-jwt-token-handling&metric=ncloc[Lines of Code,link=https://sonarcloud.io/summary/new_code?id=cuioss_cui-jwt-token-handling]
 image:https://sonarcloud.io/api/project_badges/measure?project=cuioss_cui-jwt-token-handling&metric=coverage[Coverage,link=https://sonarcloud.io/summary/new_code?id=cuioss_cui-jwt-token-handling]
 
-
 https://cuioss.github.io/cui-jwt-token-handling/about.html[Generated Documentation on github-pages]
 
 == What is it?
+
 A comprehensive framework for handling JWT tokens in multi-issuer environments.
 The core idea is to leverage offline-validation of JWT tokens.
 
-The module provides robust token parsing, validation,
-and management capabilities with a focus on security and ease of use.
+The module provides robust token parsing, validation, and management capabilities with a focus on security and ease of use.
 
 Key features include:
 
@@ -30,6 +29,11 @@ Key features include:
 * Protection against common JWT attacks
 * Configurable security settings
 * Tested compatibility with Keycloak as identity provider
+
+[NOTE]
+====
+ This library is not meant as a replacement for a full-fledged OAuth2 or OpenID Connect library. Therefore it will never be capable of creating tokens itself.
+====
 
 === Maven Coordinates
 
@@ -44,8 +48,7 @@ Key features include:
 ==== Runtime Dependencies
 
 This library requires an implementation of the `jakarta.json-api` to be present at runtime.
-The library itself includes the API as a provided dependency,
-but you need to provide an implementation such as Eclipse Parsson:
+The library itself includes the API as a provided dependency, but you need to provide an implementation such as Eclipse Parsson:
 
 [source,xml]
 ----
@@ -60,16 +63,19 @@ Alternatively, you can use any other Jakarta JSON API implementation.
 
 == Core Components
 
+image::doc/plantuml/component-overview.png[Component Overview]
+
 === TokenFactory: The Main Entry Point
 
-The link:src/main/java/de/cuioss/jwt/token/TokenFactory.java[TokenFactory] serves as the primary entry point for token operations. It provides:
+The link:src/main/java/de/cuioss/jwt/token/TokenFactory.java[TokenFactory] serves as the primary entry point for token operations.
+It provides:
 
 * Centralized token creation and validation
 * Support for multiple token types (Access, ID, Refresh)
 * Pipeline-based token validation
 * Support for multiple issuers
 
-[source, java]
+[source,java]
 ----
 // Create issuer configurations
 IssuerConfig issuerConfig = IssuerConfig.builder()
@@ -106,11 +112,15 @@ The module uses a pipeline approach for token validation:
 
 The module provides robust support for multi-issuer environments through:
 
+image::doc/plantuml/multi-issuer-support.png[Multi-Issuer Support]
+
 * Configuration of multiple issuers with IssuerConfig objects
 * Automatic issuer detection and validation
 * Thread-safe token validation
 
-[source, java]
+image::doc/plantuml/key-management.png[Key Management]
+
+[source,java]
 ----
 // Create JWKS loader configurations for different issuers
 // Option 1: HTTP-based JWKS loader with automatic key rotation
@@ -153,7 +163,7 @@ The module supports custom claim mappers that take precedence over the default o
 * Handle non-standard claims like "role" from specific identity providers
 * Extend the system with custom claim mapping logic
 
-[source, java]
+[source,java]
 ----
 // Create a custom claim mapper for the "role" claim
 ClaimMapper roleMapper = new JsonCollectionMapper();
@@ -181,6 +191,8 @@ Optional<AccessTokenContent> accessToken = factory.createAccessToken(tokenString
 
 The module uses a flexible architecture based on inheritance and composition:
 
+image::doc/plantuml/token-types.png[Token Types]
+
 * link:src/main/java/de/cuioss/jwt/token/domain/token/TokenContent.java[TokenContent]: Core interface defining JWT token functionality
 * link:src/main/java/de/cuioss/jwt/token/domain/token/BaseTokenContent.java[BaseTokenContent]: Abstract base class implementing common token functionality
 * link:src/main/java/de/cuioss/jwt/token/domain/token/MinimalTokenContent.java[MinimalTokenContent]: Minimal interface for tokens without claims
@@ -190,16 +202,16 @@ The module uses a flexible architecture based on inheritance and composition:
 The module supports three token types, each with specific functionality:
 
 * link:src/main/java/de/cuioss/jwt/token/domain/token/AccessTokenContent.java[AccessTokenContent]: OAuth2 access token with scope and role support
-  ** Extends BaseTokenContent for common token functionality
-  ** Provides enhanced scope and role management
-  ** Supports email and preferred username claims
+** Extends BaseTokenContent for common token functionality
+** Provides enhanced scope and role management
+** Supports email and preferred username claims
 * link:src/main/java/de/cuioss/jwt/token/domain/token/IdTokenContent.java[IdTokenContent]: OpenID Connect ID token for user identity
-  ** Extends BaseTokenContent for common token functionality
-  ** Focuses on identity information claims
-  ** Provides access to name and email claims
+** Extends BaseTokenContent for common token functionality
+** Focuses on identity information claims
+** Provides access to name and email claims
 * link:src/main/java/de/cuioss/jwt/token/domain/token/RefreshTokenContent.java[RefreshTokenContent]: OAuth2 refresh token
-  ** Implements MinimalTokenContent interface
-  ** Treats refresh tokens as opaque strings per OAuth2 specification
+** Implements MinimalTokenContent interface
+** Treats refresh tokens as opaque strings per OAuth2 specification
 
 == Documentation
 
@@ -225,6 +237,8 @@ The project includes comprehensive documentation:
 
 == Security Considerations
 
+image::doc/plantuml/security-controls.png[Security Controls]
+
 === Security Features
 
 * All token validation is performed using cryptographic signatures via Bouncy Castle (bcprov-jdk18on)
@@ -239,7 +253,7 @@ The project includes comprehensive documentation:
 
 The `TokenFactoryConfig` class provides important security settings for token processing:
 
-[source, java]
+[source,java]
 ----
 // Create a TokenFactory with custom security settings
 TokenFactoryConfig config = TokenFactoryConfig.builder()
@@ -292,3 +306,71 @@ For more details on security considerations, see the link:doc/Threat-Model.adoc[
 2. Configure adaptive window size for token validation to handle clock skew
 3. Use background refresh for JWKS keys to avoid blocking token validation
 4. Consider token size when designing your authentication architecture
+
+== PlantUML Diagrams
+
+This project uses PlantUML for creating diagrams in the documentation.
+To ensure compatibility with GitHub's rendering capabilities, we follow these practices:
+
+=== PlantUML File Structure
+
+All PlantUML diagrams are stored in separate files under the `/doc/plantuml/` directory with the `.puml` extension.
+This separation allows for:
+
+* Better version control of diagrams
+* Easier maintenance and updates
+* Compatibility with GitHub's rendering limitations
+* Generation of PNG images for documentation
+
+Each PlantUML file should include the following directive at the beginning to ensure it can be rendered without requiring a local Graphviz installation:
+
+[source]
+----
+@startuml
+' Configure PlantUML to use its own rendering engine
+!pragma layout smetana
+...
+@enduml
+----
+
+The `!pragma layout smetana` directive tells PlantUML to use its own internal rendering engine (Smetana) instead of relying on Graphviz, which eliminates the dependency on the local filesystem.
+
+=== Generating PNG Images
+
+To generate PNG images from PlantUML files, use the `build-plantuml` Maven profile:
+
+[source,bash]
+----
+./mvnw generate-resources -Pbuild-plantuml
+----
+
+This command will:
+
+1. Process all `.puml` files in the `/doc/plantuml/` directory
+2. Generate corresponding PNG images with the same base name
+3. Place the generated images in the same directory
+
+=== Referencing Images in Documentation
+
+To reference the generated PNG images in AsciiDoc documentation, use the following syntax:
+
+For documents in the root directory (like this README):
+
+```
+image::doc/plantuml/diagram-name.png[Diagram Title]
+```
+
+For documents in the `doc` directory:
+
+```
+image::plantuml/diagram-name.png[Diagram Title]
+```
+
+=== Adding New Diagrams
+
+To add a new diagram:
+
+1. Create a new `.puml` file in the `/doc/plantuml/` directory
+2. Add your PlantUML content to the file
+3. Run the Maven build with the `build-plantuml` profile
+4. Reference the generated PNG in your documentation

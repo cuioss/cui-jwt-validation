@@ -1,0 +1,82 @@
+@startuml
+!include plantuml.skin
+
+participant "TokenFactory" as TokenFactory
+participant "JwksLoaderFactory" as JwksLoaderFactory
+participant "HttpJwksLoader" as HttpLoader
+participant "FileJwksLoader" as FileLoader
+participant "InMemoryJwksLoader" as MemLoader
+database "JWKS Cache" as Cache
+participant "JWKS Endpoint" as Endpoint
+
+== Initialization ==
+
+TokenFactory -> JwksLoaderFactory : createHttpJwksLoader(config)
+JwksLoaderFactory -> HttpLoader : new HttpJwksLoader(config)
+HttpLoader -> HttpLoader : scheduleRefresh()
+
+TokenFactory -> JwksLoaderFactory : createFileJwksLoader(path)
+JwksLoaderFactory -> FileLoader : new FileJwksLoader(path)
+
+TokenFactory -> JwksLoaderFactory : createInMemoryJwksLoader(content)
+JwksLoaderFactory -> MemLoader : new InMemoryJwksLoader(content)
+
+== Key Retrieval ==
+
+TokenFactory -> HttpLoader : getKey(keyId)
+HttpLoader -> Cache : get(keyId)
+Cache --> HttpLoader : key (if exists)
+
+alt Key not in cache
+    HttpLoader -> Endpoint : fetch JWKS
+    Endpoint --> HttpLoader : JWKS data
+    HttpLoader -> HttpLoader : parse JWKS
+    HttpLoader -> Cache : store keys
+    Cache --> HttpLoader : confirmation
+    HttpLoader -> HttpLoader : find key by ID
+end
+
+HttpLoader --> TokenFactory : return key
+
+== Automatic Key Rotation ==
+
+HttpLoader -> HttpLoader : refreshInterval elapsed
+activate HttpLoader
+HttpLoader -> Endpoint : fetch JWKS
+Endpoint --> HttpLoader : JWKS data
+HttpLoader -> HttpLoader : parse JWKS
+HttpLoader -> Cache : update keys
+Cache --> HttpLoader : confirmation
+deactivate HttpLoader
+
+== Key Selection ==
+
+TokenFactory -> HttpLoader : getKey(keyId)
+HttpLoader -> Cache : get(keyId)
+Cache --> HttpLoader : key
+HttpLoader --> TokenFactory : return key
+
+TokenFactory -> TokenFactory : validate token\nwith key
+
+note right of HttpLoader
+  Key rotation happens:
+  1. On a configurable schedule
+  2. When a key is not found
+  3. When validation fails with current key
+end note
+
+note right of Cache
+  The cache stores:
+  - JWK by Key ID (kid)
+  - Public keys by algorithm
+  - Mapping of key IDs to algorithms
+end note
+
+note right of JwksLoaderFactory
+  Factory creates appropriate loader:
+  - HttpJwksLoader: Remote JWKS endpoint
+  - FileJwksLoader: Local JWKS file
+  - InMemoryJwksLoader: Embedded JWKS
+end note
+
+@enduml

@@ -1,0 +1,24 @@
+@startuml
+!include plantuml.skin
+
+package "JWT Token Handling" {
+  [TokenFactory] ..> [TokenFactoryConfig]
+  [TokenFactory] ..> [IssuerConfig]
+  [TokenFactory] ..> [NonValidatingJwtParser]
+  [TokenFactory] ..> [TokenHeaderValidator]
+  [TokenFactory] ..> [TokenSignatureValidator]
+  [TokenFactory] ..> [TokenBuilder]
+  [TokenFactory] ..> [TokenClaimValidator]
+  [TokenFactory] ..> [TokenContent]
+  [TokenSignatureValidator] ..> [JwksLoader]
+  [IssuerConfig] ..> [JwksLoader]
+  [JwksLoader] <.. [JwksLoaderFactory]
+  [TokenBuilder] ..> [AccessTokenContent]
+  [TokenBuilder] ..> [IdTokenContent]
+  [TokenBuilder] ..> [RefreshTokenContent]
+  [AccessTokenContent] --|> [BaseTokenContent]
+  [IdTokenContent] --|> [BaseTokenContent]
+  [BaseTokenContent] ..|> [TokenContent]
+  [RefreshTokenContent] ..|> [MinimalTokenContent]
+}
+@enduml

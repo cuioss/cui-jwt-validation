@@ -19,8 +19,8 @@ Note: Only log level INFO and above are documented in this file.
 [cols="1,1,2,2", options="header"]
 |===
 |ID |Component |Message |Description
-|JWTToken-001 |TOKEN |TokenFactory initialized with %d issuer configurations |Logged when TokenFactory is initialized with issuer configurations
-|JWTToken-002 |JWKS |Successfully loaded and parsed JWKS from %s with %d keys |Logged when JWKS is successfully loaded and parsed from a remote endpoint
+|JWTToken-001 |TOKEN |TokenFactory initialized with %s issuer configurations |Logged when TokenFactory is initialized with issuer configurations
+|JWTToken-002 |JWKS |Successfully loaded and parsed JWKS from %s with %s keys |Logged when JWKS is successfully loaded and parsed from a remote endpoint
 |===
 
 == WARN Level (100-199)
@@ -70,11 +70,3 @@ Note: Only log level INFO and above are documented in this file.
 |JWTToken-201 |TOKEN |Failed to validate token signature: %s |Logged when a token signature validation fails
 |===
 
-
-== Implementation Status
-
-* All INFO level messages (001-099) are fully implemented and documented in this file
-* All WARN level messages (100-199) are fully implemented and documented in this file
-* All ERROR level messages (200-299) are fully implemented and documented in this file
-
-Note: This document only includes log messages with level INFO and above. DEBUG level messages (500-599) are implemented in the code but not documented here.

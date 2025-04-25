@@ -6,7 +6,7 @@
     <parent>
         <groupId>de.cuioss</groupId>
         <artifactId>cui-java-parent</artifactId>
-        <version>0.9.5</version>
+        <version>0.9.9</version>
         <relativePath/>
     </parent>
     <artifactId>cui-jwt-token-handling</artifactId>
@@ -34,7 +34,6 @@
     </issueManagement>
     <properties>
         <maven.jar.plugin.automatic.module.name>de.cuioss.jwt.token</maven.jar.plugin.automatic.module.name>
-        <version.cui.parent>0.9.5</version.cui.parent>
         <version.jjwt>0.12.6</version.jjwt>
     </properties>
     <dependencyManagement>
@@ -182,4 +181,5 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
 </project>

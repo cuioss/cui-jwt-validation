@@ -1,0 +1,166 @@
+@startuml
+!include plantuml.skin
+
+' Layout the STRIDE categories in a more organized way
+together {
+  ' STRIDE categories
+  package "Spoofing" as Spoofing {
+    skinparam backgroundColor THREAT_COLOR
+    together {
+      rectangle "S1: Forged JWT tokens" as S1
+      rectangle "S2: JWKS endpoint impersonation" as S2
+      rectangle "S3: Expired/revoked token reuse" as S3
+      rectangle "S4: Untrusted issuer tokens" as S4
+      rectangle "S5: Token substitution" as S5
+    }
+  }
+
+  package "Tampering" as Tampering {
+    skinparam backgroundColor THREAT_COLOR
+    together {
+      rectangle "T1: Token content modification" as T1
+      rectangle "T2: JWKS cache tampering" as T2
+      rectangle "T3: Token parsing manipulation" as T3
+      rectangle "T4: Algorithm substitution" as T4
+      rectangle "T5: Header manipulation" as T5
+    }
+  }
+
+  package "Repudiation" as Repudiation {
+    skinparam backgroundColor THREAT_COLOR
+    together {
+      rectangle "R1: Token usage denial" as R1
+      rectangle "R2: Unauthorized refresh attempts" as R2
+      rectangle "R3: Missing audit trail" as R3
+      rectangle "R4: Token usage tracing issues" as R4
+      rectangle "R5: Log tampering" as R5
+    }
+  }
+}
+
+together {
+  package "Information Disclosure" as InfoDisclosure {
+    skinparam backgroundColor THREAT_COLOR
+    together {
+      rectangle "I1: Sensitive claims in logs" as I1
+      rectangle "I2: Token data in errors" as I2
+      rectangle "I3: JWKS cache exposure" as I3
+      rectangle "I4: Debug info exposure" as I4
+      rectangle "I5: Side-channel attacks" as I5
+      rectangle "I6: Insecure JWKS communication" as I6
+    }
+  }
+
+  package "Denial of Service" as DoS {
+    skinparam backgroundColor THREAT_COLOR
+    together {
+      rectangle "D1: JWKS endpoint flooding" as D1
+      rectangle "D2: Large token processing" as D2
+      rectangle "D3: Complex token structures" as D3
+      rectangle "D4: Resource exhaustion" as D4
+      rectangle "D5: Cache poisoning" as D5
+      rectangle "D6: CPU exhaustion" as D6
+    }
+  }
+
+  package "Elevation of Privilege" as EoP {
+    skinparam backgroundColor THREAT_COLOR
+    together {
+      rectangle "E1: Token scope manipulation" as E1
+      rectangle "E2: Role/permission injection" as E2
+      rectangle "E3: Claim manipulation" as E3
+      rectangle "E4: Validation bypass" as E4
+      rectangle "E5: Algorithm confusion" as E5
+      rectangle "E6: Key confusion" as E6
+      rectangle "E7: Client confusion" as E7
+      rectangle "E8: Scope upgrade" as E8
+      rectangle "E9: Mutable claims" as E9
+    }
+  }
+}
+
+' Mitigations
+package "Mitigations" as Mitigations {
+  skinparam backgroundColor MITIGATION_COLOR
+  together {
+    rectangle "Cryptographic Signature Verification" as M1
+    rectangle "Token Size Limits (8KB max)" as M2
+    rectangle "Issuer Validation" as M3
+    rectangle "Audience Validation" as M4
+    rectangle "Expiration Checking" as M5
+    rectangle "Algorithm Validation" as M6
+  }
+  together {
+    rectangle "Type-safe Claim Extraction" as M7
+    rectangle "Secure Parsing" as M8
+    rectangle "TLS for JWKS Endpoints" as M9
+    rectangle "Key Rotation" as M10
+    rectangle "Security Event Logging" as M11
+    rectangle "Immutable Token Objects" as M12
+  }
+}
+
+' Add layout hints to control positioning
+Spoofing -[hidden]down- InfoDisclosure
+Tampering -[hidden]down- DoS
+Repudiation -[hidden]down- EoP
+Mitigations -[hidden]left- Spoofing
+
+' Connect threats to mitigations with explicit directions
+S1 -right-> M1
+S2 -right-> M9
+S3 -right-> M5
+S4 -right-> M3
+S5 -right-> M1
+S5 -right-> M4
+
+T1 -right-> M1
+T2 -right-> M10
+T3 -right-> M8
+T4 -right-> M6
+T5 -right-> M6
+T5 -right-> M7
+
+R1 -right-> M11
+R2 -right-> M11
+R3 -right-> M11
+R4 -right-> M11
+R5 -right-> M11
+
+I1 -right-> M11
+I2 -right-> M8
+I3 -right-> M12
+I4 -right-> M8
+I5 -right-> M1
+I6 -right-> M9
+
+D1 -right-> M10
+D2 -right-> M2
+D3 -right-> M8
+D4 -right-> M2
+D5 -right-> M10
+D6 -right-> M6
+
+E1 -right-> M7
+E2 -right-> M7
+E3 -right-> M7
+E4 -right-> M1
+E5 -right-> M6
+E6 -right-> M1
+E7 -right-> M4
+E8 -right-> M7
+E9 -right-> M7
+
+note bottom of Mitigations
+  Additional recommended mitigations:
+  - Token blacklisting for revoked tokens
+  - Rate limiting for validation attempts
+  - Strict issuer validation with allowlist
+  - JWK thumbprint validation
+  - Integrity checks for cached data
+  - Correlation IDs in logging
+  - Certificate pinning for JWKS endpoints
+  - Constant-time comparison for validation
+end note
+
+@enduml

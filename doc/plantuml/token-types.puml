@@ -1,0 +1,83 @@
+@startuml
+!include plantuml.skin
+
+interface "TokenContent" as TokenContent {
+  +getIssuer(): String
+  +getSubject(): String
+  +getAudience(): List<String>
+  +getExpirationTime(): Date
+  +getNotBefore(): Date
+  +getIssuedAt(): Date
+  +getTokenId(): String
+  +isExpired(): boolean
+}
+
+abstract class "BaseTokenContent" as BaseTokenContent {
+  -issuer: String
+  -subject: String
+  -audience: List<String>
+  -expirationTime: Date
+  -notBefore: Date
+  -issuedAt: Date
+  -tokenId: String
+  +isExpired(): boolean
+}
+
+interface "MinimalTokenContent" as MinimalTokenContent {
+  +getTokenString(): String
+}
+
+class "AccessTokenContent" as AccessTokenContent {
+  -scope: Set<String>
+  -roles: Set<String>
+  -email: String
+  -preferredUsername: String
+  +hasScope(scope: String): boolean
+  +hasRole(role: String): boolean
+  +getEmail(): String
+  +getPreferredUsername(): String
+}
+
+class "IdTokenContent" as IdTokenContent {
+  -name: String
+  -email: String
+  -emailVerified: boolean
+  -preferredUsername: String
+  -authTime: Date
+  -acr: String
+  -amr: List<String>
+  +getName(): String
+  +getEmail(): String
+  +isEmailVerified(): boolean
+  +getPreferredUsername(): String
+  +getAuthTime(): Date
+  +getAcr(): String
+  +getAmr(): List<String>
+}
+
+class "RefreshTokenContent" as RefreshTokenContent {
+  -tokenString: String
+  +getTokenString(): String
+}
+
+TokenContent <|.. BaseTokenContent
+MinimalTokenContent <|.. RefreshTokenContent
+BaseTokenContent <|-- AccessTokenContent
+BaseTokenContent <|-- IdTokenContent
+
+note bottom of AccessTokenContent
+  OAuth2 Access Token
+  Used for authorization
+end note
+
+note bottom of IdTokenContent
+  OpenID Connect ID Token
+  Used for authentication
+end note
+
+note bottom of RefreshTokenContent
+  OAuth2 Refresh Token
+  Used to obtain new access tokens
+end note
+
+@enduml

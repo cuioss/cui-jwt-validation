@@ -26,31 +26,7 @@ _See Requirement link:Requirements.adoc#CUI-JWT-1[CUI-JWT-1: Token Parsing and V
 
 The JWT token handling library consists of the following main components:
 
-[plantuml]
-....
-@startuml
-package "JWT Token Handling" {
-  [TokenFactory] ..> [TokenFactoryConfig]
-  [TokenFactory] ..> [IssuerConfig]
-  [TokenFactory] ..> [NonValidatingJwtParser]
-  [TokenFactory] ..> [TokenHeaderValidator]
-  [TokenFactory] ..> [TokenSignatureValidator]
-  [TokenFactory] ..> [TokenBuilder]
-  [TokenFactory] ..> [TokenClaimValidator]
-  [TokenFactory] ..> [TokenContent]
-  [TokenSignatureValidator] ..> [JwksLoader]
-  [IssuerConfig] ..> [JwksLoader]
-  [JwksLoader] <.. [JwksLoaderFactory]
-  [TokenBuilder] ..> [AccessTokenContent]
-  [TokenBuilder] ..> [IdTokenContent]
-  [TokenBuilder] ..> [RefreshTokenContent]
-  [AccessTokenContent] --|> [BaseTokenContent]
-  [IdTokenContent] --|> [BaseTokenContent]
-  [BaseTokenContent] ..|> [TokenContent]
-  [RefreshTokenContent] ..|> [MinimalTokenContent]
-}
-@enduml
-....
+image::plantuml/component-overview.png[Component Overview]
 
 === Component Descriptions
 

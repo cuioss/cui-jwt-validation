@@ -1,0 +1,96 @@
+@startuml
+!include plantuml.skin
+
+package "JWT Token Handling" {
+  ' Group related components together
+  together {
+    component "TokenFactory" as TokenFactory
+    component "NonValidatingJwtParser" as Parser
+    component "TokenHeaderValidator" as HeaderValidator
+    component "TokenSignatureValidator" as SignatureValidator
+  }
+
+  together {
+    component "IssuerConfig\nIssuer 1" as IssuerConfig1
+    component "IssuerConfig\nIssuer 2" as IssuerConfig2
+    component "IssuerConfig\nIssuer 3" as IssuerConfig3
+  }
+
+  together {
+    component "JwksLoader\nIssuer 1" as JwksLoader1
+    component "JwksLoader\nIssuer 2" as JwksLoader2
+    component "JwksLoader\nIssuer 3" as JwksLoader3
+  }
+
+  together {
+    database "JWKS Cache\nIssuer 1" as JwksCache1
+    database "JWKS Cache\nIssuer 2" as JwksCache2
+    database "JWKS Cache\nIssuer 3" as JwksCache3
+  }
+}
+
+' Group cloud endpoints
+together {
+  cloud "Issuer 1\nJWKS Endpoint" as JwksEndpoint1
+  cloud "Issuer 2\nJWKS Endpoint" as JwksEndpoint2
+  cloud "Issuer 3\nJWKS Endpoint" as JwksEndpoint3
+}
+
+actor "Application" as App
+
+' Add layout hints to control positioning
+App -[hidden]right- TokenFactory
+TokenFactory -[hidden]down- IssuerConfig1
+IssuerConfig1 -[hidden]right- JwksLoader1
+JwksLoader1 -[hidden]right- JwksCache1
+JwksLoader1 -[hidden]up- JwksEndpoint1
+
+' Normal flow with explicit directions
+App -right-> TokenFactory : 1. Submit token
+TokenFactory -right-> Parser : 2. Parse token without validation
+Parser -down-> TokenFactory : 3. Return token header with issuer
+TokenFactory -right-> HeaderValidator : 4. Validate token header
+HeaderValidator -down-> TokenFactory : 5. Return validation result
+
+' Issuer selection with explicit directions
+TokenFactory -down-> IssuerConfig1 : 6a. Select issuer config\nbased on token issuer
+TokenFactory -down-> IssuerConfig2 : 6b. Select issuer config\nbased on token issuer
+TokenFactory -down-> IssuerConfig3 : 6c. Select issuer config\nbased on token issuer
+
+' JWKS loader retrieval with explicit directions
+IssuerConfig1 -right-> JwksLoader1 : 7a. Get JWKS loader
+IssuerConfig2 -right-> JwksLoader2 : 7b. Get JWKS loader
+IssuerConfig3 -right-> JwksLoader3 : 7c. Get JWKS loader
+
+' Cache checking with explicit directions
+JwksLoader1 -right-> JwksCache1 : 8a. Check cache
+JwksLoader2 -right-> JwksCache2 : 8b. Check cache
+JwksLoader3 -right-> JwksCache3 : 8c. Check cache
+
+' Key fetching with explicit directions
+JwksLoader1 -up-> JwksEndpoint1 : 9a. Fetch keys if needed
+JwksLoader2 -up-> JwksEndpoint2 : 9b. Fetch keys if needed
+JwksLoader3 -up-> JwksEndpoint3 : 9c. Fetch keys if needed
+
+' Signature validation with explicit directions
+TokenFactory -down-> SignatureValidator : 10. Validate token signature\nwith selected issuer's keys
+SignatureValidator -left-> TokenFactory : 11. Return validation result
+TokenFactory -left-> App : 12. Return validated token\nor validation error
+
+note right of TokenFactory
+  The TokenFactory automatically:
+  1. Detects the token issuer
+  2. Selects the appropriate issuer configuration
+  3. Uses the correct JWKS for validation
+  4. Validates issuer-specific claims
+end note
+
+note bottom of JwksLoader1
+  JwksLoader handles:
+  - Key retrieval
+  - Key caching
+  - Key rotation
+  - Key selection by Key ID (kid)
+end note
+
+@enduml
