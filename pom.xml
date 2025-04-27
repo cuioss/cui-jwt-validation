@@ -6,7 +6,7 @@
     <parent>
         <groupId>de.cuioss</groupId>
         <artifactId>cui-java-parent</artifactId>
-        <version>0.9.9</version>
+        <version>0.9.9.1</version>
         <relativePath/>
     </parent>
     <artifactId>cui-jwt-validation</artifactId>
@@ -33,17 +33,11 @@
         <system>GitHub Issues</system>
     </issueManagement>
     <properties>
-        <maven.jar.plugin.automatic.module.name>de.cuioss.jwt.token</maven.jar.plugin.automatic.module.name>
+        <maven.jar.plugin.automatic.module.name>de.cuioss.jwt.validation</maven.jar.plugin.automatic.module.name>
         <version.jjwt>0.12.6</version.jjwt>
     </properties>
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>jakarta.servlet</groupId>
-                <artifactId>jakarta.servlet-api</artifactId>
-                <version>6.1.0</version>
-                <scope>test</scope>
-            </dependency>
             <dependency>
                 <groupId>de.cuioss</groupId>
                 <artifactId>java-ee-orthogonal</artifactId>
