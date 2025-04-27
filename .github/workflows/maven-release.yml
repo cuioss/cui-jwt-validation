@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false # otherwise, the token used is the PA_TOKEN, instead of your personal access token.
+          persist-credentials: false # otherwise, the validation used is the PA_TOKEN, instead of your personal access validation.
           fetch-depth: 0 # otherwise, there would be errors pushing refs to the destination repository.
 
       - uses: radcortez/project-metadata-action@1.1

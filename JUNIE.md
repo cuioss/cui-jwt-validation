@@ -57,7 +57,7 @@ This file provides guidance to Junie when working with code in this repository.
 - Requirements README: `https://github.com/cuioss/cui-llm-rules/tree/main/standards/requirements/README.adoc`
 
 ## Code Style Guidelines
-- Follow package structure: reverse domain name notation (de.cuioss.jwt.token)
+- Follow package structure: reverse domain name notation (de.cuioss.jwt.validation)
 - Use DSL-style nested constants for logging messages in JWTTokenLogMessages
 - Organize imports: Java standard first, then 3rd party, then project imports
 - Use `@NonNull` annotations from Lombok for required parameters

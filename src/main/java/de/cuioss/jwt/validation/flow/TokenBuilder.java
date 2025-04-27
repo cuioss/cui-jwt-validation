@@ -1,0 +1,134 @@
+/*
+ * Copyright 2023 the original author or authors.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * https://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package de.cuioss.jwt.validation.flow;
+
+import de.cuioss.jwt.validation.domain.claim.ClaimName;
+import de.cuioss.jwt.validation.domain.claim.ClaimValue;
+import de.cuioss.jwt.validation.domain.claim.mapper.ClaimMapper;
+import de.cuioss.jwt.validation.domain.claim.mapper.IdentityMapper;
+import de.cuioss.jwt.validation.domain.token.AccessTokenContent;
+import de.cuioss.jwt.validation.domain.token.IdTokenContent;
+import jakarta.json.JsonObject;
+import lombok.NonNull;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
+/**
+ * Builder for creating validation content objects from decoded JWT tokens.
+ */
+public class TokenBuilder {
+
+    @NonNull
+    private final IssuerConfig issuerConfig;
+
+    /**
+     * Constructs a TokenBuilder with the specified IssuerConfig.
+     *
+     * @param issuerConfig the issuer configuration
+     */
+    public TokenBuilder(@NonNull IssuerConfig issuerConfig) {
+        this.issuerConfig = issuerConfig;
+    }
+
+    /**
+     * Creates an AccessTokenContent from a decoded JWT.
+     *
+     * @param decodedJwt the decoded JWT
+     * @return an Optional containing the AccessTokenContent if it could be created, empty otherwise
+     */
+    public Optional<AccessTokenContent> createAccessToken(@NonNull DecodedJwt decodedJwt) {
+        Optional<JsonObject> bodyOption = decodedJwt.getBody();
+        if (bodyOption.isEmpty()) {
+            return Optional.empty();
+        }
+
+        JsonObject body = bodyOption.get();
+        Map<String, ClaimValue> claims = extractClaims(body);
+
+        return Optional.of(new AccessTokenContent(claims, decodedJwt.getRawToken(), null));
+    }
+
+    /**
+     * Creates an IdTokenContent from a decoded JWT.
+     *
+     * @param decodedJwt the decoded JWT
+     * @return an Optional containing the IdTokenContent if it could be created, empty otherwise
+     */
+    public Optional<IdTokenContent> createIdToken(@NonNull DecodedJwt decodedJwt) {
+        Optional<JsonObject> bodyOption = decodedJwt.getBody();
+        if (bodyOption.isEmpty()) {
+            return Optional.empty();
+        }
+
+        JsonObject body = bodyOption.get();
+        Map<String, ClaimValue> claims = extractClaims(body);
+
+        return Optional.of(new IdTokenContent(claims, decodedJwt.getRawToken()));
+    }
+
+
+    /**
+     * Extracts claims from a JSON object.
+     *
+     * @param jsonObject the JSON object containing claims
+     * @return a map of claim names to claim values
+     */
+    private Map<String, ClaimValue> extractClaims(JsonObject jsonObject) {
+        Map<String, ClaimValue> claims = new HashMap<>();
+
+        // Process all keys in the JSON object
+        for (String key : jsonObject.keySet()) {
+            // Check if there's a custom mapper for this claim
+            if (issuerConfig.getClaimMappers() != null && issuerConfig.getClaimMappers().containsKey(key)) {
+                ClaimMapper customMapper = issuerConfig.getClaimMappers().get(key);
+                ClaimValue claimValue = customMapper.map(jsonObject, key);
+                claims.put(key, claimValue);
+            } else {
+                // Try to map using known ClaimName
+                Optional<ClaimName> claimNameOption = ClaimName.fromString(key);
+                if (claimNameOption.isPresent()) {
+                    ClaimName claimName = claimNameOption.get();
+                    ClaimValue claimValue = claimName.map(jsonObject);
+                    claims.put(key, claimValue);
+                } else {
+                    // Use IdentityMapper for unknown claims
+                    ClaimValue claimValue = new IdentityMapper().map(jsonObject, key);
+                    claims.put(key, claimValue);
+                }
+            }
+        }
+
+        return claims;
+    }
+
+    /**
+     * Extracts claims for a refresh validation from a JSON object.
+     *
+     * @param jsonObject the JSON object containing claims
+     * @return a map of claim names to claim values
+     */
+    public static Map<String, ClaimValue> extractClaimsForRefreshToken(@NonNull JsonObject jsonObject) {
+        Map<String, ClaimValue> claims = new HashMap<>();
+        for (String key : jsonObject.keySet()) {
+            // Use IdentityMapper for unknown claims
+            ClaimValue claimValue = new IdentityMapper().map(jsonObject, key);
+            claims.put(key, claimValue);
+        }
+        return claims;
+    }
+}

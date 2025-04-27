@@ -71,17 +71,17 @@ Unit tests have been implemented for the core functionality, providing comprehen
 
 The following test classes implement these unit tests:
 
-* link:../../src/test/java/de/cuioss/jwt/token/TokenFactoryTest.java[TokenFactoryTest.java] - Tests for the TokenFactory
-* link:../../src/test/java/de/cuioss/jwt/token/TokenTypeTest.java[TokenTypeTest.java] - Tests for token type enumeration
-* link:../../src/test/java/de/cuioss/jwt/token/domain/token/BaseTokenContentTest.java[BaseTokenContentTest.java] - Tests for the base token content
-* link:../../src/test/java/de/cuioss/jwt/token/domain/token/AccessTokenContentTest.java[AccessTokenContentTest.java] - Tests for access token content
-* link:../../src/test/java/de/cuioss/jwt/token/domain/token/IdTokenContentTest.java[IdTokenContentTest.java] - Tests for ID token content
-* link:../../src/test/java/de/cuioss/jwt/token/domain/token/RefreshTokenContentTest.java[RefreshTokenContentTest.java] - Tests for refresh token content
-* link:../../src/test/java/de/cuioss/jwt/token/CustomClaimMapperTest.java[CustomClaimMapperTest.java] - Tests for custom claim mapping
-* link:../../src/test/java/de/cuioss/jwt/token/flow/TokenFactoryConfigTest.java[TokenFactoryConfigTest.java] - Tests for TokenFactoryConfig
-* link:../../src/test/java/de/cuioss/jwt/token/flow/DecodedJwtTest.java[DecodedJwtTest.java] - Tests for DecodedJwt
-* link:../../src/test/java/de/cuioss/jwt/token/security/BouncyCastleProviderSingletonTest.java[BouncyCastleProviderSingletonTest.java] - Tests for BouncyCastleProviderSingleton
-* link:../../src/test/java/de/cuioss/jwt/token/jwks/JwksLoaderFactoryTest.java[JwksLoaderFactoryTest.java] - Tests for JwksLoaderFactory
+* link:../../src/test/java/de/cuioss/jwt/validation/TokenFactoryTest.java[TokenFactoryTest.java] - Tests for the TokenFactory
+* link:../../src/test/java/de/cuioss/jwt/validation/TokenTypeTest.java[TokenTypeTest.java] - Tests for token type enumeration
+* link:../../src/test/java/de/cuioss/jwt/validation/domain/token/BaseTokenContentTest.java[BaseTokenContentTest.java] - Tests for the base token content
+* link:../../src/test/java/de/cuioss/jwt/validation/domain/token/AccessTokenContentTest.java[AccessTokenContentTest.java] - Tests for access token content
+* link:../../src/test/java/de/cuioss/jwt/validation/domain/token/IdTokenContentTest.java[IdTokenContentTest.java] - Tests for ID token content
+* link:../../src/test/java/de/cuioss/jwt/validation/domain/token/RefreshTokenContentTest.java[RefreshTokenContentTest.java] - Tests for refresh token content
+* link:../../src/test/java/de/cuioss/jwt/validation/CustomClaimMapperTest.java[CustomClaimMapperTest.java] - Tests for custom claim mapping
+* link:../../src/test/java/de/cuioss/jwt/validation/flow/TokenFactoryConfigTest.java[TokenFactoryConfigTest.java] - Tests for TokenFactoryConfig
+* link:../../src/test/java/de/cuioss/jwt/validation/flow/DecodedJwtTest.java[DecodedJwtTest.java] - Tests for DecodedJwt
+* link:../../src/test/java/de/cuioss/jwt/validation/security/BouncyCastleProviderSingletonTest.java[BouncyCastleProviderSingletonTest.java] - Tests for BouncyCastleProviderSingleton
+* link:../../src/test/java/de/cuioss/jwt/validation/jwks/JwksLoaderFactoryTest.java[JwksLoaderFactoryTest.java] - Tests for JwksLoaderFactory
 
 These tests cover:
 
@@ -122,18 +122,18 @@ The following test cases will be implemented:
 
 The following test classes demonstrate token parsing and validation:
 
-* link:../../src/test/java/de/cuioss/jwt/token/TokenFactoryTest.java[TokenFactoryTest.java] - Contains tests for token creation and validation:
+* link:../../src/test/java/de/cuioss/jwt/validation/TokenFactoryTest.java[TokenFactoryTest.java] - Contains tests for token creation and validation:
 ** `shouldCreateAccessToken()` - Tests creating and parsing an access token
 ** `shouldCreateIdToken()` - Tests creating and parsing an ID token
 ** `shouldCreateRefreshToken()` - Tests creating and parsing a refresh token
 ** `shouldHandleInvalidTokenFormat()` - Tests handling invalid token formats
 ** `shouldHandleUnknownIssuer()` - Tests handling unknown issuers
 
-* link:../../src/test/java/de/cuioss/jwt/token/RFC7519JWTComplianceTest.java[RFC7519JWTComplianceTest.java] - Contains tests for RFC 7519 compliance:
+* link:../../src/test/java/de/cuioss/jwt/validation/RFC7519JWTComplianceTest.java[RFC7519JWTComplianceTest.java] - Contains tests for RFC 7519 compliance:
 ** `shouldValidateTokenSignature()` - Tests validating token signatures
 ** `shouldRejectInvalidSignature()` - Tests rejecting tokens with invalid signatures
 
-* link:../../src/test/java/de/cuioss/jwt/token/OAuth2JWTBestPracticesComplianceTest.java[OAuth2JWTBestPracticesComplianceTest.java] - Contains tests for OAuth 2.0 JWT Best Practices compliance:
+* link:../../src/test/java/de/cuioss/jwt/validation/OAuth2JWTBestPracticesComplianceTest.java[OAuth2JWTBestPracticesComplianceTest.java] - Contains tests for OAuth 2.0 JWT Best Practices compliance:
 ** `shouldRejectAccessTokenWithInvalidSignature()` - Tests rejecting access tokens with invalid signatures
 ** `shouldRejectIDTokenWithInvalidSignature()` - Tests rejecting ID tokens with invalid signatures
 
@@ -146,7 +146,7 @@ Integration tests have been implemented to verify compatibility with Keycloak as
 
 The following test class implements integration tests with Keycloak:
 
-* link:../../src/test/java/de/cuioss/jwt/token/TokenKeycloakITTest.java[TokenKeycloakITTest.java] - Integration tests with Keycloak
+* link:../../src/test/java/de/cuioss/jwt/validation/TokenKeycloakITTest.java[TokenKeycloakITTest.java] - Integration tests with Keycloak
 
 These tests cover:
 
@@ -174,10 +174,10 @@ Comprehensive security testing has been implemented to verify the security aspec
 
 The following test classes implement these security tests:
 
-* link:../../src/test/java/de/cuioss/jwt/token/ClientConfusionAttackTest.java[ClientConfusionAttackTest.java] - Tests for client confusion attacks
-* link:../../src/test/java/de/cuioss/jwt/token/TokenFactorySecurityEventTest.java[TokenFactorySecurityEventTest.java] - Tests for security event tracking
-* link:../../src/test/java/de/cuioss/jwt/token/security/KeyDisclosureVulnerabilityTest.java[KeyDisclosureVulnerabilityTest.java] - Tests for key disclosure vulnerabilities
-* link:../../src/test/java/de/cuioss/jwt/token/security/TokenCrackingResistanceTest.java[TokenCrackingResistanceTest.java] - Tests for token cracking resistance
+* link:../../src/test/java/de/cuioss/jwt/validation/ClientConfusionAttackTest.java[ClientConfusionAttackTest.java] - Tests for client confusion attacks
+* link:../../src/test/java/de/cuioss/jwt/validation/TokenFactorySecurityEventTest.java[TokenFactorySecurityEventTest.java] - Tests for security event tracking
+* link:../../src/test/java/de/cuioss/jwt/validation/security/KeyDisclosureVulnerabilityTest.java[KeyDisclosureVulnerabilityTest.java] - Tests for key disclosure vulnerabilities
+* link:../../src/test/java/de/cuioss/jwt/validation/security/TokenCrackingResistanceTest.java[TokenCrackingResistanceTest.java] - Tests for token cracking resistance
 
 These tests cover:
 
@@ -190,7 +190,7 @@ These tests cover:
 
 ==== Key Disclosure Vulnerability Tests
 
-The link:../../src/test/java/de/cuioss/jwt/token/security/KeyDisclosureVulnerabilityTest.java[KeyDisclosureVulnerabilityTest.java] class verifies that private keys are not exposed and that sensitive key material is properly protected. Key disclosure vulnerabilities can lead to complete compromise of the JWT token security model, as an attacker with access to private keys can forge valid tokens.
+The link:../../src/test/java/de/cuioss/jwt/validation/security/KeyDisclosureVulnerabilityTest.java[KeyDisclosureVulnerabilityTest.java] class verifies that private keys are not exposed and that sensitive key material is properly protected. Key disclosure vulnerabilities can lead to complete compromise of the JWT token security model, as an attacker with access to private keys can forge valid tokens.
 
 This test class verifies:
 
@@ -206,7 +206,7 @@ Testing uses a combination of direct API inspection, reflection, file system che
 
 ==== Token Cracking Resistance Tests
 
-The link:../../src/test/java/de/cuioss/jwt/token/security/TokenCrackingResistanceTest.java[TokenCrackingResistanceTest.java] class verifies that tokens use strong cryptographic algorithms and have sufficient entropy to resist cracking attempts. Token cracking refers to attempts to forge or predict JWT signatures, which would allow attackers to create valid tokens without possessing the private key.
+The link:../../src/test/java/de/cuioss/jwt/validation/security/TokenCrackingResistanceTest.java[TokenCrackingResistanceTest.java] class verifies that tokens use strong cryptographic algorithms and have sufficient entropy to resist cracking attempts. Token cracking refers to attempts to forge or predict JWT signatures, which would allow attackers to create valid tokens without possessing the private key.
 
 This test class verifies:
 
@@ -227,7 +227,7 @@ Performance testing has been implemented to verify that the JWT token handling l
 
 The following test class implements performance testing:
 
-* link:../../src/test/java/de/cuioss/jwt/token/TokenFactoryPerformanceTest.java[TokenFactoryPerformanceTest.java] - Tests for token parsing and validation performance
+* link:../../src/test/java/de/cuioss/jwt/validation/TokenFactoryPerformanceTest.java[TokenFactoryPerformanceTest.java] - Tests for token parsing and validation performance
 
 These tests cover:
 
@@ -252,9 +252,9 @@ Comprehensive logging tests have been implemented to verify that the JWT token h
 
 The following test classes implement these logging tests:
 
-* link:../../src/test/java/de/cuioss/jwt/token/TokenFactoryTest.java[TokenFactoryTest.java] - Contains a nested class `TokenLoggingTests` with tests for token-related logging
-* link:../../src/test/java/de/cuioss/jwt/token/flow/TokenClaimValidatorTest.java[TokenClaimValidatorTest.java] - Contains tests that verify logging for claim validation
-* link:../../src/test/java/de/cuioss/jwt/token/flow/TokenSignatureValidatorTest.java[TokenSignatureValidatorTest.java] - Contains tests that verify logging for signature validation
+* link:../../src/test/java/de/cuioss/jwt/validation/TokenFactoryTest.java[TokenFactoryTest.java] - Contains a nested class `TokenLoggingTests` with tests for token-related logging
+* link:../../src/test/java/de/cuioss/jwt/validation/flow/TokenClaimValidatorTest.java[TokenClaimValidatorTest.java] - Contains tests that verify logging for claim validation
+* link:../../src/test/java/de/cuioss/jwt/validation/flow/TokenSignatureValidatorTest.java[TokenSignatureValidatorTest.java] - Contains tests that verify logging for signature validation
 
 These tests cover:
 
@@ -318,10 +318,10 @@ Compliance tests have been implemented to verify that the JWT token handling lib
 
 The following test classes implement these compliance tests:
 
-* link:../../src/test/java/de/cuioss/jwt/token/RFC7519JWTComplianceTest.java[RFC7519JWTComplianceTest.java] - Tests compliance with the JWT specification defined in RFC 7519
-* link:../../src/test/java/de/cuioss/jwt/token/OpenIDConnectComplianceTest.java[OpenIDConnectComplianceTest.java] - Tests compliance with OpenID Connect Certification requirements
-* link:../../src/test/java/de/cuioss/jwt/token/OAuth2JWTBestPracticesComplianceTest.java[OAuth2JWTBestPracticesComplianceTest.java] - Tests compliance with OAuth 2.0 JWT Best Current Practices
-* link:../../src/test/java/de/cuioss/jwt/token/test/JwtTokenTamperingUtil.java[JwtTokenTamperingUtil.java] - Utility class for tampering with JWT tokens for testing purposes
+* link:../../src/test/java/de/cuioss/jwt/validation/RFC7519JWTComplianceTest.java[RFC7519JWTComplianceTest.java] - Tests compliance with the JWT specification defined in RFC 7519
+* link:../../src/test/java/de/cuioss/jwt/validation/OpenIDConnectComplianceTest.java[OpenIDConnectComplianceTest.java] - Tests compliance with OpenID Connect Certification requirements
+* link:../../src/test/java/de/cuioss/jwt/validation/OAuth2JWTBestPracticesComplianceTest.java[OAuth2JWTBestPracticesComplianceTest.java] - Tests compliance with OAuth 2.0 JWT Best Current Practices
+* link:../../src/test/java/de/cuioss/jwt/validation/test/JwtTokenTamperingUtil.java[JwtTokenTamperingUtil.java] - Utility class for tampering with JWT tokens for testing purposes
 
 These tests cover:
 
@@ -345,7 +345,7 @@ These tests cover:
 
 ==== JWT Token Tampering Testing
 
-The link:../../src/test/java/de/cuioss/jwt/token/test/JwtTokenTamperingUtil.java[JwtTokenTamperingUtil] class provides a comprehensive approach to testing JWT token signature tampering. This utility implements best practices for testing JWT signature tampering as documented in Test-Failure.adoc.
+The link:../../src/test/java/de/cuioss/jwt/validation/test/JwtTokenTamperingUtil.java[JwtTokenTamperingUtil] class provides a comprehensive approach to testing JWT token signature tampering. This utility implements best practices for testing JWT signature tampering as documented in Test-Failure.adoc.
 
 The class provides the following tampering strategies:
 
@@ -363,7 +363,7 @@ The utility is used in the OAuth2JWTBestPracticesComplianceTest class to verify 
 [source, java]
 ----
 // In OAuth2JWTBestPracticesComplianceTest.SignatureValidationTests
-@DisplayName("3.3b: Reject access-token with invalid signature")
+@DisplayName("3.3b: Reject access-validation with invalid signature")
 @ParameterizedTest
 @TypeGeneratorSource(value = AccessTokenGenerator.class, count = 50)
 void shouldRejectAccessTokenWithInvalidSignature(String token) {

@@ -67,7 +67,7 @@ image::doc/plantuml/component-overview.png[Component Overview]
 
 === TokenFactory: The Main Entry Point
 
-The link:src/main/java/de/cuioss/jwt/token/TokenFactory.java[TokenFactory] serves as the primary entry point for token operations.
+The link:src/main/java/de/cuioss/jwt/validation/TokenFactory.java[TokenFactory] serves as the primary entry point for token operations.
 It provides:
 
 * Centralized token creation and validation
@@ -103,10 +103,10 @@ Optional<RefreshTokenContent> refreshToken = factory.createRefreshToken(tokenStr
 
 The module uses a pipeline approach for token validation:
 
-* link:src/main/java/de/cuioss/jwt/token/flow/TokenHeaderValidator.java[TokenHeaderValidator]: Validates token headers (algorithm, issuer)
-* link:src/main/java/de/cuioss/jwt/token/flow/TokenSignatureValidator.java[TokenSignatureValidator]: Validates token signatures using JWKS
-* link:src/main/java/de/cuioss/jwt/token/flow/TokenBuilder.java[TokenBuilder]: Creates token content objects
-* link:src/main/java/de/cuioss/jwt/token/flow/TokenClaimValidator.java[TokenClaimValidator]: Validates token claims (expiration, audience, etc.)
+* link:src/main/java/de/cuioss/jwt/validation/flow/TokenHeaderValidator.java[TokenHeaderValidator]: Validates token headers (algorithm, issuer)
+* link:src/main/java/de/cuioss/jwt/validation/flow/TokenSignatureValidator.java[TokenSignatureValidator]: Validates token signatures using JWKS
+* link:src/main/java/de/cuioss/jwt/validation/flow/TokenBuilder.java[TokenBuilder]: Creates token content objects
+* link:src/main/java/de/cuioss/jwt/validation/flow/TokenClaimValidator.java[TokenClaimValidator]: Validates token claims (expiration, audience, etc.)
 
 === Multi-Issuer Support
 
@@ -193,23 +193,23 @@ The module uses a flexible architecture based on inheritance and composition:
 
 image::doc/plantuml/token-types.png[Token Types]
 
-* link:src/main/java/de/cuioss/jwt/token/domain/token/TokenContent.java[TokenContent]: Core interface defining JWT token functionality
-* link:src/main/java/de/cuioss/jwt/token/domain/token/BaseTokenContent.java[BaseTokenContent]: Abstract base class implementing common token functionality
-* link:src/main/java/de/cuioss/jwt/token/domain/token/MinimalTokenContent.java[MinimalTokenContent]: Minimal interface for tokens without claims
+* link:src/main/java/de/cuioss/jwt/validation/domain/token/TokenContent.java[TokenContent]: Core interface defining JWT token functionality
+* link:src/main/java/de/cuioss/jwt/validation/domain/token/BaseTokenContent.java[BaseTokenContent]: Abstract base class implementing common token functionality
+* link:src/main/java/de/cuioss/jwt/validation/domain/token/MinimalTokenContent.java[MinimalTokenContent]: Minimal interface for tokens without claims
 
 === Token Types
 
 The module supports three token types, each with specific functionality:
 
-* link:src/main/java/de/cuioss/jwt/token/domain/token/AccessTokenContent.java[AccessTokenContent]: OAuth2 access token with scope and role support
+* link:src/main/java/de/cuioss/jwt/validation/domain/token/AccessTokenContent.java[AccessTokenContent]: OAuth2 access token with scope and role support
 ** Extends BaseTokenContent for common token functionality
 ** Provides enhanced scope and role management
 ** Supports email and preferred username claims
-* link:src/main/java/de/cuioss/jwt/token/domain/token/IdTokenContent.java[IdTokenContent]: OpenID Connect ID token for user identity
+* link:src/main/java/de/cuioss/jwt/validation/domain/token/IdTokenContent.java[IdTokenContent]: OpenID Connect ID token for user identity
 ** Extends BaseTokenContent for common token functionality
 ** Focuses on identity information claims
 ** Provides access to name and email claims
-* link:src/main/java/de/cuioss/jwt/token/domain/token/RefreshTokenContent.java[RefreshTokenContent]: OAuth2 refresh token
+* link:src/main/java/de/cuioss/jwt/validation/domain/token/RefreshTokenContent.java[RefreshTokenContent]: OAuth2 refresh token
 ** Implements MinimalTokenContent interface
 ** Treats refresh tokens as opaque strings per OAuth2 specification
 
@@ -251,7 +251,7 @@ image::doc/plantuml/security-controls.png[Security Controls]
 
 === TokenFactoryConfig Security Settings
 
-The `TokenFactoryConfig` class provides important security settings for token processing:
+The `TokenValidatorConfig` class provides important security settings for token processing:
 
 [source,java]
 ----
@@ -282,9 +282,9 @@ For more details on security considerations, see the link:doc/Threat-Model.adoc[
 
 === General Recommendations
 
-1. Always use `TokenFactory` as the main entry point for all token operations
+1. Always use `TokenValidator` as the main entry point for all token operations
 2. Configure `IssuerConfig` with appropriate validation settings for each issuer
-3. Use `TokenFactoryConfig` to customize token size limits and security settings
+3. Use `TokenValidatorConfig` to customize token size limits and security settings
 4. Use TLS for JWKS endpoints in production environments
 5. Validate token scopes and roles before granting access to protected resources
 6. Handle token expiration appropriately with proper error messages
@@ -356,15 +356,17 @@ To reference the generated PNG images in AsciiDoc documentation, use the followi
 
 For documents in the root directory (like this README):
 
-```
+[source]
+----
 image::doc/plantuml/diagram-name.png[Diagram Title]
-```
+----
 
 For documents in the `doc` directory:
 
-```
+[source]
+----
 image::plantuml/diagram-name.png[Diagram Title]
-```
+----
 
 === Adding New Diagrams
 
