@@ -9,27 +9,27 @@
         <version>0.9.9</version>
         <relativePath/>
     </parent>
-    <artifactId>cui-jwt-token-handling</artifactId>
+    <artifactId>cui-jwt-validation</artifactId>
     <name>JWT Token Handling</name>
     <version>1.0.0-SNAPSHOT</version>
     <description>A comprehensive framework for handling JWT tokens in multi-issuer environments.
         The module provides robust token parsing, validation, and management capabilities
-        with a focus on security and ease of use, utilizing Bouncy Castle for cryptographic operations.
+        with a focus on security and ease of use, using Bouncy Castle for cryptographic operations.
     </description>
     <packaging>jar</packaging>
-    <url>https://github.com/cuioss/cui-jwt-token-handling/</url>
+    <url>https://github.com/cuioss/cui-jwt-validation/</url>
     <scm>
-        <url>https://github.com/cuioss/cui-jwt-token-handling/</url>
+        <url>https://github.com/cuioss/cui-jwt-validation/</url>
         <connection>
-            scm:git:https://github.com/cuioss/cui-jwt-token-handling.git
+            scm:git:https://github.com/cuioss/cui-jwt-validation.git
         </connection>
         <developerConnection>
-            scm:git:https://github.com/cuioss/cui-jwt-token-handling/
+            scm:git:https://github.com/cuioss/cui-jwt-validation/
         </developerConnection>
         <tag>HEAD</tag>
     </scm>
     <issueManagement>
-        <url>https://github.com/cuioss/cui-jwt-token-handling/issues</url>
+        <url>https://github.com/cuioss/cui-jwt-validation/issues</url>
         <system>GitHub Issues</system>
     </issueManagement>
     <properties>

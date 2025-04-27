@@ -20,7 +20,7 @@ import de.cuioss.tools.logging.LogRecordModel;
 import lombok.experimental.UtilityClass;
 
 /**
- * Provides logging messages for the cui-jwt-token-handling module.
+ * Provides logging messages for the cui-jwt-validation module.
  * All messages follow the format: JWTToken-[identifier]: [message]
  *
  * @since 1.0

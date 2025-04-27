@@ -1,17 +1,17 @@
-= cui-jwt-token-handling
+= cui-jwt-validation
 
 == Status
 
-image:https://github.com/cuioss/cui-jwt-token-handling/actions/workflows/maven.yml/badge.svg[Java CI with Maven,link=https://github.com/cuioss/cui-jwt-token-handling/actions/workflows/maven.yml]
+image:https://github.com/cuioss/cui-jwt-validation/actions/workflows/maven.yml/badge.svg[Java CI with Maven,link=https://github.com/cuioss/cui-jwt-validation/actions/workflows/maven.yml]
 image:http://img.shields.io/:license-apache-blue.svg[License,link=http://www.apache.org/licenses/LICENSE-2.0.html]
-image:https://maven-badges.herokuapp.com/maven-central/de.cuioss/cui-jwt-token-handling/badge.svg[Maven Central,link=https://maven-badges.herokuapp.com/maven-central/de.cuioss/cui-jwt-token-handling]
+image:https://maven-badges.herokuapp.com/maven-central/de.cuioss/cui-jwt-validation/badge.svg[Maven Central,link=https://maven-badges.herokuapp.com/maven-central/de.cuioss/cui-jwt-validation]
 
-https://sonarcloud.io/summary/new_code?id=cuioss_cui-jwt-token-handling[image:https://sonarcloud.io/api/project_badges/measure?project=cuioss_cui-jwt-token-handling&metric=alert_status[Quality
+https://sonarcloud.io/summary/new_code?id=cuioss_cui-jwt-validation[image:https://sonarcloud.io/api/project_badges/measure?project=cuioss_cui-jwt-validation&metric=alert_status[Quality
 Gate Status]]
-image:https://sonarcloud.io/api/project_badges/measure?project=cuioss_cui-jwt-token-handling&metric=ncloc[Lines of Code,link=https://sonarcloud.io/summary/new_code?id=cuioss_cui-jwt-token-handling]
-image:https://sonarcloud.io/api/project_badges/measure?project=cuioss_cui-jwt-token-handling&metric=coverage[Coverage,link=https://sonarcloud.io/summary/new_code?id=cuioss_cui-jwt-token-handling]
+image:https://sonarcloud.io/api/project_badges/measure?project=cuioss_cui-jwt-validation&metric=ncloc[Lines of Code,link=https://sonarcloud.io/summary/new_code?id=cuioss_cui-jwt-validation]
+image:https://sonarcloud.io/api/project_badges/measure?project=cuioss_cui-jwt-validation&metric=coverage[Coverage,link=https://sonarcloud.io/summary/new_code?id=cuioss_cui-jwt-validation]
 
-https://cuioss.github.io/cui-jwt-token-handling/about.html[Generated Documentation on github-pages]
+https://cuioss.github.io/cui-jwt-validation/about.html[Generated Documentation on github-pages]
 
 == What is it?
 
@@ -41,7 +41,7 @@ Key features include:
 ----
     <dependency>
         <groupId>de.cuioss</groupId>
-        <artifactId>cui-jwt-token-handling</artifactId>
+        <artifactId>cui-jwt-validation</artifactId>
     </dependency>
 ----
 

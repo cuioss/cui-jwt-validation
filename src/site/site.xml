@@ -17,7 +17,7 @@
     <body>
         <links>
             <item name="Home"
-                href="https://github.com/cuioss/cui-jwt-token-handling" />
+                href="https://github.com/cuioss/cui-jwt-validation" />
         </links>
         <menu name="Overview">
         <item name="About" href="about.html"></item>
