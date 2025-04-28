@@ -48,17 +48,17 @@ HttpJwksLoaderConfig httpConfig = HttpJwksLoaderConfig.builder()
         .build();
 
 // Create issuer configurations
-IssuerConfig issuer1Config = IssuerConfig.builder()
+IssuerConfig issuerHttpConfig = IssuerConfig.builder()
         .issuer("https://issuer1.com")
         .httpJwksLoaderConfig(httpConfig) // Configure HTTP-based JWKS loading
         .build();
 
-IssuerConfig issuer2Config = IssuerConfig.builder()
+IssuerConfig issuerPathConfig = IssuerConfig.builder()
         .issuer("https://issuer2.com")
         .jwksFilePath("/path/to/jwks.json") // Configure file-based JWKS loading
         .build();
 
-IssuerConfig issuer3Config = IssuerConfig.builder()
+IssuerConfig issuerMemoryConfig = IssuerConfig.builder()
         .issuer("https://issuer3.com")
         .jwksContent("{\"keys\":[{\"kty\":\"RSA\",\"kid\":\"key-id\",\"use\":\"sig\",\"alg\":\"RS256\",\"n\":\"...\",\"e\":\"...\"}]}") // Configure in-memory JWKS loading
         .build();
@@ -66,7 +66,7 @@ IssuerConfig issuer3Config = IssuerConfig.builder()
 // Create a validator supporting all issuers
 // The validator creates a SecurityEventCounter internally and passes it to all components
 TokenValidator validator = new TokenValidator(
-        issuer1Config, issuer2Config, issuer3Config);
+        issuerHttpConfig, issuerPathConfig, issuerMemoryConfig);
 
 // You can access the SecurityEventCounter for monitoring security events
 SecurityEventCounter securityEventCounter = validator.getSecurityEventCounter();
