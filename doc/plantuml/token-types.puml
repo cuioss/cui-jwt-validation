@@ -1,65 +1,64 @@
 @startuml
 !include plantuml.skin
 
+interface "Serializable" as Serializable {
+}
+
+interface "MinimalTokenContent" as MinimalTokenContent {
+  +getRawToken(): String
+  +getTokenType(): TokenType
+}
+
 interface "TokenContent" as TokenContent {
+  +getClaims(): Map<String, ClaimValue>
+  +getClaimOption(name: ClaimName): Optional<ClaimValue>
   +getIssuer(): String
   +getSubject(): String
-  +getAudience(): List<String>
-  +getExpirationTime(): Date
-  +getNotBefore(): Date
-  +getIssuedAt(): Date
-  +getTokenId(): String
+  +getExpirationTime(): OffsetDateTime
+  +getIssuedAtTime(): OffsetDateTime
+  +getNotBefore(): Optional<OffsetDateTime>
   +isExpired(): boolean
 }
 
 abstract class "BaseTokenContent" as BaseTokenContent {
-  -issuer: String
-  -subject: String
-  -audience: List<String>
-  -expirationTime: Date
-  -notBefore: Date
-  -issuedAt: Date
-  -tokenId: String
-  +isExpired(): boolean
-}
-
-interface "MinimalTokenContent" as MinimalTokenContent {
-  +getTokenString(): String
+  -claims: Map<String, ClaimValue>
+  -rawToken: String
+  -tokenType: TokenType
 }
 
 class "AccessTokenContent" as AccessTokenContent {
-  -scope: Set<String>
-  -roles: Set<String>
   -email: String
-  -preferredUsername: String
-  +hasScope(scope: String): boolean
-  +hasRole(role: String): boolean
-  +getEmail(): String
-  +getPreferredUsername(): String
+  +getAudience(): Optional<List<String>>
+  +getScopes(): List<String>
+  +getEmail(): Optional<String>
+  +getPreferredUsername(): Optional<String>
+  +providesScopes(expectedScopes: Collection<String>): boolean
+  +providesScopesAndDebugIfScopesAreMissing(expectedScopes: Collection<String>, logContext: String, logger: CuiLogger): boolean
+  +determineMissingScopes(expectedScopes: Collection<String>): Set<String>
 }
 
 class "IdTokenContent" as IdTokenContent {
-  -name: String
-  -email: String
-  -emailVerified: boolean
-  -preferredUsername: String
-  -authTime: Date
-  -acr: String
-  -amr: List<String>
-  +getName(): String
-  +getEmail(): String
-  +isEmailVerified(): boolean
-  +getPreferredUsername(): String
-  +getAuthTime(): Date
-  +getAcr(): String
-  +getAmr(): List<String>
+  +getAudience(): List<String>
+  +getName(): Optional<String>
+  +getEmail(): Optional<String>
 }
 
 class "RefreshTokenContent" as RefreshTokenContent {
-  -tokenString: String
-  +getTokenString(): String
+  -rawToken: String
+  -claims: Map<String, ClaimValue>
+  +getTokenType(): TokenType
 }
 
+enum "TokenType" as TokenType {
+  ACCESS_TOKEN
+  ID_TOKEN
+  REFRESH_TOKEN
+  UNKNOWN
+  +fromTypClaim(typeClaimName: String): TokenType
+}
+
+Serializable <|-- MinimalTokenContent
+MinimalTokenContent <|-- TokenContent
 TokenContent <|.. BaseTokenContent
 MinimalTokenContent <|.. RefreshTokenContent
 BaseTokenContent <|-- AccessTokenContent

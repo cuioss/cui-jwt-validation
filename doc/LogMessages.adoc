@@ -19,7 +19,7 @@ Note: Only log level INFO and above are documented in this file.
 [cols="1,1,2,2", options="header"]
 |===
 |ID |Component |Message |Description
-|JWTToken-001 |TOKEN |TokenFactory initialized with %s issuer configurations |Logged when TokenFactory is initialized with issuer configurations
+|JWTToken-001 |TOKEN |TokenValidator initialized with %s issuer configurations |Logged when TokenValidator is initialized with issuer configurations
 |JWTToken-002 |JWKS |Successfully loaded and parsed JWKS from %s with %s keys |Logged when JWKS is successfully loaded and parsed from a remote endpoint
 |===
 
@@ -69,4 +69,3 @@ Note: Only log level INFO and above are documented in this file.
 |ID |Component |Message |Description
 |JWTToken-201 |TOKEN |Failed to validate token signature: %s |Logged when a token signature validation fails
 |===
-

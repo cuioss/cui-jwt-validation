@@ -26,8 +26,6 @@ image::plantuml/threat-model-dataflow.png[Threat Model Data Flow]
 
 == STRIDE Threat Analysis
 
-image::plantuml/attack-vectors.png[Attack Vectors and Mitigations]
-
 === Spoofing
 _See Requirement link:Requirements.adoc#CUI-JWT-8.1[CUI-JWT-8.1: Token Size Limits] and link:Requirements.adoc#CUI-JWT-8.4[CUI-JWT-8.4: Claims Validation]_
 

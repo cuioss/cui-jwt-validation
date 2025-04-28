@@ -1,7 +1,7 @@
 @startuml
 !include plantuml.skin
 
-participant "TokenFactory" as TokenFactory
+participant "TokenValidator" as TokenValidator
 participant "JwksLoaderFactory" as JwksLoaderFactory
 participant "HttpJwksLoader" as HttpLoader
 participant "FileJwksLoader" as FileLoader
@@ -11,52 +11,52 @@ participant "JWKS Endpoint" as Endpoint
 
 == Initialization ==
 
-TokenFactory -> JwksLoaderFactory : createHttpJwksLoader(config)
-JwksLoaderFactory -> HttpLoader : new HttpJwksLoader(config)
-HttpLoader -> HttpLoader : scheduleRefresh()
+TokenValidator -> JwksLoaderFactory : "createHttpJwksLoader(config)"
+JwksLoaderFactory -> HttpLoader : "new HttpJwksLoader(config)"
+HttpLoader -> HttpLoader : "scheduleRefresh()"
 
-TokenFactory -> JwksLoaderFactory : createFileJwksLoader(path)
-JwksLoaderFactory -> FileLoader : new FileJwksLoader(path)
+TokenValidator -> JwksLoaderFactory : "createFileJwksLoader(path)"
+JwksLoaderFactory -> FileLoader : "new FileJwksLoader(path)"
 
-TokenFactory -> JwksLoaderFactory : createInMemoryJwksLoader(content)
-JwksLoaderFactory -> MemLoader : new InMemoryJwksLoader(content)
+TokenValidator -> JwksLoaderFactory : "createInMemoryJwksLoader(content)"
+JwksLoaderFactory -> MemLoader : "new InMemoryJwksLoader(content)"
 
 == Key Retrieval ==
 
-TokenFactory -> HttpLoader : getKey(keyId)
-HttpLoader -> Cache : get(keyId)
-Cache --> HttpLoader : key (if exists)
+TokenValidator -> HttpLoader : "getKey(keyId)"
+HttpLoader -> Cache : "get(keyId)"
+Cache --> HttpLoader : "key (if exists)"
 
 alt Key not in cache
-    HttpLoader -> Endpoint : fetch JWKS
-    Endpoint --> HttpLoader : JWKS data
-    HttpLoader -> HttpLoader : parse JWKS
-    HttpLoader -> Cache : store keys
-    Cache --> HttpLoader : confirmation
-    HttpLoader -> HttpLoader : find key by ID
+    HttpLoader -> Endpoint : "fetch JWKS"
+    Endpoint --> HttpLoader : "JWKS data"
+    HttpLoader -> HttpLoader : "parse JWKS"
+    HttpLoader -> Cache : "store keys"
+    Cache --> HttpLoader : "confirmation"
+    HttpLoader -> HttpLoader : "find key by ID"
 end
 
-HttpLoader --> TokenFactory : return key
+HttpLoader --> TokenValidator : "return key"
 
 == Automatic Key Rotation ==
 
-HttpLoader -> HttpLoader : refreshInterval elapsed
+HttpLoader -> HttpLoader : "refreshInterval elapsed"
 activate HttpLoader
-HttpLoader -> Endpoint : fetch JWKS
-Endpoint --> HttpLoader : JWKS data
-HttpLoader -> HttpLoader : parse JWKS
-HttpLoader -> Cache : update keys
-Cache --> HttpLoader : confirmation
+HttpLoader -> Endpoint : "fetch JWKS"
+Endpoint --> HttpLoader : "JWKS data"
+HttpLoader -> HttpLoader : "parse JWKS"
+HttpLoader -> Cache : "update keys"
+Cache --> HttpLoader : "confirmation"
 deactivate HttpLoader
 
 == Key Selection ==
 
-TokenFactory -> HttpLoader : getKey(keyId)
-HttpLoader -> Cache : get(keyId)
-Cache --> HttpLoader : key
-HttpLoader --> TokenFactory : return key
+TokenValidator -> HttpLoader : "getKey(keyId)"
+HttpLoader -> Cache : "get(keyId)"
+Cache --> HttpLoader : "key"
+HttpLoader --> TokenValidator : "return key"
 
-TokenFactory -> TokenFactory : validate token\nwith key
+TokenValidator -> TokenValidator : "validate token\nwith key"
 
 note right of HttpLoader
   Key rotation happens:

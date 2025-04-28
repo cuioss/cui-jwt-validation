@@ -10,9 +10,9 @@
         <relativePath/>
     </parent>
     <artifactId>cui-jwt-validation</artifactId>
-    <name>JWT Token Handling</name>
+    <name>JWT Token Validation</name>
     <version>1.0.0-SNAPSHOT</version>
-    <description>A comprehensive framework for handling JWT tokens in multi-issuer environments.
+    <description>A comprehensive framework for validating JWT tokens in multi-issuer environments.
         The module provides robust token parsing, validation, and management capabilities
         with a focus on security and ease of use, using Bouncy Castle for cryptographic operations.
     </description>

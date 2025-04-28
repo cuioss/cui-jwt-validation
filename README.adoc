@@ -15,10 +15,10 @@ https://cuioss.github.io/cui-jwt-validation/about.html[Generated Documentation o
 
 == What is it?
 
-A comprehensive framework for handling JWT tokens in multi-issuer environments.
+A comprehensive library for validating JWT tokens in multi-issuer environments.
 The core idea is to leverage offline-validation of JWT tokens.
 
-The module provides robust token parsing, validation, and management capabilities with a focus on security and ease of use.
+The module provides robust token parsing and validation capabilities with a focus on security and ease of use.
 
 Key features include:
 
@@ -32,7 +32,8 @@ Key features include:
 
 [NOTE]
 ====
- This library is not meant as a replacement for a full-fledged OAuth2 or OpenID Connect library. Therefore it will never be capable of creating tokens itself.
+This library is not meant as a replacement for a full-fledged OAuth2 or OpenID Connect library.
+Therefore it will never be capable of creating tokens itself.
 ====
 
 === Maven Coordinates
@@ -65,9 +66,9 @@ Alternatively, you can use any other Jakarta JSON API implementation.
 
 image::doc/plantuml/component-overview.png[Component Overview]
 
-=== TokenFactory: The Main Entry Point
+=== TokenValidator: The Main Entry Point
 
-The link:src/main/java/de/cuioss/jwt/validation/TokenFactory.java[TokenFactory] serves as the primary entry point for token operations.
+The `TokenValidator` serves as the primary entry point for token operations.
 It provides:
 
 * Centralized token creation and validation
@@ -75,85 +76,24 @@ It provides:
 * Pipeline-based token validation
 * Support for multiple issuers
 
-[source,java]
-----
-// Create issuer configurations
-IssuerConfig issuerConfig = IssuerConfig.builder()
-        .issuer("https://issuer1.com")
-        .expectedAudience("client-id") // Can add multiple audiences with multiple calls
-        .expectedClientId("client-id") // Can add multiple client IDs with multiple calls
-        // Configure JWKS loading (one of the following options)
-        .httpJwksLoaderConfig(httpJwksLoaderConfig) // Option 1: HTTP-based JWKS
-        // .jwksFilePath("/path/to/jwks.json") // Option 2: File-based JWKS
-        // .jwksContent(jwksContent) // Option 3: In-memory JWKS content
-        .build();
-
-// Create a factory with multiple issuer configurations
-TokenFactory factory = new TokenFactory(
-        TokenFactoryConfig.builder().build(),
-        issuerConfig);
-
-// Create and validate tokens
-Optional<AccessTokenContent> accessToken = factory.createAccessToken(tokenString);
-Optional<IdTokenContent> idToken = factory.createIdToken(tokenString);
-Optional<RefreshTokenContent> refreshToken = factory.createRefreshToken(tokenString);
-----
+For detailed usage examples, see the link:doc/Usage.adoc[Usage Guide].
 
 === Token Validation Pipeline
 
 The module uses a pipeline approach for token validation:
 
-* link:src/main/java/de/cuioss/jwt/validation/flow/TokenHeaderValidator.java[TokenHeaderValidator]: Validates token headers (algorithm, issuer)
-* link:src/main/java/de/cuioss/jwt/validation/flow/TokenSignatureValidator.java[TokenSignatureValidator]: Validates token signatures using JWKS
-* link:src/main/java/de/cuioss/jwt/validation/flow/TokenBuilder.java[TokenBuilder]: Creates token content objects
-* link:src/main/java/de/cuioss/jwt/validation/flow/TokenClaimValidator.java[TokenClaimValidator]: Validates token claims (expiration, audience, etc.)
+* `TokenHeaderValidator`: Validates token headers (algorithm, issuer)
+* `TokenSignatureValidator`: Validates token signatures using JWKS
+* `TokenBuilder`: Creates token content objects
+* `TokenClaimValidator`: Validates token claims (expiration, audience, etc.)
 
 === Multi-Issuer Support
 
-The module provides robust support for multi-issuer environments through:
+The module provides robust support for multi-issuer environments with configuration of multiple issuers, automatic issuer detection, and thread-safe token validation.
 
-image::doc/plantuml/multi-issuer-support.png[Multi-Issuer Support]
+For detailed information about multi-issuer support and key management, see the link:doc/specification/technical-components.adoc#_issuerconfig_and_multi_issuer_support[Multi-Issuer Support] section in the technical components specification.
 
-* Configuration of multiple issuers with IssuerConfig objects
-* Automatic issuer detection and validation
-* Thread-safe token validation
-
-image::doc/plantuml/key-management.png[Key Management]
-
-[source,java]
-----
-// Create JWKS loader configurations for different issuers
-// Option 1: HTTP-based JWKS loader with automatic key rotation
-HttpJwksLoaderConfig httpConfig = HttpJwksLoaderConfig.builder()
-        .jwksUrl("https://issuer1.com/.well-known/jwks.json")
-        .refreshIntervalSeconds(60) // Refresh keys every 60 seconds
-        .build();
-
-// Create issuer configurations
-IssuerConfig issuer1Config = IssuerConfig.builder()
-        .issuer("https://issuer1.com")
-        .httpJwksLoaderConfig(httpConfig) // Configure HTTP-based JWKS loading
-        .build();
-
-IssuerConfig issuer2Config = IssuerConfig.builder()
-        .issuer("https://issuer2.com")
-        .jwksFilePath("/path/to/jwks.json") // Configure file-based JWKS loading
-        .build();
-
-IssuerConfig issuer3Config = IssuerConfig.builder()
-        .issuer("https://issuer3.com")
-        .jwksContent("{\"keys\":[{\"kty\":\"RSA\",\"kid\":\"key-id\",\"use\":\"sig\",\"alg\":\"RS256\",\"n\":\"...\",\"e\":\"...\"}]}") // Configure in-memory JWKS loading
-        .build();
-
-// Create a factory supporting all issuers
-// The factory creates a SecurityEventCounter internally and passes it to all components
-TokenFactory factory = new TokenFactory(
-        TokenFactoryConfig.builder().build(),
-        issuer1Config, issuer2Config, issuer3Config);
-
-// You can access the SecurityEventCounter for monitoring security events
-SecurityEventCounter securityEventCounter = factory.getSecurityEventCounter();
-----
+For detailed examples of multi-issuer configuration, see the link:doc/Usage.adoc[Usage Guide].
 
 === Custom Claim Mappers
 
@@ -163,81 +103,24 @@ The module supports custom claim mappers that take precedence over the default o
 * Handle non-standard claims like "role" from specific identity providers
 * Extend the system with custom claim mapping logic
 
-[source,java]
-----
-// Create a custom claim mapper for the "role" claim
-ClaimMapper roleMapper = new JsonCollectionMapper();
-
-// Add the custom mapper to the issuer configuration
-IssuerConfig issuerConfig = IssuerConfig.builder()
-        .issuer("https://issuer.com")
-        .jwksLoader(jwksLoader)
-        // Add custom claim mapper for "role" claim
-        .claimMapper("role", roleMapper)
-        .build();
-
-// Create a factory with the configured issuer
-TokenFactory factory = new TokenFactory(
-        TokenFactoryConfig.builder().build(),
-        issuerConfig);
-
-// The custom mapper will be used when processing tokens with the "role" claim
-Optional<AccessTokenContent> accessToken = factory.createAccessToken(tokenString);
-----
+For examples of custom claim mapper configuration, see the link:doc/Usage.adoc[Usage Guide].
 
 == Token Architecture and Types
 
-=== Architecture
+The module uses a flexible architecture based on inheritance and composition, supporting three token types: AccessTokenContent, IdTokenContent, and RefreshTokenContent.
 
-The module uses a flexible architecture based on inheritance and composition:
-
-image::doc/plantuml/token-types.png[Token Types]
-
-* link:src/main/java/de/cuioss/jwt/validation/domain/token/TokenContent.java[TokenContent]: Core interface defining JWT token functionality
-* link:src/main/java/de/cuioss/jwt/validation/domain/token/BaseTokenContent.java[BaseTokenContent]: Abstract base class implementing common token functionality
-* link:src/main/java/de/cuioss/jwt/validation/domain/token/MinimalTokenContent.java[MinimalTokenContent]: Minimal interface for tokens without claims
-
-=== Token Types
-
-The module supports three token types, each with specific functionality:
-
-* link:src/main/java/de/cuioss/jwt/validation/domain/token/AccessTokenContent.java[AccessTokenContent]: OAuth2 access token with scope and role support
-** Extends BaseTokenContent for common token functionality
-** Provides enhanced scope and role management
-** Supports email and preferred username claims
-* link:src/main/java/de/cuioss/jwt/validation/domain/token/IdTokenContent.java[IdTokenContent]: OpenID Connect ID token for user identity
-** Extends BaseTokenContent for common token functionality
-** Focuses on identity information claims
-** Provides access to name and email claims
-* link:src/main/java/de/cuioss/jwt/validation/domain/token/RefreshTokenContent.java[RefreshTokenContent]: OAuth2 refresh token
-** Implements MinimalTokenContent interface
-** Treats refresh tokens as opaque strings per OAuth2 specification
+For detailed information about token architecture and types, see the link:doc/specification/technical-components.adoc#_token_architecture_and_types[Token Architecture and Types] section in the technical components specification.
 
 == Documentation
 
-The project includes comprehensive documentation:
+The project includes comprehensive documentation across several categories:
 
-=== Core Documentation
-
-* link:doc/Requirements.adoc[Requirements] - Functional and non-functional requirements
-* link:doc/Specification.adoc[Specification] - Technical specification and architecture
-* link:doc/Threat-Model.adoc[Threat Model] - Security threat analysis and mitigations
-
-=== Technical Documentation
-
-* link:doc/specification/technical-components.adoc[Technical Components] - Detailed component specifications
-* link:doc/specification/security.adoc[Security Specification] - Security implementation details
-* link:doc/specification/token-size-validation.adoc[Token Size Validation] - Token size validation details
-* link:doc/specification/token-decryption.adoc[Token Decryption] - Token decryption implementation
-* link:doc/specification/testing.adoc[Testing] - Testing approach and methodology
-
-=== Developer Documentation
-
-* link:doc/LogMessages.adoc[Log Messages] - Logging documentation
+* *Requirements and Specifications*: link:doc/Requirements.adoc[Requirements], link:doc/Specification.adoc[Technical Specification]
+* *Security*: link:doc/Threat-Model.adoc[Threat Model], link:doc/specification/security.adoc[Security Specification]
+* *Technical Details*: link:doc/specification/technical-components.adoc[Technical Components], link:doc/specification/token-size-validation.adoc[Token Size Validation], link:doc/specification/token-decryption.adoc[Token Decryption]
+* *Development*: link:doc/specification/testing.adoc[Testing], link:doc/LogMessages.adoc[Log Messages], link:doc/Usage.adoc[Usage Guide], link:doc/Build.adoc[Building and Development]
 
 == Security Considerations
-
-image::doc/plantuml/security-controls.png[Security Controls]
 
 === Security Features
 
@@ -249,130 +132,22 @@ image::doc/plantuml/security-controls.png[Security Controls]
 * Protection against client confusion attacks
 * Comprehensive threat model with STRIDE analysis
 
-=== TokenFactoryConfig Security Settings
+=== TokenValidatorConfig Security Settings
 
-The `TokenValidatorConfig` class provides important security settings for token processing:
-
-[source,java]
-----
-// Create a TokenFactory with custom security settings
-TokenFactoryConfig config = TokenFactoryConfig.builder()
-        .maxTokenSize(4 * 1024)        // Limit token size to 4KB (default is 8KB)
-        .maxPayloadSize(4 * 1024)      // Limit payload size to 4KB (default is 8KB)
-        .maxStringSize(2 * 1024)       // Limit JSON string size to 2KB (default is 4KB)
-        .maxArraySize(32)              // Limit JSON array size to 32 elements (default is 64)
-        .maxDepth(5)                   // Limit JSON parsing depth to 5 levels (default is 10)
-        .logWarningsOnDecodeFailure(true) // Log warnings when token decoding fails
-        .build();
-
-TokenFactory factory = new TokenFactory(
-        config,
-        issuerConfig);
-----
-
-These security settings help prevent various attacks:
+The `TokenValidatorConfig` class provides important security settings for token processing to prevent various attacks:
 
 * `maxTokenSize`: Prevents memory exhaustion attacks from oversized tokens
 * `maxPayloadSize`: Prevents memory exhaustion attacks from oversized payloads
 * `maxStringSize`, `maxArraySize`, `maxDepth`: Prevent JSON parsing attacks
 
+For examples of security settings configuration, see the link:doc/Usage.adoc[Usage Guide].
+
 For more details on security considerations, see the link:doc/Threat-Model.adoc[Threat Model] and link:doc/specification/security.adoc[Security Specification].
 
 == Best Practices
 
-=== General Recommendations
+For detailed best practices, including general recommendations, security recommendations, and performance recommendations, see the link:doc/Usage.adoc[Usage Guide].
 
-1. Always use `TokenValidator` as the main entry point for all token operations
-2. Configure `IssuerConfig` with appropriate validation settings for each issuer
-3. Use `TokenValidatorConfig` to customize token size limits and security settings
-4. Use TLS for JWKS endpoints in production environments
-5. Validate token scopes and roles before granting access to protected resources
-6. Handle token expiration appropriately with proper error messages
-7. Configure expected audience and client ID for enhanced security
+== Building and Development
 
-=== Security Recommendations
-
-1. Use HTTP-based JWKS loaders with automatic key rotation in production
-2. Set appropriate refresh intervals for JWKS key rotation (e.g., 60 seconds)
-3. Configure token size limits to prevent memory exhaustion attacks
-4. Use secure TLS versions (TLS 1.2+) for JWKS endpoint communication
-5. Implement proper error handling for token validation failures
-6. Don't store sensitive information in tokens
-7. Validate all token claims, especially issuer, audience, and expiration (implicitly done)
-
-=== Performance Recommendations
-
-1. Use appropriate cache settings for JWKS keys to reduce network requests
-2. Configure adaptive window size for token validation to handle clock skew
-3. Use background refresh for JWKS keys to avoid blocking token validation
-4. Consider token size when designing your authentication architecture
-
-== PlantUML Diagrams
-
-This project uses PlantUML for creating diagrams in the documentation.
-To ensure compatibility with GitHub's rendering capabilities, we follow these practices:
-
-=== PlantUML File Structure
-
-All PlantUML diagrams are stored in separate files under the `/doc/plantuml/` directory with the `.puml` extension.
-This separation allows for:
-
-* Better version control of diagrams
-* Easier maintenance and updates
-* Compatibility with GitHub's rendering limitations
-* Generation of PNG images for documentation
-
-Each PlantUML file should include the following directive at the beginning to ensure it can be rendered without requiring a local Graphviz installation:
-
-[source]
-----
-@startuml
-' Configure PlantUML to use its own rendering engine
-!pragma layout smetana
-...
-@enduml
-----
-
-The `!pragma layout smetana` directive tells PlantUML to use its own internal rendering engine (Smetana) instead of relying on Graphviz, which eliminates the dependency on the local filesystem.
-
-=== Generating PNG Images
-
-To generate PNG images from PlantUML files, use the `build-plantuml` Maven profile:
-
-[source,bash]
-----
-./mvnw generate-resources -Pbuild-plantuml
-----
-
-This command will:
-
-1. Process all `.puml` files in the `/doc/plantuml/` directory
-2. Generate corresponding PNG images with the same base name
-3. Place the generated images in the same directory
-
-=== Referencing Images in Documentation
-
-To reference the generated PNG images in AsciiDoc documentation, use the following syntax:
-
-For documents in the root directory (like this README):
-
-[source]
-----
-image::doc/plantuml/diagram-name.png[Diagram Title]
-----
-
-For documents in the `doc` directory:
-
-[source]
-----
-image::plantuml/diagram-name.png[Diagram Title]
-----
-
-=== Adding New Diagrams
-
-To add a new diagram:
-
-1. Create a new `.puml` file in the `/doc/plantuml/` directory
-2. Add your PlantUML content to the file
-3. Run the Maven build with the `build-plantuml` profile
-4. Reference the generated PNG in your documentation
+For information about building and developing the library, including PlantUML diagram generation and usage, see the link:doc/Build.adoc[Building and Development Guide].

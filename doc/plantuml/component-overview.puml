@@ -2,14 +2,14 @@
 !include plantuml.skin
 
 package "JWT Token Handling" {
-  [TokenFactory] ..> [TokenFactoryConfig]
-  [TokenFactory] ..> [IssuerConfig]
-  [TokenFactory] ..> [NonValidatingJwtParser]
-  [TokenFactory] ..> [TokenHeaderValidator]
-  [TokenFactory] ..> [TokenSignatureValidator]
-  [TokenFactory] ..> [TokenBuilder]
-  [TokenFactory] ..> [TokenClaimValidator]
-  [TokenFactory] ..> [TokenContent]
+  [TokenValidator] ..> [TokenValidatorConfig]
+  [TokenValidator] ..> [IssuerConfig]
+  [TokenValidator] ..> [NonValidatingJwtParser]
+  [TokenValidator] ..> [TokenHeaderValidator]
+  [TokenValidator] ..> [TokenSignatureValidator]
+  [TokenValidator] ..> [TokenBuilder]
+  [TokenValidator] ..> [TokenClaimValidator]
+  [TokenValidator] ..> [TokenContent]
   [TokenSignatureValidator] ..> [JwksLoader]
   [IssuerConfig] ..> [JwksLoader]
   [JwksLoader] <.. [JwksLoaderFactory]

@@ -71,14 +71,14 @@ Unit tests have been implemented for the core functionality, providing comprehen
 
 The following test classes implement these unit tests:
 
-* link:../../src/test/java/de/cuioss/jwt/validation/TokenFactoryTest.java[TokenFactoryTest.java] - Tests for the TokenFactory
+* link:../../src/test/java/de/cuioss/jwt/validation/TokenValidatorTest.java[TokenValidatorTest.java] - Tests for the TokenValidator
 * link:../../src/test/java/de/cuioss/jwt/validation/TokenTypeTest.java[TokenTypeTest.java] - Tests for token type enumeration
 * link:../../src/test/java/de/cuioss/jwt/validation/domain/token/BaseTokenContentTest.java[BaseTokenContentTest.java] - Tests for the base token content
 * link:../../src/test/java/de/cuioss/jwt/validation/domain/token/AccessTokenContentTest.java[AccessTokenContentTest.java] - Tests for access token content
 * link:../../src/test/java/de/cuioss/jwt/validation/domain/token/IdTokenContentTest.java[IdTokenContentTest.java] - Tests for ID token content
 * link:../../src/test/java/de/cuioss/jwt/validation/domain/token/RefreshTokenContentTest.java[RefreshTokenContentTest.java] - Tests for refresh token content
 * link:../../src/test/java/de/cuioss/jwt/validation/CustomClaimMapperTest.java[CustomClaimMapperTest.java] - Tests for custom claim mapping
-* link:../../src/test/java/de/cuioss/jwt/validation/flow/TokenFactoryConfigTest.java[TokenFactoryConfigTest.java] - Tests for TokenFactoryConfig
+* link:../../src/test/java/de/cuioss/jwt/validation/flow/TokenValidatorConfigTest.java[TokenValidatorConfigTest.java] - Tests for TokenValidatorConfig
 * link:../../src/test/java/de/cuioss/jwt/validation/flow/DecodedJwtTest.java[DecodedJwtTest.java] - Tests for DecodedJwt
 * link:../../src/test/java/de/cuioss/jwt/validation/security/BouncyCastleProviderSingletonTest.java[BouncyCastleProviderSingletonTest.java] - Tests for BouncyCastleProviderSingleton
 * link:../../src/test/java/de/cuioss/jwt/validation/jwks/JwksLoaderFactoryTest.java[JwksLoaderFactoryTest.java] - Tests for JwksLoaderFactory
@@ -122,7 +122,7 @@ The following test cases will be implemented:
 
 The following test classes demonstrate token parsing and validation:
 
-* link:../../src/test/java/de/cuioss/jwt/validation/TokenFactoryTest.java[TokenFactoryTest.java] - Contains tests for token creation and validation:
+* link:../../src/test/java/de/cuioss/jwt/validation/TokenValidatorTest.java[TokenValidatorTest.java] - Contains tests for token creation and validation:
 ** `shouldCreateAccessToken()` - Tests creating and parsing an access token
 ** `shouldCreateIdToken()` - Tests creating and parsing an ID token
 ** `shouldCreateRefreshToken()` - Tests creating and parsing a refresh token
@@ -175,7 +175,7 @@ Comprehensive security testing has been implemented to verify the security aspec
 The following test classes implement these security tests:
 
 * link:../../src/test/java/de/cuioss/jwt/validation/ClientConfusionAttackTest.java[ClientConfusionAttackTest.java] - Tests for client confusion attacks
-* link:../../src/test/java/de/cuioss/jwt/validation/TokenFactorySecurityEventTest.java[TokenFactorySecurityEventTest.java] - Tests for security event tracking
+* link:../../src/test/java/de/cuioss/jwt/validation/TokenValidatorSecurityEventTest.java[TokenValidatorSecurityEventTest.java] - Tests for security event tracking
 * link:../../src/test/java/de/cuioss/jwt/validation/security/KeyDisclosureVulnerabilityTest.java[KeyDisclosureVulnerabilityTest.java] - Tests for key disclosure vulnerabilities
 * link:../../src/test/java/de/cuioss/jwt/validation/security/TokenCrackingResistanceTest.java[TokenCrackingResistanceTest.java] - Tests for token cracking resistance
 
@@ -227,7 +227,7 @@ Performance testing has been implemented to verify that the JWT token handling l
 
 The following test class implements performance testing:
 
-* link:../../src/test/java/de/cuioss/jwt/validation/TokenFactoryPerformanceTest.java[TokenFactoryPerformanceTest.java] - Tests for token parsing and validation performance
+* link:../../src/test/java/de/cuioss/jwt/validation/TokenValidatorPerformanceTest.java[TokenValidatorPerformanceTest.java] - Tests for token parsing and validation performance
 
 These tests cover:
 
@@ -252,7 +252,7 @@ Comprehensive logging tests have been implemented to verify that the JWT token h
 
 The following test classes implement these logging tests:
 
-* link:../../src/test/java/de/cuioss/jwt/validation/TokenFactoryTest.java[TokenFactoryTest.java] - Contains a nested class `TokenLoggingTests` with tests for token-related logging
+* link:../../src/test/java/de/cuioss/jwt/validation/TokenValidatorTest.java[TokenValidatorTest.java] - Contains a nested class `TokenLoggingTests` with tests for token-related logging
 * link:../../src/test/java/de/cuioss/jwt/validation/flow/TokenClaimValidatorTest.java[TokenClaimValidatorTest.java] - Contains tests that verify logging for claim validation
 * link:../../src/test/java/de/cuioss/jwt/validation/flow/TokenSignatureValidatorTest.java[TokenSignatureValidatorTest.java] - Contains tests that verify logging for signature validation
 
@@ -371,7 +371,7 @@ void shouldRejectAccessTokenWithInvalidSignature(String token) {
     String tamperedToken = JwtTokenTamperingUtil.tamperWithToken(token);
 
     // Verify that the tampered token is rejected
-    var result = tokenFactory.createAccessToken(tamperedToken);
+    var result = tokenValidator.createAccessToken(tamperedToken);
     assertFalse(result.isPresent(), "Token with invalid signature should be rejected");
 }
 ----

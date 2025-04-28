@@ -12,9 +12,9 @@ node "Client Application" as ClientApp {
   component "Resource Access\nModule" as ResourceModule
 }
 
-node "JWT Token Handling Library" as JWTLib {
+node "JWT Token Validation" as JWTLib {
   together {
-    component "TokenFactory" as TokenFactory
+    component "TokenValidator" as TokenValidator
     component "Token Validation\nPipeline" as ValidationPipeline
   }
   together {
@@ -65,10 +65,10 @@ Attacker --> Resources : "A6. Privilege escalation"
 
 ' Internal connections with explicit directions
 AuthModule --> ResourceModule
-TokenFactory --> ValidationPipeline
+TokenValidation --> ValidationPipeline
 ValidationPipeline --> JwksLoader
 JwksLoader --> KeyCache
 ValidationPipeline --> TokenContent
-TokenFactory --> SecurityCounter
+TokenValidation --> SecurityCounter
 
 @enduml

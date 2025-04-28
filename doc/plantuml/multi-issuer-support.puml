@@ -4,7 +4,7 @@
 package "JWT Token Handling" {
   ' Group related components together
   together {
-    component "TokenFactory" as TokenFactory
+    component "TokenValidator" as TokenValidator
     component "NonValidatingJwtParser" as Parser
     component "TokenHeaderValidator" as HeaderValidator
     component "TokenSignatureValidator" as SignatureValidator
@@ -39,23 +39,23 @@ together {
 actor "Application" as App
 
 ' Add layout hints to control positioning
-App -[hidden]right- TokenFactory
-TokenFactory -[hidden]down- IssuerConfig1
+App -[hidden]right- TokenValidator
+TokenValidator -[hidden]down- IssuerConfig1
 IssuerConfig1 -[hidden]right- JwksLoader1
 JwksLoader1 -[hidden]right- JwksCache1
 JwksLoader1 -[hidden]up- JwksEndpoint1
 
 ' Normal flow with explicit directions
-App -right-> TokenFactory : 1. Submit token
-TokenFactory -right-> Parser : 2. Parse token without validation
-Parser -down-> TokenFactory : 3. Return token header with issuer
-TokenFactory -right-> HeaderValidator : 4. Validate token header
-HeaderValidator -down-> TokenFactory : 5. Return validation result
+App -right-> TokenValidator : 1. Submit token
+TokenValidator -right-> Parser : 2. Parse token without validation
+Parser -down-> TokenValidator : 3. Return token header with issuer
+TokenValidator -right-> HeaderValidator : 4. Validate token header
+HeaderValidator -down-> TokenValidator : 5. Return validation result
 
 ' Issuer selection with explicit directions
-TokenFactory -down-> IssuerConfig1 : 6a. Select issuer config\nbased on token issuer
-TokenFactory -down-> IssuerConfig2 : 6b. Select issuer config\nbased on token issuer
-TokenFactory -down-> IssuerConfig3 : 6c. Select issuer config\nbased on token issuer
+TokenValidator -down-> IssuerConfig1 : 6a. Select issuer config\nbased on token issuer
+TokenValidator -down-> IssuerConfig2 : 6b. Select issuer config\nbased on token issuer
+TokenValidator -down-> IssuerConfig3 : 6c. Select issuer config\nbased on token issuer
 
 ' JWKS loader retrieval with explicit directions
 IssuerConfig1 -right-> JwksLoader1 : 7a. Get JWKS loader
@@ -73,12 +73,12 @@ JwksLoader2 -up-> JwksEndpoint2 : 9b. Fetch keys if needed
 JwksLoader3 -up-> JwksEndpoint3 : 9c. Fetch keys if needed
 
 ' Signature validation with explicit directions
-TokenFactory -down-> SignatureValidator : 10. Validate token signature\nwith selected issuer's keys
-SignatureValidator -left-> TokenFactory : 11. Return validation result
-TokenFactory -left-> App : 12. Return validated token\nor validation error
+TokenValidator -down-> SignatureValidator : 10. Validate token signature\nwith selected issuer's keys
+SignatureValidator -left-> TokenValidator : 11. Return validation result
+TokenValidator -left-> App : 12. Return validated token\nor validation error
 
-note right of TokenFactory
-  The TokenFactory automatically:
+note right of TokenValidator
+  The TokenValidator automatically:
   1. Detects the token issuer
   2. Selects the appropriate issuer configuration
   3. Uses the correct JWKS for validation
