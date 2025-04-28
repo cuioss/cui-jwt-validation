@@ -58,8 +58,7 @@ class TokenValidatorSecurityEventTest {
                 .build();
 
         // Create validation factory
-        TokenValidatorConfig config = TokenValidatorConfig.builder().build();
-        tokenValidator = new TokenValidator(config, issuerConfig);
+        tokenValidator = new TokenValidator(issuerConfig);
     }
 
     @Test

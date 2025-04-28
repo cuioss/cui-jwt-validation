@@ -27,7 +27,6 @@ import de.cuioss.test.mockwebserver.EnableMockWebServer;
 import de.cuioss.test.mockwebserver.URIBuilder;
 import de.cuioss.test.mockwebserver.dispatcher.ModuleDispatcher;
 import lombok.Getter;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -258,7 +257,7 @@ class HttpJwksLoaderTest {
         moduleDispatcher.switchToOtherPublicKey();
 
         // Force a refresh of the cache
-        Assertions.assertDoesNotThrow(() -> {
+        assertDoesNotThrow(() -> {
             // Access private method to force refresh
             java.lang.reflect.Method refreshMethod = HttpJwksLoader.class.getDeclaredMethod("loadJwksKeyLoader", String.class);
             refreshMethod.setAccessible(true);

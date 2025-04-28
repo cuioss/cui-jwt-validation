@@ -26,9 +26,7 @@ IssuerConfig issuerConfig = IssuerConfig.builder()
         .build();
 
 // Create a validator with multiple issuer configurations
-TokenValidator validator = new TokenValidator(
-        TokenValidatorConfig.builder().build(),
-        issuerConfig);
+TokenValidator validator = new TokenValidator(issuerConfig);
 
 // Create and validate tokens
 Optional<AccessTokenContent> accessToken = validator.createAccessToken(tokenString);
@@ -68,7 +66,6 @@ IssuerConfig issuer3Config = IssuerConfig.builder()
 // Create a validator supporting all issuers
 // The validator creates a SecurityEventCounter internally and passes it to all components
 TokenValidator validator = new TokenValidator(
-        TokenValidatorConfig.builder().build(),
         issuer1Config, issuer2Config, issuer3Config);
 
 // You can access the SecurityEventCounter for monitoring security events
@@ -97,9 +94,7 @@ IssuerConfig issuerConfig = IssuerConfig.builder()
         .build();
 
 // Create a validator with the configured issuer
-TokenValidator validator = new TokenValidator(
-        TokenValidatorConfig.builder().build(),
-        issuerConfig);
+TokenValidator validator = new TokenValidator(issuerConfig);
 
 // The custom mapper will be used when processing tokens with the "role" claim
 Optional<AccessTokenContent> accessToken = validator.createAccessToken(tokenString);

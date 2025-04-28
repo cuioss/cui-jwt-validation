@@ -105,7 +105,7 @@ public class TokenKeycloakITTest extends KeycloakITBase {
                 .build();
 
         // Create the validation factory
-        factory = new TokenValidator(null, issuerConfig);
+        factory = new TokenValidator(issuerConfig);
     }
 
     private String requestToken(Map<String, String> parameter, String tokenType) {

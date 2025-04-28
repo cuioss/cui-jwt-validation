@@ -69,8 +69,7 @@ class CustomClaimMapperTest {
                 .build();
 
         // Create validation factory
-        TokenValidatorConfig config = TokenValidatorConfig.builder().build();
-        tokenValidator = new TokenValidator(config, issuerConfig);
+        tokenValidator = new TokenValidator(issuerConfig);
 
         // Create a validation with a "role" claim containing an array of roles
         tokenWithRoles = Jwts.builder()
@@ -121,7 +120,6 @@ class CustomClaimMapperTest {
 
         // Create validation factory
         TokenValidator factoryWithoutCustomMapper = new TokenValidator(
-                TokenValidatorConfig.builder().build(),
                 issuerConfigWithoutCustomMapper);
 
         // Parse the validation

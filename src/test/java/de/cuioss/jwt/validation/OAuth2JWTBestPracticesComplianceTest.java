@@ -75,8 +75,7 @@ class OAuth2JWTBestPracticesComplianceTest {
                 .build();
 
         // Create validation factory
-        TokenValidatorConfig config = TokenValidatorConfig.builder().build();
-        tokenValidator = new TokenValidator(config, issuerConfig);
+        tokenValidator = new TokenValidator(issuerConfig);
 
         // Create access validation generator
         accessTokenGenerator = new AccessTokenGenerator(false);

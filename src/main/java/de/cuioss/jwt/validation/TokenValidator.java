@@ -108,20 +108,29 @@ public class TokenValidator {
     private final SecurityEventCounter securityEventCounter;
 
     /**
-     * Creates a new TokenValidator with the given issuer configurations and optional factory configuration.
+     * Creates a new TokenValidator with the given issuer configurations.
+     * It is used for standard use cases where no special configuration is needed.
      *
-     * @param config        optional configuration for the factory, if null, default configuration will be used
      * @param issuerConfigs varargs of issuer configurations, must not be null
      */
-    public TokenValidator(TokenValidatorConfig config, @NonNull IssuerConfig... issuerConfigs) {
-        TokenValidatorConfig config1 = config != null ? config : TokenValidatorConfig.builder().build();
+    public TokenValidator(@NonNull IssuerConfig... issuerConfigs) {
+        this(TokenValidatorConfig.builder().build(), issuerConfigs);
+    }
+
+    /**
+     * Creates a new TokenValidator with the given issuer configurations and optional factory configuration.
+     *
+     * @param config        optional configuration for the factory, if null, default configuration will be used, must not be null
+     * @param issuerConfigs varargs of issuer configurations, must not be null
+     */
+    public TokenValidator(@NonNull TokenValidatorConfig config, @NonNull IssuerConfig... issuerConfigs) {
 
         // Initialize security event counter
         this.securityEventCounter = new SecurityEventCounter();
 
         // Initialize NonValidatingJwtParser with configuration
         this.jwtParser = NonValidatingJwtParser.builder()
-                .config(config1)
+                .config(config)
                 .securityEventCounter(securityEventCounter)
                 .build();
 

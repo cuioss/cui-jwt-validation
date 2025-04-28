@@ -62,8 +62,7 @@ class TokenValidatorTest {
                 .build();
 
         // Create validation factory
-        TokenValidatorConfig config = TokenValidatorConfig.builder().build();
-        tokenValidator = new TokenValidator(config, issuerConfig);
+        tokenValidator = new TokenValidator(issuerConfig);
     }
 
     @Nested
@@ -329,7 +328,7 @@ class TokenValidatorTest {
                     .build();
 
             // Create a new validation factory with the new issuer config
-            TokenValidator newTokenValidator = new TokenValidator(TokenValidatorConfig.builder().build(), newIssuerConfig);
+            TokenValidator newTokenValidator = new TokenValidator(newIssuerConfig);
 
             // When creating an access validation
             Optional<AccessTokenContent> result = newTokenValidator.createAccessToken(tokenWithUnknownKeyId);
@@ -362,7 +361,6 @@ class TokenValidatorTest {
 
             // Create a new validation factory with multiple issuer configs
             new TokenValidator(
-                    TokenValidatorConfig.builder().build(),
                     issuerConfig1,
                     issuerConfig2);
 

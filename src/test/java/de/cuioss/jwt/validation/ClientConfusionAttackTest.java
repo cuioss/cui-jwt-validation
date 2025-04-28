@@ -104,7 +104,7 @@ class ClientConfusionAttackTest {
                 ", expectedClientId=" + issuerConfig.getExpectedClientId());
 
         // Create a validation factory with the issuer config
-        tokenValidator = new TokenValidator(null, issuerConfig);
+        tokenValidator = new TokenValidator(issuerConfig);
 
         // Verify the validation is accepted
         Optional<IdTokenContent> result = tokenValidator.createIdToken(token);
@@ -126,7 +126,7 @@ class ClientConfusionAttackTest {
                 .build();
 
         // Create a validation factory with the issuer config
-        tokenValidator = new TokenValidator(null, issuerConfig);
+        tokenValidator = new TokenValidator(issuerConfig);
 
         // Verify the validation is rejected
         Optional<IdTokenContent> result = tokenValidator.createIdToken(token);
@@ -148,7 +148,7 @@ class ClientConfusionAttackTest {
                 .build();
 
         // Create a validation factory with the issuer config
-        tokenValidator = new TokenValidator(null, issuerConfig);
+        tokenValidator = new TokenValidator(issuerConfig);
 
         // Verify the validation is rejected
         Optional<IdTokenContent> result = tokenValidator.createIdToken(token);
@@ -203,7 +203,7 @@ class ClientConfusionAttackTest {
                 ", expectedClientId=" + issuerConfig.getExpectedClientId());
 
         // Create a validation factory with the issuer config
-        tokenValidator = new TokenValidator(null, issuerConfig);
+        tokenValidator = new TokenValidator(issuerConfig);
 
         // Verify the validation is accepted
         Optional<IdTokenContent> result = tokenValidator.createIdToken(token);
@@ -224,7 +224,7 @@ class ClientConfusionAttackTest {
                 .build();
 
         // Create a validation factory with the issuer config
-        tokenValidator = new TokenValidator(null, issuerConfig);
+        tokenValidator = new TokenValidator(issuerConfig);
 
         // Verify the validation is accepted
         Optional<IdTokenContent> result = tokenValidator.createIdToken(token);
@@ -245,7 +245,7 @@ class ClientConfusionAttackTest {
                 .build();
 
         // Create a validation factory with the issuer config
-        tokenValidator = new TokenValidator(null, issuerConfig);
+        tokenValidator = new TokenValidator(issuerConfig);
 
         // Verify the validation is rejected
         Optional<IdTokenContent> result = tokenValidator.createIdToken(token);
