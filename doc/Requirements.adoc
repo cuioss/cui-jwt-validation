@@ -182,11 +182,6 @@ The library must provide methods for parsing different token types:
 * ID tokens
 * Refresh tokens
 
-[#CUI-JWT-5.2]
-==== CUI-JWT-5.2: Multiple Parser Support
-
-The token parsing mechanism must support multiple token parsers.
-
 [#CUI-JWT-6]
 === CUI-JWT-6: Configuration
 

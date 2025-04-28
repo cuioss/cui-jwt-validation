@@ -51,7 +51,7 @@ This specification has been implemented in the following classes:
 * link:../../src/main/java/de/cuioss/jwt/validation/flow/TokenClaimValidator.java[TokenClaimValidator] (class)
 * link:../../src/main/java/de/cuioss/jwt/validation/flow/NonValidatingJwtParser.java[NonValidatingJwtParser] (class)
 
-The token validation pipeline replaces the previous JwtParser interface with a more modular approach. Each component in the pipeline has a specific responsibility:
+Each component in the pipeline has a specific responsibility:
 
 * `TokenHeaderValidator` - Validates token headers (algorithm, issuer)
 * `TokenSignatureValidator` - Validates token signatures using JWKS
@@ -85,15 +85,15 @@ This specification has been implemented in the following classes:
 
 * link:../../src/main/java/de/cuioss/jwt/validation/IssuerConfig.java[IssuerConfig] (class)
 
-The `IssuerConfig` class replaces the previous MultiIssuerJwtParser approach with a more flexible configuration-based approach. Each IssuerConfig instance contains all the information needed to validate tokens from a specific issuer:
+Each IssuerConfig instance contains all the information needed to validate tokens from a specific issuer:
 
 * Issuer URL
 * Expected audience values
 * Expected client ID values
 * JWKS configuration (one of the following):
-  * HTTP JWKS configuration (httpJwksLoaderConfig)
-  * File path to JWKS file (jwksFilePath)
-  * In-memory JWKS content (jwksContent)
+** HTTP JWKS configuration (httpJwksLoaderConfig)
+** File path to JWKS file (jwksFilePath)
+** In-memory JWKS content (jwksContent)
 * Algorithm preferences
 * Custom claim mappers
 
@@ -242,6 +242,9 @@ The module supports three token types, each with specific functionality:
 * `RefreshTokenContent`: OAuth2 refresh token
 ** Implements MinimalTokenContent interface
 ** Treats refresh tokens as opaque strings per OAuth2 specification
+** In case it is a JWT, the corresponding claims will be extracted and made available.
+*Caution:* The signature of the refresh token is not verified, so the claims should be treated as untrusted.
+
 
 The library provides specialized classes for different token types, each with functionality appropriate for its use case.
 

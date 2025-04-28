@@ -172,51 +172,7 @@ _See Requirement link:../Requirements.adoc#CUI-JWT-8[CUI-JWT-8: Security]_
 
 Comprehensive security testing has been implemented to verify the security aspects of the JWT Token Validation library.
 
-The following test classes implement these security tests:
-
-* link:../../src/test/java/de/cuioss/jwt/validation/ClientConfusionAttackTest.java[ClientConfusionAttackTest.java] - Tests for client confusion attacks
-* link:../../src/test/java/de/cuioss/jwt/validation/TokenValidatorSecurityEventTest.java[TokenValidatorSecurityEventTest.java] - Tests for security event tracking
-* link:../../src/test/java/de/cuioss/jwt/validation/security/KeyDisclosureVulnerabilityTest.java[KeyDisclosureVulnerabilityTest.java] - Tests for key disclosure vulnerabilities
-* link:../../src/test/java/de/cuioss/jwt/validation/security/TokenCrackingResistanceTest.java[TokenCrackingResistanceTest.java] - Tests for token cracking resistance
-
-These tests cover:
-
-1. Token validation bypass tests
-2. Algorithm confusion attack tests
-3. Signature verification bypass tests
-4. Security event tracking and monitoring
-5. Key disclosure vulnerability tests
-6. Token cracking resistance tests
-
-==== Key Disclosure Vulnerability Tests
-
-The link:../../src/test/java/de/cuioss/jwt/validation/security/KeyDisclosureVulnerabilityTest.java[KeyDisclosureVulnerabilityTest.java] class verifies that private keys are not exposed and that sensitive key material is properly protected. Key disclosure vulnerabilities can lead to complete compromise of the JWT token security model, as an attacker with access to private keys can forge valid tokens.
-
-This test class verifies:
-
-* JwksLoader only exposes public keys, never private keys
-* JWKS content does not contain private key material
-* Private keys are not serializable (to prevent accidental disclosure)
-* Private key files have restricted permissions
-* Private keys are not logged
-* JWKS endpoints use HTTPS for secure transmission
-* JWKSKeyLoader only loads public keys
-
-Testing uses a combination of direct API inspection, reflection, file system checks, and serialization attempts to verify that private keys are properly protected throughout the library.
-
-==== Token Cracking Resistance Tests
-
-The link:../../src/test/java/de/cuioss/jwt/validation/security/TokenCrackingResistanceTest.java[TokenCrackingResistanceTest.java] class verifies that tokens use strong cryptographic algorithms and have sufficient entropy to resist cracking attempts. Token cracking refers to attempts to forge or predict JWT signatures, which would allow attackers to create valid tokens without possessing the private key.
-
-This test class verifies:
-
-* Tokens use strong cryptographic algorithms (RS256, RS384, RS512, ES256, ES384, ES512, PS256, PS384, PS512)
-* Tokens have sufficient entropy in their header and payload
-* Tokens are resistant to brute force attacks
-* Only approved algorithms are used
-* Token signatures are unpredictable
-
-Testing uses a combination of algorithm verification, entropy calculation using Shannon entropy, signature tampering, and multiple token generation to ensure that tokens are cryptographically secure and resistant to various attack vectors.
+For detailed information about security testing, including test classes, test coverage, and specific security tests like Key Disclosure Vulnerability Tests and Token Cracking Resistance Tests, please refer to the link:security.adoc[Security] document, specifically the "Security Testing Specifications" section.
 
 === Performance Testing
 _See Requirement link:../Requirements.adoc#CUI-JWT-12.4[CUI-JWT-12.4: Performance Testing]_
@@ -299,15 +255,9 @@ _See Requirement link:../Requirements.adoc#CUI-JWT-12.5[CUI-JWT-12.5: Vulnerabil
 
 ==== Status: IMPLEMENTED
 
-Vulnerability scanning has been implemented using GitHub Dependabot, which is configured to scan Maven dependencies weekly and create pull requests for updates. This ensures that the library is regularly checked for security vulnerabilities in its dependencies.
+Vulnerability scanning has been implemented using GitHub Dependabot to regularly check for security vulnerabilities in dependencies.
 
-The Dependabot configuration can be found in `.github/dependabot.yml` and includes:
-
-* Weekly scanning of Maven dependencies
-* Automatic creation of pull requests for security updates
-* Notifications for security vulnerabilities
-
-This implementation satisfies the requirement for regular vulnerability scanning of third-party dependencies as specified in CUI-JWT-12.5.
+For detailed information about dependency management and vulnerability scanning, please refer to the link:security.adoc[Security] document, specifically the "Dependency Management" section.
 
 === Compliance Testing
 _See Requirement link:../Requirements.adoc#CUI-JWT-12.6[CUI-JWT-12.6: Compliance Testing]_
