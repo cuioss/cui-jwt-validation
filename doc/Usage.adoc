@@ -135,9 +135,10 @@ These security settings help prevent various attacks:
 2. Configure `IssuerConfig` with appropriate validation settings for each issuer
 3. Use `ParserConfig` to customize token size limits and security settings
 4. Use TLS for JWKS endpoints in production environments
-5. Validate token scopes and roles before granting access to protected resources
+5. Validate token scopes and roles before granting access to protected resources (the final check for correct scopes must be in the client library)
 6. Handle token expiration appropriately with proper error messages
-7. Configure expected audience and client ID for enhanced security
+7. Check token expiration in client code, especially if the token is kept longer than the request duration
+8. Configure expected audience and client ID for enhanced security
 
 === Security Recommendations
 
@@ -148,6 +149,7 @@ These security settings help prevent various attacks:
 5. Implement proper error handling for token validation failures
 6. Don't store sensitive information in tokens
 7. Validate all token claims, especially issuer, audience, and expiration (implicitly done)
+8. Remember that while token expiration is checked during validation, tokens can expire after validation - implement additional expiration checks in client code
 
 === Performance Recommendations
 
