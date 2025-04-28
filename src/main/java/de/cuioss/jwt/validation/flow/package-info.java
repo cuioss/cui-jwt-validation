@@ -29,7 +29,7 @@
  *   <li>{@link de.cuioss.jwt.validation.flow.TokenHeaderValidator} - Validates validation headers against issuer configuration</li>
  *   <li>{@link de.cuioss.jwt.validation.flow.TokenSignatureValidator} - Validates validation signatures using JWKS</li>
  *   <li>{@link de.cuioss.jwt.validation.flow.IssuerConfig} - Configuration for a validation issuer</li>
- *   <li>{@link de.cuioss.jwt.validation.TokenValidatorConfig} - Configuration for the validation factory</li>
+ *   <li>{@link de.cuioss.jwt.validation.TokenParserConfig} - Configuration for the validation factory</li>
  * </ul>
  * <p>
  * The typical validation processing flow is:

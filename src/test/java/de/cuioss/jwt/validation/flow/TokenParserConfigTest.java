@@ -15,7 +15,7 @@
  */
 package de.cuioss.jwt.validation.flow;
 
-import de.cuioss.jwt.validation.TokenValidatorConfig;
+import de.cuioss.jwt.validation.TokenParserConfig;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import jakarta.json.JsonReaderFactory;
 import org.junit.jupiter.api.DisplayName;
@@ -24,24 +24,24 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests for {@link TokenValidatorConfig}.
+ * Tests for {@link TokenParserConfig}.
  */
 @EnableTestLogger
-@DisplayName("Tests for TokenValidatorConfig")
-class TokenValidatorConfigTest {
+@DisplayName("Tests for TokenParserConfig")
+class TokenParserConfigTest {
 
     @Test
     @DisplayName("Should create config with default values")
     void shouldCreateConfigWithDefaultValues() {
         // When
-        TokenValidatorConfig config = TokenValidatorConfig.builder().build();
+        TokenParserConfig config = TokenParserConfig.builder().build();
 
         // Then
-        assertEquals(TokenValidatorConfig.DEFAULT_MAX_TOKEN_SIZE, config.getMaxTokenSize());
-        assertEquals(TokenValidatorConfig.DEFAULT_MAX_PAYLOAD_SIZE, config.getMaxPayloadSize());
-        assertEquals(TokenValidatorConfig.DEFAULT_MAX_STRING_SIZE, config.getMaxStringSize());
-        assertEquals(TokenValidatorConfig.DEFAULT_MAX_ARRAY_SIZE, config.getMaxArraySize());
-        assertEquals(TokenValidatorConfig.DEFAULT_MAX_DEPTH, config.getMaxDepth());
+        assertEquals(TokenParserConfig.DEFAULT_MAX_TOKEN_SIZE, config.getMaxTokenSize());
+        assertEquals(TokenParserConfig.DEFAULT_MAX_PAYLOAD_SIZE, config.getMaxPayloadSize());
+        assertEquals(TokenParserConfig.DEFAULT_MAX_STRING_SIZE, config.getMaxStringSize());
+        assertEquals(TokenParserConfig.DEFAULT_MAX_ARRAY_SIZE, config.getMaxArraySize());
+        assertEquals(TokenParserConfig.DEFAULT_MAX_DEPTH, config.getMaxDepth());
         assertTrue(config.isLogWarningsOnDecodeFailure());
     }
 
@@ -57,7 +57,7 @@ class TokenValidatorConfigTest {
         boolean customLogWarnings = false;
 
         // When
-        TokenValidatorConfig config = TokenValidatorConfig.builder()
+        TokenParserConfig config = TokenParserConfig.builder()
                 .maxTokenSize(customMaxTokenSize)
                 .maxPayloadSize(customMaxPayloadSize)
                 .maxStringSize(customMaxStringSize)
@@ -79,7 +79,7 @@ class TokenValidatorConfigTest {
     @DisplayName("Should create JsonReaderFactory with security settings")
     void shouldCreateJsonReaderFactoryWithSecuritySettings() {
         // Given
-        TokenValidatorConfig config = TokenValidatorConfig.builder().build();
+        TokenParserConfig config = TokenParserConfig.builder().build();
 
         // When
         JsonReaderFactory factory = config.getJsonReaderFactory();
@@ -96,7 +96,7 @@ class TokenValidatorConfigTest {
         int customMaxArraySize = 32;
         int customMaxDepth = 5;
 
-        TokenValidatorConfig config = TokenValidatorConfig.builder()
+        TokenParserConfig config = TokenParserConfig.builder()
                 .maxStringSize(customMaxStringSize)
                 .maxArraySize(customMaxArraySize)
                 .maxDepth(customMaxDepth)

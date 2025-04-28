@@ -73,7 +73,7 @@ import java.util.Optional;
  * // Create the validation factory
  * // The factory creates a SecurityEventCounter internally and passes it to all components
  * TokenValidator tokenFactory = new TokenValidator(
- *     TokenValidatorConfig.builder().build(),
+ *     TokenParserConfig.builder().build(),
  *     issuerConfig
  * );
  *
@@ -114,7 +114,7 @@ public class TokenValidator {
      * @param issuerConfigs varargs of issuer configurations, must not be null
      */
     public TokenValidator(@NonNull IssuerConfig... issuerConfigs) {
-        this(TokenValidatorConfig.builder().build(), issuerConfigs);
+        this(TokenParserConfig.builder().build(), issuerConfigs);
     }
 
     /**
@@ -123,7 +123,7 @@ public class TokenValidator {
      * @param config        optional configuration for the factory, if null, default configuration will be used, must not be null
      * @param issuerConfigs varargs of issuer configurations, must not be null
      */
-    public TokenValidator(@NonNull TokenValidatorConfig config, @NonNull IssuerConfig... issuerConfigs) {
+    public TokenValidator(@NonNull TokenParserConfig config, @NonNull IssuerConfig... issuerConfigs) {
 
         // Initialize security event counter
         this.securityEventCounter = new SecurityEventCounter();

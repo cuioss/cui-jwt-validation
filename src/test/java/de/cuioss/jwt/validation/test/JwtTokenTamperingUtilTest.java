@@ -16,7 +16,7 @@
 package de.cuioss.jwt.validation.test;
 
 import de.cuioss.jwt.validation.TokenValidator;
-import de.cuioss.jwt.validation.TokenValidatorConfig;
+import de.cuioss.jwt.validation.TokenParserConfig;
 import de.cuioss.jwt.validation.domain.token.AccessTokenContent;
 import de.cuioss.jwt.validation.domain.token.IdTokenContent;
 import de.cuioss.jwt.validation.flow.IssuerConfig;
@@ -55,7 +55,7 @@ class JwtTokenTamperingUtilTest {
     @BeforeEach
     void setUp() {
         // Create validation factory with default configuration
-        TokenValidatorConfig config = TokenValidatorConfig.builder().build();
+        TokenParserConfig config = TokenParserConfig.builder().build();
         IssuerConfig issuerConfig = IssuerConfig.builder()
                 .issuer(ISSUER)
                 .expectedAudience(AUDIENCE)

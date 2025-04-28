@@ -102,12 +102,12 @@ Optional<AccessTokenContent> accessToken = validator.createAccessToken(tokenStri
 
 == Security Settings
 
-The `TokenValidatorConfig` class provides important security settings for token processing:
+The `TokenParserConfig` class provides important security settings for token processing:
 
 [source,java]
 ----
 // Create a TokenValidator with custom security settings
-TokenValidatorConfig config = TokenValidatorConfig.builder()
+TokenParserConfig config = TokenParserConfig.builder()
         .maxTokenSize(4 * 1024)        // Limit token size to 4KB (default is 8KB)
         .maxPayloadSize(4 * 1024)      // Limit payload size to 4KB (default is 8KB)
         .maxStringSize(2 * 1024)       // Limit JSON string size to 2KB (default is 4KB)
@@ -133,7 +133,7 @@ These security settings help prevent various attacks:
 
 1. Always use `TokenValidator` as the main entry point for all token operations
 2. Configure `IssuerConfig` with appropriate validation settings for each issuer
-3. Use `TokenValidatorConfig` to customize token size limits and security settings
+3. Use `TokenParserConfig` to customize token size limits and security settings
 4. Use TLS for JWKS endpoints in production environments
 5. Validate token scopes and roles before granting access to protected resources
 6. Handle token expiration appropriately with proper error messages

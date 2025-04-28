@@ -34,7 +34,7 @@ import java.util.Map;
  */
 @Builder
 @Value
-public class TokenValidatorConfig {
+public class TokenParserConfig {
 
     /**
      * Default maximum size of a JWT validation in bytes to prevent overflow attacks.

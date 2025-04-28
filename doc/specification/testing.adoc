@@ -78,7 +78,7 @@ The following test classes implement these unit tests:
 * link:../../src/test/java/de/cuioss/jwt/validation/domain/token/IdTokenContentTest.java[IdTokenContentTest.java] - Tests for ID token content
 * link:../../src/test/java/de/cuioss/jwt/validation/domain/token/RefreshTokenContentTest.java[RefreshTokenContentTest.java] - Tests for refresh token content
 * link:../../src/test/java/de/cuioss/jwt/validation/CustomClaimMapperTest.java[CustomClaimMapperTest.java] - Tests for custom claim mapping
-* link:../../src/test/java/de/cuioss/jwt/validation/flow/TokenValidatorConfigTest.java[TokenValidatorConfigTest.java] - Tests for TokenValidatorConfig
+* link:../../src/test/java/de/cuioss/jwt/validation/flow/TokenParserConfigTest.java[TokenParserConfigTest.java] - Tests for TokenParserConfig
 * link:../../src/test/java/de/cuioss/jwt/validation/flow/DecodedJwtTest.java[DecodedJwtTest.java] - Tests for DecodedJwt
 * link:../../src/test/java/de/cuioss/jwt/validation/security/BouncyCastleProviderSingletonTest.java[BouncyCastleProviderSingletonTest.java] - Tests for BouncyCastleProviderSingleton
 * link:../../src/test/java/de/cuioss/jwt/validation/jwks/JwksLoaderFactoryTest.java[JwksLoaderFactoryTest.java] - Tests for JwksLoaderFactory

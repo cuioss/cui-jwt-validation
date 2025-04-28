@@ -15,7 +15,7 @@ This specification has been implemented in the following classes:
 
 * link:../../src/main/java/de/cuioss/jwt/validation/flow/NonValidatingJwtParser.java[NonValidatingJwtParser]
 * link:../../src/main/java/de/cuioss/jwt/validation/TokenValidator.java[TokenValidator]
-* link:../../src/main/java/de/cuioss/jwt/validation/TokenValidatorConfig.java[TokenValidatorConfig]
+* link:../../src/main/java/de/cuioss/jwt/validation/TokenParserConfig.java[TokenParserConfig]
 
 This document provides detailed specifications for enhancing the token size validation capabilities in the JWT token handling library. Specifically, it outlines how to implement token size validation in the token processing pipeline.
 
@@ -34,13 +34,13 @@ The `NonValidatingJwtParser` class implements token size validation with the fol
 
 The `TokenValidator` class provides:
 
-* A factory method that accepts a TokenValidatorConfig parameter
+* A factory method that accepts a TokenParserConfig parameter
 * Methods for creating and validating tokens
 * Token size validation as part of the token processing pipeline
 
-=== TokenValidatorConfig
+=== TokenParserConfig
 
-The `TokenValidatorConfig` class:
+The `TokenParserConfig` class:
 
 * Provides configuration options for the TokenValidator
 * Allows customizing token size limits
@@ -56,7 +56,7 @@ Refer to the implementation and associated JavaDoc for detailed behavior.
 ----
 // Create TokenValidator with default token size limits
 TokenValidator validator = new TokenValidator(
-    TokenValidatorConfig.builder().build(),
+    TokenParserConfig.builder().build(),
     issuerConfigs);
 ----
 
@@ -66,7 +66,7 @@ TokenValidator validator = new TokenValidator(
 ----
 // Create TokenValidator with custom token size limits
 TokenValidator validator = new TokenValidator(
-    TokenValidatorConfig.builder()
+    TokenParserConfig.builder()
         .maxTokenSize(8 * 1024)  // 8KB
         .maxPayloadSize(4 * 1024)  // 4KB
         .build(),
@@ -82,14 +82,14 @@ The default values in the `NonValidatingJwtParser` class:
 * `DEFAULT_MAX_TOKEN_SIZE = 8 * 1024` (8KB)
 * `DEFAULT_MAX_PAYLOAD_SIZE = 8 * 1024` (8KB)
 
-These values are also used as defaults in the `TokenValidatorConfig` class.
+These values are also used as defaults in the `TokenParserConfig` class.
 
 === Thread Safety
 
 The implementation maintains thread safety:
 
 * `TokenValidator` is immutable after construction
-* `TokenValidatorConfig` is immutable after construction (using Lombok's `@Value` annotation)
+* `TokenParserConfig` is immutable after construction (using Lombok's `@Value` annotation)
 * `NonValidatingJwtParser` is immutable after construction
 
 == Testing Strategy
@@ -99,7 +99,7 @@ The implementation maintains thread safety:
 Unit tests verify:
 
 1. Default token size limits are used when not explicitly configured
-2. Custom token size limits are correctly passed to `NonValidatingJwtParser` through `TokenValidatorConfig`
+2. Custom token size limits are correctly passed to `NonValidatingJwtParser` through `TokenParserConfig`
 3. Token validation fails when token size exceeds the configured limit
 4. Payload validation fails when payload size exceeds the configured limit
 
