@@ -9,11 +9,11 @@ link:../Specification.adoc[Back to Main Specification]
 == Overview
 _See Requirement link:../Requirements.adoc#CUI-JWT-12[CUI-JWT-12: Testing and Quality Assurance]_
 
-This document provides detailed specifications for testing the JWT token handling library.
+This document provides detailed specifications for testing the JWT Token Validation library.
 
 == Compliance with CUI Testing Standards
 
-This section outlines how the JWT token handling library testing should comply with the CUI Testing Standards:
+This section outlines how the JWT Token Validation library testing should comply with the CUI Testing Standards:
 
 * https://github.com/cuioss/cui-llm-rules/blob/main/standards/testing/core-standards.adoc[CUI Testing Core Standards]
 * https://github.com/cuioss/cui-llm-rules/blob/main/standards/testing/quality-standards.adoc[CUI Quality Standards and Testing Framework]
@@ -170,7 +170,7 @@ _See Requirement link:../Requirements.adoc#CUI-JWT-8[CUI-JWT-8: Security]_
 
 ==== Status: IMPLEMENTED
 
-Comprehensive security testing has been implemented to verify the security aspects of the JWT token handling library.
+Comprehensive security testing has been implemented to verify the security aspects of the JWT Token Validation library.
 
 The following test classes implement these security tests:
 
@@ -223,7 +223,7 @@ _See Requirement link:../Requirements.adoc#CUI-JWT-12.4[CUI-JWT-12.4: Performanc
 
 ==== Status: IMPLEMENTED
 
-Performance testing has been implemented to verify that the JWT token handling library meets the performance requirements.
+Performance testing has been implemented to verify that the JWT Token Validation library meets the performance requirements.
 
 The following test class implements performance testing:
 
@@ -248,7 +248,7 @@ _See Requirement link:../Requirements.adoc#CUI-JWT-7[CUI-JWT-7: Logging]_
 
 ==== Status: IMPLEMENTED
 
-Comprehensive logging tests have been implemented to verify that the JWT token handling library logs appropriate information at the correct log levels.
+Comprehensive logging tests have been implemented to verify that the JWT Token Validation library logs appropriate information at the correct log levels.
 
 The following test classes implement these logging tests:
 
@@ -314,7 +314,7 @@ _See Requirement link:../Requirements.adoc#CUI-JWT-12.6[CUI-JWT-12.6: Compliance
 
 ==== Status: IMPLEMENTED
 
-Compliance tests have been implemented to verify that the JWT token handling library adheres to the standards and best practices defined in various specifications.
+Compliance tests have been implemented to verify that the JWT Token Validation library adheres to the standards and best practices defined in various specifications.
 
 The following test classes implement these compliance tests:
 

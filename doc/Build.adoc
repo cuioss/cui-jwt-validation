@@ -1,4 +1,8 @@
 = Building and Development Guide
+:toc:
+:toclevels: 3
+:toc-title: Table of Contents
+:sectnums:
 
 This document provides information about building and developing the cui-jwt-validation library.
 

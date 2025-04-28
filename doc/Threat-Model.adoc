@@ -7,11 +7,11 @@
 == Overview
 _See Requirement link:Requirements.adoc#CUI-JWT-8[CUI-JWT-8: Security Requirements] and Specification link:Specification.adoc[Specification] and link:specification/security.adoc[Security Specification]_
 
-This document outlines the threat model for the JWT token handling library. The threat model follows OWASP recommendations and identifies potential security threats, current mitigations, and additional recommendations.
+This document outlines the threat model for the JWT Token Validation library. The threat model follows OWASP recommendations and identifies potential security threats, current mitigations, and additional recommendations.
 
 == System Context
 
-The JWT token handling library operates within the following context:
+The JWT Token Validation library operates within the following context:
 
 * Processes JWT tokens from OAuth2/OpenID Connect providers
 * Validates token signatures using JWKS (JSON Web Key Sets)

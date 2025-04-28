@@ -21,14 +21,14 @@ import lombok.experimental.UtilityClass;
 
 /**
  * Provides logging messages for the cui-jwt-validation module.
- * All messages follow the format: JWTToken-[identifier]: [message]
+ * All messages follow the format: JWTValidation-[identifier]: [message]
  *
  * @since 1.0
  */
 @UtilityClass
 public final class JWTValidationLogMessages {
 
-    private static final String PREFIX = "JWTToken";
+    private static final String PREFIX = "JWTValidation";
 
     /**
      * Contains debug-level log messages for informational and diagnostic purposes.

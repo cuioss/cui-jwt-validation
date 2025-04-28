@@ -17,7 +17,7 @@ This specification has been implemented in the following classes:
 * link:../../src/main/java/de/cuioss/jwt/validation/TokenValidator.java[TokenValidator]
 * link:../../src/main/java/de/cuioss/jwt/validation/ParserConfig.java[ParserConfig]
 
-This document provides detailed specifications for enhancing the token size validation capabilities in the JWT token handling library. Specifically, it outlines how to implement token size validation in the token processing pipeline.
+This document provides detailed specifications for enhancing the token size validation capabilities in the JWT Token Validation library. Specifically, it outlines how to implement token size validation in the token processing pipeline.
 
 == Implementation Details
 
