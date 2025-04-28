@@ -44,15 +44,18 @@ import java.util.Optional;
  * This class provides methods for creating different types of tokens from
  * JWT strings, handling the validation and parsing process.
  * <p>
- * The factory uses a pipeline approach to validate tokens:
+ * The validator uses a pipeline approach to validate tokens:
  * <ol>
- *   <li>Basic validation format validation</li>
+ *   <li>Basic format validation</li>
  *   <li>Issuer validation</li>
  *   <li>Header validation</li>
  *   <li>Signature validation</li>
  *   <li>Token building</li>
  *   <li>Claim validation</li>
  * </ol>
+ * <p>
+ * This class is thread-safe after construction.
+ * All validation methods can be called concurrently from multiple threads.
  * <p>
  * Usage example:
  * <pre>
@@ -69,24 +72,24 @@ import java.util.Optional;
  *     .httpJwksLoaderConfig(httpConfig)
  *     .build();
  *
- * // Create the validation factory
- * // The factory creates a SecurityEventCounter internally and passes it to all components
- * TokenValidator tokenFactory = new TokenValidator(
+ * // Create the token validator
+ * // The validator creates a SecurityEventCounter internally and passes it to all components
+ * TokenValidator tokenValidator = new TokenValidator(
  *     ParserConfig.builder().build(),
  *     issuerConfig
  * );
  *
- * // Parse an access validation
- * Optional&lt;AccessTokenContent&gt; accessToken = tokenFactory.createAccessToken(tokenString);
+ * // Parse an access token
+ * Optional&lt;AccessTokenContent&gt; accessToken = tokenValidator.createAccessToken(tokenString);
  *
- * // Parse an ID validation
- * Optional&lt;IdTokenContent&gt; idToken = tokenFactory.createIdToken(tokenString);
+ * // Parse an ID token
+ * Optional&lt;IdTokenContent&gt; idToken = tokenValidator.createIdToken(tokenString);
  *
- * // Parse a refresh validation
- * Optional&lt;RefreshTokenContent&gt; refreshToken = tokenFactory.createRefreshToken(tokenString);
+ * // Parse a refresh token
+ * Optional&lt;RefreshTokenContent&gt; refreshToken = tokenValidator.createRefreshToken(tokenString);
  *
  * // Access the security event counter for monitoring
- * SecurityEventCounter securityEventCounter = tokenFactory.getSecurityEventCounter();
+ * SecurityEventCounter securityEventCounter = tokenValidator.getSecurityEventCounter();
  * </pre>
  *
  * @since 1.0
@@ -117,10 +120,10 @@ public class TokenValidator {
     }
 
     /**
-     * Creates a new TokenValidator with the given issuer configurations and optional factory configuration.
+     * Creates a new TokenValidator with the given issuer configurations and parser configuration.
      *
-     * @param config        optional configuration for the factory, if null, default configuration will be used, must not be null
-     * @param issuerConfigs varargs of issuer configurations, must not be null
+     * @param config        configuration for the parser, must not be null
+     * @param issuerConfigs varargs of issuer configurations, must not be null and must contain at least one configuration
      */
     public TokenValidator(@NonNull ParserConfig config, @NonNull IssuerConfig... issuerConfigs) {
 
@@ -146,13 +149,13 @@ public class TokenValidator {
     }
 
     /**
-     * Creates an access validation from the given validation string.
+     * Creates an access token from the given token string.
      *
-     * @param tokenString The validation string to parse, must not be null
-     * @return The parsed access validation, which may be empty if the validation is invalid or no parser is found
+     * @param tokenString The token string to parse, must not be null
+     * @return The parsed access token, which may be empty if the token is invalid or no parser is found
      */
     public Optional<AccessTokenContent> createAccessToken(@NonNull String tokenString) {
-        LOGGER.debug("Creating access validation");
+        LOGGER.debug("Creating access token");
         Optional<AccessTokenContent> result = processTokenPipeline(
                 tokenString,
                 (decodedJwt, issuerConfig) -> new TokenBuilder(issuerConfig).createAccessToken(decodedJwt)
@@ -167,13 +170,13 @@ public class TokenValidator {
     }
 
     /**
-     * Creates an ID validation from the given validation string.
+     * Creates an ID token from the given token string.
      *
-     * @param tokenString The validation string to parse, must not be null
-     * @return The parsed ID validation, which may be empty if the validation is invalid or no parser is found
+     * @param tokenString The token string to parse, must not be null
+     * @return The parsed ID token, which may be empty if the token is invalid or no parser is found
      */
     public Optional<IdTokenContent> createIdToken(@NonNull String tokenString) {
-        LOGGER.debug("Creating ID validation");
+        LOGGER.debug("Creating ID token");
         Optional<IdTokenContent> result = processTokenPipeline(
                 tokenString,
                 (decodedJwt, issuerConfig) -> new TokenBuilder(issuerConfig).createIdToken(decodedJwt)
@@ -188,14 +191,14 @@ public class TokenValidator {
     }
 
     /**
-     * Creates a refresh validation from the given validation string.
+     * Creates a refresh token from the given token string.
      *
-     * @param tokenString The validation string to parse, must not be null
-     * @return The parsed refresh validation, which may be empty if the validation is invalid or no parser is found
+     * @param tokenString The token string to parse, must not be null
+     * @return The parsed refresh token, which may be empty if the token is invalid or no parser is found
      */
     @SuppressWarnings("java:S3655") // owolff: false positive: isPresent is checked
     public Optional<RefreshTokenContent> createRefreshToken(@NonNull String tokenString) {
-        LOGGER.debug("Creating refresh validation");
+        LOGGER.debug("Creating refresh token");
         // For refresh tokens, we don't need the full pipeline
         if (MoreStrings.isBlank(tokenString)) {
             LOGGER.warn(JWTValidationLogMessages.WARN.TOKEN_IS_EMPTY::format);

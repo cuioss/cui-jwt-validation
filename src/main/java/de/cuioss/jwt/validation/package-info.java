@@ -16,26 +16,28 @@
 
 /**
  * Provides a comprehensive framework for handling OAuth2 and OpenID Connect tokens
- * in a Portal environment. This package focuses on validation parsing, validation,
- * and management with support for multiple validation issuers.
+ * in a Portal environment. This package focuses on JWT token parsing, validation,
+ * and management with support for multiple token issuers.
  * <p>
  * Key components:
  * <ul>
  *   <li>{@link de.cuioss.jwt.validation.TokenValidator} - Main entry point for creating and validating tokens</li>
- *   <li>{@link de.cuioss.jwt.validation.TokenType} - Enumeration of supported validation types</li>
+ *   <li>{@link de.cuioss.jwt.validation.IssuerConfig} - Configuration for token issuers</li>
+ *   <li>{@link de.cuioss.jwt.validation.ParserConfig} - Configuration for token parsing</li>
  *   <li>{@link de.cuioss.jwt.validation.JWTValidationLogMessages} - Structured logging messages</li>
  * </ul>
  * <p>
  * The package supports:
  * <ul>
- *   <li>Multi-issuer validation validation</li>
+ *   <li>Multi-issuer token validation</li>
  *   <li>JWKS (JSON Web Key Set) integration</li>
  *   <li>Role and scope-based authorization</li>
  *   <li>Token expiration management</li>
+ *   <li>Custom claim mapping</li>
  * </ul>
  * <p>
  * Note: The implementation is primarily tested with Keycloak as the identity provider.
- * Some features may be specific to Keycloak's validation implementation.
+ * Some features may be specific to Keycloak's token implementation.
  * 
  * @since 1.0
  */

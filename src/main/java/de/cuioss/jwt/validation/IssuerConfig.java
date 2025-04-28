@@ -33,7 +33,7 @@ import java.util.Set;
 
 /**
  * Configuration class for issuer settings.
- * It aggregates all information needed to validate a JWT validation.
+ * It aggregates all information needed to validate a JWT token.
  * <p>
  * This class contains the issuer URL, expected audience, expected client ID,
  * configuration for JwksLoader and {@link AlgorithmPreferences}.
@@ -42,6 +42,27 @@ import java.util.Set;
  * The JwksLoader is initialized through the {@link #initSecurityEventCounter(SecurityEventCounter)} method
  * and can be accessed through the {@link #getJwksLoader()} method.
  * </p>
+ * <p>
+ * This class is immutable after construction and thread-safe once the JwksLoader is initialized.
+ * </p>
+ * <p>
+ * Usage example:
+ * <pre>
+ * // Create an issuer configuration with HTTP-based JWKS loading
+ * IssuerConfig issuerConfig = IssuerConfig.builder()
+ *     .issuer("https://example.com")
+ *     .expectedAudience("my-client")
+ *     .httpJwksLoaderConfig(HttpJwksLoaderConfig.builder()
+ *         .jwksUrl("https://example.com/.well-known/jwks.json")
+ *         .refreshIntervalSeconds(60)
+ *         .build())
+ *     .build();
+ * 
+ * // Initialize the security event counter -> This is usually done by TokenValidator
+ * issuerConfig.initSecurityEventCounter(new SecurityEventCounter());
+ * </pre>
+ *
+ * @since 1.0
  */
 @Builder
 @Getter
@@ -49,12 +70,26 @@ import java.util.Set;
 @ToString
 public class IssuerConfig {
 
+    /**
+     * The issuer URL that identifies the token issuer.
+     * This value is matched against the "iss" claim in the token.
+     */
     @NonNull
     String issuer;
 
+    /**
+     * Set of expected audience values.
+     * These values are matched against the "aud" claim in the token.
+     * If the token's audience claim matches any of these values, it is considered valid.
+     */
     @Singular("expectedAudience")
     Set<String> expectedAudience;
 
+    /**
+     * Set of expected client ID values.
+     * These values are matched against the "azp" or "client_id" claim in the token.
+     * If the token's client ID claim matches any of these values, it is considered valid.
+     */
     @Singular("expectedClientId")
     Set<String> expectedClientId;
 
@@ -98,12 +133,17 @@ public class IssuerConfig {
      * Initializes the JwksLoader if it's not already initialized.
      * This method should be called by TokenValidator before using the JwksLoader.
      * It will initialize the JwksLoader based on the first available configuration in the following order:
-     * 1. HTTP JwksLoader (httpJwksLoaderConfig)
-     * 2. File JwksLoader (jwksFilePath)
-     * 3. In-memory JwksLoader (jwksContent)
+     * <ol>
+     *   <li>HTTP JwksLoader (httpJwksLoaderConfig)</li>
+     *   <li>File JwksLoader (jwksFilePath)</li>
+     *   <li>In-memory JwksLoader (jwksContent)</li>
+     * </ol>
+     * <p>
+     * This method is not thread-safe and should be called before the object is shared between threads.
      *
-     * @param securityEventCounter the counter for security events
-     * @throws IllegalStateException if no configuration is present
+     * @param securityEventCounter the counter for security events, must not be null
+     * @throws IllegalStateException if no JwksLoader configuration is present
+     * @throws NullPointerException if securityEventCounter is null
      */
     public void initSecurityEventCounter(@NonNull SecurityEventCounter securityEventCounter) {
 

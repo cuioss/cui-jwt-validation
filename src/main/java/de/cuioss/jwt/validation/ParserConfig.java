@@ -28,16 +28,29 @@ import java.util.Map;
  * Configuration class for the TokenValidator.
  * <p>
  * This class provides configuration options for the TokenValidator, such as
- * maximum validation size, maximum payload size, and logging behavior.
+ * maximum token size, maximum payload size, and logging behavior.
  * It also includes JSON parsing security settings like maximum string size,
  * maximum array size, and maximum depth.
+ * <p>
+ * This class is immutable and thread-safe.
+ * <p>
+ * Usage example:
+ * <pre>
+ * ParserConfig config = ParserConfig.builder()
+ *     .maxTokenSize(16 * 1024)
+ *     .maxPayloadSize(16 * 1024)
+ *     .logWarningsOnDecodeFailure(false)
+ *     .build();
+ * </pre>
+ *
+ * @since 1.0
  */
 @Builder
 @Value
 public class ParserConfig {
 
     /**
-     * Default maximum size of a JWT validation in bytes to prevent overflow attacks.
+     * Default maximum size of a JWT token in bytes to prevent overflow attacks.
      * 8KB as recommended by OAuth 2.0 JWT BCP Section 3.11.
      */
     public static final int DEFAULT_MAX_TOKEN_SIZE = 8 * 1024;
@@ -64,7 +77,7 @@ public class ParserConfig {
     public static final int DEFAULT_MAX_DEPTH = 10;
 
     /**
-     * Maximum size of a JWT validation in bytes to prevent overflow attacks.
+     * Maximum size of a JWT token in bytes to prevent overflow attacks.
      */
     @Builder.Default
     int maxTokenSize = DEFAULT_MAX_TOKEN_SIZE;
