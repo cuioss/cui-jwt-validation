@@ -21,7 +21,7 @@ _See Requirement link:../Requirements.adoc#CUI-JWT-2[CUI-JWT-2: Token Representa
 This specification has been implemented in the following classes:
 
 * link:../../src/main/java/de/cuioss/jwt/validation/TokenValidator.java[TokenValidator] (class)
-* link:../../src/main/java/de/cuioss/jwt/validation/TokenParserConfig.java[TokenParserConfig] (configuration)
+* link:../../src/main/java/de/cuioss/jwt/validation/ParserConfig.java[ParserConfig] (configuration)
 
 The `TokenValidator` is the primary entry point for applications using the library. It provides methods for creating and validating different types of tokens (access, ID, refresh) while handling the complexity of token parsing and validation through a pipeline approach.
 

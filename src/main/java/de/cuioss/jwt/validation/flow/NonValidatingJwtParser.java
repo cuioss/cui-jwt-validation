@@ -16,7 +16,7 @@
 package de.cuioss.jwt.validation.flow;
 
 import de.cuioss.jwt.validation.JWTValidationLogMessages;
-import de.cuioss.jwt.validation.TokenParserConfig;
+import de.cuioss.jwt.validation.ParserConfig;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
@@ -83,8 +83,8 @@ import java.util.Optional;
  * <p>
  * Example with custom security settings:
  * <pre>
- * // Create a parser with custom security settings using TokenParserConfig
- * TokenParserConfig config = TokenParserConfig.builder()
+ * // Create a parser with custom security settings using ParserConfig
+ * ParserConfig config = ParserConfig.builder()
  *     .maxTokenSize(1024)  // 1KB max validation size
  *     .maxPayloadSize(512)  // 512 bytes max payload size
  *     .maxStringSize(256)   // 256 bytes max string size
@@ -131,8 +131,8 @@ public class NonValidatingJwtParser {
      * <p>
      * You can use this builder to configure the parser with specific security settings:
      * <pre>
-     * // Using TokenParserConfig
-     * TokenParserConfig config = TokenParserConfig.builder()
+     * // Using ParserConfig
+     * ParserConfig config = ParserConfig.builder()
      *     .maxTokenSize(16 * 1024)  // 16KB
      *     .maxPayloadSize(8 * 1024)  // 8KB
      *     .logWarningsOnDecodeFailure(false)  // suppress warnings
@@ -156,7 +156,7 @@ public class NonValidatingJwtParser {
      * Configuration for the parser, containing all security settings.
      */
     @Builder.Default
-    private final TokenParserConfig config = TokenParserConfig.builder().build();
+    private final ParserConfig config = ParserConfig.builder().build();
 
     /**
      * Counter for security events that occur during validation processing.

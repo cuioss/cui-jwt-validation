@@ -15,7 +15,7 @@
  */
 package de.cuioss.jwt.validation.security;
 
-import de.cuioss.jwt.validation.TokenParserConfig;
+import de.cuioss.jwt.validation.ParserConfig;
 import de.cuioss.jwt.validation.TokenValidator;
 import de.cuioss.jwt.validation.IssuerConfig;
 import de.cuioss.jwt.validation.jwks.JwksLoader;
@@ -95,7 +95,7 @@ class TokenCrackingResistanceTest {
                 .build();
 
         // Create validation factory
-        TokenParserConfig config = TokenParserConfig.builder().build();
+        ParserConfig config = ParserConfig.builder().build();
         tokenValidator = new TokenValidator(config, issuerConfig);
     }
 

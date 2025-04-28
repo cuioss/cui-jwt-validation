@@ -132,9 +132,9 @@ The project includes comprehensive documentation across several categories:
 * Protection against client confusion attacks
 * Comprehensive threat model with STRIDE analysis
 
-=== TokenParserConfig Security Settings
+=== ParserConfig Security Settings
 
-The `TokenParserConfig` class provides important security settings for token processing to prevent various attacks:
+The `ParserConfig` class provides important security settings for token processing to prevent various attacks:
 
 * `maxTokenSize`: Prevents memory exhaustion attacks from oversized tokens
 * `maxPayloadSize`: Prevents memory exhaustion attacks from oversized payloads

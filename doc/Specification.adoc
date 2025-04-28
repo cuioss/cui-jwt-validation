@@ -37,7 +37,7 @@ _See Requirement link:Requirements.adoc#CUI-JWT-2[CUI-JWT-2: Token Representatio
 
 The primary entry point for applications using the library. It provides methods for creating and validating different types of tokens using a pipeline approach.
 
-==== TokenParserConfig
+==== ParserConfig
 _See Requirement link:Requirements.adoc#CUI-JWT-6[CUI-JWT-6: Configuration]_
 
 Configuration class for the TokenValidator that allows customizing token size limits and other settings.

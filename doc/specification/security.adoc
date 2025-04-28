@@ -65,18 +65,18 @@ The following classes implement this specification:
 
 * link:../../src/main/java/de/cuioss/jwt/validation/flow/NonValidatingJwtParser.java[NonValidatingJwtParser]
 * link:../../src/main/java/de/cuioss/jwt/validation/TokenValidator.java[TokenValidator]
-* link:../../src/main/java/de/cuioss/jwt/validation/TokenParserConfig.java[TokenParserConfig]
+* link:../../src/main/java/de/cuioss/jwt/validation/ParserConfig.java[ParserConfig]
 
 To prevent denial of service attacks, the library enforces a maximum token size of 8KB.
 
 Token size is checked before parsing and tokens larger than the configured limit are rejected. The default limit is set to 8KB as recommended by OAuth 2.0 JWT BCP Section 3.11.
 
-The TokenParserConfig class allows customizing token size limits:
+The ParserConfig class allows customizing token size limits:
 
 [source,java]
 ----
 TokenValidator validator = new TokenValidator(
-    TokenParserConfig.builder()
+    ParserConfig.builder()
         .maxTokenSize(8 * 1024)  // 8KB
         .maxPayloadSize(4 * 1024)  // 4KB
         .build(),

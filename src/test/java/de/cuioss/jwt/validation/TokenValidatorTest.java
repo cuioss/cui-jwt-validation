@@ -140,7 +140,7 @@ class TokenValidatorTest {
             String largeToken = "a".repeat(customMaxSize + 1);
 
             // Create TokenValidator with custom validation size limits
-            TokenParserConfig customConfig = TokenParserConfig.builder()
+            ParserConfig customConfig = ParserConfig.builder()
                     .maxTokenSize(customMaxSize)
                     .build();
             var factory = new TokenValidator(customConfig, issuerConfig);
@@ -155,7 +155,7 @@ class TokenValidatorTest {
         @DisplayName("Should respect custom payload size limits")
         void shouldRespectCustomPayloadSizeLimits() {
             // Create TokenValidator with custom payload size limits
-            TokenParserConfig customConfig = TokenParserConfig.builder()
+            ParserConfig customConfig = ParserConfig.builder()
                     .maxPayloadSize(100)
                     .build();
             var factory = new TokenValidator(customConfig, issuerConfig);

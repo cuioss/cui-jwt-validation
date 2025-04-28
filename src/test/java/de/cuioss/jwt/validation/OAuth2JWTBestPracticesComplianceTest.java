@@ -266,7 +266,7 @@ class OAuth2JWTBestPracticesComplianceTest {
             String largeToken = "a".repeat(customMaxSize + 1);
 
             // Create TokenValidator with custom validation size limits
-            TokenParserConfig customConfig = TokenParserConfig.builder()
+            ParserConfig customConfig = ParserConfig.builder()
                     .maxTokenSize(customMaxSize)
                     .build();
             var factory = new TokenValidator(customConfig, IssuerConfig.builder()
@@ -288,7 +288,7 @@ class OAuth2JWTBestPracticesComplianceTest {
         @DisplayName("3.11: Default validation size limit should be 8KB")
         void defaultTokenSizeLimitShouldBe8KB() {
             // Given
-            TokenParserConfig config = TokenParserConfig.builder().build();
+            ParserConfig config = ParserConfig.builder().build();
 
             // Then
             assertEquals(8192, config.getMaxTokenSize(),
