@@ -21,7 +21,6 @@ import de.cuioss.jwt.validation.domain.token.IdTokenContent;
 import de.cuioss.jwt.validation.domain.token.RefreshTokenContent;
 import de.cuioss.jwt.validation.domain.token.TokenContent;
 import de.cuioss.jwt.validation.flow.DecodedJwt;
-import de.cuioss.jwt.validation.flow.IssuerConfig;
 import de.cuioss.jwt.validation.flow.NonValidatingJwtParser;
 import de.cuioss.jwt.validation.flow.TokenBuilder;
 import de.cuioss.jwt.validation.flow.TokenClaimValidator;

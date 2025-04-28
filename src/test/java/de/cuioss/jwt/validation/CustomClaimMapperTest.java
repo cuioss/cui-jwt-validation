@@ -20,7 +20,6 @@ import de.cuioss.jwt.validation.domain.claim.ClaimValueType;
 import de.cuioss.jwt.validation.domain.claim.mapper.ClaimMapper;
 import de.cuioss.jwt.validation.domain.claim.mapper.JsonCollectionMapper;
 import de.cuioss.jwt.validation.domain.token.AccessTokenContent;
-import de.cuioss.jwt.validation.flow.IssuerConfig;
 import de.cuioss.jwt.validation.test.JWKSFactory;
 import de.cuioss.jwt.validation.test.KeyMaterialHandler;
 import de.cuioss.test.juli.junit5.EnableTestLogger;

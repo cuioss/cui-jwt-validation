@@ -15,7 +15,6 @@
  */
 package de.cuioss.jwt.validation;
 
-import de.cuioss.jwt.validation.flow.IssuerConfig;
 import de.cuioss.jwt.validation.security.AlgorithmPreferences;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.jwt.validation.test.JWKSFactory;

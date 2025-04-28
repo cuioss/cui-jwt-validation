@@ -19,7 +19,7 @@ import de.cuioss.jwt.validation.TokenValidator;
 import de.cuioss.jwt.validation.TokenParserConfig;
 import de.cuioss.jwt.validation.domain.token.AccessTokenContent;
 import de.cuioss.jwt.validation.domain.token.IdTokenContent;
-import de.cuioss.jwt.validation.flow.IssuerConfig;
+import de.cuioss.jwt.validation.IssuerConfig;
 import de.cuioss.jwt.validation.security.AlgorithmPreferences;
 import de.cuioss.jwt.validation.test.JwtTokenTamperingUtil.TamperingStrategy;
 import de.cuioss.jwt.validation.test.generator.AccessTokenGenerator;

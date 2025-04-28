@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.cuioss.jwt.validation.flow;
+package de.cuioss.jwt.validation;
 
 import de.cuioss.test.generator.Generators;
 import de.cuioss.test.valueobjects.junit5.contracts.ShouldImplementEqualsAndHashCode;

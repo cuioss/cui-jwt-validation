@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.validation.flow;
 
+import de.cuioss.jwt.validation.IssuerConfig;
 import de.cuioss.jwt.validation.JWTValidationLogMessages;
 import de.cuioss.jwt.validation.TokenType;
 import de.cuioss.jwt.validation.domain.claim.ClaimName;

@@ -17,7 +17,7 @@ package de.cuioss.jwt.validation.security;
 
 import de.cuioss.jwt.validation.TokenParserConfig;
 import de.cuioss.jwt.validation.TokenValidator;
-import de.cuioss.jwt.validation.flow.IssuerConfig;
+import de.cuioss.jwt.validation.IssuerConfig;
 import de.cuioss.jwt.validation.jwks.JwksLoader;
 import de.cuioss.jwt.validation.jwks.key.KeyInfo;
 import de.cuioss.jwt.validation.test.JWKSFactory;
