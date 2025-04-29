@@ -18,8 +18,6 @@ https://cuioss.github.io/cui-jwt-validation/about.html[Generated Documentation o
 A comprehensive library for validating JWT tokens in multi-issuer environments.
 The core idea is to leverage offline-validation of JWT tokens.
 
-The module provides robust token parsing and validation capabilities with a focus on security and ease of use.
-
 Key features include:
 
 * Multi-issuer support for handling tokens from different identity providers
@@ -62,92 +60,60 @@ The library itself includes the API as a provided dependency, but you need to pr
 
 Alternatively, you can use any other Jakarta JSON API implementation.
 
-== Core Components
+== Architecture Overview
 
 image::doc/plantuml/component-overview.png[Component Overview]
 
-=== TokenValidator: The Main Entry Point
+The library is designed around a pipeline architecture for token validation, with each component handling a specific aspect of the validation process. The main components are:
 
-The `TokenValidator` serves as the primary entry point for token operations.
-It provides:
+* *TokenValidator*: The primary entry point for all token operations
+* *Token Validation Pipeline*: A series of validators for headers, signatures, and claims
+* *Multi-Issuer Support*: Configuration for multiple identity providers
+* *Key Management*: Handling of cryptographic keys for token validation
 
-* Centralized token creation and validation
-* Support for multiple token types (Access, ID, Refresh)
-* Pipeline-based token validation
-* Support for multiple issuers
+For detailed information about the architecture and components, see the link:doc/specification/technical-components.adoc[Technical Components] documentation.
 
-For detailed usage examples, see the link:doc/Usage.adoc[Usage Guide].
+== Getting Started
 
-=== Token Validation Pipeline
+To start using the library, you'll need to:
 
-The module uses a pipeline approach for token validation:
+1. Add the Maven dependency to your project
+2. Configure one or more issuers
+3. Create a TokenValidator instance
+4. Use the validator to validate tokens
 
-* `TokenHeaderValidator`: Validates token headers (algorithm, issuer)
-* `TokenSignatureValidator`: Validates token signatures using JWKS
-* `TokenBuilder`: Creates token content objects
-* `TokenClaimValidator`: Validates token claims (expiration, audience, etc.)
+Here's a minimal example:
 
-=== Multi-Issuer Support
+[source,java]
+----
+// Create issuer configuration
+IssuerConfig issuerConfig = IssuerConfig.builder()
+        .issuer("https://your-issuer.com")
+        .httpJwksLoaderConfig(httpJwksLoaderConfig)
+        .build();
 
-The module provides robust support for multi-issuer environments with configuration of multiple issuers, automatic issuer detection, and thread-safe token validation.
+// Create validator
+TokenValidator validator = new TokenValidator(issuerConfig);
 
-For detailed information about multi-issuer support and key management, see the link:doc/specification/technical-components.adoc#_issuerconfig_and_multi_issuer_support[Multi-Issuer Support] section in the technical components specification.
+// Validate token
+Optional<AccessTokenContent> accessToken = validator.createAccessToken(tokenString);
+----
 
-For detailed examples of multi-issuer configuration, see the link:doc/Usage.adoc[Usage Guide].
-
-=== Custom Claim Mappers
-
-The module supports custom claim mappers that take precedence over the default ones:
-
-* Configure custom ClaimMapper instances for specific claims
-* Handle non-standard claims like "role" from specific identity providers
-* Extend the system with custom claim mapping logic
-
-For examples of custom claim mapper configuration, see the link:doc/Usage.adoc[Usage Guide].
-
-== Token Architecture and Types
-
-The module uses a flexible architecture based on inheritance and composition, supporting three token types: AccessTokenContent, IdTokenContent, and RefreshTokenContent.
-
-For detailed information about token architecture and types, see the link:doc/specification/technical-components.adoc#_token_architecture_and_types[Token Architecture and Types] section in the technical components specification.
+For more detailed examples and best practices, see the link:doc/Usage.adoc[Usage Guide].
 
 == Documentation
 
-The project includes comprehensive documentation across several categories:
+The project includes comprehensive documentation to help you get started and understand the library's capabilities:
 
-* *Requirements and Specifications*: link:doc/Requirements.adoc[Requirements], link:doc/Specification.adoc[Technical Specification]
-* *Security*: link:doc/threat-model/Threat-Model.adoc[Threat Model], link:doc/specification/security.adoc[Security Specification]
-* *Technical Details*: link:doc/specification/technical-components.adoc[Technical Components], link:doc/specification/token-size-validation.adoc[Token Size Validation], link:doc/specification/token-decryption.adoc[Token Decryption]
-* *Development*: link:doc/specification/testing.adoc[Testing], link:doc/LogMessages.adoc[Log Messages], link:doc/Usage.adoc[Usage Guide], link:doc/Build.adoc[Building and Development]
+* link:doc/Usage.adoc[Usage Guide] - How to use the library with code examples
+* link:doc/Requirements.adoc[Requirements] - Functional and non-functional requirements
+* link:doc/specification/technical-components.adoc[Technical Components] - Detailed component specifications
+* link:doc/threat-model/Threat-Model.adoc[Threat Model] - Security analysis and mitigations
+* link:doc/LogMessages.adoc[Log Messages] - Logging and troubleshooting
+* link:doc/Build.adoc[Building and Development] - Information for contributors
 
-== Security Considerations
+== Next Steps
 
-=== Security Features
-
-* All token validation is performed using cryptographic signatures via Bouncy Castle (bcprov-jdk18on)
-* Automatic key rotation prevents stale key usage
-* Token size limits prevent memory exhaustion attacks
-* Safe Base64 decoding practices
-* TLS support for secure key retrieval
-* Protection against client confusion attacks
-* Comprehensive threat model with STRIDE analysis
-
-=== ParserConfig Security Settings
-
-The `ParserConfig` class provides important security settings for token processing to prevent various attacks:
-
-* `maxTokenSize`: Prevents memory exhaustion attacks from oversized tokens
-* `maxPayloadSize`: Prevents memory exhaustion attacks from oversized payloads
-* `maxStringSize`, `maxArraySize`, `maxDepth`: Prevent JSON parsing attacks
-
-For examples of security settings configuration, see the link:doc/Usage.adoc[Usage Guide].
-
-For more details on security considerations, see the link:doc/threat-model/Threat-Model.adoc[Threat Model] and link:doc/specification/security.adoc[Security Specification].
-
-== Best Practices
-
-For detailed best practices, including general recommendations, security recommendations, and performance recommendations, see the link:doc/Usage.adoc[Usage Guide].
-
-== Building and Development
-
-For information about building and developing the library, including PlantUML diagram generation and usage, see the link:doc/Build.adoc[Building and Development Guide].
+* Read the link:doc/Usage.adoc[Usage Guide] for detailed examples
+* Review the link:doc/Requirements.adoc[Requirements] to understand the library's capabilities
+* Explore the link:doc/specification/technical-components.adoc[Technical Components] for implementation details
