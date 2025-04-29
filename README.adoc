@@ -116,7 +116,7 @@ For detailed information about token architecture and types, see the link:doc/sp
 The project includes comprehensive documentation across several categories:
 
 * *Requirements and Specifications*: link:doc/Requirements.adoc[Requirements], link:doc/Specification.adoc[Technical Specification]
-* *Security*: link:doc/Threat-Model.adoc[Threat Model], link:doc/specification/security.adoc[Security Specification]
+* *Security*: link:doc/threat-model/Threat-Model.adoc[Threat Model], link:doc/specification/security.adoc[Security Specification]
 * *Technical Details*: link:doc/specification/technical-components.adoc[Technical Components], link:doc/specification/token-size-validation.adoc[Token Size Validation], link:doc/specification/token-decryption.adoc[Token Decryption]
 * *Development*: link:doc/specification/testing.adoc[Testing], link:doc/LogMessages.adoc[Log Messages], link:doc/Usage.adoc[Usage Guide], link:doc/Build.adoc[Building and Development]
 
@@ -142,7 +142,7 @@ The `ParserConfig` class provides important security settings for token processi
 
 For examples of security settings configuration, see the link:doc/Usage.adoc[Usage Guide].
 
-For more details on security considerations, see the link:doc/Threat-Model.adoc[Threat Model] and link:doc/specification/security.adoc[Security Specification].
+For more details on security considerations, see the link:doc/threat-model/Threat-Model.adoc[Threat Model] and link:doc/specification/security.adoc[Security Specification].
 
 == Best Practices
 
