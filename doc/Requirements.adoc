@@ -304,8 +304,6 @@ Integration tests must verify compatibility with Keycloak as the identity provid
 * Validate tokens against Keycloak JWKS endpoint
 * Handle token expiration and validation
 
-Note: The implementation uses a standard library for parsing JWT tokens, which ensures compatibility with other identity providers (Auth0, Azure AD, etc.) without requiring specific integration tests for each one.
-
 [#CUI-JWT-12.4]
 ==== CUI-JWT-12.4: Performance Testing
 
