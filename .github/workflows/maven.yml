@@ -50,7 +50,7 @@ jobs:
       - name: Compare build artifacts for reproducibility
         run: |
           if ! command -v diffoscope &> /dev/null; then
-            sudo apt-get update && sudo apt-get install -y diffoscope
+            sudo apt-get update -qq && sudo apt-get install -y -qq diffoscope
           fi
           diffoscope target/*.jar /tmp/first-build.jar || (echo "Builds differ!" && exit 1)
 
