@@ -30,6 +30,19 @@ jobs:
       - name: Build with Maven, Java ${{ matrix.version }}
         run: ./mvnw --no-transfer-progress verify -Dmaven.compiler.source=${{ matrix.version }} -Dmaven.compiler.target=${{ matrix.version }}
 
+      - name: First reproducible build
+        run: ./mvnw clean verify
+      - name: Save first build artifact
+        run: cp target/*.jar /tmp/first-build.jar
+      - name: Second reproducible build
+        run: ./mvnw clean verify
+      - name: Compare build artifacts for reproducibility
+        run: |
+          if ! command -v diffoscope &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y diffoscope
+          fi
+          diffoscope target/*.jar /tmp/first-build.jar || (echo "Builds differ!" && exit 1)
+
   sonar-build:
     needs: build
     runs-on: ubuntu-latest

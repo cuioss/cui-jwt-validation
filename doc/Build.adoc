@@ -44,6 +44,32 @@ This project implements several measures to ensure reproducible builds. The foll
 * All GitHub Actions in `.github/workflows/` are pinned by commit hash (uses: `...@<commit-sha>`).
 * The build environment is documented: builds are tested on Linux with `Java 17` and Maven `3.9.6` using `./mvnw`.
 
+=== Verifying Reproducibility
+
+To verify that builds are reproducible, you can perform the following steps:
+
+. Clean the project and perform the first build:
++
+[source,bash]
+----
+./mvnw clean verify
+cp target/*.jar /tmp/first-build.jar
+----
+. Clean the project and perform the second build:
++
+[source,bash]
+----
+./mvnw clean verify
+----
+. Compare the two build artifacts:
++
+[source,bash]
+----
+diffoscope target/*.jar /tmp/first-build.jar || (echo "Builds differ!" && exit 1)
+----
+
+If the builds are reproducible, there should be no differences reported by `diffoscope`.
+
 == PlantUML Diagrams
 
 This project uses PlantUML for creating diagrams in the documentation.
