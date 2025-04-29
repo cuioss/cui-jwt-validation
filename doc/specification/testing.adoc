@@ -175,7 +175,7 @@ Comprehensive security testing has been implemented to verify the security aspec
 For detailed information about security testing, including test classes, test coverage, and specific security tests like Key Disclosure Vulnerability Tests and Token Cracking Resistance Tests, please refer to the link:security.adoc[Security] document, specifically the "Security Testing Specifications" section.
 
 === Performance Testing
-_See Requirement link:../Requirements.adoc#CUI-JWT-12.4[CUI-JWT-12.4: Performance Testing]_
+_See Requirement link:../Requirements.adoc#CUI-JWT-9[CUI-JWT-9: Performance]_
 
 ==== Status: IMPLEMENTED
 
@@ -251,7 +251,7 @@ The following test methods demonstrate the logging test approach:
 These tests ensure that the library logs appropriate information at the correct log levels for both successful operations and error scenarios.
 
 === Vulnerability Scanning
-_See Requirement link:../Requirements.adoc#CUI-JWT-12.5[CUI-JWT-12.5: Vulnerability Scanning]_
+_See Requirement link:../Requirements.adoc#CUI-JWT-12.4[CUI-JWT-12.4: Vulnerability Scanning]_
 
 ==== Status: IMPLEMENTED
 
@@ -260,7 +260,7 @@ Vulnerability scanning has been implemented using GitHub Dependabot to regularly
 For detailed information about dependency management and vulnerability scanning, please refer to the link:security.adoc[Security] document, specifically the "Dependency Management" section.
 
 === Compliance Testing
-_See Requirement link:../Requirements.adoc#CUI-JWT-12.6[CUI-JWT-12.6: Compliance Testing]_
+_See Requirement link:../Requirements.adoc#CUI-JWT-12.5[CUI-JWT-12.5: Compliance Testing]_
 
 ==== Status: IMPLEMENTED
 

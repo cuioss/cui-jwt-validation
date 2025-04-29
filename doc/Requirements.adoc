@@ -304,17 +304,9 @@ Integration tests must verify compatibility with Keycloak as the identity provid
 * Validate tokens against Keycloak JWKS endpoint
 * Handle token expiration and validation
 
+
 [#CUI-JWT-12.4]
-==== CUI-JWT-12.4: Performance Testing
-
-Performance tests must verify that the library meets the performance requirements specified in CUI-JWT-9, including:
-
-* Token parsing performance
-* Token validation performance
-* Key retrieval and caching performance
-
-[#CUI-JWT-12.5]
-==== CUI-JWT-12.5: Vulnerability Scanning
+==== CUI-JWT-12.4: Vulnerability Scanning
 
 The library must be regularly scanned for vulnerabilities using:
 
@@ -322,8 +314,8 @@ The library must be regularly scanned for vulnerabilities using:
 * Static Application Security Testing (SAST) tools
 * https://owasp.org/www-community/Fuzzing[Fuzz testing] for input validation
 
-[#CUI-JWT-12.6]
-==== CUI-JWT-12.6: Compliance Testing
+[#CUI-JWT-12.5]
+==== CUI-JWT-12.5: Compliance Testing
 
 Tests must verify compliance with:
 
