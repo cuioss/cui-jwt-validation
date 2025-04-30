@@ -135,8 +135,8 @@ class JWKSKeyLoaderTest {
     }
 
     @Nested
-    @DisplayName("New Features")
-    class NewFeaturesTests {
+    @DisplayName("Metadata and State Management")
+    class MetadataAndStateTests {
         @Test
         @DisplayName("Should store original JWKS content")
         void shouldStoreOriginalJwksContent() {

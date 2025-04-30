@@ -223,7 +223,7 @@ class TokenClaimValidatorTest {
     @DisplayName("Audience Validation Tests")
     class AudienceValidationTests {
         @Test
-        @DisplayName("Should validate validation with matching audience")
+        @DisplayName("Should validate token with matching audience")
         void shouldValidateTokenWithMatchingAudience() {
             // Given a validator with expected audience
             var issuerConfig = IssuerConfig.builder()
@@ -233,7 +233,7 @@ class TokenClaimValidatorTest {
                     .build();
             var validator = createValidator(issuerConfig);
 
-            // When validating a validation with a matching audience
+            // When validating a token with a matching audience
             TokenContent tokenContent = new ValidTokenContentGenerator().next();
             var result = validator.validate(tokenContent);
 
@@ -242,7 +242,7 @@ class TokenClaimValidatorTest {
         }
 
         @Test
-        @DisplayName("Should fail validation for validation with non-matching audience for ID-Tokens")
+        @DisplayName("Should fail validation for token with non-matching audience for ID-Tokens")
         void shouldFailValidationForTokenWithNonMatchingAudienceForID() {
             // Get initial count
             long initialCount = SECURITY_EVENT_COUNTER.getCount(SecurityEventCounter.EventType.MISSING_CLAIM);
@@ -255,7 +255,7 @@ class TokenClaimValidatorTest {
                     .build();
             var validator = createValidator(issuerConfig);
 
-            // When validating a validation with a missing audience
+            // When validating a token with a missing audience
             TokenContent tokenContent = new InvalidTokenContentGenerator(TokenType.ID_TOKEN)
                     .withMissingAudience()
                     .next();
@@ -273,7 +273,7 @@ class TokenClaimValidatorTest {
         }
 
         @Test
-        @DisplayName("Should fail validation for validation with non-matching audience for Access-Tokens")
+        @DisplayName("Should fail validation for token with non-matching audience for Access-Tokens")
         void shouldFailValidationForTokenWithNonMatchingAudienceForAccessToken() {
             // Given a validator with expected audience
             var issuerConfig = IssuerConfig.builder()
@@ -283,14 +283,14 @@ class TokenClaimValidatorTest {
                     .build();
             var validator = createValidator(issuerConfig);
 
-            // When validating a validation with a missing audience
+            // When validating a token with a missing audience
             TokenContent tokenContent = new InvalidTokenContentGenerator(TokenType.ACCESS_TOKEN)
                     .withMissingAudience()
                     .next();
             var result = validator.validate(tokenContent);
 
             // Then the validation should fail
-            assertFalse(result.isEmpty(), "Token should be valid with missing audience for access-validation");
+            assertFalse(result.isEmpty(), "Token should be valid with missing audience for access-token");
         }
     }
 
@@ -298,7 +298,7 @@ class TokenClaimValidatorTest {
     @DisplayName("Authorized Party Validation Tests")
     class AuthorizedPartyValidationTests {
         @Test
-        @DisplayName("Should validate validation with matching authorized party")
+        @DisplayName("Should validate token with matching authorized party")
         void shouldValidateTokenWithMatchingAuthorizedParty() {
             // Given a validator with expected client ID
             var issuerConfig = IssuerConfig.builder()
@@ -308,7 +308,7 @@ class TokenClaimValidatorTest {
                     .build();
             var validator = createValidator(issuerConfig);
 
-            // When validating a validation with a matching authorized party
+            // When validating a token with a matching authorized party
             TokenContent tokenContent = new ValidTokenContentGenerator().next();
             var result = validator.validate(tokenContent);
 
@@ -317,7 +317,7 @@ class TokenClaimValidatorTest {
         }
 
         @Test
-        @DisplayName("Should fail validation for validation with missing authorized party")
+        @DisplayName("Should fail validation for token with missing authorized party")
         void shouldFailValidationForTokenWithMissingAuthorizedParty() {
             // Get initial count
             long initialCount = SECURITY_EVENT_COUNTER.getCount(SecurityEventCounter.EventType.MISSING_CLAIM);
@@ -330,8 +330,8 @@ class TokenClaimValidatorTest {
                     .build();
             var validator = createValidator(issuerConfig);
 
-            // When validating a validation with a missing authorized party
-            // Create a validation with a missing authorized party claim
+            // When validating a token with a missing authorized party
+            // Create a token with a missing authorized party claim
             TokenContent tokenContent = new InvalidTokenContentGenerator()
                     .withMissingAuthorizedParty()
                     .next();

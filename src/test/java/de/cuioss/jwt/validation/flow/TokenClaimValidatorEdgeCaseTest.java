@@ -66,7 +66,7 @@ class TokenClaimValidatorEdgeCaseTest {
     class TokenExpirationEdgeCaseTests {
 
         @Test
-        @DisplayName("Should validate validation that is about to expire")
+        @DisplayName("Should validate token that is about to expire")
         void shouldValidateTokenThatIsAboutToExpire() {
             // Given a validator
             var issuerConfig = IssuerConfig.builder()
@@ -76,7 +76,7 @@ class TokenClaimValidatorEdgeCaseTest {
                     .build();
             var validator = createValidator(issuerConfig);
 
-            // When validating a validation that is about to expire (5 seconds from now)
+            // When validating a token that is about to expire (5 seconds from now)
             TokenContent tokenAboutToExpire = createTokenWithExpirationTime(OffsetDateTime.now().plusSeconds(5));
             var result = validator.validate(tokenAboutToExpire);
 
@@ -85,7 +85,7 @@ class TokenClaimValidatorEdgeCaseTest {
         }
 
         @Test
-        @DisplayName("Should fail validation for validation that has just expired")
+        @DisplayName("Should fail validation for token that has just expired")
         void shouldFailValidationForTokenThatHasJustExpired() {
             // Given a validator
             var issuerConfig = IssuerConfig.builder()
@@ -95,7 +95,7 @@ class TokenClaimValidatorEdgeCaseTest {
                     .build();
             var validator = createValidator(issuerConfig);
 
-            // When validating a validation that has just expired (5 seconds ago)
+            // When validating a token that has just expired (5 seconds ago)
             TokenContent tokenJustExpired = createTokenWithExpirationTime(OffsetDateTime.now().minusSeconds(5));
             var result = validator.validate(tokenJustExpired);
 
@@ -112,7 +112,7 @@ class TokenClaimValidatorEdgeCaseTest {
     class NotBeforeTimeEdgeCaseTests {
 
         @Test
-        @DisplayName("Should validate validation with not before time in the past")
+        @DisplayName("Should validate token with not before time in the past")
         void shouldValidateTokenWithNotBeforeTimeInThePast() {
             // Given a validator
             var issuerConfig = IssuerConfig.builder()
@@ -122,7 +122,7 @@ class TokenClaimValidatorEdgeCaseTest {
                     .build();
             var validator = createValidator(issuerConfig);
 
-            // When validating a validation with a not before time in the past
+            // When validating a token with a not before time in the past
             TokenContent tokenWithPastNotBefore = createTokenWithNotBeforeTime(OffsetDateTime.now().minusMinutes(5));
             var result = validator.validate(tokenWithPastNotBefore);
 
@@ -131,7 +131,7 @@ class TokenClaimValidatorEdgeCaseTest {
         }
 
         @Test
-        @DisplayName("Should validate validation with not before time slightly in the future (within clock skew)")
+        @DisplayName("Should validate token with not before time slightly in the future (within clock skew)")
         void shouldValidateTokenWithNotBeforeTimeSlightlyInTheFuture() {
             // Given a validator
             var issuerConfig = IssuerConfig.builder()
@@ -141,7 +141,7 @@ class TokenClaimValidatorEdgeCaseTest {
                     .build();
             var validator = createValidator(issuerConfig);
 
-            // When validating a validation with a not before time slightly in the future (30 seconds)
+            // When validating a token with a not before time slightly in the future (30 seconds)
             // This should be within the allowed clock skew (60 seconds)
             TokenContent tokenWithFutureNotBefore = createTokenWithNotBeforeTime(OffsetDateTime.now().plusSeconds(30));
             var result = validator.validate(tokenWithFutureNotBefore);
@@ -151,7 +151,7 @@ class TokenClaimValidatorEdgeCaseTest {
         }
 
         @Test
-        @DisplayName("Should fail validation for validation with not before time far in the future (beyond clock skew)")
+        @DisplayName("Should fail validation for token with not before time far in the future (beyond clock skew)")
         void shouldFailValidationForTokenWithNotBeforeTimeFarInTheFuture() {
             // Given a validator
             var issuerConfig = IssuerConfig.builder()
@@ -161,7 +161,7 @@ class TokenClaimValidatorEdgeCaseTest {
                     .build();
             var validator = createValidator(issuerConfig);
 
-            // When validating a validation with a not before time far in the future (90 seconds)
+            // When validating a token with a not before time far in the future (90 seconds)
             // This should be beyond the allowed clock skew (60 seconds)
             TokenContent tokenWithFarFutureNotBefore = createTokenWithNotBeforeTime(OffsetDateTime.now().plusSeconds(90));
             var result = validator.validate(tokenWithFarFutureNotBefore);

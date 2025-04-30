@@ -38,7 +38,7 @@ class ClientConfusionAttackTest {
     private static final CuiLogger LOGGER = new CuiLogger(ClientConfusionAttackTest.class);
 
     /**
-     * The validation factory used for testing.
+     * The token validator used for testing.
      */
     private TokenValidator tokenValidator;
 
@@ -57,11 +57,11 @@ class ClientConfusionAttackTest {
     @Test
     @DisplayName("Token with valid azp claim should be accepted")
     void verify_azp_validation() {
-        // Generate a validation with the default client ID
+        // Generate a token with the default client ID
         String token = new IDTokenGenerator(false).next();
         LOGGER.debug("Token: " + token);
 
-        // Print the validation headers using NonValidatingJwtParser to debug
+        // Print the token headers using NonValidatingJwtParser to debug
         try {
             var decoder = NonValidatingJwtParser.builder().securityEventCounter(new SecurityEventCounter()).build();
             var decoded = decoder.decode(token);
@@ -76,18 +76,18 @@ class ClientConfusionAttackTest {
                         LOGGER.debug("Audience claim found: " + body.get("aud"));
                         LOGGER.debug("Audience claim type: " + body.get("aud").getValueType());
                     } else {
-                        LOGGER.debug("No audience claim found in validation");
+                        LOGGER.debug("No audience claim found in token");
                     }
 
                     if (body.containsKey("azp")) {
                         LOGGER.debug("AZP claim found: " + body.get("azp"));
                     } else {
-                        LOGGER.debug("No azp claim found in validation");
+                        LOGGER.debug("No azp claim found in token");
                     }
                 });
             });
         } catch (Exception e) {
-            System.err.println("Error decoding validation: " + e.getMessage());
+            System.err.println("Error decoding token: " + e.getMessage());
         }
 
         // Create an IssuerConfig with the correct client ID
@@ -102,10 +102,10 @@ class ClientConfusionAttackTest {
                 ", expectedAudience=" + issuerConfig.getExpectedAudience() +
                 ", expectedClientId=" + issuerConfig.getExpectedClientId());
 
-        // Create a validation factory with the issuer config
+        // Create a token validator with the issuer config
         tokenValidator = new TokenValidator(issuerConfig);
 
-        // Verify the validation is accepted
+        // Verify the token is accepted
         Optional<IdTokenContent> result = tokenValidator.createIdToken(token);
         assertTrue(result.isPresent(), "Token with valid azp claim should be accepted");
     }
@@ -113,7 +113,7 @@ class ClientConfusionAttackTest {
     @Test
     @DisplayName("Token with invalid azp claim should be rejected")
     void verify_azp_validation_failure() {
-        // Generate a validation with the default client ID
+        // Generate a token with the default client ID
         String token = new IDTokenGenerator(false).next();
 
         // Create an IssuerConfig with an incorrect client ID
@@ -124,10 +124,10 @@ class ClientConfusionAttackTest {
                 .jwksContent(JWKSFactory.createDefaultJwks())
                 .build();
 
-        // Create a validation factory with the issuer config
+        // Create a token validator with the issuer config
         tokenValidator = new TokenValidator(issuerConfig);
 
-        // Verify the validation is rejected
+        // Verify the token is rejected
         Optional<IdTokenContent> result = tokenValidator.createIdToken(token);
         assertTrue(result.isEmpty(), "Token with invalid azp claim should be rejected");
     }
@@ -135,7 +135,7 @@ class ClientConfusionAttackTest {
     @Test
     @DisplayName("Token from a different client should be rejected")
     void verify_different_client_token_rejected() {
-        // Generate a validation with the alternative client ID
+        // Generate a token with the alternative client ID
         String token = new IDTokenGenerator(true).next();
 
         // Create an IssuerConfig with the default client ID
@@ -146,10 +146,10 @@ class ClientConfusionAttackTest {
                 .jwksContent(JWKSFactory.createDefaultJwks())
                 .build();
 
-        // Create a validation factory with the issuer config
+        // Create a token validator with the issuer config
         tokenValidator = new TokenValidator(issuerConfig);
 
-        // Verify the validation is rejected
+        // Verify the token is rejected
         Optional<IdTokenContent> result = tokenValidator.createIdToken(token);
         assertTrue(result.isEmpty(), "Token from a different client should be rejected");
     }
@@ -157,11 +157,11 @@ class ClientConfusionAttackTest {
     @Test
     @DisplayName("Audience validation without azp validation should work")
     void verify_audience_validation_without_azp() {
-        // Generate a validation with the default client ID
+        // Generate a token with the default client ID
         String token = new IDTokenGenerator(false).next();
-        LOGGER.debug("Generated validation: " + token);
+        LOGGER.debug("Generated token: " + token);
 
-        // Print the validation headers using NonValidatingJwtParser to debug
+        // Print the token headers using NonValidatingJwtParser to debug
         try {
             var decoder = NonValidatingJwtParser.builder().securityEventCounter(new SecurityEventCounter()).build();
             var decoded = decoder.decode(token);
@@ -176,18 +176,18 @@ class ClientConfusionAttackTest {
                         LOGGER.debug("Audience claim found: " + body.get("aud"));
                         LOGGER.debug("Audience claim type: " + body.get("aud").getValueType());
                     } else {
-                        LOGGER.debug("No audience claim found in validation");
+                        LOGGER.debug("No audience claim found in token");
                     }
 
                     if (body.containsKey("azp")) {
                         LOGGER.debug("AZP claim found: " + body.get("azp"));
                     } else {
-                        LOGGER.debug("No azp claim found in validation");
+                        LOGGER.debug("No azp claim found in token");
                     }
                 });
             });
         } catch (Exception e) {
-            System.err.println("Error decoding validation: " + e.getMessage());
+            System.err.println("Error decoding token: " + e.getMessage());
         }
 
         // Create an IssuerConfig with the correct audience but no client ID
@@ -201,10 +201,10 @@ class ClientConfusionAttackTest {
                 ", expectedAudience=" + issuerConfig.getExpectedAudience() +
                 ", expectedClientId=" + issuerConfig.getExpectedClientId());
 
-        // Create a validation factory with the issuer config
+        // Create a token validator with the issuer config
         tokenValidator = new TokenValidator(issuerConfig);
 
-        // Verify the validation is accepted
+        // Verify the token is accepted
         Optional<IdTokenContent> result = tokenValidator.createIdToken(token);
         assertTrue(result.isPresent(), "Token with valid audience should be accepted");
     }
@@ -212,7 +212,7 @@ class ClientConfusionAttackTest {
     @Test
     @DisplayName("AZP validation without audience validation should work")
     void verify_azp_validation_without_audience() {
-        // Generate a validation with the default client ID
+        // Generate a token with the default client ID
         String token = new IDTokenGenerator(false).next();
 
         // Create an IssuerConfig with the correct client ID but no audience
@@ -222,10 +222,10 @@ class ClientConfusionAttackTest {
                 .jwksContent(JWKSFactory.createDefaultJwks())
                 .build();
 
-        // Create a validation factory with the issuer config
+        // Create a token validator with the issuer config
         tokenValidator = new TokenValidator(issuerConfig);
 
-        // Verify the validation is accepted
+        // Verify the token is accepted
         Optional<IdTokenContent> result = tokenValidator.createIdToken(token);
         assertTrue(result.isPresent(), "Token with valid azp should be accepted");
     }
@@ -233,7 +233,7 @@ class ClientConfusionAttackTest {
     @Test
     @DisplayName("Token with missing azp claim should be rejected when validation is enabled")
     void verify_missing_azp_rejected() {
-        // Generate a validation with a specific client ID that has no azp claim
+        // Generate a token with a specific client ID that has no azp claim
         String token = new IDTokenGenerator(false, null).next();
 
         // Create an IssuerConfig that requires azp validation
@@ -243,10 +243,10 @@ class ClientConfusionAttackTest {
                 .jwksContent(JWKSFactory.createDefaultJwks())
                 .build();
 
-        // Create a validation factory with the issuer config
+        // Create a token validator with the issuer config
         tokenValidator = new TokenValidator(issuerConfig);
 
-        // Verify the validation is rejected
+        // Verify the token is rejected
         Optional<IdTokenContent> result = tokenValidator.createIdToken(token);
         assertTrue(result.isEmpty(), "Token with missing azp claim should be rejected");
     }
