@@ -6,7 +6,7 @@
     <parent>
         <groupId>de.cuioss</groupId>
         <artifactId>cui-java-parent</artifactId>
-        <version>0.9.9.2</version>
+        <version>0.9.9.3</version>
         <relativePath/>
     </parent>
     <artifactId>cui-jwt-validation</artifactId>
@@ -175,40 +175,4 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>${maven.jar.plugin.version}</version>
-                <configuration>
-                    <excludes>
-                        <exclude>**/log4j2.xml</exclude>
-                        <!-- Exclude eclipse workspace files -->
-                        <exclude>**/*.jsfdia</exclude>
-                    </excludes>
-                    <archive>
-                        <index>true</index>
-                        <manifest>
-                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                        </manifest>
-                        <manifestEntries>
-                            <Automatic-Module-Name>
-                                ${maven.jar.plugin.automatic.module.name}
-                            </Automatic-Module-Name>
-                            <Build-Time>${reproducible.build.outputTimestamp}</Build-Time>
-                            <Build-User>${user.name}</Build-User>
-                            <!--suppress UnresolvedMavenProperty -->
-                            <Build-Maven>Maven ${maven.version}</Build-Maven>
-                            <Build-Java>${java.version}</Build-Java>
-                            <Build-OS>${os.name}</Build-OS>
-                            <!--suppress UnresolvedMavenProperty -->
-                            <Build-Number>${buildNumber}</Build-Number>
-                        </manifestEntries>
-                    </archive>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-
 </project>
