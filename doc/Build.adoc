@@ -155,3 +155,16 @@ To add a new diagram:
    a. Run the `./generate-plantuml.sh` script (recommended if PlantUML is installed locally)
    b. Run the Maven build with the `build-plantuml` profile
 4. Reference the generated PNG in your documentation
+
+=== Automatisierte Überprüfung der Reproduzierbarkeit
+
+Die Reproduzierbarkeit des Builds wird automatisiert in der GitHub Actions Pipeline überprüft. Der Workflow "reproducible-build" führt dazu zwei Builds mit identischer Konfiguration durch und vergleicht die erzeugten Artefakte mit diffoscope. Nur wenn keine Unterschiede festgestellt werden, gilt der Build als reproduzierbar. Das Ergebnis wird durch eine Badge im README angezeigt.
+
+Ablauf im Workflow:
+
+. Erster Build und Speichern des JAR-Artefakts
+. Zweiter Build mit identischer Konfiguration
+. Vergleich der beiden Artefakte mit diffoscope
+. Bei Unterschieden schlägt der Workflow fehl
+
+Die diffoscope-Ausgabe kann zur Analyse im Fehlerfall genutzt werden. Weitere Informationen finden sich im Workflow unter `.github/workflows/maven.yml` (Job: `reproducible-build`).
