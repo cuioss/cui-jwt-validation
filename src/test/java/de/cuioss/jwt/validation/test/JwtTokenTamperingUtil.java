@@ -25,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Objects;
+import java.util.List;
 
 /**
  * Utility class for tampering with JWT tokens for testing purposes.
@@ -33,6 +34,45 @@ import java.util.Objects;
 public class JwtTokenTamperingUtil {
 
     private static final CuiLogger LOGGER = new CuiLogger(JwtTokenTamperingUtil.class);
+
+    /**
+     * Generator for replacement characters.
+     */
+    private static final TypedGenerator<Character> CHAR_GENERATOR_A_B = Generators.fixedValues(List.of('A', 'B'));
+
+    /**
+     * Generator for replacement characters.
+     */
+    private static final TypedGenerator<Character> CHAR_GENERATOR_C_D = Generators.fixedValues(List.of('C', 'D'));
+
+    /**
+     * Generator for replacement characters.
+     */
+    private static final TypedGenerator<Character> CHAR_GENERATOR_X_Y = Generators.fixedValues(List.of('X', 'Y'));
+
+    /**
+     * Maximum number of attempts to generate a different character.
+     */
+    private static final int MAX_ATTEMPTS = 10;
+
+    /**
+     * Generates a character that is different from the original character.
+     * 
+     * @param originalChar the character to be replaced
+     * @param generator the generator to use for generating characters
+     * @return a different character
+     */
+    private static char generateDifferentChar(char originalChar, TypedGenerator<Character> generator) {
+        char newChar;
+        int attempts = 0;
+
+        do {
+            newChar = generator.next();
+            attempts++;
+        } while (newChar == originalChar && attempts < MAX_ATTEMPTS);
+
+        return newChar;
+    }
 
     /**
      * Enum defining different tampering strategies for JWT tokens.
@@ -147,8 +187,8 @@ public class JwtTokenTamperingUtil {
             // For short signatures, modify the last two characters
             char lastChar = signature.charAt(signature.length() - 1);
             char secondLastChar = signature.charAt(signature.length() - 2);
-            char newLastChar = (lastChar == 'A') ? 'B' : 'A';
-            char newSecondLastChar = (secondLastChar == 'C') ? 'D' : 'C';
+            char newLastChar = generateDifferentChar(lastChar, CHAR_GENERATOR_A_B);
+            char newSecondLastChar = generateDifferentChar(secondLastChar, CHAR_GENERATOR_C_D);
             String tamperedSignature = signature.substring(0, signature.length() - 2)
                     + newSecondLastChar + newLastChar;
             return parts[0] + "." + parts[1] + "." + tamperedSignature;
@@ -158,8 +198,8 @@ public class JwtTokenTamperingUtil {
             int middleIndex = signature.length() / 2;
             char middleChar = signature.charAt(middleIndex);
 
-            char newLastChar = (lastChar == 'A') ? 'B' : 'A';
-            char newMiddleChar = (middleChar == 'X') ? 'Y' : 'X';
+            char newLastChar = generateDifferentChar(lastChar, CHAR_GENERATOR_A_B);
+            char newMiddleChar = generateDifferentChar(middleChar, CHAR_GENERATOR_X_Y);
 
             String tamperedSignature = signature.substring(0, middleIndex)
                     + newMiddleChar
@@ -190,7 +230,7 @@ public class JwtTokenTamperingUtil {
 
         int randomIndex = Generators.integers(0, signature.length() - 1).next();
         char originalChar = signature.charAt(randomIndex);
-        char newChar = (originalChar == 'A') ? 'B' : 'A';
+        char newChar = generateDifferentChar(originalChar, CHAR_GENERATOR_A_B);
 
         String tamperedSignature = signature.substring(0, randomIndex) + newChar +
                 (randomIndex < signature.length() - 1 ? signature.substring(randomIndex + 1) : "");
@@ -288,7 +328,7 @@ public class JwtTokenTamperingUtil {
             // change a character to ensure it's different
             if (reversedSignature.toString().equals(originalSignature) && !originalSignature.isEmpty()) {
                 char firstChar = reversedSignature.charAt(0);
-                reversedSignature.setCharAt(0, (firstChar == 'A') ? 'B' : 'A');
+                reversedSignature.setCharAt(0, generateDifferentChar(firstChar, CHAR_GENERATOR_A_B));
             }
 
             // Return the original validation with the different signature
