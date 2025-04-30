@@ -87,7 +87,7 @@ This file provides guidance to Junie when working with code in this repository.
 
 ## Testing Standards
 - Use JUnit 5 (`@Test`, `@DisplayName`, `@Nested`)
-- Use cui-test-juli-logger for logger testing with `@EnableTestLogger` 
+- Use cui-test-juli-logger for logger testing with `@EnableTestLogger`
 - Test all code paths, edge cases, and error conditions
 - Use assertLogMessagePresentContaining for testing log messages
 - Follow Arrange-Act-Assert pattern in test methods
