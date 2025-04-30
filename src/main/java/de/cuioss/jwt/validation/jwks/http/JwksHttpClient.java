@@ -156,7 +156,7 @@ public class JwksHttpClient {
         LOGGER.debug(DEBUG.RESOLVING_KEY_LOADER.format(uriString));
 
         // Check if the URI is the dummy URI for invalid URLs
-        if (uriString.equals("http://invalid-url")) {
+        if ("http://invalid-url".equals(uriString)) {
             LOGGER.warn(WARN.FAILED_TO_FETCH_JWKS.format(uriString));
             return JwksHttpResponse.empty();
         }

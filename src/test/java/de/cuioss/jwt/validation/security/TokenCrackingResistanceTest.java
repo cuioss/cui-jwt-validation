@@ -15,9 +15,9 @@
  */
 package de.cuioss.jwt.validation.security;
 
+import de.cuioss.jwt.validation.IssuerConfig;
 import de.cuioss.jwt.validation.ParserConfig;
 import de.cuioss.jwt.validation.TokenValidator;
-import de.cuioss.jwt.validation.IssuerConfig;
 import de.cuioss.jwt.validation.jwks.JwksLoader;
 import de.cuioss.jwt.validation.jwks.key.KeyInfo;
 import de.cuioss.jwt.validation.test.JWKSFactory;
@@ -120,15 +120,15 @@ class TokenCrackingResistanceTest {
 
             // Verify that the algorithm is a strong one
             assertTrue(
-                    algorithm.equals("RS256") ||
-                            algorithm.equals("RS384") ||
-                            algorithm.equals("RS512") ||
-                            algorithm.equals("ES256") ||
-                            algorithm.equals("ES384") ||
-                            algorithm.equals("ES512") ||
-                            algorithm.equals("PS256") ||
-                            algorithm.equals("PS384") ||
-                            algorithm.equals("PS512"),
+                    "RS256".equals(algorithm) ||
+                            "RS384".equals(algorithm) ||
+                            "RS512".equals(algorithm) ||
+                            "ES256".equals(algorithm) ||
+                            "ES384".equals(algorithm) ||
+                            "ES512".equals(algorithm) ||
+                            "PS256".equals(algorithm) ||
+                            "PS384".equals(algorithm) ||
+                            "PS512".equals(algorithm),
                     "Algorithm should be a strong one, but was: " + algorithm
             );
         }

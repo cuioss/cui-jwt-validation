@@ -209,7 +209,7 @@ public class InvalidDecodedJwtGenerator implements TypedGenerator<DecodedJwt> {
                         case STRING:
                         default:
                             // For string values, add as a string
-                            if (claimName.equals("iss") && customIssuer != null) {
+                            if ("iss".equals(claimName) && customIssuer != null) {
                                 // Override issuer if custom issuer is set
                                 bodyBuilder.add(claimName, customIssuer);
                             } else {

@@ -215,11 +215,11 @@ public class TokenSignatureValidator {
      */
     private boolean isAlgorithmCompatible(String tokenAlgorithm, String keyAlgorithm) {
         // For RSA keys
-        if (keyAlgorithm.equals("RSA")) {
+        if ("RSA".equals(keyAlgorithm)) {
             return tokenAlgorithm.startsWith("RS") || tokenAlgorithm.startsWith("PS");
         }
         // For EC keys
-        if (keyAlgorithm.equals("EC")) {
+        if ("EC".equals(keyAlgorithm)) {
             return tokenAlgorithm.startsWith("ES");
         }
         // For exact matches

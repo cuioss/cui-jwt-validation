@@ -15,11 +15,11 @@
  */
 package de.cuioss.jwt.validation.test;
 
+import de.cuioss.jwt.validation.IssuerConfig;
 import de.cuioss.jwt.validation.ParserConfig;
 import de.cuioss.jwt.validation.TokenValidator;
 import de.cuioss.jwt.validation.domain.token.AccessTokenContent;
 import de.cuioss.jwt.validation.domain.token.IdTokenContent;
-import de.cuioss.jwt.validation.IssuerConfig;
 import de.cuioss.jwt.validation.security.AlgorithmPreferences;
 import de.cuioss.jwt.validation.test.JwtTokenTamperingUtil.TamperingStrategy;
 import de.cuioss.jwt.validation.test.generator.AccessTokenGenerator;
