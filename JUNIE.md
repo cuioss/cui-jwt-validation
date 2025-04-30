@@ -7,9 +7,8 @@ This file provides guidance to Junie when working with code in this repository.
 - Run tests: `./mvnw test`
 - Run single test: `./mvnw test -Dtest=ClassName#methodName`
 - Create site: `./mvnw site`
-- Clean-Up Javadoc: `./mvnw clean install -Pjavadoc` -> Check the console after running the command and fix all errors and warnings, verify until they are all corrected 
-- Prepare Code: Use `./mvnw -Prewrite-modernize rewrite:run` -> verify with `./mvnw clean install` -> Fix if necessary and commit
-- Clean-Up Code: Use `./mvnw -Prewrite-prepare-release rewrite:run` -> verify with `./mvnw clean install` -> Fix if necessary and commit
+- Clean-Up Javadoc: `./mvnw clean install -Pjavadoc` -> Check the console after running the command and fix all errors and warnings, verify until they are all corrected
+- Clean-Up Code: Use `./mvnw -Prewrite rewrite:run` -> verify with `./mvnw clean install` -> Fix if necessary and commit
 
 ## Project Documentation
 - Requirements: `doc/Requirements.adoc`

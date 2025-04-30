@@ -181,23 +181,27 @@ _See Requirement link:../Requirements.adoc#CUI-JWT-9[CUI-JWT-9: Performance]_
 
 Performance testing has been implemented to verify that the JWT Token Validation library meets the performance requirements.
 
-The following test class implements performance testing:
+The following test classes implement performance testing:
 
 * link:../../src/test/java/de/cuioss/jwt/validation/TokenValidatorPerformanceTest.java[TokenValidatorPerformanceTest.java] - Tests for token parsing and validation performance
+* link:../../src/test/java/de/cuioss/jwt/validation/jwks/http/HttpJwksLoaderPerformanceTest.java[HttpJwksLoaderPerformanceTest.java] - Tests for JWKS loading and key retrieval performance
 
 These tests cover:
 
 1. Token parsing performance for different token types
 2. Concurrent token validation performance
 3. Mixed token type processing performance
-4. Performance statistics collection and analysis
+4. JWKS loading and caching performance
+5. Concurrent key retrieval performance
+6. Performance statistics collection and analysis
 
 The implementation uses concurrent testing to simulate real-world load scenarios and measures:
 
 1. Throughput (tokens processed per second)
-2. Average processing time per token
+2. Average processing time per token/key retrieval
 3. Success rate under load
 4. Performance under different concurrency levels
+5. Cache efficiency for JWKS loading
 
 === Logging Tests
 _See Requirement link:../Requirements.adoc#CUI-JWT-7[CUI-JWT-7: Logging]_
