@@ -312,7 +312,7 @@ The library must be regularly scanned for vulnerabilities using:
 
 * https://owasp.org/www-project-dependency-check/[OWASP Dependency Check] for third-party dependencies
 * Static Application Security Testing (SAST) tools
-* https://owasp.org/www-community/Fuzzing[Fuzz testing] for input validation
+* Fuzz-Testing tools for input validation vulnerabilities
 
 [#CUI-JWT-12.5]
 ==== CUI-JWT-12.5: Compliance Testing

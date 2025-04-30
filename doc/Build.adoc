@@ -31,14 +31,7 @@ This project implements several measures to ensure reproducible builds. The foll
 <maven.compiler.target>17</maven.compiler.target>
 ----
 
-* Reproducibility configuration is set for JAR/WAR plugins in all modules:
-
-[source,xml]
-----
-<configuration>
-    <outputTimestamp>${reproducible.build.outputTimestamp}</outputTimestamp>
-</configuration>
-----
+* Reproducibility configuration is set for JAR/WAR plugins in all modules: project.build.outputTimestamp
 
 * No non-deterministic resource filtering is used (no timestamp, hostname, or environment injection in resources).
 * All GitHub Actions in `.github/workflows/` are pinned by commit hash (uses: `...@<commit-sha>`).

@@ -263,6 +263,36 @@ Vulnerability scanning has been implemented using GitHub Dependabot to regularly
 
 For detailed information about dependency management and vulnerability scanning, please refer to the link:security.adoc[Security] document, specifically the "Dependency Management" section.
 
+==== Fuzz Testing Implementation
+
+Fuzz testing has been implemented using Generators from https://github.com/cuioss/cui-test-generator to generate a wide variety of test inputs for JWT tokens. This approach allows for comprehensive testing of the library's ability to handle various token formats, claims, and edge cases.
+
+The following generator classes implement fuzz testing:
+
+* link:../../src/test/java/de/cuioss/jwt/validation/test/generator/AccessTokenGenerator.java[AccessTokenGenerator] - Generates random but valid access tokens with varying claims
+* link:../../src/test/java/de/cuioss/jwt/validation/test/generator/IDTokenGenerator.java[IDTokenGenerator] - Generates random but valid ID tokens with varying claims
+* link:../../src/test/java/de/cuioss/jwt/validation/test/generator/ScopeGenerator.java[ScopeGenerator] - Generates random scopes for access tokens
+* link:../../src/test/java/de/cuioss/jwt/validation/test/generator/RoleGenerator.java[RoleGenerator] - Generates random roles for access tokens
+
+These generators are used in parameterized tests with the `@TypeGeneratorSource` annotation to perform fuzz testing. For example:
+
+[source, java]
+----
+@DisplayName("3.3b: Reject access-validation with invalid signature")
+@ParameterizedTest
+@TypeGeneratorSource(value = AccessTokenGenerator.class, count = 50)
+void shouldRejectAccessTokenWithInvalidSignature(String token) {
+    // Tamper with the token using one of the tampering strategies
+    String tamperedToken = JwtTokenTamperingUtil.tamperWithToken(token);
+
+    // Verify that the tampered token is rejected
+    var result = tokenValidator.createAccessToken(tamperedToken);
+    assertFalse(result.isPresent(), "Token with invalid signature should be rejected");
+}
+----
+
+This approach ensures that the library is tested against a wide range of inputs, helping to identify potential vulnerabilities that might not be discovered with traditional testing methods.
+
 === Compliance Testing
 _See Requirement link:../Requirements.adoc#CUI-JWT-12.5[CUI-JWT-12.5: Compliance Testing]_
 
