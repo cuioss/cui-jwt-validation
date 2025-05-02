@@ -3,7 +3,6 @@
 == Status
 
 image:https://github.com/cuioss/cui-jwt-validation/actions/workflows/maven.yml/badge.svg[Java CI with Maven,link=https://github.com/cuioss/cui-jwt-validation/actions/workflows/maven.yml]
-image:https://github.com/cuioss/cui-jwt-validation/actions/workflows/maven.yml/badge.svg?branch=main&event=push&label=reproducible-build&style=flat-square&logo=github[Reproducible Build,link=https://github.com/cuioss/cui-jwt-validation/actions/workflows/maven.yml?query=workflow%3Areproducible-build]
 image:http://img.shields.io/:license-apache-blue.svg[License,link=http://www.apache.org/licenses/LICENSE-2.0.html]
 image:https://maven-badges.herokuapp.com/maven-central/de.cuioss/cui-jwt-validation/badge.svg[Maven Central,link=https://maven-badges.herokuapp.com/maven-central/de.cuioss/cui-jwt-validation]
 
