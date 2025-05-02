@@ -20,12 +20,12 @@ _See Requirement link:../Requirements.adoc#CUI-JWT-1.3[CUI-JWT-1.3: Signature Va
 
 The following classes implement this specification:
 
-* link:../../src/main/java/de/cuioss/jwt/validation/flow/TokenSignatureValidator.java[TokenSignatureValidator]
+* link:../../src/main/java/de/cuioss/jwt/validation/pipeline/TokenSignatureValidator.java[TokenSignatureValidator]
 * link:../../src/main/java/de/cuioss/jwt/validation/TokenValidator.java[TokenValidator]
 
 The following tests verify the implementation:
 
-* link:../../src/test/java/de/cuioss/jwt/validation/flow/TokenSignatureValidatorTest.java[TokenSignatureValidatorTest] - Comprehensive tests for signature validation, including:
+* link:../../src/test/java/de/cuioss/jwt/validation/pipeline/TokenSignatureValidatorTest.java[TokenSignatureValidatorTest] - Comprehensive tests for signature validation, including:
 ** Validation of tokens with supported algorithms (RS256)
 ** Rejection of tokens with unsupported algorithms (HS256, HS384, HS512, none)
 ** Protection against algorithm confusion attacks
@@ -72,15 +72,15 @@ _See Requirement link:../Requirements.adoc#CUI-JWT-8.2[CUI-JWT-8.2: Safe Parsing
 
 The following classes implement this specification:
 
-* link:../../src/main/java/de/cuioss/jwt/validation/flow/NonValidatingJwtParser.java[NonValidatingJwtParser]
+* link:../../src/main/java/de/cuioss/jwt/validation/pipeline/NonValidatingJwtParser.java[NonValidatingJwtParser]
 
 The `NonValidatingJwtParser` class provides comprehensive safe parsing features to protect against common attacks such as memory exhaustion, stack overflow, and malformed input attacks.
 
-For implementation details, see the JavaDoc of the link:../../src/main/java/de/cuioss/jwt/validation/flow/NonValidatingJwtParser.java[NonValidatingJwtParser] class.
+For implementation details, see the JavaDoc of the link:../../src/main/java/de/cuioss/jwt/validation/pipeline/NonValidatingJwtParser.java[NonValidatingJwtParser] class.
 
 The following tests verify the implementation:
 
-* link:../../src/test/java/de/cuioss/jwt/validation/flow/NonValidatingJwtParserTest.java[NonValidatingJwtParserTest] - Comprehensive tests for the NonValidatingJwtParser class, including:
+* link:../../src/test/java/de/cuioss/jwt/validation/pipeline/NonValidatingJwtParserTest.java[NonValidatingJwtParserTest] - Comprehensive tests for the NonValidatingJwtParser class, including:
 ** Token size validation tests
 ** JSON depth limit tests
 ** Large JSON array handling tests
@@ -96,8 +96,8 @@ _See Requirement link:../Requirements.adoc#CUI-JWT-8.4[CUI-JWT-8.4: Claims Valid
 
 The following classes implement this specification:
 
-* link:../../src/main/java/de/cuioss/jwt/validation/flow/TokenClaimValidator.java[TokenClaimValidator]
-* link:../../src/main/java/de/cuioss/jwt/validation/flow/TokenHeaderValidator.java[TokenHeaderValidator]
+* link:../../src/main/java/de/cuioss/jwt/validation/pipeline/TokenClaimValidator.java[TokenClaimValidator]
+* link:../../src/main/java/de/cuioss/jwt/validation/pipeline/TokenHeaderValidator.java[TokenHeaderValidator]
 * link:../../src/main/java/de/cuioss/jwt/validation/IssuerConfig.java[IssuerConfig]
 
 The library provides comprehensive validation for standard JWT claims as defined in RFC 7519.
@@ -112,7 +112,7 @@ The library provides comprehensive validation for standard JWT claims as defined
 * Audience (aud) - validated by TokenClaimValidator if expected audience is provided
 * Authorized Party (azp) - validated by TokenClaimValidator if expected client ID is provided
 
-For implementation details, see the JavaDoc of the link:../../src/main/java/de/cuioss/jwt/validation/flow/TokenClaimValidator.java[TokenClaimValidator] and link:../../src/main/java/de/cuioss/jwt/validation/flow/TokenHeaderValidator.java[TokenHeaderValidator] classes.
+For implementation details, see the JavaDoc of the link:../../src/main/java/de/cuioss/jwt/validation/pipeline/TokenClaimValidator.java[TokenClaimValidator] and link:../../src/main/java/de/cuioss/jwt/validation/pipeline/TokenHeaderValidator.java[TokenHeaderValidator] classes.
 
 === Secure Communication
 _See Requirement link:../Requirements.adoc#CUI-JWT-8.3[CUI-JWT-8.3: Secure Communication]_
@@ -142,7 +142,7 @@ The following classes implement this specification:
 * link:../../src/main/java/de/cuioss/jwt/validation/jwks/key/KeyInfo.java[KeyInfo]
 * link:../../src/main/java/de/cuioss/jwt/validation/jwks/JwksLoader.java[JwksLoader]
 * link:../../src/main/java/de/cuioss/jwt/validation/jwks/key/JWKSKeyLoader.java[JWKSKeyLoader]
-* link:../../src/main/java/de/cuioss/jwt/validation/flow/TokenSignatureValidator.java[TokenSignatureValidator]
+* link:../../src/main/java/de/cuioss/jwt/validation/pipeline/TokenSignatureValidator.java[TokenSignatureValidator]
 * link:../../src/main/java/de/cuioss/jwt/validation/IssuerConfig.java[IssuerConfig]
 
 The cryptographic agility features include:
@@ -161,7 +161,7 @@ For implementation details, see the JavaDoc of the following classes:
 * link:../../src/main/java/de/cuioss/jwt/validation/jwks/key/KeyInfo.java[KeyInfo]
 * link:../../src/main/java/de/cuioss/jwt/validation/jwks/JwksLoader.java[JwksLoader]
 * link:../../src/main/java/de/cuioss/jwt/validation/jwks/key/JWKSKeyLoader.java[JWKSKeyLoader]
-* link:../../src/main/java/de/cuioss/jwt/validation/flow/TokenSignatureValidator.java[TokenSignatureValidator]
+* link:../../src/main/java/de/cuioss/jwt/validation/pipeline/TokenSignatureValidator.java[TokenSignatureValidator]
 * link:../../src/main/java/de/cuioss/jwt/validation/IssuerConfig.java[IssuerConfig]
 
 The following tests verify the implementation:
@@ -172,7 +172,7 @@ The following tests verify the implementation:
 ** Base64 URL encoding validation
 ** Security tests for potential attacks
 * link:../../src/test/java/de/cuioss/jwt/validation/jwks/key/JWKSKeyLoaderTest.java[JWKSKeyLoaderTest] - Tests for the JWKSKeyLoader
-* link:../../src/test/java/de/cuioss/jwt/validation/flow/TokenSignatureValidatorTest.java[TokenSignatureValidatorTest] - Tests for the TokenSignatureValidator
+* link:../../src/test/java/de/cuioss/jwt/validation/pipeline/TokenSignatureValidatorTest.java[TokenSignatureValidatorTest] - Tests for the TokenSignatureValidator
 
 === Security Events Monitoring
 _See Requirement link:../Requirements.adoc#CUI-JWT-7.3[CUI-JWT-7.3: Security Events]_
@@ -183,11 +183,11 @@ The following classes implement this specification:
 
 * link:../../src/main/java/de/cuioss/jwt/validation/security/SecurityEventCounter.java[SecurityEventCounter]
 * link:../../src/main/java/de/cuioss/jwt/validation/TokenValidator.java[TokenValidator]
-* link:../../src/main/java/de/cuioss/jwt/validation/flow/TokenBuilder.java[TokenBuilder]
-* link:../../src/main/java/de/cuioss/jwt/validation/flow/TokenClaimValidator.java[TokenClaimValidator]
-* link:../../src/main/java/de/cuioss/jwt/validation/flow/TokenHeaderValidator.java[TokenHeaderValidator]
-* link:../../src/main/java/de/cuioss/jwt/validation/flow/TokenSignatureValidator.java[TokenSignatureValidator]
-* link:../../src/main/java/de/cuioss/jwt/validation/flow/NonValidatingJwtParser.java[NonValidatingJwtParser]
+* link:../../src/main/java/de/cuioss/jwt/validation/pipeline/TokenBuilder.java[TokenBuilder]
+* link:../../src/main/java/de/cuioss/jwt/validation/pipeline/TokenClaimValidator.java[TokenClaimValidator]
+* link:../../src/main/java/de/cuioss/jwt/validation/pipeline/TokenHeaderValidator.java[TokenHeaderValidator]
+* link:../../src/main/java/de/cuioss/jwt/validation/pipeline/TokenSignatureValidator.java[TokenSignatureValidator]
+* link:../../src/main/java/de/cuioss/jwt/validation/pipeline/NonValidatingJwtParser.java[NonValidatingJwtParser]
 
 The library provides a mechanism to monitor and count security events that occur during token processing. This allows applications to track potential security issues and anomalies without duplicating logging functionality.
 
@@ -270,7 +270,7 @@ The following classes directly use Bouncy Castle:
 ** Supporting a wide range of elliptic curves (P-256, P-384, P-521)
 ** Converting between Bouncy Castle curve specifications and JCA specifications
 
-* link:../../src/main/java/de/cuioss/jwt/validation/flow/TokenSignatureValidator.java[TokenSignatureValidator] - Uses Bouncy Castle for:
+* link:../../src/main/java/de/cuioss/jwt/validation/pipeline/TokenSignatureValidator.java[TokenSignatureValidator] - Uses Bouncy Castle for:
 ** Signature verification of JWT tokens
 ** Supporting multiple signature algorithms:
 *** RSA signatures (RS256, RS384, RS512)

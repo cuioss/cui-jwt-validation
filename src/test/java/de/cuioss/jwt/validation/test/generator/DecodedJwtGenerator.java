@@ -16,7 +16,7 @@
 package de.cuioss.jwt.validation.test.generator;
 
 import de.cuioss.jwt.validation.TokenType;
-import de.cuioss.jwt.validation.flow.DecodedJwt;
+import de.cuioss.jwt.validation.pipeline.DecodedJwt;
 import de.cuioss.test.generator.TypedGenerator;
 
 /**

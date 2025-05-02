@@ -32,7 +32,7 @@ public final class JWTValidationLogMessages {
 
     /**
      * Contains debug-level log messages for informational and diagnostic purposes.
-     * These messages are typically used for tracing program flow and providing
+     * These messages are typically used for tracing program pipeline and providing
      * detailed information about normal operations.
      */
     @UtilityClass

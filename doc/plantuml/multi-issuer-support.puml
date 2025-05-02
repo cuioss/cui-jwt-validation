@@ -45,7 +45,7 @@ IssuerConfig1 -[hidden]right- JwksLoader1
 JwksLoader1 -[hidden]right- JwksCache1
 JwksLoader1 -[hidden]up- JwksEndpoint1
 
-' Normal flow with explicit directions
+' Normal pipeline with explicit directions
 App -right-> TokenValidator : 1. Submit token
 TokenValidator -right-> Parser : 2. Parse token without validation
 Parser -down-> TokenValidator : 3. Return token header with issuer

@@ -17,7 +17,7 @@ package de.cuioss.jwt.validation.test.generator;
 
 import de.cuioss.jwt.validation.TokenType;
 import de.cuioss.jwt.validation.domain.claim.ClaimValue;
-import de.cuioss.jwt.validation.flow.DecodedJwt;
+import de.cuioss.jwt.validation.pipeline.DecodedJwt;
 import de.cuioss.test.generator.TypedGenerator;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;

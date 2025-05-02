@@ -16,7 +16,7 @@
 package de.cuioss.jwt.validation;
 
 import de.cuioss.jwt.validation.domain.token.IdTokenContent;
-import de.cuioss.jwt.validation.flow.NonValidatingJwtParser;
+import de.cuioss.jwt.validation.pipeline.NonValidatingJwtParser;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.jwt.validation.test.JWKSFactory;
 import de.cuioss.jwt.validation.test.TestTokenProducer;

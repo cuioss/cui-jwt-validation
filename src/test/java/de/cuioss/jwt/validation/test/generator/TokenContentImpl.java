@@ -19,7 +19,7 @@ import de.cuioss.jwt.validation.TokenType;
 import de.cuioss.jwt.validation.domain.claim.ClaimName;
 import de.cuioss.jwt.validation.domain.claim.ClaimValue;
 import de.cuioss.jwt.validation.domain.token.TokenContent;
-import de.cuioss.jwt.validation.flow.DecodedJwt;
+import de.cuioss.jwt.validation.pipeline.DecodedJwt;
 import de.cuioss.test.generator.domain.EmailGenerator;
 import de.cuioss.test.generator.domain.FullNameGenerator;
 import jakarta.json.Json;
