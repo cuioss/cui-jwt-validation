@@ -239,7 +239,8 @@ class JwksCacheManager {
 
     /**
      * Refreshes the cache by invalidating the current entry.
-     * This will cause the next access to load a fresh value.
+     * Technically the underlying {@link LoadingCache} will asynchronously load the entry again
+     * and return the previous value until the new entry is loaded.
      */
     void refresh() {
         jwksCache.refresh(getCacheKey());
