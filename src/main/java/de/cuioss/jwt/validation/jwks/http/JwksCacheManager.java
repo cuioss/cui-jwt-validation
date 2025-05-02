@@ -66,7 +66,7 @@ class JwksCacheManager {
      * @param cacheLoader function to load a JWKSKeyLoader when cache misses
      */
     JwksCacheManager(@NonNull HttpJwksLoaderConfig config,
-            @NonNull Function<String, JWKSKeyLoader> cacheLoader) {
+                     @NonNull Function<String, JWKSKeyLoader> cacheLoader) {
         this.config = config;
         this.lastValidResult = null;
         this.accessCount = new AtomicInteger(0);
@@ -150,6 +150,9 @@ class JwksCacheManager {
      *
      * @return a JWKSKeyLoader instance with the current JWKS content
      */
+    @SuppressWarnings("java:S2589")
+    // owolff: Regarding the LoadingCache API, The API claims that the method may return null,
+    // therefore the null check is not redundant
     JWKSKeyLoader resolve() {
         LOGGER.debug(DEBUG.RESOLVING_KEY_LOADER.format(config.getJwksUri().toString()));
 
@@ -219,22 +222,7 @@ class JwksCacheManager {
     /**
      * Simple class to hold the result of a cache update operation.
      */
-    static class KeyRotationResult {
-        private final JWKSKeyLoader keyLoader;
-        private final boolean keyRotationDetected;
-
-        KeyRotationResult(JWKSKeyLoader keyLoader, boolean keyRotationDetected) {
-            this.keyLoader = keyLoader;
-            this.keyRotationDetected = keyRotationDetected;
-        }
-
-        JWKSKeyLoader getKeyLoader() {
-            return keyLoader;
-        }
-
-        boolean isKeyRotationDetected() {
-            return keyRotationDetected;
-        }
+    record KeyRotationResult(JWKSKeyLoader keyLoader, boolean keyRotationDetected) {
     }
 
     /**

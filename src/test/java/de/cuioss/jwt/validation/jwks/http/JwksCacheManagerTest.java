@@ -92,7 +92,7 @@ class JwksCacheManagerTest {
         // When
         JWKSKeyLoader initialResult = cacheManager.resolve();
         JwksCacheManager.KeyRotationResult result = cacheManager.updateCache(newContent, newEtag);
-        JWKSKeyLoader updatedResult = result.getKeyLoader();
+        JWKSKeyLoader updatedResult = result.keyLoader();
 
         // Then
         assertNotNull(initialResult);
@@ -111,7 +111,7 @@ class JwksCacheManagerTest {
         // Given
         // First, update the cache to set the lastValidResult
         JwksCacheManager.KeyRotationResult result = cacheManager.updateCache(JWKS_CONTENT, ETAG);
-        JWKSKeyLoader initialResult = result.getKeyLoader();
+        JWKSKeyLoader initialResult = result.keyLoader();
 
         // When
         JWKSKeyLoader notModifiedResult = cacheManager.handleNotModified();
@@ -192,7 +192,7 @@ class JwksCacheManagerTest {
         // When
         // Update the cache to set the lastValidResult
         JwksCacheManager.KeyRotationResult rotationResult = cacheManager.updateCache(JWKS_CONTENT, ETAG);
-        JWKSKeyLoader updatedResult = rotationResult.getKeyLoader();
+        JWKSKeyLoader updatedResult = rotationResult.keyLoader();
         Optional<JWKSKeyLoader> lastValidResult = cacheManager.getLastValidResult();
 
         // Then

@@ -119,7 +119,7 @@ public class HttpJwksLoader implements JwksLoader, AutoCloseable {
                     response.getContent(), response.getEtag().orElse(null));
 
             // Check if key rotation was detected
-            if (result.isKeyRotationDetected()) {
+            if (result.keyRotationDetected()) {
                 LOGGER.warn(WARN.KEY_ROTATION_DETECTED::format);
                 securityEventCounter.increment(SecurityEventCounter.EventType.KEY_ROTATION_DETECTED);
             }
@@ -127,9 +127,9 @@ public class HttpJwksLoader implements JwksLoader, AutoCloseable {
             // Log successful loading and parsing of JWKS
             LOGGER.info(JWTValidationLogMessages.INFO.JWKS_LOADED.format(
                     config.getJwksUri().toString(),
-                    result.getKeyLoader().keySet().size()));
+                    result.keyLoader().keySet().size()));
 
-            return result.getKeyLoader();
+            return result.keyLoader();
         } catch (Exception e) {
             LOGGER.warn(e, WARN.JWKS_FETCH_FAILED.format(e.getMessage()));
             securityEventCounter.increment(SecurityEventCounter.EventType.JWKS_FETCH_FAILED);
