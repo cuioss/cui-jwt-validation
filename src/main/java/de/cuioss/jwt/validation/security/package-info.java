@@ -39,6 +39,6 @@
  * 
  * @since 1.0
  * @see de.cuioss.jwt.validation.pipeline.TokenSignatureValidator
- * @see de.cuioss.jwt.validation.jwks.HttpJwksLoader
+ * @see de.cuioss.jwt.validation.jwks.http.HttpJwksLoader
  */
 package de.cuioss.jwt.validation.security;

@@ -40,7 +40,7 @@ import java.util.Set;
  * </p>
  * <p>
  * The JwksLoader is initialized through the {@link #initSecurityEventCounter(SecurityEventCounter)} method
- * and can be accessed through the {@link #getJwksLoader()} method.
+ * and can be accessed through the {@link #jwksLoader} field.
  * </p>
  * <p>
  * This class is immutable after construction and thread-safe once the JwksLoader is initialized.

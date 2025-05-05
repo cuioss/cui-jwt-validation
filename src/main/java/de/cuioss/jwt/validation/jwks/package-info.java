@@ -24,7 +24,7 @@
  * Key components:
  * <ul>
  *   <li>{@link de.cuioss.jwt.validation.jwks.JwksLoader} - Interface for loading JSON Web Keys from a JWKS source</li>
- *   <li>{@link de.cuioss.jwt.validation.jwks.HttpJwksLoader} - Implementation that loads JWKS from an HTTP endpoint</li>
+ *   <li>{@link de.cuioss.jwt.validation.jwks.http.HttpJwksLoader} - Implementation that loads JWKS from an HTTP endpoint</li>
  *   <li>{@link de.cuioss.jwt.validation.jwks.JwksLoaderFactory} - Factory for creating JwksLoader instances</li>
  * </ul>
  * <p>
