@@ -34,7 +34,7 @@ public class IdentityMapper implements ClaimMapper {
 
         Optional<JsonValue> optionalJsonValue = ClaimMapperUtils.getJsonValue(jsonObject, claimName);
         if (optionalJsonValue.isEmpty()) {
-            return ClaimValue.createDefaultClaimValue(ClaimValueType.STRING);
+            return ClaimValue.createEmptyClaimValue(ClaimValueType.STRING);
         }
         JsonValue jsonValue = optionalJsonValue.get();
 
@@ -51,7 +51,7 @@ public class IdentityMapper implements ClaimMapper {
                 break;
             default:
                 // This should never happen as we've already checked for NULL
-                return ClaimValue.createDefaultClaimValue(ClaimValueType.STRING);
+                return ClaimValue.createEmptyClaimValue(ClaimValueType.STRING);
         }
 
         return ClaimValue.forPlainString(value);

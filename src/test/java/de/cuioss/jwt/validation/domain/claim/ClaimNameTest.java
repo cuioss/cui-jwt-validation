@@ -174,14 +174,14 @@ class ClaimNameTest {
                 Arguments.of(
                         ClaimName.ISSUER,
                         Json.createObjectBuilder().build(),
-                        ClaimValue.createDefaultClaimValue(ClaimValueType.STRING)
+                        ClaimValue.createEmptyClaimValue(ClaimValueType.STRING)
                 ),
 
                 // Null claims
                 Arguments.of(
                         ClaimName.SUBJECT,
                         createJsonObjectWithNullClaim("sub"),
-                        ClaimValue.createDefaultClaimValue(ClaimValueType.STRING)
+                        ClaimValue.createEmptyClaimValue(ClaimValueType.STRING)
                 )
         );
     }

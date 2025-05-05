@@ -161,14 +161,14 @@ public class ClaimValue implements Serializable {
     }
 
     /**
-     * Creates a default ClaimValue for a missing or null claim.
+     * Creates an empty ClaimValue for a missing or null claim.
      * This method should be used when the JSON object is null, does not contain the claim,
      * or the claim value is null.
      *
      * @param valueType the type of the claim value
      * @return a default ClaimValue for the given type
      */
-    public static ClaimValue createDefaultClaimValue(ClaimValueType valueType) {
+    public static ClaimValue createEmptyClaimValue(ClaimValueType valueType) {
         return switch (valueType) {
             case STRING -> forPlainString(null);
             case STRING_LIST -> forList(null, Collections.emptyList());
