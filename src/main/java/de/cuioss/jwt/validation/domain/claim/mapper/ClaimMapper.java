@@ -25,6 +25,7 @@ import lombok.NonNull;
  * corresponding Java object representation.
  *
  * @see ClaimValue
+ * @since 1.0
  */
 @FunctionalInterface
 public interface ClaimMapper {

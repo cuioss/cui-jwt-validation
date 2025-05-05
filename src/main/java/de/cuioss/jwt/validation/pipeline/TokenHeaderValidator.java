@@ -24,7 +24,7 @@ import lombok.Builder;
 import lombok.NonNull;
 
 /**
- * Validator for JWT validation headers.
+ * Validator for JWT Token headers.
  * <p>
  * This class validates the following header elements:
  * <ul>
@@ -33,6 +33,8 @@ import lombok.NonNull;
  * </ul>
  * <p>
  * The validator logs appropriate warning messages for validation failures.
+ *
+ * @since 1.0
  */
 @Builder
 public class TokenHeaderValidator {
@@ -59,9 +61,9 @@ public class TokenHeaderValidator {
 
 
     /**
-     * Validates a decoded JWT validation's header.     *
+     * Validates a decoded JWT Token's header.     *
      *
-     * @param decodedJwt the decoded JWT validation to validate
+     * @param decodedJwt the decoded JWT Token to validate
      * @return true if the validation header is valid, false otherwise.
      */
     public boolean validate(@Nonnull DecodedJwt decodedJwt) {
@@ -82,7 +84,7 @@ public class TokenHeaderValidator {
     /**
      * Validates the validation's algorithm against the configured algorithm preferences.
      *
-     * @param decodedJwt the decoded JWT validation
+     * @param decodedJwt the decoded JWT Token
      * @return true if the algorithm is valid, false otherwise
      */
     private boolean validateAlgorithm(DecodedJwt decodedJwt) {
@@ -107,7 +109,7 @@ public class TokenHeaderValidator {
     /**
      * Validates the validation's issuer against the configured expected issuers.
      *
-     * @param decodedJwt the decoded JWT validation
+     * @param decodedJwt the decoded JWT Token
      * @return true if the issuer is valid, false otherwise
      */
     @SuppressWarnings("java:S3655") // Suppress warning for using Optional.get()

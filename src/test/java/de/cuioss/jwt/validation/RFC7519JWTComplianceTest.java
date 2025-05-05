@@ -71,7 +71,7 @@ class RFC7519JWTComplianceTest {
         // Create validation factory
         tokenValidator = new TokenValidator(issuerConfig);
 
-        // Create access validation generator
+        // Create access token generator
         accessTokenGenerator = new AccessTokenGenerator(false);
     }
 

@@ -50,6 +50,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <a href="../../../../../../../doc/specification/security.adoc">Security Specification</a>.
  *
  * @author Oliver Wolff
+ * @since 1.0
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class JwkKeyHandler {

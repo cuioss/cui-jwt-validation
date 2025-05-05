@@ -15,7 +15,7 @@
  */
 
 /**
- * Contains the domain model classes for JWT validation handling.
+ * Contains the domain model classes for JWT Token handling.
  * <p>
  * This package is organized into two main subpackages:
  * <ul>

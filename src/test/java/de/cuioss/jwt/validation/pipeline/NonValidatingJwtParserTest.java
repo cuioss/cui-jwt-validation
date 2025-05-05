@@ -96,7 +96,7 @@ class NonValidatingJwtParserTest {
             assertTrue(jwt.getKid().isPresent(), "Key ID should be extracted");
             assertEquals("test-key-id", jwt.getKid().get(), "Extracted key ID should match");
 
-            // Verify raw validation
+            // Verify raw token
             assertEquals(VALID_TOKEN, jwt.getRawToken(), "Raw validation should match the original validation");
         }
     }

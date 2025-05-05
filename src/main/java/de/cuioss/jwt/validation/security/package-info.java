@@ -15,14 +15,14 @@
  */
 
 /**
- * Provides security-related functionality for JWT validation handling.
+ * Provides security-related functionality for JWT Token handling.
  * <p>
- * This package contains classes that implement security best practices for JWT validation
+ * This package contains classes that implement security best practices for JWT Token
  * processing, including algorithm preferences and secure SSL context provision.
  * <p>
  * Key components:
  * <ul>
- *   <li>{@link de.cuioss.jwt.validation.security.AlgorithmPreferences} - Manages algorithm preferences for JWT validation signatures</li>
+ *   <li>{@link de.cuioss.jwt.validation.security.AlgorithmPreferences} - Manages algorithm preferences for JWT Token signatures</li>
  *   <li>{@link de.cuioss.jwt.validation.security.SecureSSLContextProvider} - Provides secure SSL contexts for HTTPS connections</li>
  * </ul>
  * <p>
@@ -34,7 +34,7 @@
  *   <li>Secure TLS configuration for HTTPS connections</li>
  * </ul>
  * <p>
- * These security features are used throughout the JWT validation handling framework to ensure
+ * These security features are used throughout the JWT Token handling framework to ensure
  * secure validation validation and JWKS retrieval.
  * 
  * @since 1.0

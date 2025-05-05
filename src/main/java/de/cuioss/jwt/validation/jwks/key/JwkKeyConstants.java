@@ -36,6 +36,8 @@ import java.util.regex.Pattern;
  * <p>
  * For more details on the JWK specification, see the
  * <a href="https://datatracker.ietf.org/doc/html/rfc7517">RFC 7517 - JSON Web Key (JWK)</a>.
+ *
+ * @since 1.0
  */
 @UtilityClass
 public class JwkKeyConstants {

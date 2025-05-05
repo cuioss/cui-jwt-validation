@@ -30,18 +30,21 @@ import java.util.Optional;
  * Utility class for {@link ClaimMapper} implementations.
  * Provides common methods for handling JSON objects and values.
  * <p>
- * This class is package-private and intended for use only within the claim mapper package.
+ * This class is <b>public</b> due to Lombok's {@code @UtilityClass} annotation and intended for use only within the claim mapper package.
+ *
+ * @since 1.0
  */
 @UtilityClass
 class ClaimMapperUtils {
 
     /**
-     * Checks if the given JSON object contains a claim with the given name.
-     * Returns true if the JSON object is not null and contains the claim.
+     * Checks if the given JSON object does not contain a claim with the given name.
+     * Returns true if the JSON object does not contain the claim.
      *
      * @param jsonObject the JSON object to check
      * @param claimName  the name of the claim to check for
-     * @return true if the JSON object contains the claim, false otherwise
+     * @return true if the JSON object does not contain the claim, false otherwise
+     * @since 1.0
      */
     boolean doesNotContainClaim(@NonNull JsonObject jsonObject, @NonNull String claimName) {
         return !jsonObject.containsKey(claimName);
@@ -55,6 +58,7 @@ class ClaimMapperUtils {
      * @param jsonObject the JSON object to get the value from
      * @param claimName  the name of the claim to get
      * @return an Optional containing the JSON value for the claim, or empty if not found or if the value is null
+     * @since 1.0
      */
     Optional<JsonValue> getJsonValue(@NonNull JsonObject jsonObject, @NonNull String claimName) {
         if (doesNotContainClaim(jsonObject, claimName)) {
@@ -72,6 +76,7 @@ class ClaimMapperUtils {
      *
      * @param jsonValue the JSON value to check
      * @return true if the JSON value is null or represents a JSON null value, false otherwise
+     * @since 1.0
      */
     boolean isNullValue(JsonValue jsonValue) {
         return jsonValue == null || jsonValue.getValueType() == JsonValue.ValueType.NULL;
@@ -81,11 +86,13 @@ class ClaimMapperUtils {
      * Extracts a string from a JSON value, handling different value types.
      * For STRING values, returns the string value.
      * For other types (NUMBER, TRUE, FALSE, OBJECT), returns the string representation.
+     * Returns null if the value type is not supported (e.g., NULL or ARRAY).
      *
      * @param jsonObject the JSON object containing the value
      * @param claimName the name of the claim in the JSON object
      * @param jsonValue the JSON value to extract a string from
      * @return the extracted string, or null if the value type is not supported
+     * @since 1.0
      */
     String extractStringFromJsonValue(@NonNull JsonObject jsonObject, @NonNull String claimName, @NonNull JsonValue jsonValue) {
         return switch (jsonValue.getValueType()) {
@@ -104,6 +111,7 @@ class ClaimMapperUtils {
      *
      * @param jsonArray the JSON array to extract strings from
      * @return a list of strings extracted from the JSON array
+     * @since 1.0
      */
     List<String> extractStringsFromJsonArray(@NonNull JsonArray jsonArray) {
         List<String> result = new ArrayList<>();

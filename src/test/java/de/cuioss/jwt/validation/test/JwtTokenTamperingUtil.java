@@ -138,9 +138,9 @@ public class JwtTokenTamperingUtil {
     }
 
     /**
-     * Applies a tampering strategy to a JWT validation.
+     * Applies a tampering strategy to a JWT Token.
      *
-     * @param token    the original JWT validation
+     * @param token    the original JWT Token
      * @param strategy the tampering strategy to apply
      * @return the tampered validation
      */
@@ -163,13 +163,13 @@ public class JwtTokenTamperingUtil {
     /**
      * Modifies the last character of the signature.
      *
-     * @param token the original JWT validation
+     * @param token the original JWT Token
      * @return the tampered validation
      */
     private static String modifySignatureLastChar(String token) {
         String[] parts = token.split("\\.");
         if (parts.length != 3) {
-            return token; // Not a valid JWT validation
+            return token; // Not a valid JWT Token
         }
 
         String signature = parts[2];
@@ -214,13 +214,13 @@ public class JwtTokenTamperingUtil {
     /**
      * Modifies a random character in the signature part of the validation.
      *
-     * @param token the original JWT validation
+     * @param token the original JWT Token
      * @return the tampered validation
      */
     private static String modifySignatureRandomChar(String token) {
         String[] parts = token.split("\\.");
         if (parts.length != 3) {
-            return token; // Not a valid JWT validation
+            return token; // Not a valid JWT Token
         }
 
         String signature = parts[2];
@@ -241,13 +241,13 @@ public class JwtTokenTamperingUtil {
     /**
      * Removes the signature entirely.
      *
-     * @param token the original JWT validation
+     * @param token the original JWT Token
      * @return the tampered validation
      */
     private static String removeSignature(String token) {
         String[] parts = token.split("\\.");
         if (parts.length != 3) {
-            return token; // Not a valid JWT validation
+            return token; // Not a valid JWT Token
         }
         return parts[0] + "." + parts[1] + ".";
     }
@@ -255,13 +255,13 @@ public class JwtTokenTamperingUtil {
     /**
      * Changes the algorithm in the header to 'none'.
      *
-     * @param token the original JWT validation
+     * @param token the original JWT Token
      * @return the tampered validation
      */
     private static String changeAlgorithmToNone(String token) {
         String[] parts = token.split("\\.");
         if (parts.length != 3) {
-            return token; // Not a valid JWT validation
+            return token; // Not a valid JWT Token
         }
 
         try {
@@ -282,13 +282,13 @@ public class JwtTokenTamperingUtil {
     /**
      * Changes the algorithm in the header from RS256 to HS256 (algorithm downgrade).
      *
-     * @param token the original JWT validation
+     * @param token the original JWT Token
      * @return the tampered validation
      */
     private static String downgradeAlgorithm(String token) {
         String[] parts = token.split("\\.");
         if (parts.length != 3) {
-            return token; // Not a valid JWT validation
+            return token; // Not a valid JWT Token
         }
 
         try {
@@ -309,13 +309,13 @@ public class JwtTokenTamperingUtil {
     /**
      * Uses a completely different signature.
      *
-     * @param token the original JWT validation
+     * @param token the original JWT Token
      * @return the tampered validation
      */
     private static String useDifferentSignature(String token) {
         String[] parts = token.split("\\.");
         if (parts.length != 3) {
-            return token; // Not a valid JWT validation
+            return token; // Not a valid JWT Token
         }
 
         try {
@@ -341,13 +341,13 @@ public class JwtTokenTamperingUtil {
     /**
      * Changes the key ID (kid) in the header to an invalid value.
      *
-     * @param token the original JWT validation
+     * @param token the original JWT Token
      * @return the tampered validation
      */
     private static String changeKeyIdToInvalid(String token) {
         String[] parts = token.split("\\.");
         if (parts.length != 3) {
-            return token; // Not a valid JWT validation
+            return token; // Not a valid JWT Token
         }
 
         try {
@@ -368,13 +368,13 @@ public class JwtTokenTamperingUtil {
     /**
      * Removes the key ID (kid) from the header.
      *
-     * @param token the original JWT validation
+     * @param token the original JWT Token
      * @return the tampered validation
      */
     private static String removeKeyId(String token) {
         String[] parts = token.split("\\.");
         if (parts.length != 3) {
-            return token; // Not a valid JWT validation
+            return token; // Not a valid JWT Token
         }
 
         try {

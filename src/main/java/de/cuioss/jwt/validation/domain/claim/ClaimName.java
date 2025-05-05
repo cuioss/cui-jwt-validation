@@ -34,6 +34,8 @@ import java.util.Optional;
  * <p>
  * This is a replacement for the org.eclipse.microprofile.jwt.ClaimNames interface
  * to provide a standardized set of JWT claim names and types.
+ *
+ * @since 1.0
  */
 @Getter
 @RequiredArgsConstructor
@@ -173,7 +175,7 @@ public enum ClaimName {
     },
 
     /**
-     * The "scope" claim identifies the scope of the access validation.
+     * The "scope" claim identifies the scope of the access token.
      * Required by RFC 6749 for ACCESS_TOKEN type.
      *
      * @see <a href="https://datatracker.ietf.org/doc/html/rfc6749#section-3.3">RFC 6749 - 3.3. Access Token Scope</a>

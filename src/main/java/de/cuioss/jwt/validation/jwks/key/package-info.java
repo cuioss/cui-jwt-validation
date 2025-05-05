@@ -18,7 +18,7 @@
  * Provides classes for handling individual keys within a JSON Web Key Set (JWKS).
  * <p>
  * This package contains classes for parsing, storing, and managing cryptographic keys
- * used for JWT validation signature verification.
+ * used for JWT Token signature verification.
  * <p>
  * Key components:
  * <ul>
@@ -29,8 +29,8 @@
  * </ul>
  * <p>
  * This package supports cryptographic agility by handling different key types and algorithms,
- * which is essential for secure JWT validation validation. It provides the foundation for
- * signature verification in the validation validation pipeline.
+ * which is essential for secure JWT Token validation. It provides the foundation for
+ * signature verification in the token validation pipeline.
  * <p>
  * The classes in this package implement security best practices for key handling, including:
  * <ul>

@@ -23,13 +23,15 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Base interface for JWT validation content.
- * Provides access to claims. Raw validation string and validation type are provided through {@link MinimalTokenContent}.
+ * Base interface for JWT Token content.
+ * Provides access to claims. Raw token string and validation type are provided through {@link MinimalTokenContent}.
+ *
+ * @since 1.0
  */
 public interface TokenContent extends MinimalTokenContent {
 
     /**
-     * Gets all claims in this validation.
+     * Gets all claims in this token.
      *
      * @return a map of claim names to claim objects
      */
@@ -57,7 +59,7 @@ public interface TokenContent extends MinimalTokenContent {
     default String getIssuer() {
         return getClaimOption(ClaimName.ISSUER)
                 .map(ClaimValue::getOriginalString)
-                .orElseThrow(() -> new IllegalStateException("Issuer claim not present in validation"));
+                .orElseThrow(() -> new IllegalStateException("Issuer claim not presentin token"));
     }
 
     /**
@@ -71,7 +73,7 @@ public interface TokenContent extends MinimalTokenContent {
     default String getSubject() {
         return getClaimOption(ClaimName.SUBJECT)
                 .map(ClaimValue::getOriginalString)
-                .orElseThrow(() -> new IllegalStateException("Subject claim not present in validation"));
+                .orElseThrow(() -> new IllegalStateException("Subject claim not presentin token"));
     }
 
     /**
@@ -86,7 +88,7 @@ public interface TokenContent extends MinimalTokenContent {
     default OffsetDateTime getExpirationTime() {
         return getClaimOption(ClaimName.EXPIRATION)
                 .map(ClaimValue::getDateTime)
-                .orElseThrow(() -> new IllegalStateException("ExpirationTime claim not present in validation"));
+                .orElseThrow(() -> new IllegalStateException("ExpirationTime claim not presentin token"));
     }
 
     /**
@@ -101,7 +103,7 @@ public interface TokenContent extends MinimalTokenContent {
     default OffsetDateTime getIssuedAtTime() {
         return getClaimOption(ClaimName.ISSUED_AT)
                 .map(ClaimValue::getDateTime)
-                .orElseThrow(() -> new IllegalStateException("issued at time claim claim not present in validation"));
+                .orElseThrow(() -> new IllegalStateException("issued at time claim claim not presentin token"));
     }
 
     /**

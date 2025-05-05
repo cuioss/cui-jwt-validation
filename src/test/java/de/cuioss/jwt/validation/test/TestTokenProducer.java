@@ -45,7 +45,7 @@ public class TestTokenProducer {
     // Constants for file paths
     public static final String BASE_PATH = KeyMaterialHandler.BASE_PATH;
 
-    // Constants for validation claims files
+    // Constants for token claims files
     public static final String SOME_SCOPES = BASE_PATH + "some-scopes.json";
     public static final String REFRESH_TOKEN = BASE_PATH + "refresh-token.json";
     public static final String SOME_ROLES = BASE_PATH + "some-roles.json";
@@ -163,7 +163,7 @@ public class TestTokenProducer {
      * Creates a valid signed JWT with a "Not Before" (nbf) claim
      *
      * @param notBefore the instant representing the "Not Before" time
-     * @return a signed JWT validation string with the nbf claim set
+     * @return a signed JWT token string with the nbf claim set
      */
     public static String validSignedJWTWithNotBefore(Instant notBefore) {
         try {

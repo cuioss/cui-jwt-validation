@@ -27,8 +27,10 @@ import java.io.Serial;
 import java.util.Map;
 
 /**
- * Represents the content of an OAuth 2.0 refresh validation in JWT format.
- * This is only used when the refresh validation is in JWT format.
+ * Represents the content of an OAuth 2.0 Refresh-Token in JWT format.
+ * This is only used when the Refresh-Token is in JWT format.
+ *
+ * @since 1.0
  */
 @ToString
 @EqualsAndHashCode
@@ -43,7 +45,7 @@ public class RefreshTokenContent implements MinimalTokenContent {
     private final String rawToken;
 
     /**
-     * For cases the idp returns a JWT as refresh validation, this method returns a non-validated-claims-representation
+     * For cases the idp returns a JWT as Refresh-Token, this method returns a non-validated-claims-representation
      * of the validation.
      * <em>Note:</em> This is validation is not validated in any way
      * It is never null but be empty

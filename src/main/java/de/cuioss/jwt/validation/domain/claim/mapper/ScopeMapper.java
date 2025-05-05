@@ -33,6 +33,8 @@ import java.util.TreeSet;
  * into a {@link ClaimValue} containing a list of strings.
  * It handles both space-separated string scopes and JSON arrays of scopes.
  * <em>Note:</em> Although technically the result is a list, it is treated as a SortedSet
+ *
+ * @since 1.0
  */
 public class ScopeMapper implements ClaimMapper {
     @Override

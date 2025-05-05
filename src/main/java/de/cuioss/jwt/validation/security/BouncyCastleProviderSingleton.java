@@ -36,6 +36,8 @@ import java.security.Security;
  * // Use the provider name with Signature.getInstance
  * Signature signature = Signature.getInstance(algorithm, providerName);
  * </pre>
+ *
+ * @since 1.0
  */
 @SuppressWarnings("java:S6548") // owolff: A singleton here is ok and better than the alternative: static initializer
 public class BouncyCastleProviderSingleton {

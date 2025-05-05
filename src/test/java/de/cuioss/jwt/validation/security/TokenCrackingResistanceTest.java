@@ -73,7 +73,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * </ul>
  * <p>
  * The Shannon entropy calculation is particularly important as it provides a
- * mathematical measure of the unpredictability of the validation content, which
+ * mathematical measure of the unpredictability of the token content, which
  * directly relates to how resistant the tokens are to guessing attacks.
  */
 @EnableTestLogger

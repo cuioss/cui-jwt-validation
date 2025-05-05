@@ -33,6 +33,7 @@ import java.security.PublicKey;
  * <a href="../../../../../../../doc/specification/security.adoc">Security Specification</a>.
  *
  * @author Oliver Wolff
+ * @since 1.0
  */
 @Value
 public class KeyInfo {
@@ -52,7 +53,7 @@ public class KeyInfo {
      * <p>
      * This field contains the algorithm name (e.g., "RS256", "ES384") that should be
      * used with this key for signature verification. The algorithm must match the
-     * "alg" header in the JWT validation for successful verification.
+     * "alg" header in the JWT Token for successful verification.
      * <p>
      * Common values include:
      * <ul>
@@ -72,7 +73,7 @@ public class KeyInfo {
      * The unique identifier for this key.
      * <p>
      * This is the "kid" (Key ID) value from the JWK, which is used to identify
-     * the specific key within a JWKS. When verifying a JWT validation, the "kid" in the
+     * the specific key within a JWKS. When verifying a JWT Token, the "kid" in the
      * validation header is matched against this value to select the correct key for
      * signature verification.
      * <p>

@@ -27,7 +27,7 @@ import java.util.Date;
 
 /**
  * Generator for OAuth/OIDC refresh tokens.
- * Generates a JWT refresh validation string.
+ * Generates a JWT refresh token string.
  * Can be configured in "default" or "alternative" mode for signing.
  */
 public class RefreshTokenGenerator implements TypedGenerator<String> {
@@ -88,7 +88,7 @@ public class RefreshTokenGenerator implements TypedGenerator<String> {
 
             return builder.compact();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to generate refresh validation", e);
+            throw new RuntimeException("Failed to generate Refresh-Token", e);
         }
     }
 }

@@ -71,7 +71,7 @@ class JwtTokenTamperingUtilTest {
     }
 
     @Test
-    @DisplayName("Should validate untampered access validation")
+    @DisplayName("Should validate untampered access token")
     void shouldValidateUntamperedAccessToken() {
         // Given
         String token = accessTokenGenerator.next();
@@ -84,7 +84,7 @@ class JwtTokenTamperingUtilTest {
     }
 
     @Test
-    @DisplayName("Should validate untampered ID validation")
+    @DisplayName("Should validate untampered ID-Token")
     void shouldValidateUntamperedIdToken() {
         // Given
         String token = idTokenGenerator.next();
@@ -98,7 +98,7 @@ class JwtTokenTamperingUtilTest {
 
     @ParameterizedTest
     @EnumSource(TamperingStrategy.class)
-    @DisplayName("Should reject tampered access validation")
+    @DisplayName("Should reject tampered access token")
     void shouldRejectTamperedAccessToken(TamperingStrategy strategy) {
         // Given
         String originalToken = accessTokenGenerator.next();
@@ -118,7 +118,7 @@ class JwtTokenTamperingUtilTest {
 
     @ParameterizedTest
     @EnumSource(TamperingStrategy.class)
-    @DisplayName("Should reject tampered ID validation")
+    @DisplayName("Should reject tampered ID-Token")
     void shouldRejectTamperedIdToken(TamperingStrategy strategy) {
         // Given
         String originalToken = idTokenGenerator.next();

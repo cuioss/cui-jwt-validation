@@ -30,7 +30,9 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Builder for creating validation content objects from decoded JWT tokens.
+ * Builder for creating token content objects from decoded JWT tokens.
+ *
+ * @since 1.0
  */
 public class TokenBuilder {
 
@@ -118,7 +120,7 @@ public class TokenBuilder {
     }
 
     /**
-     * Extracts claims for a refresh validation from a JSON object.
+     * Extracts claims for a Refresh-Token from a JSON object.
      *
      * @param jsonObject the JSON object containing claims
      * @return a map of claim names to claim values

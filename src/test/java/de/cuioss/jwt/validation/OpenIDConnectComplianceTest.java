@@ -71,7 +71,7 @@ class OpenIDConnectComplianceTest {
         // Create validation factory
         tokenValidator = new TokenValidator(issuerConfig);
 
-        // Create ID validation generator
+        // Create ID-Token generator
         idTokenGenerator = new IDTokenGenerator(false);
     }
 

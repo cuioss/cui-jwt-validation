@@ -28,7 +28,7 @@ import java.util.Date;
 
 /**
  * Generator for OAuth/OIDC ID tokens.
- * Generates a JWT ID validation string.
+ * Generates a JWT ID token string.
  * Can be configured in "default" or "alternative" mode for signing.
  */
 public class IDTokenGenerator implements TypedGenerator<String> {
@@ -106,7 +106,7 @@ public class IDTokenGenerator implements TypedGenerator<String> {
 
             return builder.compact();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to generate ID validation", e);
+            throw new RuntimeException("Failed to generate ID-Token", e);
         }
     }
 }

@@ -69,7 +69,7 @@ class TokenValidatorTest {
     class TokenCreationTests {
 
         @Test
-        @DisplayName("Should create refresh validation")
+        @DisplayName("Should create Refresh-Token")
         void shouldCreateRefreshToken() {
             var token = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.REFRESH_TOKEN);
             var parsedToken = tokenValidator.createRefreshToken(token);
@@ -88,9 +88,9 @@ class TokenValidatorTest {
         }
 
         @Test
-        @DisplayName("Should create refresh validation with empty claims for non-JWT validation")
+        @DisplayName("Should create Refresh-Token with empty claims for non-JWT Token")
         void shouldCreateRefreshTokenWithEmptyClaimsForNonJwtToken() {
-            // A non-JWT validation (just a random string)
+            // A non-JWT Token (just a random string)
             var token = "not-a-jwt-validation";
             var parsedToken = tokenValidator.createRefreshToken(token);
 
@@ -100,11 +100,11 @@ class TokenValidatorTest {
 
             // Verify claims are empty
             assertNotNull(parsedToken.get().getClaims(), "Claims should not be null");
-            assertTrue(parsedToken.get().getClaims().isEmpty(), "Claims should be empty for non-JWT validation");
+            assertTrue(parsedToken.get().getClaims().isEmpty(), "Claims should be empty for non-JWT Token");
         }
 
         @Test
-        @DisplayName("Should create access validation")
+        @DisplayName("Should create access token")
         void shouldCreateAccessToken() {
             var token = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_SCOPES);
             var parsedToken = tokenValidator.createAccessToken(token);
@@ -116,7 +116,7 @@ class TokenValidatorTest {
         }
 
         @Test
-        @DisplayName("Should create ID validation")
+        @DisplayName("Should create ID-Token")
         void shouldCreateIdToken() {
             var token = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_ID_TOKEN);
             var parsedToken = tokenValidator.createIdToken(token);
@@ -179,7 +179,7 @@ class TokenValidatorTest {
     class TokenValidationErrorTests {
 
         @Test
-        @DisplayName("Should handle empty or blank validation strings")
+        @DisplayName("Should handle empty or blank token strings")
         void shouldProvideEmptyFallbackOnEmptyInput() {
             // Test with empty string
             var emptyToken = tokenValidator.createAccessToken("");
@@ -255,7 +255,7 @@ class TokenValidatorTest {
             String tokenWithUnknownIssuer = TestTokenProducer.validSignedJWTWithClaims(
                     TestTokenProducer.SOME_SCOPES, "unknown-issuer");
 
-            // When creating an access validation
+            // When creating an access token
             Optional<AccessTokenContent> result = tokenValidator.createAccessToken(tokenWithUnknownIssuer);
 
             // Then the validation creation should fail
@@ -269,10 +269,10 @@ class TokenValidatorTest {
         @Test
         @DisplayName("Should log warning when validation is missing claims")
         void shouldLogWarningWhenTokenIsMissingClaims() {
-            // Given a valid validation string but missing required claims
+            // Given a valid token string but missing required claims
             String validToken = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_SCOPES);
 
-            // When creating an access validation
+            // When creating an access token
             tokenValidator.createAccessToken(validToken);
 
             // Then the appropriate warning message should be logged
@@ -282,12 +282,12 @@ class TokenValidatorTest {
         }
 
         @Test
-        @DisplayName("Should log warning when ID validation is missing claims")
+        @DisplayName("Should log warning when ID-Token is missing claims")
         void shouldLogWarningWhenIdTokenIsMissingClaims() {
-            // Given a valid validation string but missing required claims
+            // Given a valid token string but missing required claims
             String validToken = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_ID_TOKEN);
 
-            // When creating an ID validation
+            // When creating an ID-Token
             tokenValidator.createIdToken(validToken);
 
             // Then the appropriate warning message should be logged
@@ -297,12 +297,12 @@ class TokenValidatorTest {
         }
 
         @Test
-        @DisplayName("Should create refresh validation successfully")
+        @DisplayName("Should create Refresh-Token successfully")
         void shouldCreateRefreshTokenSuccessfully() {
-            // Given a valid validation string
+            // Given a valid token string
             String validToken = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.REFRESH_TOKEN);
 
-            // When creating a refresh validation
+            // When creating a Refresh-Token
             Optional<RefreshTokenContent> result = tokenValidator.createRefreshToken(validToken);
 
             // Then the validation should be created successfully
@@ -329,7 +329,7 @@ class TokenValidatorTest {
             // Create a new validation factory with the new issuer config
             TokenValidator newTokenValidator = new TokenValidator(newIssuerConfig);
 
-            // When creating an access validation
+            // When creating an access token
             Optional<AccessTokenContent> result = newTokenValidator.createAccessToken(tokenWithUnknownKeyId);
 
             // Then the validation creation should fail

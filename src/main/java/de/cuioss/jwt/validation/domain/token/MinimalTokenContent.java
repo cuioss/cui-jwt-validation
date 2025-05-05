@@ -23,13 +23,15 @@ import java.io.Serializable;
  * Provides elements that are applicable on every Token.
  * Compare to the {@link TokenContent} this interface does not provide JWT-specific content like claims.
  * Currently, it is only relevant for {@link TokenType#REFRESH_TOKEN}
+ *
+ * @since 1.0
  */
 public interface MinimalTokenContent extends Serializable {
 
     /**
-     * Gets the raw validation string.
+     * Gets the raw token string.
      *
-     * @return the raw JWT validation string
+     * @return the raw JWT token string
      */
     String getRawToken();
 

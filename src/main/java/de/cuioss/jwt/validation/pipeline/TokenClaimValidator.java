@@ -61,6 +61,8 @@ import java.util.stream.Collectors;
  * <a href="../../../../../../../doc/specification/security.adoc">Security Specification</a>.
  * <p>
  * Note: Issuer (iss) validation is handled by {@link TokenHeaderValidator}.
+ *
+ * @since 1.0
  */
 @Builder
 public class TokenClaimValidator {
@@ -310,7 +312,7 @@ public class TokenClaimValidator {
     private boolean validateStringListAudience(List<String> audienceList) {
         // Optimization: Iterate through the smaller collection to minimize comparisons
         if (expectedAudience.size() < audienceList.size()) {
-            // If expected audience is smaller, check if any expected audience is in the validation audience
+            // If expected audience is smaller, check if any expected audience is in the token audience
             for (String audience : expectedAudience) {
                 if (audienceList.contains(audience)) {
                     LOGGER.debug(AUDIENCE_MATCHES_EXPECTED_AUDIENCE_S, audience);
@@ -362,7 +364,7 @@ public class TokenClaimValidator {
      * If the azp claim is missing but expected client ID is provided, the validation fails.
      *
      * @param token the JWT claims
-     * @return true, if the authorized party is valid or no client ID validation is required, false otherwise
+     * @return true, if the authorized party is valid or no client ID-Token is required, false otherwise
      */
     private boolean validateAuthorizedParty(TokenContent token) {
         // If no expected client ID is provided, skip validation

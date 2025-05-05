@@ -103,7 +103,7 @@ public class TokenValidator {
     private final Map<String, IssuerConfig> issuerConfigMap;
 
     /**
-     * Counter for security events that occur during validation processing.
+     * Counter for security events that occur during token processing.
      * This counter is thread-safe and can be accessed from outside to monitor security events.
      */
     @Getter
@@ -218,11 +218,11 @@ public class TokenValidator {
     }
 
     /**
-     * Processes a validation through the validation pipeline.
+     * Processes a token through the token pipeline.
      * <p>
-     * This method implements an optimized validation pipeline with early termination
-     * for common failure cases. The validation steps are ordered to fail fast:
-     * 1. Basic validation format validation (empty check, decoding)
+     * This method implements an optimized token pipeline with early termination
+     * for common failure cases. The token steps are ordered to fail fast:
+     * 1. Basic token format validation (empty check, decoding)
      * 2. Issuer validation (presence and configuration lookup)
      * 3. Header validation (algorithm)
      * 4. Signature validation
@@ -232,23 +232,23 @@ public class TokenValidator {
      * Validators are only created if needed, avoiding unnecessary object creation
      * for invalid tokens.
      *
-     * @param tokenString  the validation string to process
-     * @param tokenBuilder function to build the validation from the decoded JWT and issuer config
-     * @param <T>          the type of validation to create
-     * @return an Optional containing the validated validation, or empty if validation fails
+     * @param tokenString  the token string to process
+     * @param tokenBuilder function to build the token from the decoded JWT and issuer config
+     * @param <T>          the type of token to create
+     * @return an Optional containing the validated token, or empty if validation fails
      */
     private <T extends TokenContent> Optional<T> processTokenPipeline(
             String tokenString,
             TokenBuilderFunction<T> tokenBuilder) {
 
-        // 1. Basic validation format validation - fail fast for empty tokens
+        // 1. Basic token format validation - fail fast for empty tokens
         if (MoreStrings.isBlank(tokenString)) {
             LOGGER.warn(JWTValidationLogMessages.WARN.TOKEN_IS_EMPTY::format);
             securityEventCounter.increment(SecurityEventCounter.EventType.TOKEN_EMPTY);
             return Optional.empty();
         }
 
-        // 2. Decode the validation - fail fast for malformed tokens
+        // 2. Decode the token - fail fast for malformed tokens
         Optional<DecodedJwt> decodedJwt = jwtParser.decode(tokenString);
         if (decodedJwt.isEmpty()) {
             LOGGER.warn(JWTValidationLogMessages.WARN.FAILED_TO_DECODE_JWT::format);
@@ -290,14 +290,14 @@ public class TokenValidator {
             return Optional.empty();
         }
 
-        // 7. Build validation - only if header and signature are valid
+        // 7. Build token - only if header and signature are valid
         Optional<T> token = tokenBuilder.apply(decodedJwt.get(), issuerConfig);
         if (token.isEmpty()) {
             LOGGER.debug("Token building failed");
             return Optional.empty();
         }
 
-        // 8. Validate claims - create validator only if validation is built successfully
+        // 8. Validate claims - create validator only if token is built successfully
         TokenClaimValidator claimValidator = new TokenClaimValidator(issuerConfig, securityEventCounter);
         @SuppressWarnings("unchecked")
         Optional<T> validatedToken = claimValidator.validate(token.get())
@@ -315,7 +315,7 @@ public class TokenValidator {
     /**
      * Functional interface for building tokens with issuer config.
      *
-     * @param <T> the type of validation to create
+     * @param <T> the type of token to create
      */
     @FunctionalInterface
     private interface TokenBuilderFunction<T> {

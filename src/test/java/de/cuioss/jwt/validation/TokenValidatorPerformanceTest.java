@@ -84,30 +84,30 @@ class TokenValidatorPerformanceTest {
     }
 
     @Test
-    @DisplayName("Should handle concurrent access validation creation")
+    @DisplayName("Should handle concurrent access token creation")
     void shouldHandleConcurrentAccessTokenCreation() throws InterruptedException {
-        LOGGER.info("Starting access validation performance test");
+        LOGGER.info("Starting access token performance test");
         performConcurrentTest(DEFAULT_THREAD_COUNT, DEFAULT_REQUESTS_PER_THREAD, DEFAULT_PAUSE_MILLIS, TokenType.ACCESS);
     }
 
     @Test
-    @DisplayName("Should handle concurrent ID validation creation")
+    @DisplayName("Should handle concurrent ID-Token creation")
     void shouldHandleConcurrentIdTokenCreation() throws InterruptedException {
-        LOGGER.info("Starting ID validation performance test");
+        LOGGER.info("Starting ID-Token performance test");
         performConcurrentTest(DEFAULT_THREAD_COUNT, DEFAULT_REQUESTS_PER_THREAD, DEFAULT_PAUSE_MILLIS, TokenType.ID);
     }
 
     @Test
-    @DisplayName("Should handle concurrent refresh validation creation")
+    @DisplayName("Should handle concurrent Refresh-Token creation")
     void shouldHandleConcurrentRefreshTokenCreation() throws InterruptedException {
-        LOGGER.info("Starting refresh validation performance test");
+        LOGGER.info("Starting Refresh-Token performance test");
         performConcurrentTest(DEFAULT_THREAD_COUNT, DEFAULT_REQUESTS_PER_THREAD, DEFAULT_PAUSE_MILLIS, TokenType.REFRESH);
     }
 
     @Test
-    @DisplayName("Should handle mixed validation types concurrently")
+    @DisplayName("Should handle mixed token types concurrently")
     void shouldHandleMixedTokenTypesConcurrently() throws InterruptedException {
-        LOGGER.info("Starting mixed validation types performance test");
+        LOGGER.info("Starting mixed token types performance test");
         performConcurrentTest(DEFAULT_THREAD_COUNT, DEFAULT_REQUESTS_PER_THREAD, DEFAULT_PAUSE_MILLIS, TokenType.MIXED);
     }
 
@@ -117,7 +117,7 @@ class TokenValidatorPerformanceTest {
      * @param threadCount       the number of threads to use
      * @param requestsPerThread the number of requests each thread should make
      * @param pauseMillis       the pause between requests in milliseconds
-     * @param tokenType         the type of validation to test
+     * @param tokenType         the type of token to test
      * @throws InterruptedException if the test is interrupted
      */
     private void performConcurrentTest(int threadCount, int requestsPerThread, int pauseMillis, TokenType tokenType) throws InterruptedException {
@@ -133,7 +133,7 @@ class TokenValidatorPerformanceTest {
         // Create a thread pool
         ExecutorService executor = Executors.newFixedThreadPool(threadCount);
 
-        // Counter for validation type distribution in MIXED mode
+        // Counter for token type distribution in MIXED mode
         AtomicInteger tokenTypeCounter = new AtomicInteger(0);
 
         // Start overall timing
@@ -148,18 +148,18 @@ class TokenValidatorPerformanceTest {
 
                     for (int j = 0; j < requestsPerThread; j++) {
                         try {
-                            // Time each validation creation
+                            // Time each token creation
                             StopWatch accessStopWatch = StopWatch.createStarted();
 
-                            // Determine which validation type to use for this request
+                            // Determine which token type to use for this request
                             TokenType currentTokenType = tokenType;
                             if (tokenType == TokenType.MIXED) {
-                                // Rotate through validation types
+                                // Rotate through token types
                                 int typeIndex = tokenTypeCounter.getAndIncrement() % 3;
                                 currentTokenType = TokenType.values()[typeIndex];
                             }
 
-                            // Process the validation based on its type
+                            // Process the token based on its type
                             boolean success = processToken(currentTokenType);
 
                             // Stop timing and record statistics
@@ -174,7 +174,7 @@ class TokenValidatorPerformanceTest {
                                 stats.incrementSuccess();
                             } else {
                                 stats.incrementFailure();
-                                LOGGER.warn("Thread %s failed to process validation on request %s", threadId, j);
+                                LOGGER.warn("Thread %s failed to process token on request %s", threadId, j);
                             }
 
                             // Pause between requests
@@ -237,7 +237,7 @@ class TokenValidatorPerformanceTest {
 
         // Verify performance requirements
         if (tokenType != TokenType.MIXED) {
-            // For specific validation types, we can verify against requirements
+            // For specific token types, we can verify against requirements
             double requiredTokensPerSecond = (tokenType == TokenType.REFRESH) ? 1000 : 500;
             LOGGER.info("Required tokens per second: %.2f, Actual: %.2f", requiredTokensPerSecond, tokensPerSecond);
 
@@ -252,7 +252,7 @@ class TokenValidatorPerformanceTest {
     /**
      * Processes a validation based on its type.
      *
-     * @param tokenType the type of validation to process
+     * @param tokenType the type of token to process
      * @return true if the validation was processed successfully, false otherwise
      */
     private boolean processToken(TokenType tokenType) {
@@ -270,7 +270,7 @@ class TokenValidatorPerformanceTest {
                 Optional<?> refreshResult = tokenValidator.createRefreshToken(refreshToken);
                 return refreshResult.isPresent();
             default:
-                throw new IllegalArgumentException("Unsupported validation type: " + tokenType);
+                throw new IllegalArgumentException("Unsupported token type: " + tokenType);
         }
     }
 

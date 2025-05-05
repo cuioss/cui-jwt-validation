@@ -166,7 +166,7 @@ public class InvalidDecodedJwtGenerator implements TypedGenerator<DecodedJwt> {
     /**
      * Converts a TokenContentImpl to a DecodedJwt.
      *
-     * @param tokenContent the validation content to convert
+     * @param tokenContent the token content to convert
      * @return a DecodedJwt instance
      */
     protected DecodedJwt tokenContentToDecodedJwt(TokenContentImpl tokenContent) {
@@ -188,10 +188,10 @@ public class InvalidDecodedJwtGenerator implements TypedGenerator<DecodedJwt> {
                 // Build the header
                 JsonObject header = headerBuilder.build();
 
-                // Create body from validation content claims
+                // Create body from token content claims
                 JsonObjectBuilder bodyBuilder = Json.createObjectBuilder();
 
-                // Add all claims from the validation content
+                // Add all claims from the token content
                 for (Map.Entry<String, ClaimValue> entry : tokenContent.getClaims().entrySet()) {
                     String claimName = entry.getKey();
                     ClaimValue claimValue = entry.getValue();
@@ -225,13 +225,13 @@ public class InvalidDecodedJwtGenerator implements TypedGenerator<DecodedJwt> {
                 // Create a signature (not actually used for validation in tests)
                 String signature = "test-signature";
 
-                // Generate a unique identifier for this validation
+                // Generate a unique identifier for this token
                 String uniqueId = UUID.randomUUID().toString();
 
                 // Create validation parts with unique identifier
                 String[] parts = new String[]{"header-part-" + uniqueId, "body-part-" + uniqueId, "signature-part-" + uniqueId};
 
-                // Use the raw validation from the validation content if available, otherwise create one
+                // Use the raw token from the token content if available, otherwise create one
                 String rawToken = tokenContent.getRawToken();
                 if (rawToken == null || rawToken.isEmpty()) {
                     rawToken = parts[0] + "." + parts[1] + "." + parts[2];
@@ -248,10 +248,10 @@ public class InvalidDecodedJwtGenerator implements TypedGenerator<DecodedJwt> {
     @Override
     public DecodedJwt next() {
         try {
-            // Generate an invalid validation content using the InvalidTokenContentGenerator
+            // Generate an invalid token content using the InvalidTokenContentGenerator
             TokenContentImpl tokenContent = tokenContentGenerator.next();
 
-            // Convert the validation content to a DecodedJwt
+            // Convert the token content to a DecodedJwt
             return tokenContentToDecodedJwt(tokenContent);
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate invalid DecodedJwt", e);

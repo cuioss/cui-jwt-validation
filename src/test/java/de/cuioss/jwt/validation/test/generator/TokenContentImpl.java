@@ -31,7 +31,7 @@ import java.util.*;
 
 /**
  * Implementation of TokenContent for testing purposes.
- * This implementation can be used to create both valid and invalid validation content.
+ * This implementation can be used to create both valid and invalid token content.
  */
 public class TokenContentImpl implements TokenContent {
     private final TokenType tokenType;
@@ -41,7 +41,7 @@ public class TokenContentImpl implements TokenContent {
     private final String uniqueId;
 
     /**
-     * Constructor for creating a validation content with specific claim control parameters.
+     * Constructor for creating a token content with specific claim control parameters.
      *
      * @param tokenType the type of validation to generate
      * @param claimControl the parameter object controlling which claims should be included or excluded
@@ -55,7 +55,7 @@ public class TokenContentImpl implements TokenContent {
     }
 
     /**
-     * Generates a properly formatted JWT raw validation string.
+     * Generates a properly formatted JWT raw token string.
      * 
      * @return a string in the format header.payload.signature
      */
@@ -94,10 +94,10 @@ public class TokenContentImpl implements TokenContent {
             // Build the header
             JsonObject header = headerBuilder.build();
 
-            // Create body from validation content claims
+            // Create body from token content claims
             JsonObjectBuilder bodyBuilder = Json.createObjectBuilder();
 
-            // Add all claims from the validation content
+            // Add all claims from the token content
             for (Map.Entry<String, ClaimValue> entry : getClaims().entrySet()) {
                 String claimName = entry.getKey();
                 ClaimValue claimValue = entry.getValue();

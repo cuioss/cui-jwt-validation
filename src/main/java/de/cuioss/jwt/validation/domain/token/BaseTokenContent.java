@@ -28,7 +28,9 @@ import java.util.Map;
 
 /**
  * Base implementation of {@link TokenContent}.
- * Provides common functionality for validation content implementations.
+ * Provides common functionality for token content implementations.
+ *
+ * @since 1.0
  */
 @ToString
 @EqualsAndHashCode
@@ -53,9 +55,9 @@ public abstract class BaseTokenContent implements TokenContent {
     /**
      * Constructor for BaseTokenContent.
      *
-     * @param claims    the validation claims
-     * @param rawToken  the raw validation string
-     * @param tokenType the validation type
+     * @param claims    the token claims
+     * @param rawToken  the raw token string
+     * @param tokenType the token type
      */
     protected BaseTokenContent(@NonNull Map<String, ClaimValue> claims, @NonNull String rawToken, @NonNull TokenType tokenType) {
         this.claims = claims;

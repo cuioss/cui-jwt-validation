@@ -42,6 +42,7 @@ import static de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
  * </ul>
  *
  * @author Oliver Wolff
+ * @since 1.0
  */
 @RequiredArgsConstructor
 public class JwksHttpClient {

@@ -194,7 +194,7 @@ class AccessTokenContentTest {
     }
 
     @Test
-    @DisplayName("Should return true when validation provides all expected scopes")
+    @DisplayName("Should return true when token provides all expected scopes")
     void shouldReturnTrueWhenTokenProvidesAllExpectedScopes() {
         // Given an AccessTokenContent with scopes
         ScopeGenerator scopeGenerator = new ScopeGenerator(3, 5);
@@ -228,7 +228,7 @@ class AccessTokenContentTest {
         claims.put(ClaimName.SCOPE.getName(), ClaimValue.forList(scopes.toString(), new ArrayList<>(scopes)));
         var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
 
-        // When checking if validation provides scopes including one that's not in the validation
+        // When checking if validation provides scopes including one that's not in the token
         List<String> expectedScopes = new ArrayList<>(scopes);
         expectedScopes.add("non_existent_scope");
         boolean result = accessTokenContent.providesScopes(expectedScopes);
@@ -253,7 +253,7 @@ class AccessTokenContentTest {
     }
 
     @Test
-    @DisplayName("Should return true when validation provides all expected scopes with debug logging")
+    @DisplayName("Should return true when token provides all expected scopes with debug logging")
     void shouldReturnTrueWhenTokenProvidesAllExpectedScopesWithDebugLogging() {
         // Given an AccessTokenContent with scopes
         ScopeGenerator scopeGenerator = new ScopeGenerator(3, 5);
@@ -288,7 +288,7 @@ class AccessTokenContentTest {
         claims.put(ClaimName.SCOPE.getName(), ClaimValue.forList(scopes.toString(), new ArrayList<>(scopes)));
         var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
 
-        // When checking if validation provides scopes including one that's not in the validation with debug logging
+        // When checking if validation provides scopes including one that's not in the token with debug logging
         List<String> expectedScopes = new ArrayList<>(scopes);
         expectedScopes.add("non_existent_scope");
         boolean result = accessTokenContent.providesScopesAndDebugIfScopesAreMissing(
@@ -299,7 +299,7 @@ class AccessTokenContentTest {
     }
 
     @Test
-    @DisplayName("Should return empty set when validation provides all expected scopes")
+    @DisplayName("Should return empty set when token provides all expected scopes")
     void shouldReturnEmptySetWhenTokenProvidesAllExpectedScopes() {
         // Given an AccessTokenContent with scopes
         ScopeGenerator scopeGenerator = new ScopeGenerator(3, 5);
@@ -333,7 +333,7 @@ class AccessTokenContentTest {
         claims.put(ClaimName.SCOPE.getName(), ClaimValue.forList(scopes.toString(), new ArrayList<>(scopes)));
         var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
 
-        // When determining missing scopes including ones that are not in the validation
+        // When determining missing scopes including ones that are not in the token
         List<String> expectedScopes = new ArrayList<>(scopes);
         String missingScope1 = "non_existent_scope1";
         String missingScope2 = "non_existent_scope2";

@@ -22,7 +22,7 @@ import de.cuioss.test.generator.TypedGenerator;
 /**
  * Generator for DecodedJwt instances.
  * Can be configured with different {@link TokenType} values to generate
- * appropriate validation content.
+ * appropriate token content.
  * 
  * This implementation uses ValidTokenContentGenerator to create a TokenContent
  * and then transforms it to a DecodedJWT.
@@ -50,7 +50,7 @@ public class DecodedJwtGenerator implements TypedGenerator<DecodedJwt> {
     /**
      * Converts a TokenContentImpl to a DecodedJwt.
      *
-     * @param tokenContent the validation content to convert
+     * @param tokenContent the token content to convert
      * @return a DecodedJwt instance
      */
     protected DecodedJwt tokenContentToDecodedJwt(TokenContentImpl tokenContent) {
@@ -65,10 +65,10 @@ public class DecodedJwtGenerator implements TypedGenerator<DecodedJwt> {
     @Override
     public DecodedJwt next() {
         try {
-            // Generate a valid validation content using the ValidTokenContentGenerator
+            // Generate a valid token content using the ValidTokenContentGenerator
             TokenContentImpl tokenContent = tokenContentGenerator.next();
 
-            // Convert the validation content to a DecodedJwt
+            // Convert the token content to a DecodedJwt
             return tokenContentToDecodedJwt(tokenContent);
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate DecodedJwt", e);

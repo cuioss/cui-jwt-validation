@@ -76,7 +76,7 @@ class TokenBuilderTest {
             // Verify validation type
             assertEquals(TokenType.ACCESS_TOKEN, accessTokenContent.getTokenType(), "Token type should be ACCESS_TOKEN");
 
-            // Verify raw validation
+            // Verify raw token
             assertEquals(decodedJwt.getRawToken(), accessTokenContent.getRawToken(), "Raw validation should match");
 
             // Verify claims are extracted
@@ -121,7 +121,7 @@ class TokenBuilderTest {
             // Verify validation type
             assertEquals(TokenType.ID_TOKEN, idTokenContent.getTokenType(), "Token type should be ID_TOKEN");
 
-            // Verify raw validation
+            // Verify raw token
             assertEquals(decodedJwt.getRawToken(), idTokenContent.getRawToken(), "Raw validation should match");
 
             // Verify claims are extracted

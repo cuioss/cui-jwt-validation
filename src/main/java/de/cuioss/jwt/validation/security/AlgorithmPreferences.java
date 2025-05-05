@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Utility class for managing algorithm preferences for JWT validation signatures.
+ * Utility class for managing algorithm preferences for JWT Token signatures.
  * <p>
  * This class provides methods to get preferred algorithms and check if an algorithm is supported.
  * It implements cryptographic agility by allowing configuration of preferred algorithms

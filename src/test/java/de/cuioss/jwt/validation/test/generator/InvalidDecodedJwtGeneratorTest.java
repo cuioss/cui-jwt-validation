@@ -187,9 +187,9 @@ class InvalidDecodedJwtGeneratorTest {
     }
 
     @Test
-    @DisplayName("Should create DecodedJwt with missing audience for ID validation")
+    @DisplayName("Should create DecodedJwt with missing audience for ID-Token")
     void shouldCreateDecodedJwtWithMissingAudienceForIdToken() {
-        // Given a generator for ID validation with missing audience mutation
+        // Given a generator for ID-Token with missing audience mutation
         var generator = new InvalidDecodedJwtGenerator(TokenType.ID_TOKEN).withMissingAudience();
 
         // When generating a DecodedJwt

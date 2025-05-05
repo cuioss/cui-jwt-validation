@@ -59,6 +59,7 @@ import java.nio.file.Path;
  * Implements requirement: {@code CUI-JWT-4.1: JWKS Endpoint Support}
  *
  * @author Oliver Wolff
+ * @since 1.0
  */
 @UtilityClass
 public class JwksLoaderFactory {

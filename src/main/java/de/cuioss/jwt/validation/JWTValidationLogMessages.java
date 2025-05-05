@@ -113,19 +113,19 @@ public final class JWTValidationLogMessages {
         public static final LogRecord ACCESS_TOKEN_CREATED = LogRecordModel.builder()
                 .prefix(PREFIX)
                 .identifier(512)
-                .template("Successfully created access validation")
+                .template("Successfully created access token")
                 .build();
 
         public static final LogRecord ID_TOKEN_CREATED = LogRecordModel.builder()
                 .prefix(PREFIX)
                 .identifier(513)
-                .template("Successfully created ID validation")
+                .template("Successfully created ID-Token")
                 .build();
 
         public static final LogRecord REFRESH_TOKEN_CREATED = LogRecordModel.builder()
                 .prefix(PREFIX)
                 .identifier(514)
-                .template("Successfully created refresh validation")
+                .template("Successfully created Refresh-Token")
                 .build();
 
     }
@@ -236,14 +236,14 @@ public final class JWTValidationLogMessages {
         public static final LogRecord FAILED_TO_DECODE_JWT = LogRecordModel.builder()
                 .prefix(PREFIX)
                 .identifier(109)
-                .template("Failed to decode JWT validation")
+                .template("Failed to decode JWT Token")
                 .build();
 
 
         public static final LogRecord INVALID_JWT_FORMAT = LogRecordModel.builder()
                 .prefix(PREFIX)
                 .identifier(112)
-                .template("Invalid JWT validation format: expected 3 parts but got %s")
+                .template("Invalid JWT Token format: expected 3 parts but got %s")
                 .build();
 
         public static final LogRecord FAILED_TO_DECODE_HEADER = LogRecordModel.builder()

@@ -30,6 +30,8 @@ import java.util.Optional;
  * Contains the decoded header, body, signature, issuer, and kid-header.
  * <em>Caution: </em> This class is not guaranteed to be validated.
  * It is usually created by {@link NonValidatingJwtParser}.
+ *
+ * @since 1.0
  */
 @ToString
 @EqualsAndHashCode

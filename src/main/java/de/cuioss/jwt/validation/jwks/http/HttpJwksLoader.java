@@ -55,6 +55,7 @@ import static de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
  * <a href="../../../../../../../doc/specification/security.adoc">Security Specification</a>.
  *
  * @author Oliver Wolff
+ * @since 1.0
  */
 @ToString(exclude = {"httpClient", "cacheManager", "backgroundRefreshManager", "securityEventCounter"})
 @EqualsAndHashCode(exclude = {"httpClient", "cacheManager", "backgroundRefreshManager", "securityEventCounter"})

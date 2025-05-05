@@ -29,7 +29,7 @@ import java.util.Set;
 
 /**
  * Generator for OAuth/OIDC access tokens.
- * Generates a JWT access validation string.
+ * Generates a JWT access token string.
  * Can be configured in "default" or "alternative" mode for signing.
  */
 public class AccessTokenGenerator implements TypedGenerator<String> {
@@ -47,7 +47,7 @@ public class AccessTokenGenerator implements TypedGenerator<String> {
 
     /**
      * Default constructor (default mode).
-     * Generates a JWT access validation string.
+     * Generates a JWT access token string.
      */
     public AccessTokenGenerator() {
         this(false);
@@ -104,7 +104,7 @@ public class AccessTokenGenerator implements TypedGenerator<String> {
 
             return builder.compact();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to generate access validation", e);
+            throw new RuntimeException("Failed to generate access token", e);
         }
     }
 }

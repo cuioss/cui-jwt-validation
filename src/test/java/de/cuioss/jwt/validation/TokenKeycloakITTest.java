@@ -120,7 +120,7 @@ public class TokenKeycloakITTest extends KeycloakITBase {
     @DisplayName("Access Token Tests")
     class AccessTokenTests {
         @Test
-        @DisplayName("Should handle valid access validation")
+        @DisplayName("Should handle valid access token")
         void shouldHandleValidAccessToken() {
             var tokenString = requestToken(parameterForScopedToken(SCOPES), TokenTypes.ACCESS);
             var retrievedAccessToken = factory.createAccessToken(tokenString);
@@ -129,7 +129,7 @@ public class TokenKeycloakITTest extends KeycloakITBase {
             var accessToken = retrievedAccessToken.get();
 
             assertFalse(accessToken.isExpired(), "Token should not be expired");
-            // Check if all scopes are present in the validation
+            // Check if all scopes are present in the token
             List<String> tokenScopes = accessToken.getScopes();
             assertTrue(tokenScopes.containsAll(SCOPES_AS_LIST), "Token should provide requested scopes");
             assertEquals(TestRealm.TestUser.EMAIL.toLowerCase(), accessToken.getEmail().orElse(""), "Email should match test user");
@@ -141,12 +141,12 @@ public class TokenKeycloakITTest extends KeycloakITBase {
     @DisplayName("ID Token Tests")
     class IdTokenTests {
         @Test
-        @DisplayName("Should handle valid ID validation")
+        @DisplayName("Should handle valid ID-Token")
         void shouldHandleValidIdToken() {
             var tokenString = requestToken(parameterForScopedToken(SCOPES), TokenTypes.ID_TOKEN);
             var idToken = factory.createIdToken(tokenString);
 
-            assertTrue(idToken.isPresent(), "ID validation should be present");
+            assertTrue(idToken.isPresent(), "ID-Token should be present");
             assertFalse(idToken.get().isExpired(), "Token should not be expired");
             assertEquals(TestRealm.TestUser.EMAIL.toLowerCase(), idToken.get().getEmail().orElse(""), "Email should match test user");
             assertEquals(TokenType.ID_TOKEN, idToken.get().getTokenType(), "Token type should be ID_TOKEN");
@@ -157,7 +157,7 @@ public class TokenKeycloakITTest extends KeycloakITBase {
     @DisplayName("Refresh Token Tests")
     class RefreshTokenTests {
         @Test
-        @DisplayName("Should handle valid refresh validation")
+        @DisplayName("Should handle valid Refresh-Token")
         void shouldHandleValidRefreshToken() {
             var tokenString = requestToken(parameterForScopedToken(SCOPES), TokenTypes.REFRESH);
             var refreshToken = factory.createRefreshToken(tokenString);

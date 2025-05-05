@@ -15,13 +15,13 @@
  */
 
 /**
- * Provides interfaces and implementations for JWT validation content.
+ * Provides interfaces and implementations for JWT Token content.
  * <p>
  * Key components:
  * <ul>
- *   <li>{@link de.cuioss.jwt.validation.domain.token.TokenContent} - Base interface for JWT validation content</li>
- *   <li>{@link de.cuioss.jwt.validation.domain.token.MinimalTokenContent} - Minimal interface for validation content with raw validation string and type</li>
- *   <li>{@link de.cuioss.jwt.validation.domain.token.BaseTokenContent} - Abstract base implementation of validation content</li>
+ *   <li>{@link de.cuioss.jwt.validation.domain.token.TokenContent} - Base interface for JWT Token content</li>
+ *   <li>{@link de.cuioss.jwt.validation.domain.token.MinimalTokenContent} - Minimal interface for token content with raw token string and type</li>
+ *   <li>{@link de.cuioss.jwt.validation.domain.token.BaseTokenContent} - Abstract base implementation of token content</li>
  *   <li>{@link de.cuioss.jwt.validation.domain.token.AccessTokenContent} - Specialized interface for OAuth2 access tokens</li>
  *   <li>{@link de.cuioss.jwt.validation.domain.token.IdTokenContent} - Specialized interface for OpenID Connect ID tokens</li>
  *   <li>{@link de.cuioss.jwt.validation.domain.token.RefreshTokenContent} - Specialized interface for OAuth2 refresh tokens</li>

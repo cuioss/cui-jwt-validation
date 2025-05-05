@@ -21,7 +21,7 @@ import de.cuioss.test.generator.TypedGenerator;
 /**
  * Generator for valid TokenContentImpl instances.
  * Can be configured with different {@link TokenType} values to generate
- * appropriate validation content with all required claims.
+ * appropriate token content with all required claims.
  */
 public class ValidTokenContentGenerator implements TypedGenerator<TokenContentImpl> {
 

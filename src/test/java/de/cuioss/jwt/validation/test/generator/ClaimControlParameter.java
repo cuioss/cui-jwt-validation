@@ -19,7 +19,7 @@ import de.cuioss.jwt.validation.TokenType;
 
 /**
  * Parameter object for controlling which claims should be included or excluded
- * when generating validation content. Used by {@link TokenContentImpl} to create
+ * when generating token content. Used by {@link TokenContentImpl} to create
  * both valid and invalid tokens for testing purposes.
  */
 public class ClaimControlParameter {
@@ -174,7 +174,7 @@ public class ClaimControlParameter {
         /**
          * Sets the validation prefix.
          *
-         * @param tokenPrefix the prefix for the raw validation string
+         * @param tokenPrefix the prefix for the raw token string
          * @return this builder for method chaining
          */
         public Builder tokenPrefix(String tokenPrefix) {

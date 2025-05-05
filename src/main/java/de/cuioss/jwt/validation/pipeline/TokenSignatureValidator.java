@@ -29,9 +29,9 @@ import java.security.*;
 import java.util.Base64;
 
 /**
- * Validator for JWT validation signatures.
+ * Validator for JWT Token signatures.
  * <p>
- * This class validates the signature of a JWT validation using a public key
+ * This class validates the signature of a JWT Token using a public key
  * retrieved from a configured JwksLoader.
  * <p>
  * It assumes that header validation (algorithm, issuer) has already been
@@ -53,6 +53,8 @@ import java.util.Base64;
  * <p>
  * Using Bouncy Castle ensures consistent cryptographic operations across different JVM implementations
  * and provides support for modern cryptographic algorithms that may not be available in all JVM versions.
+ *
+ * @since 1.0
  */
 public class TokenSignatureValidator {
 
@@ -77,9 +79,9 @@ public class TokenSignatureValidator {
     }
 
     /**
-     * Validates the signature of a decoded JWT validation.
+     * Validates the signature of a decoded JWT Token.
      *
-     * @param decodedJwt the decoded JWT validation to validate
+     * @param decodedJwt the decoded JWT Token to validate
      * @return true if the signature is valid, false otherwise
      */
     public boolean validateSignature(@Nonnull DecodedJwt decodedJwt) {
@@ -136,9 +138,9 @@ public class TokenSignatureValidator {
     }
 
     /**
-     * Verifies the signature of a JWT validation using the provided public key and algorithm.
+     * Verifies the signature of a JWT Token using the provided public key and algorithm.
      *
-     * @param decodedJwt the decoded JWT validation
+     * @param decodedJwt the decoded JWT Token
      * @param publicKey  the public key to use for verification
      * @param algorithm  the algorithm to use for verification
      * @return true if the signature is valid, false otherwise

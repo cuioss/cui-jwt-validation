@@ -28,8 +28,10 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Represents the content of an OpenID Connect ID validation.
- * Provides access to ID validation specific claims.
+ * Represents the content of an OpenID Connect ID-Token.
+ * Provides access to ID-Token specific claims.
+ *
+ * @since 1.0
  */
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
@@ -40,10 +42,10 @@ public class IdTokenContent extends BaseTokenContent {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Constructs a new IdTokenContent with the given claims and raw validation.
+     * Constructs a new IdTokenContent with the given claims and raw token.
      *
-     * @param claims   the validation claims
-     * @param rawToken the raw validation string
+     * @param claims   the token claims
+     * @param rawToken the raw token string
      */
     public IdTokenContent(Map<String, ClaimValue> claims, String rawToken) {
         super(claims, rawToken, TokenType.ID_TOKEN);
@@ -60,11 +62,11 @@ public class IdTokenContent extends BaseTokenContent {
     public List<String> getAudience() {
         return getClaimOption(ClaimName.AUDIENCE)
                 .map(ClaimValue::getAsList)
-                .orElseThrow(() -> new IllegalStateException("Audience claim not present in validation"));
+                .orElseThrow(() -> new IllegalStateException("Audience claim not presentin token"));
     }
 
     /**
-     * Gets the name from the validation claims.
+     * Gets the name from the token claims.
      *
      * @return an Optional containing the name if present, or empty otherwise
      */
@@ -74,7 +76,7 @@ public class IdTokenContent extends BaseTokenContent {
     }
 
     /**
-     * Gets the email from the validation claims.
+     * Gets the email from the token claims.
      *
      * @return an Optional containing the email if present, or empty otherwise
      */

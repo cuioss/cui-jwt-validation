@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 /**
- * Provides counters for relevant security events in the JWT validation handling module.
+ * Provides counters for relevant security events in the JWT Token handling module.
  * <p>
  * This class is designed to be thread-safe and highly concurrent, allowing for
  * accurate counting of security events in multi-threaded environments.

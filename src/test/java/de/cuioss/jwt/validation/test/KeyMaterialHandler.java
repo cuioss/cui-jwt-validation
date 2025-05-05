@@ -36,7 +36,7 @@ import java.security.spec.RSAPublicKeySpec;
 import java.util.Base64;
 
 /**
- * Handles key material for JWT validation testing.
+ * Handles key material for JWT Token testing.
  * Provides access to private and public keys used for signing and verifying tokens.
  * All access to key materials should be through this class, with no direct references to key files.
  */

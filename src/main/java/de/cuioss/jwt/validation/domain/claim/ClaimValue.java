@@ -29,9 +29,11 @@ import java.util.List;
 import java.util.SortedSet;
 
 /**
- * Represents a typed claim value in a JWT validation.
+ * Represents a typed claim value in a JWT Token.
  * All implementations must be immutable, properly implement equals/hashCode,
  * and be serializable.
+ *
+ * @since 1.0
  */
 @ToString
 @EqualsAndHashCode
@@ -41,7 +43,7 @@ public class ClaimValue implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The original string representation of this claim value as it appeared in the validation.
+     * The original string representation of this claim value as it appeared in the token.
      * All claim values must preserve their original string representation to maintain
      * fidelity with the original validation format.
      */

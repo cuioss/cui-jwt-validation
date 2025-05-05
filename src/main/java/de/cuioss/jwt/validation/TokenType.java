@@ -26,21 +26,27 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import static de.cuioss.jwt.validation.domain.claim.ClaimName.*;
+import static de.cuioss.jwt.validation.domain.claim.ClaimName.AUDIENCE;
+import static de.cuioss.jwt.validation.domain.claim.ClaimName.EXPIRATION;
+import static de.cuioss.jwt.validation.domain.claim.ClaimName.ISSUED_AT;
+import static de.cuioss.jwt.validation.domain.claim.ClaimName.ISSUER;
+import static de.cuioss.jwt.validation.domain.claim.ClaimName.SCOPE;
+import static de.cuioss.jwt.validation.domain.claim.ClaimName.SUBJECT;
 
 /**
- * Defines the supported validation types within the authentication system.
- * Each type represents a specific OAuth2/OpenID Connect validation category with its corresponding type claim name.
+ * Defines the supported token types within the authentication system.
+ * Each type represents a specific OAuth2/OpenID Connect token category with its corresponding type claim name.
  * <p>
- * The supported validation types are:
+ * The supported token types are:
  * <ul>
- *   <li>{@link #ACCESS_TOKEN}: Standard OAuth2 access validation with "Bearer" type claim</li>
- *   <li>{@link #ID_TOKEN}: OpenID Connect ID validation with "ID" type claim</li>
- *   <li>{@link #REFRESH_TOKEN}: OAuth2 refresh validation with "Refresh" type claim</li>
+ *   <li>{@link #ACCESS_TOKEN}: Standard OAuth2 access token with "Bearer" type claim</li>
+ *   <li>{@link #ID_TOKEN}: OpenID Connect ID-Token with "ID" type claim</li>
+ *   <li>{@link #REFRESH_TOKEN}: OAuth2 Refresh-Token with "Refresh" type claim</li>
  *   <li>{@link #UNKNOWN}: Fallback type for unrecognized or missing type claims</li>
  * </ul>
  *
  * @author Oliver Wolff
+ * @since 1.0
  */
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public enum TokenType {
@@ -61,8 +67,8 @@ public enum TokenType {
      * Resolves a TokenType from a type claim string value.
      * <p>
      * This method performs a case-insensitive comparison of the provided type claim name
-     * against the known validation types. If no match is found, it logs a warning and returns
-     * the {@link #UNKNOWN} validation type.
+     * against the known token types. If no match is found, it logs a warning and returns
+     * the {@link #UNKNOWN} token type.
      *
      * @param typeClaimName the string value of the type claim, may be null
      * @return the matching TokenType, or {@link #UNKNOWN} if no match is found or the input is null

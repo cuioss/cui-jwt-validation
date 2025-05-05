@@ -17,7 +17,7 @@
 /**
  * Provides classes for loading and managing JSON Web Key Sets (JWKS).
  * <p>
- * JWKS are used to validate JWT validation signatures by providing the public keys
+ * JWKS are used to validate JWT Token signatures by providing the public keys
  * needed for signature verification. This package supports loading JWKS from
  * HTTP endpoints and other sources, with automatic refresh capabilities.
  * <p>
