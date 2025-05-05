@@ -208,7 +208,7 @@ class JwksCacheManager {
             boolean keyRotationDetected = lastValidResult != null && lastValidResult.isNotEmpty() &&
                     !newLoader.keySet().equals(lastValidResult.keySet());
             lastValidResult = newLoader;
-            currentEtag = etag;
+            setCurrentEtag(etag);
             return new KeyRotationResult(newLoader, keyRotationDetected);
         } else if (lastValidResult != null && lastValidResult.isNotEmpty()) {
             // If new loader is empty but we have a valid previous result, log warning and return previous
