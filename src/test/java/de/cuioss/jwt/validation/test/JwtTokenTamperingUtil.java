@@ -24,8 +24,8 @@ import lombok.RequiredArgsConstructor;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.Objects;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Utility class for tampering with JWT tokens for testing purposes.
