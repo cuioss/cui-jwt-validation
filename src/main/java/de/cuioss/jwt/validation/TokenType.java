@@ -26,12 +26,7 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import static de.cuioss.jwt.validation.domain.claim.ClaimName.AUDIENCE;
-import static de.cuioss.jwt.validation.domain.claim.ClaimName.EXPIRATION;
-import static de.cuioss.jwt.validation.domain.claim.ClaimName.ISSUED_AT;
-import static de.cuioss.jwt.validation.domain.claim.ClaimName.ISSUER;
-import static de.cuioss.jwt.validation.domain.claim.ClaimName.SCOPE;
-import static de.cuioss.jwt.validation.domain.claim.ClaimName.SUBJECT;
+import static de.cuioss.jwt.validation.domain.claim.ClaimName.*;
 
 /**
  * Defines the supported token types within the authentication system.
