@@ -39,7 +39,6 @@ import static de.cuioss.jwt.validation.domain.claim.ClaimName.*;
  *   <li>{@link #REFRESH_TOKEN}: OAuth2 refresh validation with "Refresh" type claim</li>
  *   <li>{@link #UNKNOWN}: Fallback type for unrecognized or missing type claims</li>
  * </ul>
- * <p>
  *
  * @author Oliver Wolff
  */

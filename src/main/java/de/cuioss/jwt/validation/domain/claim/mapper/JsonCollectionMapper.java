@@ -42,7 +42,7 @@ public class JsonCollectionMapper implements ClaimMapper {
     public ClaimValue map(@NonNull JsonObject jsonObject, @NonNull String claimName) {
         Optional<JsonValue> optionalJsonValue = ClaimMapperUtils.getJsonValue(jsonObject, claimName);
         if (optionalJsonValue.isEmpty()) {
-            return ClaimValue.createDefaultClaimValue(ClaimValueType.STRING_LIST);
+            return ClaimValue.createEmptyClaimValue(ClaimValueType.STRING_LIST);
         }
         JsonValue jsonValue = optionalJsonValue.get();
 

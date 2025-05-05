@@ -26,7 +26,7 @@ import lombok.ToString;
 import java.util.Optional;
 
 /**
- * Class representing a decoded JWT validation.
+ * Class representing a decoded JWT token.
  * Contains the decoded header, body, signature, issuer, and kid-header.
  * <em>Caution: </em> This class is not guaranteed to be validated.
  * It is usually created by {@link NonValidatingJwtParser}.
@@ -53,8 +53,8 @@ public class DecodedJwt {
      * @param header    the decoded header as a JsonObject
      * @param body      the decoded body as a JsonObject
      * @param signature the signature part as a String
-     * @param parts     the original validation parts
-     * @param rawToken  the original raw validation string
+     * @param parts     the original token parts
+     * @param rawToken  the original raw token string
      */
     public DecodedJwt(JsonObject header, JsonObject body, String signature, String[] parts, String rawToken) {
         this.header = header;
@@ -74,7 +74,7 @@ public class DecodedJwt {
     }
 
     /**
-     * Gets the header of the JWT validation.
+     * Gets the header of the JWT token.
      *
      * @return an Optional containing the header if present
      */
@@ -83,7 +83,7 @@ public class DecodedJwt {
     }
 
     /**
-     * Gets the body of the JWT validation.
+     * Gets the body of the JWT token.
      *
      * @return an Optional containing the body if present
      */
@@ -92,7 +92,7 @@ public class DecodedJwt {
     }
 
     /**
-     * Gets the signature of the JWT validation.
+     * Gets the signature of the JWT token.
      *
      * @return an Optional containing the signature if present
      */
@@ -101,7 +101,7 @@ public class DecodedJwt {
     }
 
     /**
-     * Gets the issuer of the JWT validation.
+     * Gets the issuer of the JWT token.
      *
      * @return an Optional containing the issuer if present
      */
@@ -110,7 +110,7 @@ public class DecodedJwt {
     }
 
     /**
-     * Gets the kid (key ID) from the JWT validation header.
+     * Gets the kid (key ID) from the JWT token header.
      *
      * @return an Optional containing the kid if present
      */
@@ -119,7 +119,7 @@ public class DecodedJwt {
     }
 
     /**
-     * Gets the alg (algorithm) from the JWT validation header.
+     * Gets the alg (algorithm) from the JWT token header.
      *
      * @return an Optional containing the algorithm if present
      */

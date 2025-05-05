@@ -66,7 +66,7 @@ class JwksCacheManager {
      * @param cacheLoader function to load a JWKSKeyLoader when cache misses
      */
     JwksCacheManager(@NonNull HttpJwksLoaderConfig config,
-                     @NonNull Function<String, JWKSKeyLoader> cacheLoader) {
+            @NonNull Function<String, JWKSKeyLoader> cacheLoader) {
         this.config = config;
         this.lastValidResult = null;
         this.accessCount = new AtomicInteger(0);
@@ -208,7 +208,7 @@ class JwksCacheManager {
             boolean keyRotationDetected = lastValidResult != null && lastValidResult.isNotEmpty() &&
                     !newLoader.keySet().equals(lastValidResult.keySet());
             lastValidResult = newLoader;
-            currentEtag = etag;
+            setCurrentEtag(etag);
             return new KeyRotationResult(newLoader, keyRotationDetected);
         } else if (lastValidResult != null && lastValidResult.isNotEmpty()) {
             // If new loader is empty but we have a valid previous result, log warning and return previous

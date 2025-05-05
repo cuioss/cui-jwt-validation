@@ -37,7 +37,7 @@ public class OffsetDateTimeMapper implements ClaimMapper {
     public ClaimValue map(@NonNull JsonObject jsonObject, @NonNull String claimName) {
         Optional<JsonValue> optionalJsonValue = ClaimMapperUtils.getJsonValue(jsonObject, claimName);
         if (optionalJsonValue.isEmpty()) {
-            return ClaimValue.createDefaultClaimValue(ClaimValueType.DATETIME);
+            return ClaimValue.createEmptyClaimValue(ClaimValueType.DATETIME);
         }
         JsonValue jsonValue = optionalJsonValue.get();
 

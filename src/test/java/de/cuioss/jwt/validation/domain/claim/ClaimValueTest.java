@@ -122,18 +122,18 @@ class ClaimValueTest {
 
     @Test
     @DisplayName("Should create default claim values")
-    void shouldCreateDefaultClaimValues() {
+    void shouldCreateEmptyClaimValues() {
         // Given, When, Then
-        ClaimValue stringValue = ClaimValue.createDefaultClaimValue(ClaimValueType.STRING);
+        ClaimValue stringValue = ClaimValue.createEmptyClaimValue(ClaimValueType.STRING);
         assertNull(stringValue.getOriginalString());
         assertEquals(ClaimValueType.STRING, stringValue.getType());
 
-        ClaimValue listValue = ClaimValue.createDefaultClaimValue(ClaimValueType.STRING_LIST);
+        ClaimValue listValue = ClaimValue.createEmptyClaimValue(ClaimValueType.STRING_LIST);
         assertNull(listValue.getOriginalString());
         assertEquals(ClaimValueType.STRING_LIST, listValue.getType());
         assertTrue(listValue.getAsList().isEmpty());
 
-        ClaimValue dateTimeValue = ClaimValue.createDefaultClaimValue(ClaimValueType.DATETIME);
+        ClaimValue dateTimeValue = ClaimValue.createEmptyClaimValue(ClaimValueType.DATETIME);
         assertNull(dateTimeValue.getOriginalString());
         assertEquals(ClaimValueType.DATETIME, dateTimeValue.getType());
         assertNull(dateTimeValue.getDateTime());
@@ -181,7 +181,7 @@ class ClaimValueTest {
 
         // When, Then
         assertThrows(NullPointerException.class, () -> {
-            ClaimValue.createDefaultClaimValue(nullType);
-        }, "Should throw NullPointerException when null is passed to createDefaultClaimValue");
+            ClaimValue.createEmptyClaimValue(nullType);
+        }, "Should throw NullPointerException when null is passed to createEmptyClaimValue");
     }
 }
