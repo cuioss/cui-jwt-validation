@@ -32,7 +32,7 @@ import java.util.TreeSet;
  * This class is responsible for converting a scope claim from a JSON object
  * into a {@link ClaimValue} containing a list of strings.
  * It handles both space-separated string scopes and JSON arrays of scopes.
- * <em>Note:</em> Although technically the result is a list, it is treated
+ * <em>Note:</em> Although technically the result is a list, it is treated as a SortedSet
  */
 public class ScopeMapper implements ClaimMapper {
     @Override
