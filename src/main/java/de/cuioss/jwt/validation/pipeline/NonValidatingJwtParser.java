@@ -202,8 +202,8 @@ public class NonValidatingJwtParser {
         } catch (Exception e) {
             if (logWarnings) {
                 LOGGER.warn(e, JWTValidationLogMessages.WARN.FAILED_TO_DECODE_JWT.format());
+                securityEventCounter.increment(SecurityEventCounter.EventType.FAILED_TO_DECODE_JWT);
             }
-            securityEventCounter.increment(SecurityEventCounter.EventType.FAILED_TO_DECODE_JWT);
             return Optional.empty();
         }
     }
@@ -219,8 +219,8 @@ public class NonValidatingJwtParser {
         if (MoreStrings.isEmpty(token)) {
             if (logWarnings) {
                 LOGGER.warn(JWTValidationLogMessages.WARN.TOKEN_IS_EMPTY::format);
+                securityEventCounter.increment(SecurityEventCounter.EventType.TOKEN_EMPTY);
             }
-            securityEventCounter.increment(SecurityEventCounter.EventType.TOKEN_EMPTY);
             return true;
         }
         return false;
@@ -237,8 +237,8 @@ public class NonValidatingJwtParser {
         if (token.getBytes(StandardCharsets.UTF_8).length > config.getMaxTokenSize()) {
             if (logWarnings) {
                 LOGGER.warn(JWTValidationLogMessages.WARN.TOKEN_SIZE_EXCEEDED.format(config.getMaxTokenSize()));
+                securityEventCounter.increment(SecurityEventCounter.EventType.TOKEN_SIZE_EXCEEDED);
             }
-            securityEventCounter.increment(SecurityEventCounter.EventType.TOKEN_SIZE_EXCEEDED);
             return true;
         }
         return false;
@@ -255,8 +255,8 @@ public class NonValidatingJwtParser {
         if (parts.length != 3) {
             if (logWarnings) {
                 LOGGER.warn(JWTValidationLogMessages.WARN.INVALID_JWT_FORMAT.format(parts.length));
+                securityEventCounter.increment(SecurityEventCounter.EventType.INVALID_JWT_FORMAT);
             }
-            securityEventCounter.increment(SecurityEventCounter.EventType.INVALID_JWT_FORMAT);
             return true;
         }
         return false;
@@ -276,8 +276,8 @@ public class NonValidatingJwtParser {
         if (headerOpt.isEmpty()) {
             if (logWarnings) {
                 LOGGER.warn(JWTValidationLogMessages.WARN.FAILED_TO_DECODE_HEADER::format);
+                securityEventCounter.increment(SecurityEventCounter.EventType.FAILED_TO_DECODE_HEADER);
             }
-            securityEventCounter.increment(SecurityEventCounter.EventType.FAILED_TO_DECODE_HEADER);
             return Optional.empty();
         }
 
@@ -286,8 +286,8 @@ public class NonValidatingJwtParser {
         if (bodyOpt.isEmpty()) {
             if (logWarnings) {
                 LOGGER.warn(JWTValidationLogMessages.WARN.FAILED_TO_DECODE_PAYLOAD::format);
+                securityEventCounter.increment(SecurityEventCounter.EventType.FAILED_TO_DECODE_PAYLOAD);
             }
-            securityEventCounter.increment(SecurityEventCounter.EventType.FAILED_TO_DECODE_PAYLOAD);
             return Optional.empty();
         }
 
@@ -315,8 +315,8 @@ public class NonValidatingJwtParser {
             if (decoded.length > config.getMaxPayloadSize()) {
                 if (logWarnings) {
                     LOGGER.warn(JWTValidationLogMessages.WARN.DECODED_PART_SIZE_EXCEEDED.format(config.getMaxPayloadSize()));
+                    securityEventCounter.increment(SecurityEventCounter.EventType.DECODED_PART_SIZE_EXCEEDED);
                 }
-                securityEventCounter.increment(SecurityEventCounter.EventType.DECODED_PART_SIZE_EXCEEDED);
                 return Optional.empty();
             }
 
@@ -328,8 +328,8 @@ public class NonValidatingJwtParser {
         } catch (Exception e) {
             if (logWarnings) {
                 LOGGER.warn(e, JWTValidationLogMessages.WARN.FAILED_TO_DECODE_JWT.format());
+                securityEventCounter.increment(SecurityEventCounter.EventType.FAILED_TO_DECODE_JWT);
             }
-            securityEventCounter.increment(SecurityEventCounter.EventType.FAILED_TO_DECODE_JWT);
             return Optional.empty();
         }
     }
