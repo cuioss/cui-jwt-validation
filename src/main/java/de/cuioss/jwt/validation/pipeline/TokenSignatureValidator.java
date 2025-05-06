@@ -181,8 +181,6 @@ public class TokenSignatureValidator {
             securityEventCounter.increment(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED);
             return false;
         }
-
-
     }
 
     /**
