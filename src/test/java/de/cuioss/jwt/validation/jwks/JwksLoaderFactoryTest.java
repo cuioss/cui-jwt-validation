@@ -19,7 +19,7 @@ import de.cuioss.jwt.validation.jwks.http.HttpJwksLoader;
 import de.cuioss.jwt.validation.jwks.http.HttpJwksLoaderConfig;
 import de.cuioss.jwt.validation.jwks.key.JWKSKeyLoader;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
-import de.cuioss.jwt.validation.test.JWKSFactory;
+import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -45,7 +45,7 @@ class JwksLoaderFactoryTest {
     @BeforeEach
     void setUp() {
         securityEventCounter = new SecurityEventCounter();
-        jwksContent = JWKSFactory.createDefaultJwks();
+        jwksContent = InMemoryJWKSFactory.createDefaultJwks();
     }
 
     @Test

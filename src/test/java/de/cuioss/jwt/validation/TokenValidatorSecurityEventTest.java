@@ -17,8 +17,8 @@ package de.cuioss.jwt.validation;
 
 import de.cuioss.jwt.validation.security.AlgorithmPreferences;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
-import de.cuioss.jwt.validation.test.JWKSFactory;
-import de.cuioss.jwt.validation.test.KeyMaterialHandler;
+import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
+import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
 import de.cuioss.jwt.validation.test.TestTokenProducer;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import io.jsonwebtoken.Jwts;
@@ -45,7 +45,7 @@ class TokenValidatorSecurityEventTest {
     @BeforeEach
     void setUp() {
         // Create a JWKSKeyLoader with the default JWKS content
-        String jwksContent = JWKSFactory.createDefaultJwks();
+        String jwksContent = InMemoryJWKSFactory.createDefaultJwks();
 
         // Create issuer config
         IssuerConfig issuerConfig = IssuerConfig.builder()
@@ -101,7 +101,7 @@ class TokenValidatorSecurityEventTest {
         // Create a validation without issuer
         String token = Jwts.builder()
                 .subject("test-subject")
-                .signWith(KeyMaterialHandler.getDefaultPrivateKey())
+                .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
                 .compact();
 
         // Process validation without issuer
@@ -122,7 +122,7 @@ class TokenValidatorSecurityEventTest {
         String token = Jwts.builder()
                 .issuer("https://unknown-issuer.com")
                 .subject("test-subject")
-                .signWith(KeyMaterialHandler.getDefaultPrivateKey())
+                .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
                 .compact();
 
         // Process validation with unknown issuer

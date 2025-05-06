@@ -60,7 +60,7 @@ class JwtTokenTamperingUtilTest {
                 .issuer(ISSUER)
                 .expectedAudience(AUDIENCE)
                 .expectedClientId(CLIENT_ID)
-                .jwksContent(JWKSFactory.createDefaultJwks())
+                .jwksContent(InMemoryJWKSFactory.createDefaultJwks())
                 .algorithmPreferences(new AlgorithmPreferences())
                 .build();
         tokenValidator = new TokenValidator(config, issuerConfig);

@@ -18,7 +18,7 @@ package de.cuioss.jwt.validation.jwks;
 import de.cuioss.jwt.validation.jwks.key.JWKSKeyLoader;
 import de.cuioss.jwt.validation.jwks.key.KeyInfo;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
-import de.cuioss.jwt.validation.test.JWKSFactory;
+import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
@@ -38,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Tests file-based JWKSKeyLoader functionality")
 class FileJwksLoaderTest {
 
-    private static final String TEST_KID = JWKSFactory.DEFAULT_KEY_ID;
+    private static final String TEST_KID = InMemoryJWKSFactory.DEFAULT_KEY_ID;
 
     @TempDir
     Path tempDir;
@@ -54,7 +54,7 @@ class FileJwksLoaderTest {
 
         // Create a temporary JWKS file for testing
         jwksFilePath = tempDir.resolve("jwks.json");
-        String jwksContent = JWKSFactory.createDefaultJwks();
+        String jwksContent = InMemoryJWKSFactory.createDefaultJwks();
         Files.writeString(jwksFilePath, jwksContent);
 
         // Create the FileJwksLoader with the temporary file
@@ -133,7 +133,7 @@ class FileJwksLoaderTest {
 
         // Given
         Path invalidJwksPath = tempDir.resolve("invalid-jwks.json");
-        Files.writeString(invalidJwksPath, JWKSFactory.createInvalidJson());
+        Files.writeString(invalidJwksPath, InMemoryJWKSFactory.createInvalidJson());
         JwksLoader invalidJwksLoader = JwksLoaderFactory.createFileLoader(invalidJwksPath.toString(), securityEventCounter);
 
         // When
@@ -150,7 +150,7 @@ class FileJwksLoaderTest {
     void shouldHandleMissingRequiredFieldsInJwk() throws IOException {
         // Given
         Path missingFieldsJwksPath = tempDir.resolve("missing-fields-jwks.json");
-        String missingFieldsJwksContent = JWKSFactory.createJwksWithMissingFields(TEST_KID);
+        String missingFieldsJwksContent = InMemoryJWKSFactory.createJwksWithMissingFields(TEST_KID);
         Files.writeString(missingFieldsJwksPath, missingFieldsJwksContent);
         JwksLoader missingFieldsJwksLoader = JwksLoaderFactory.createFileLoader(missingFieldsJwksPath.toString(), securityEventCounter);
 
@@ -172,7 +172,7 @@ class FileJwksLoaderTest {
         assertTrue(initialKeyInfo.isPresent(), "Initial key info should be present");
 
         // When - update the file with new content
-        String updatedJwksContent = JWKSFactory.createValidJwksWithKeyId("updated-key-id");
+        String updatedJwksContent = InMemoryJWKSFactory.createValidJwksWithKeyId("updated-key-id");
         Files.writeString(jwksFilePath, updatedJwksContent);
 
         // Create a new FileJwksLoader to force refresh

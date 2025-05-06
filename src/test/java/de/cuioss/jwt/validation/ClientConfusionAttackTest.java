@@ -18,7 +18,7 @@ package de.cuioss.jwt.validation;
 import de.cuioss.jwt.validation.domain.token.IdTokenContent;
 import de.cuioss.jwt.validation.pipeline.NonValidatingJwtParser;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
-import de.cuioss.jwt.validation.test.JWKSFactory;
+import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.jwt.validation.test.TestTokenProducer;
 import de.cuioss.jwt.validation.test.generator.IDTokenGenerator;
 import de.cuioss.tools.logging.CuiLogger;
@@ -47,8 +47,8 @@ class ClientConfusionAttackTest {
      */
     @BeforeEach
     void setUp() {
-        // Use the JWKSFactory to create a proper JWKS document with the default key ID
-        String jwksContent = JWKSFactory.createDefaultJwks();
+        // Use the InMemoryJWKSFactory to create a proper JWKS document with the default key ID
+        String jwksContent = InMemoryJWKSFactory.createDefaultJwks();
 
         // Print the JWKS content for debugging
         LOGGER.debug("JWKS content: " + jwksContent);
@@ -95,7 +95,7 @@ class ClientConfusionAttackTest {
                 .issuer(TestTokenProducer.ISSUER)
                 .expectedAudience(IDTokenGenerator.DEFAULT_CLIENT_ID)
                 .expectedClientId(IDTokenGenerator.DEFAULT_CLIENT_ID)
-                .jwksContent(JWKSFactory.createDefaultJwks())
+                .jwksContent(InMemoryJWKSFactory.createDefaultJwks())
                 .build();
 
         LOGGER.debug("IssuerConfig: issuer=" + issuerConfig.getIssuer() +
@@ -121,7 +121,7 @@ class ClientConfusionAttackTest {
                 .issuer(TestTokenProducer.ISSUER)
                 .expectedAudience(IDTokenGenerator.DEFAULT_CLIENT_ID)
                 .expectedClientId("wrong-client-id")
-                .jwksContent(JWKSFactory.createDefaultJwks())
+                .jwksContent(InMemoryJWKSFactory.createDefaultJwks())
                 .build();
 
         // Create a token validator with the issuer config
@@ -143,7 +143,7 @@ class ClientConfusionAttackTest {
                 .issuer(TestTokenProducer.ISSUER)
                 .expectedAudience(IDTokenGenerator.DEFAULT_CLIENT_ID)
                 .expectedClientId(IDTokenGenerator.DEFAULT_CLIENT_ID)
-                .jwksContent(JWKSFactory.createDefaultJwks())
+                .jwksContent(InMemoryJWKSFactory.createDefaultJwks())
                 .build();
 
         // Create a token validator with the issuer config
@@ -194,7 +194,7 @@ class ClientConfusionAttackTest {
         IssuerConfig issuerConfig = IssuerConfig.builder()
                 .issuer(TestTokenProducer.ISSUER)
                 .expectedAudience(IDTokenGenerator.DEFAULT_CLIENT_ID)
-                .jwksContent(JWKSFactory.createDefaultJwks())
+                .jwksContent(InMemoryJWKSFactory.createDefaultJwks())
                 .build();
 
         LOGGER.debug("IssuerConfig: issuer=" + issuerConfig.getIssuer() +
@@ -219,7 +219,7 @@ class ClientConfusionAttackTest {
         IssuerConfig issuerConfig = IssuerConfig.builder()
                 .issuer(TestTokenProducer.ISSUER)
                 .expectedClientId(IDTokenGenerator.DEFAULT_CLIENT_ID)
-                .jwksContent(JWKSFactory.createDefaultJwks())
+                .jwksContent(InMemoryJWKSFactory.createDefaultJwks())
                 .build();
 
         // Create a token validator with the issuer config
@@ -240,7 +240,7 @@ class ClientConfusionAttackTest {
         IssuerConfig issuerConfig = IssuerConfig.builder()
                 .issuer(TestTokenProducer.ISSUER)
                 .expectedClientId(IDTokenGenerator.DEFAULT_CLIENT_ID)
-                .jwksContent(JWKSFactory.createDefaultJwks())
+                .jwksContent(InMemoryJWKSFactory.createDefaultJwks())
                 .build();
 
         // Create a token validator with the issuer config

@@ -15,16 +15,13 @@
  */
 package de.cuioss.jwt.validation.test.dispatcher;
 
-import de.cuioss.jwt.validation.test.JWKSFactory;
-import io.jsonwebtoken.Jwts;
+import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import lombok.Getter;
 import lombok.NonNull;
 import mockwebserver3.MockResponse;
 import mockwebserver3.RecordedRequest;
 import okhttp3.Headers;
 
-import java.security.KeyPair;
-import java.security.interfaces.RSAPublicKey;
 import java.util.Optional;
 
 import static jakarta.servlet.http.HttpServletResponse.SC_NOT_MODIFIED;
@@ -126,12 +123,8 @@ public class EnhancedJwksResolveDispatcher extends JwksResolveDispatcher {
             case SAME_CONTENT -> createDefaultResponse();
             case DIFFERENT_CONTENT -> {
                 if (differentContentKeyId != null) {
-                    // Create a new key pair for a truly different key
-                    KeyPair keyPair = Jwts.SIG.RS256.keyPair().build();
-                    RSAPublicKey rsaPublicKey = (RSAPublicKey) keyPair.getPublic();
-
-                    // Create JWKS with the new key and the specified key ID
-                    String differentContent = JWKSFactory.createJwksFromRsaKey(rsaPublicKey, differentContentKeyId);
+                    // Create JWKS with a different key ID
+                    String differentContent = InMemoryJWKSFactory.createValidJwksWithKeyId(differentContentKeyId);
                     yield Optional.of(new MockResponse(SC_OK, Headers.of("Content-Type", "application/json", "ETag", "\"new-etag-value\""), differentContent));
                 }
                 yield createDefaultResponse();
@@ -146,7 +139,7 @@ public class EnhancedJwksResolveDispatcher extends JwksResolveDispatcher {
 
     private Optional<MockResponse> createDefaultResponse() {
         // Create a default response with ETag
-        return Optional.of(new MockResponse(SC_OK, Headers.of("Content-Type", "application/json", "ETag", ETAG_VALUE), JWKSFactory.createDefaultJwks()));
+        return Optional.of(new MockResponse(SC_OK, Headers.of("Content-Type", "application/json", "ETag", ETAG_VALUE), InMemoryJWKSFactory.createDefaultJwks()));
     }
 
     /**

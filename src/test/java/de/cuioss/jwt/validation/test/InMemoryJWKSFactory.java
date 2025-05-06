@@ -23,7 +23,7 @@ import lombok.experimental.UtilityClass;
  * Factory for creating JWKS (JSON Web Key Set) content for testing purposes.
  * <p>
  * This class centralizes the creation of JWKS content with support for multiple algorithms.
- * Unlike {@link JWKSFactory}, this class:
+ * Unlike previous JWKSFactory, this class:
  * <ul>
  *   <li>Supports multiple algorithms (RS256, RS384, RS512)</li>
  *   <li>Creates keys on the fly</li>

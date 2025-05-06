@@ -18,7 +18,7 @@ package de.cuioss.jwt.validation.jwks;
 import de.cuioss.jwt.validation.jwks.key.JWKSKeyLoader;
 import de.cuioss.jwt.validation.jwks.key.KeyInfo;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
-import de.cuioss.jwt.validation.test.JWKSFactory;
+import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
@@ -44,7 +44,7 @@ class InMemoryJwksLoaderTest {
         securityEventCounter = new SecurityEventCounter();
 
         // Create the InMemoryJwksLoader with the valid content
-        inMemoryJwksLoader = JwksLoaderFactory.createInMemoryLoader(JWKSFactory.createDefaultJwks(), securityEventCounter);
+        inMemoryJwksLoader = JwksLoaderFactory.createInMemoryLoader(InMemoryJWKSFactory.createDefaultJwks(), securityEventCounter);
     }
 
 
@@ -52,7 +52,7 @@ class InMemoryJwksLoaderTest {
     @DisplayName("Should load and parse JWKS from string")
     void shouldLoadAndParseJwksFromString() {
         // When
-        Optional<Key> key = inMemoryJwksLoader.getKeyInfo(JWKSFactory.DEFAULT_KEY_ID).map(KeyInfo::getKey);
+        Optional<Key> key = inMemoryJwksLoader.getKeyInfo(InMemoryJWKSFactory.DEFAULT_KEY_ID).map(KeyInfo::getKey);
 
         // Then
         assertTrue(key.isPresent(), "Key should be present");
@@ -96,11 +96,11 @@ class InMemoryJwksLoaderTest {
     void shouldHandleInvalidJwksFormat() {
 
         // Given
-        String invalidJwksContent = JWKSFactory.createInvalidJson();
+        String invalidJwksContent = InMemoryJWKSFactory.createInvalidJson();
         JwksLoader invalidJwksLoader = JwksLoaderFactory.createInMemoryLoader(invalidJwksContent, securityEventCounter);
 
         // When
-        Optional<Key> key = invalidJwksLoader.getKeyInfo(JWKSFactory.DEFAULT_KEY_ID).map(KeyInfo::getKey);
+        Optional<Key> key = invalidJwksLoader.getKeyInfo(InMemoryJWKSFactory.DEFAULT_KEY_ID).map(KeyInfo::getKey);
 
         // Then
         assertFalse(key.isPresent(), "Key should not be present when JWKS is invalid");
@@ -112,11 +112,11 @@ class InMemoryJwksLoaderTest {
     @DisplayName("Should handle missing required fields in JWK")
     void shouldHandleMissingRequiredFieldsInJwk() {
         // Given
-        String missingFieldsJwksContent = JWKSFactory.createJwksWithMissingFields(JWKSFactory.DEFAULT_KEY_ID);
+        String missingFieldsJwksContent = InMemoryJWKSFactory.createJwksWithMissingFields(InMemoryJWKSFactory.DEFAULT_KEY_ID);
         JwksLoader missingFieldsJwksLoader = JwksLoaderFactory.createInMemoryLoader(missingFieldsJwksContent, securityEventCounter);
 
         // When
-        Optional<Key> key = missingFieldsJwksLoader.getKeyInfo(JWKSFactory.DEFAULT_KEY_ID).map(KeyInfo::getKey);
+        Optional<Key> key = missingFieldsJwksLoader.getKeyInfo(InMemoryJWKSFactory.DEFAULT_KEY_ID).map(KeyInfo::getKey);
 
         // Then
         assertFalse(key.isPresent(), "Key should not be present when JWK is missing required fields");
@@ -127,15 +127,15 @@ class InMemoryJwksLoaderTest {
     @DisplayName("Should update keys when refreshed with new data")
     void shouldUpdateKeysWhenRefreshedWithNewData() {
         // Given
-        Optional<Key> initialKey = inMemoryJwksLoader.getKeyInfo(JWKSFactory.DEFAULT_KEY_ID).map(KeyInfo::getKey);
+        Optional<Key> initialKey = inMemoryJwksLoader.getKeyInfo(InMemoryJWKSFactory.DEFAULT_KEY_ID).map(KeyInfo::getKey);
         assertTrue(initialKey.isPresent(), "Initial key should be present");
 
         // When - create a new loader with updated content
-        String updatedJwksContent = JWKSFactory.createValidJwksWithKeyId("updated-key-id");
+        String updatedJwksContent = InMemoryJWKSFactory.createValidJwksWithKeyId("updated-key-id");
         JwksLoader updatedLoader = JwksLoaderFactory.createInMemoryLoader(updatedJwksContent, securityEventCounter);
 
         // Then - verify the new loader has the updated key
-        Optional<Key> oldKey = updatedLoader.getKeyInfo(JWKSFactory.DEFAULT_KEY_ID).map(KeyInfo::getKey);
+        Optional<Key> oldKey = updatedLoader.getKeyInfo(InMemoryJWKSFactory.DEFAULT_KEY_ID).map(KeyInfo::getKey);
         assertFalse(oldKey.isPresent(), "Old key should not be present in the new loader");
 
         Optional<Key> newKey = updatedLoader.getKeyInfo("updated-key-id").map(KeyInfo::getKey);
@@ -153,7 +153,7 @@ class InMemoryJwksLoaderTest {
 
         // Then
         assertFalse(keySet.isEmpty(), "KeySet should not be empty");
-        assertTrue(keySet.contains(JWKSFactory.DEFAULT_KEY_ID), "KeySet should contain the test key ID");
+        assertTrue(keySet.contains(InMemoryJWKSFactory.DEFAULT_KEY_ID), "KeySet should contain the test key ID");
         assertEquals(1, keySet.size(), "KeySet should contain exactly one key");
     }
 
@@ -161,14 +161,14 @@ class InMemoryJwksLoaderTest {
     @DisplayName("Should create loader from factory method")
     void shouldCreateLoaderFromFactoryMethod() {
         // Given
-        String jwksContent = JWKSFactory.createDefaultJwks();
+        String jwksContent = InMemoryJWKSFactory.createDefaultJwks();
 
         // When
         JwksLoader loader = JwksLoaderFactory.createInMemoryLoader(jwksContent, securityEventCounter);
 
         // Then
         assertInstanceOf(JWKSKeyLoader.class, loader, "Loader should be an instance of JWKSKeyLoader");
-        Optional<Key> key = loader.getKeyInfo(JWKSFactory.DEFAULT_KEY_ID).map(KeyInfo::getKey);
+        Optional<Key> key = loader.getKeyInfo(InMemoryJWKSFactory.DEFAULT_KEY_ID).map(KeyInfo::getKey);
         assertTrue(key.isPresent(), "Key should be present");
     }
 }

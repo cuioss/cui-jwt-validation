@@ -15,7 +15,7 @@
  */
 package de.cuioss.jwt.validation.jwks.http;
 
-import de.cuioss.jwt.validation.test.JWKSFactory;
+import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.jwt.validation.test.dispatcher.JwksResolveDispatcher;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import de.cuioss.test.mockwebserver.EnableMockWebServer;
@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @EnableMockWebServer
 class JwksHttpClientTest {
 
-    private static final String JWKS_CONTENT = JWKSFactory.createDefaultJwks();
+    private static final String JWKS_CONTENT = InMemoryJWKSFactory.createDefaultJwks();
 
     @Getter
     private final JwksResolveDispatcher moduleDispatcher = new JwksResolveDispatcher();

@@ -19,8 +19,8 @@ import de.cuioss.jwt.validation.jwks.JwksLoader;
 import de.cuioss.jwt.validation.jwks.JwksLoaderFactory;
 import de.cuioss.jwt.validation.jwks.key.KeyInfo;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
-import de.cuioss.jwt.validation.test.JWKSFactory;
-import de.cuioss.jwt.validation.test.KeyMaterialHandler;
+import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
+import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
@@ -68,7 +68,7 @@ class TokenSignatureValidatorTest {
         DecodedJwt decodedJwt = decodedJwtOpt.get();
 
         // Create an in-memory JwksLoader with a valid key
-        String jwksContent = JWKSFactory.createDefaultJwks();
+        String jwksContent = InMemoryJWKSFactory.createDefaultJwks();
         JwksLoader jwksLoader = JwksLoaderFactory.createInMemoryLoader(jwksContent, securityEventCounter);
 
         // Create the validator with the in-memory JwksLoader and security event counter
@@ -109,7 +109,7 @@ class TokenSignatureValidatorTest {
         DecodedJwt decodedJwt = decodedJwtOpt.get();
 
         // Create an in-memory JwksLoader with a valid key
-        String jwksContent = JWKSFactory.createDefaultJwks();
+        String jwksContent = InMemoryJWKSFactory.createDefaultJwks();
         JwksLoader jwksLoader = JwksLoaderFactory.createInMemoryLoader(jwksContent, securityEventCounter);
 
         // Create the validator with the in-memory JwksLoader and security event counter
@@ -142,7 +142,7 @@ class TokenSignatureValidatorTest {
         DecodedJwt decodedJwt = decodedJwtOpt.get();
 
         // Create an in-memory JwksLoader with a different key ID
-        String jwksContent = JWKSFactory.createValidJwksWithKeyId("different-key-id");
+        String jwksContent = InMemoryJWKSFactory.createValidJwksWithKeyId("different-key-id");
         JwksLoader jwksLoader = JwksLoaderFactory.createInMemoryLoader(jwksContent, securityEventCounter);
 
         // Create the validator with the in-memory JwksLoader and security event counter
@@ -175,7 +175,7 @@ class TokenSignatureValidatorTest {
         DecodedJwt decodedJwt = decodedJwtOpt.get();
 
         // Create an in-memory JwksLoader with a valid key
-        String jwksContent = JWKSFactory.createDefaultJwks();
+        String jwksContent = InMemoryJWKSFactory.createDefaultJwks();
         JwksLoader jwksLoader = JwksLoaderFactory.createInMemoryLoader(jwksContent, securityEventCounter);
 
         // Create the validator with the in-memory JwksLoader and security event counter
@@ -209,7 +209,7 @@ class TokenSignatureValidatorTest {
         DecodedJwt decodedJwt = decodedJwtOpt.get();
 
         // Create an in-memory JwksLoader with a valid key
-        String jwksContent = JWKSFactory.createDefaultJwks();
+        String jwksContent = InMemoryJWKSFactory.createDefaultJwks();
         JwksLoader jwksLoader = JwksLoaderFactory.createInMemoryLoader(jwksContent, securityEventCounter);
 
         // Create the validator with the in-memory JwksLoader and security event counter
@@ -245,25 +245,25 @@ class TokenSignatureValidatorTest {
         JwksLoader jwksLoader = new JwksLoader() {
             @Override
             public Optional<KeyInfo> getKeyInfo(String kid) {
-                if (JWKSFactory.DEFAULT_KEY_ID.equals(kid)) {
-                    return Optional.of(new KeyInfo(KeyMaterialHandler.getDefaultPublicKey(), "EC", kid));
+                if (InMemoryJWKSFactory.DEFAULT_KEY_ID.equals(kid)) {
+                    return Optional.of(new KeyInfo(InMemoryKeyMaterialHandler.getDefaultPublicKey(), "EC", kid));
                 }
                 return Optional.empty();
             }
 
             @Override
             public Optional<KeyInfo> getFirstKeyInfo() {
-                return Optional.of(new KeyInfo(KeyMaterialHandler.getDefaultPublicKey(), "EC", JWKSFactory.DEFAULT_KEY_ID));
+                return Optional.of(new KeyInfo(InMemoryKeyMaterialHandler.getDefaultPublicKey(), "EC", InMemoryJWKSFactory.DEFAULT_KEY_ID));
             }
 
             @Override
             public List<KeyInfo> getAllKeyInfos() {
-                return List.of(new KeyInfo(KeyMaterialHandler.getDefaultPublicKey(), "EC", JWKSFactory.DEFAULT_KEY_ID));
+                return List.of(new KeyInfo(InMemoryKeyMaterialHandler.getDefaultPublicKey(), "EC", InMemoryJWKSFactory.DEFAULT_KEY_ID));
             }
 
             @Override
             public Set<String> keySet() {
-                return Set.of(JWKSFactory.DEFAULT_KEY_ID);
+                return Set.of(InMemoryJWKSFactory.DEFAULT_KEY_ID);
             }
         };
 
@@ -293,7 +293,7 @@ class TokenSignatureValidatorTest {
                 .issuer(ISSUER)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiration))
-                .signWith(KeyMaterialHandler.getDefaultPrivateKey(), Jwts.SIG.RS256)
+                .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey(), Jwts.SIG.RS256)
                 .compact();
     }
 
@@ -308,8 +308,8 @@ class TokenSignatureValidatorTest {
                 .issuer(ISSUER)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiration))
-                .header().add("kid", JWKSFactory.DEFAULT_KEY_ID).and()
-                .signWith(KeyMaterialHandler.getDefaultPrivateKey(), Jwts.SIG.RS256)
+                .header().add("kid", InMemoryJWKSFactory.DEFAULT_KEY_ID).and()
+                .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey(), Jwts.SIG.RS256)
                 .compact();
     }
 
@@ -326,7 +326,7 @@ class TokenSignatureValidatorTest {
 
         // Modify the header to keep RS256 but change something else
         String header = new String(Base64.getUrlDecoder().decode(parts[0]), StandardCharsets.UTF_8);
-        header = header.replace("\"kid\":\"" + JWKSFactory.DEFAULT_KEY_ID + "\"", "\"kid\":\"wrong-key-id\"");
+        header = header.replace("\"kid\":\"" + InMemoryJWKSFactory.DEFAULT_KEY_ID + "\"", "\"kid\":\"wrong-key-id\"");
         String modifiedHeader = Base64.getUrlEncoder().withoutPadding().encodeToString(header.getBytes(StandardCharsets.UTF_8));
 
         // Construct a validation with the modified header but keep the original payload and signature

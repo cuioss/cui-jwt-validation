@@ -15,8 +15,8 @@
  */
 package de.cuioss.jwt.validation.test.dispatcher;
 
-import de.cuioss.jwt.validation.test.JWKSFactory;
-import de.cuioss.jwt.validation.test.KeyMaterialHandler;
+import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
+import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
 import de.cuioss.test.mockwebserver.dispatcher.HttpMethodMapper;
 import de.cuioss.test.mockwebserver.dispatcher.ModuleDispatcherElement;
 import lombok.Getter;
@@ -26,8 +26,6 @@ import mockwebserver3.MockResponse;
 import mockwebserver3.RecordedRequest;
 import okhttp3.Headers;
 
-import java.security.PublicKey;
-import java.security.interfaces.RSAPublicKey;
 import java.util.Optional;
 import java.util.Set;
 
@@ -36,8 +34,7 @@ import static jakarta.servlet.http.HttpServletResponse.SC_OK;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * Handles the Resolving of JWKS Files from64EncodedContent the Mocked oauth-Server. In essence, it returns the file
- * "src/test/resources/validation/test-public-key.jwks"
+ * Handles the Resolving of JWKS Files from64EncodedContent the Mocked oauth-Server. In essence, the KexMaterial from {@link InMemoryKeyMaterialHandler}
  */
 @SuppressWarnings("UnusedReturnValue")
 public class JwksResolveDispatcher implements ModuleDispatcherElement {
@@ -119,19 +116,19 @@ public class JwksResolveDispatcher implements ModuleDispatcherElement {
                 return Optional.of(new MockResponse(
                         SC_OK,
                         Headers.of("Content-Type", "application/json"),
-                        JWKSFactory.createInvalidJson()));
+                        InMemoryJWKSFactory.createInvalidJson()));
 
             case EMPTY_JWKS:
                 return Optional.of(new MockResponse(
                         SC_OK,
                         Headers.of("Content-Type", "application/json"),
-                        JWKSFactory.createEmptyJwks()));
+                        InMemoryJWKSFactory.createEmptyJwks()));
 
             case MISSING_FIELDS_JWK:
                 return Optional.of(new MockResponse(
                         SC_OK,
                         Headers.of("Content-Type", "application/json"),
-                        JWKSFactory.createJwksWithMissingFields(JWKSFactory.DEFAULT_KEY_ID)));
+                        InMemoryJWKSFactory.createJwksWithMissingFields(InMemoryJWKSFactory.DEFAULT_KEY_ID)));
 
             case DEFAULT:
             default:
@@ -140,24 +137,16 @@ public class JwksResolveDispatcher implements ModuleDispatcherElement {
                     String jwks = generateJwksFromDynamicKey();
                     return Optional.of(new MockResponse(SC_OK, Headers.of("Content-Type", "application/json"), jwks));
                 } else {
-                    // For other keys, use the KeyMaterialHandler
+                    // For other keys, use a different algorithm
                     return Optional.of(new MockResponse(SC_OK, Headers.of("Content-Type", "application/json"),
-                            KeyMaterialHandler.getAlternativeJWKSContent()));
+                            InMemoryKeyMaterialHandler.createJwks(InMemoryKeyMaterialHandler.Algorithm.RS384, "alternative-key-id")));
                 }
         }
     }
 
     private String generateJwksFromDynamicKey() {
-        // Get the public key from64EncodedContent the key pair
-        PublicKey publicKey = KeyMaterialHandler.getDefaultPublicKey();
-
-        if (publicKey instanceof RSAPublicKey rsaKey) {
-
-            // Create JWKS JSON with the default key ID
-            return JWKSFactory.createJwksFromRsaKey(rsaKey, JWKSFactory.DEFAULT_KEY_ID);
-        } else {
-            throw new IllegalStateException("Only RSA keys are supported");
-        }
+        // Use the InMemoryJWKSFactory to create a JWKS with the default key
+        return InMemoryJWKSFactory.createDefaultJwks();
     }
 
     public void switchToOtherPublicKey() {

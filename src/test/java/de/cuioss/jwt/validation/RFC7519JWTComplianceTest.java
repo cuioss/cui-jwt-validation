@@ -18,8 +18,8 @@ package de.cuioss.jwt.validation;
 import de.cuioss.jwt.validation.domain.claim.ClaimName;
 import de.cuioss.jwt.validation.domain.token.AccessTokenContent;
 import de.cuioss.jwt.validation.security.AlgorithmPreferences;
-import de.cuioss.jwt.validation.test.JWKSFactory;
-import de.cuioss.jwt.validation.test.KeyMaterialHandler;
+import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
+import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
 import de.cuioss.jwt.validation.test.TestTokenProducer;
 import de.cuioss.jwt.validation.test.generator.AccessTokenGenerator;
 import io.jsonwebtoken.Jwts;
@@ -57,7 +57,7 @@ class RFC7519JWTComplianceTest {
     @BeforeEach
     void setUp() {
         // Get the default JWKS content
-        String jwksContent = JWKSFactory.createDefaultJwks();
+        String jwksContent = InMemoryJWKSFactory.createDefaultJwks();
 
         // Create issuer config
         IssuerConfig issuerConfig = IssuerConfig.builder()
@@ -157,7 +157,7 @@ class RFC7519JWTComplianceTest {
                     .claim("azp", CLIENT_ID)
                     .claim("aud", CLIENT_ID)
                     .header().add("kid", "default-key-id").and()
-                    .signWith(KeyMaterialHandler.getDefaultPrivateKey())
+                    .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
                     .compact();
 
             // When
@@ -199,7 +199,7 @@ class RFC7519JWTComplianceTest {
                     .claim("aud", CLIENT_ID)
                     .claim("scope", "openid profile email")
                     .header().add("kid", "default-key-id").and()
-                    .signWith(KeyMaterialHandler.getDefaultPrivateKey())
+                    .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
                     .compact();
 
             // When
@@ -374,7 +374,7 @@ class RFC7519JWTComplianceTest {
                     .claim("aud", CLIENT_ID)
                     .claim("scope", "openid profile email")
                     .header().add("kid", "default-key-id").and()
-                    .signWith(KeyMaterialHandler.getDefaultPrivateKey())
+                    .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
                     .compact();
 
             // When

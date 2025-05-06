@@ -16,7 +16,7 @@
 package de.cuioss.jwt.validation.jwks.http;
 
 import de.cuioss.jwt.validation.jwks.key.JWKSKeyLoader;
-import de.cuioss.jwt.validation.test.JWKSFactory;
+import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import de.cuioss.tools.concurrent.ConcurrentTools;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Tests JwksCacheManager")
 class JwksCacheManagerTest {
 
-    private static final String JWKS_CONTENT = JWKSFactory.createDefaultJwks();
+    private static final String JWKS_CONTENT = InMemoryJWKSFactory.createDefaultJwks();
     private static final String ETAG = "\"test-etag\"";
     private static final String JWKS_URI = "https://example.com/.well-known/jwks.json";
     private static final int REFRESH_INTERVAL = 60;
@@ -86,7 +86,7 @@ class JwksCacheManagerTest {
     @DisplayName("Should update cache with new content")
     void shouldUpdateCacheWithNewContent() {
         // Given
-        String newContent = JWKSFactory.createDefaultJwks(); // Different instance but same content
+        String newContent = InMemoryJWKSFactory.createDefaultJwks(); // Different instance but same content
         String newEtag = "\"new-etag\"";
 
         // When

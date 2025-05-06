@@ -15,7 +15,7 @@
  */
 package de.cuioss.jwt.validation.jwks.key;
 
-import de.cuioss.jwt.validation.test.JWKSFactory;
+import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
@@ -32,14 +32,14 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Tests JWKSKeyLoader functionality")
 class JWKSKeyLoaderTest {
 
-    private static final String TEST_KID = JWKSFactory.DEFAULT_KEY_ID;
+    private static final String TEST_KID = InMemoryJWKSFactory.DEFAULT_KEY_ID;
     private static final String TEST_ETAG = "\"test-etag\"";
     private JWKSKeyLoader keyLoader;
     private String jwksContent;
 
     @BeforeEach
     void setUp() {
-        jwksContent = JWKSFactory.createDefaultJwks();
+        jwksContent = InMemoryJWKSFactory.createDefaultJwks();
         keyLoader = new JWKSKeyLoader(jwksContent, TEST_ETAG);
     }
 
@@ -107,7 +107,7 @@ class JWKSKeyLoaderTest {
         @DisplayName("Should handle invalid JWKS format")
         void shouldHandleInvalidJwksFormat() {
             // Given
-            String invalidJwksContent = JWKSFactory.createInvalidJson();
+            String invalidJwksContent = InMemoryJWKSFactory.createInvalidJson();
             JWKSKeyLoader invalidLoader = new JWKSKeyLoader(invalidJwksContent);
 
             // When
@@ -122,7 +122,7 @@ class JWKSKeyLoaderTest {
         @DisplayName("Should handle missing required fields in JWK")
         void shouldHandleMissingRequiredFieldsInJwk() {
             // Given
-            String missingFieldsJwksContent = JWKSFactory.createJwksWithMissingFields(TEST_KID);
+            String missingFieldsJwksContent = InMemoryJWKSFactory.createJwksWithMissingFields(TEST_KID);
             JWKSKeyLoader missingFieldsLoader = new JWKSKeyLoader(missingFieldsJwksContent);
 
             // When
@@ -213,7 +213,7 @@ class JWKSKeyLoaderTest {
         @DisplayName("Should not be equal when content is different")
         void shouldNotBeEqualWhenContentIsDifferent() {
             // Given
-            String differentContent = JWKSFactory.createValidJwksWithKeyId("different-kid");
+            String differentContent = InMemoryJWKSFactory.createValidJwksWithKeyId("different-kid");
             JWKSKeyLoader differentLoader = new JWKSKeyLoader(differentContent, TEST_ETAG);
 
             // When/Then

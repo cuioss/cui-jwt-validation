@@ -37,7 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * In-memory key material handler for JWT token testing.
  * <p>
  * This class provides access to private and public keys used for signing and verifying tokens.
- * Unlike {@link KeyMaterialHandler}, this class:
+ * Unlike KeyMaterialHandler, this class:
  * <ul>
  *   <li>Creates keys on the fly</li>
  *   <li>Stores keys in static fields instead of the filesystem</li>

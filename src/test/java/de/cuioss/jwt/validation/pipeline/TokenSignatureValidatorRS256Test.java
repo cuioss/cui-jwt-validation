@@ -18,9 +18,9 @@ package de.cuioss.jwt.validation.pipeline;
 import de.cuioss.jwt.validation.jwks.JwksLoader;
 import de.cuioss.jwt.validation.jwks.JwksLoaderFactory;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
-import de.cuioss.jwt.validation.test.JWKSFactory;
+import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
+import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
 import de.cuioss.jwt.validation.test.JwtTokenTamperingUtil;
-import de.cuioss.jwt.validation.test.KeyMaterialHandler;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
@@ -59,7 +59,7 @@ class TokenSignatureValidatorRS256Test {
         jwtParser = NonValidatingJwtParser.builder().securityEventCounter(securityEventCounter).build();
 
         // Create an in-memory JwksLoader with a valid key
-        String jwksContent = JWKSFactory.createDefaultJwks();
+        String jwksContent = InMemoryJWKSFactory.createDefaultJwks();
         jwksLoader = JwksLoaderFactory.createInMemoryLoader(jwksContent, securityEventCounter);
 
         // Create the validator with the in-memory JwksLoader and security event counter
@@ -127,8 +127,8 @@ class TokenSignatureValidatorRS256Test {
                 .issuer(ISSUER)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiration))
-                .header().add("kid", JWKSFactory.DEFAULT_KEY_ID).and()
-                .signWith(KeyMaterialHandler.getDefaultPrivateKey(), Jwts.SIG.RS256)
+                .header().add("kid", InMemoryJWKSFactory.DEFAULT_KEY_ID).and()
+                .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey(), Jwts.SIG.RS256)
                 .compact();
     }
 }

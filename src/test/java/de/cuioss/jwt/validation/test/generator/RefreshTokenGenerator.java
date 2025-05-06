@@ -15,7 +15,7 @@
  */
 package de.cuioss.jwt.validation.test.generator;
 
-import de.cuioss.jwt.validation.test.KeyMaterialHandler;
+import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
 import de.cuioss.jwt.validation.test.TestTokenProducer;
 import de.cuioss.test.generator.Generators;
 import de.cuioss.test.generator.TypedGenerator;
@@ -84,7 +84,7 @@ public class RefreshTokenGenerator implements TypedGenerator<String> {
 
             // Sign with default private key (we don't have an alternative private key)
             // The "alternative" mode is indicated by the key ID in the header
-            builder.signWith(KeyMaterialHandler.getDefaultPrivateKey());
+            builder.signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey());
 
             return builder.compact();
         } catch (Exception e) {

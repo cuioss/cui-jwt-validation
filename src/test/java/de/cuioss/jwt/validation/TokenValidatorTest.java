@@ -18,8 +18,8 @@ package de.cuioss.jwt.validation;
 import de.cuioss.jwt.validation.domain.token.AccessTokenContent;
 import de.cuioss.jwt.validation.domain.token.RefreshTokenContent;
 import de.cuioss.jwt.validation.security.AlgorithmPreferences;
-import de.cuioss.jwt.validation.test.JWKSFactory;
-import de.cuioss.jwt.validation.test.KeyMaterialHandler;
+import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
+import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
 import de.cuioss.jwt.validation.test.TestTokenProducer;
 import de.cuioss.test.generator.Generators;
 import de.cuioss.test.juli.LogAsserts;
@@ -49,7 +49,7 @@ class TokenValidatorTest {
     @BeforeEach
     void setUp() {
         // Get the default JWKS content
-        String jwksContent = JWKSFactory.createDefaultJwks();
+        String jwksContent = InMemoryJWKSFactory.createDefaultJwks();
 
         // Create issuer config
         issuerConfig = IssuerConfig.builder()
@@ -163,7 +163,7 @@ class TokenValidatorTest {
             // Create a JWT with a large payload using io.jsonwebtoken
             String token = Jwts.builder().issuer(TestTokenProducer.ISSUER).subject("test-subject")
                     .claim("large-claim", "a".repeat(200))
-                    .signWith(KeyMaterialHandler.getDefaultPrivateKey(),
+                    .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey(),
                             Jwts.SIG.RS256)
                     .compact();
 
@@ -207,7 +207,7 @@ class TokenValidatorTest {
             String token = Jwts.builder()
                     .issuer("https://unknown-issuer.com")
                     .subject("test-subject")
-                    .signWith(KeyMaterialHandler.getDefaultPrivateKey())
+                    .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
                     .compact();
 
             var parsedToken = tokenValidator.createAccessToken(token);
@@ -323,7 +323,7 @@ class TokenValidatorTest {
                     .issuer(ISSUER)
                     .expectedAudience(AUDIENCE)
                     .expectedClientId(CLIENT_ID)
-                    .jwksContent(JWKSFactory.createEmptyJwks())
+                    .jwksContent(InMemoryJWKSFactory.createEmptyJwks())
                     .build();
 
             // Create a new validation factory with the new issuer config
@@ -348,14 +348,14 @@ class TokenValidatorTest {
                     .issuer(ISSUER)
                     .expectedAudience(AUDIENCE)
                     .expectedClientId(CLIENT_ID)
-                    .jwksContent(JWKSFactory.createDefaultJwks())
+                    .jwksContent(InMemoryJWKSFactory.createDefaultJwks())
                     .build();
 
             IssuerConfig issuerConfig2 = IssuerConfig.builder()
                     .issuer("https://another-issuer.com")
                     .expectedAudience(AUDIENCE)
                     .expectedClientId(CLIENT_ID)
-                    .jwksContent(JWKSFactory.createDefaultJwks())
+                    .jwksContent(InMemoryJWKSFactory.createDefaultJwks())
                     .build();
 
             // Create a new validation factory with multiple issuer configs

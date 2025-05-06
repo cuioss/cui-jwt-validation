@@ -38,7 +38,7 @@ class TestTokenProducerTest {
 
         // Parse the validation using JJWT
         Jws<Claims> parsedToken = Jwts.parser()
-                .verifyWith(KeyMaterialHandler.getDefaultPublicKey())
+                .verifyWith(InMemoryKeyMaterialHandler.getDefaultPublicKey())
                 .build().parseSignedClaims(token);
 
         assertNotNull(parsedToken);
@@ -54,7 +54,7 @@ class TestTokenProducerTest {
 
         // Parse the validation using JJWT
         Jws<Claims> parsedToken = Jwts.parser()
-                .verifyWith(KeyMaterialHandler.getDefaultPublicKey())
+                .verifyWith(InMemoryKeyMaterialHandler.getDefaultPublicKey())
                 .build().parseSignedClaims(token);
 
         assertNotNull(parsedToken);
@@ -70,7 +70,7 @@ class TestTokenProducerTest {
 
         // Parse the validation using JJWT
         Jws<Claims> parsedToken = Jwts.parser()
-                .verifyWith(KeyMaterialHandler.getDefaultPublicKey())
+                .verifyWith(InMemoryKeyMaterialHandler.getDefaultPublicKey())
                 .build().parseSignedClaims(token);
 
         assertNotNull(parsedToken);
@@ -87,7 +87,7 @@ class TestTokenProducerTest {
 
         // Parse the validation using JJWT
         Jws<Claims> parsedToken = Jwts.parser()
-                .verifyWith(KeyMaterialHandler.getDefaultPublicKey())
+                .verifyWith(InMemoryKeyMaterialHandler.getDefaultPublicKey())
                 .build().parseSignedClaims(token);
 
         assertNotNull(parsedToken);
@@ -109,7 +109,7 @@ class TestTokenProducerTest {
 
         // Parse the validation using JJWT
         Jws<Claims> parsedToken = Jwts.parser()
-                .verifyWith(KeyMaterialHandler.getDefaultPublicKey())
+                .verifyWith(InMemoryKeyMaterialHandler.getDefaultPublicKey())
                 .build().parseSignedClaims(token);
 
         assertNotNull(parsedToken);
@@ -128,7 +128,7 @@ class TestTokenProducerTest {
 
         // Parse the validation using JJWT
         Jws<Claims> parsedToken = Jwts.parser()
-                .verifyWith(KeyMaterialHandler.getDefaultPublicKey())
+                .verifyWith(InMemoryKeyMaterialHandler.getDefaultPublicKey())
                 .build().parseSignedClaims(token);
 
         assertNotNull(parsedToken);
@@ -149,7 +149,7 @@ class TestTokenProducerTest {
 
         // Parse the validation using JJWT directly
         Jws<Claims> parsedToken = Jwts.parser()
-                .verifyWith(KeyMaterialHandler.getDefaultPublicKey())
+                .verifyWith(InMemoryKeyMaterialHandler.getDefaultPublicKey())
                 .build().parseSignedClaims(token);
 
         assertNotNull(parsedToken);
