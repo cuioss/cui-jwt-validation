@@ -15,6 +15,8 @@
  */
 package de.cuioss.jwt.validation.jwks.key;
 
+import de.cuioss.jwt.validation.ParserConfig;
+import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
@@ -36,11 +38,17 @@ class JWKSKeyLoaderTest {
     private static final String TEST_ETAG = "\"test-etag\"";
     private JWKSKeyLoader keyLoader;
     private String jwksContent;
+    private SecurityEventCounter securityEventCounter;
 
     @BeforeEach
     void setUp() {
         jwksContent = InMemoryJWKSFactory.createDefaultJwks();
-        keyLoader = new JWKSKeyLoader(jwksContent, TEST_ETAG);
+        securityEventCounter = new SecurityEventCounter();
+        keyLoader = JWKSKeyLoader.builder()
+                .originalString(jwksContent)
+                .etag(TEST_ETAG)
+                .securityEventCounter(securityEventCounter)
+                .build();
     }
 
     @Nested
@@ -108,7 +116,10 @@ class JWKSKeyLoaderTest {
         void shouldHandleInvalidJwksFormat() {
             // Given
             String invalidJwksContent = InMemoryJWKSFactory.createInvalidJson();
-            JWKSKeyLoader invalidLoader = new JWKSKeyLoader(invalidJwksContent);
+            JWKSKeyLoader invalidLoader = JWKSKeyLoader.builder()
+                    .originalString(invalidJwksContent)
+                    .securityEventCounter(new SecurityEventCounter())
+                    .build();
 
             // When
             Optional<KeyInfo> keyInfo = invalidLoader.getKeyInfo(TEST_KID);
@@ -123,7 +134,10 @@ class JWKSKeyLoaderTest {
         void shouldHandleMissingRequiredFieldsInJwk() {
             // Given
             String missingFieldsJwksContent = InMemoryJWKSFactory.createJwksWithMissingFields(TEST_KID);
-            JWKSKeyLoader missingFieldsLoader = new JWKSKeyLoader(missingFieldsJwksContent);
+            JWKSKeyLoader missingFieldsLoader = JWKSKeyLoader.builder()
+                    .originalString(missingFieldsJwksContent)
+                    .securityEventCounter(new SecurityEventCounter())
+                    .build();
 
             // When
             Optional<KeyInfo> keyInfo = missingFieldsLoader.getKeyInfo(TEST_KID);
@@ -161,7 +175,10 @@ class JWKSKeyLoaderTest {
         @DisplayName("Should return null for ETag when not provided")
         void shouldReturnNullForEtagWhenNotProvided() {
             // Given
-            JWKSKeyLoader loaderWithoutEtag = new JWKSKeyLoader(jwksContent);
+            JWKSKeyLoader loaderWithoutEtag = JWKSKeyLoader.builder()
+                    .originalString(jwksContent)
+                    .securityEventCounter(new SecurityEventCounter())
+                    .build();
 
             // When
             String etag = loaderWithoutEtag.getEtag();
@@ -185,7 +202,10 @@ class JWKSKeyLoaderTest {
         void shouldReportEmptyWhenNoKeysArePresent() {
             // Given
             String emptyJwksContent = "{}";
-            JWKSKeyLoader emptyLoader = new JWKSKeyLoader(emptyJwksContent);
+            JWKSKeyLoader emptyLoader = JWKSKeyLoader.builder()
+                    .originalString(emptyJwksContent)
+                    .securityEventCounter(new SecurityEventCounter())
+                    .build();
 
             // When
             boolean notEmpty = emptyLoader.isNotEmpty();
@@ -196,16 +216,95 @@ class JWKSKeyLoaderTest {
     }
 
     @Nested
+    @DisplayName("Security Features")
+    class SecurityFeaturesTests {
+        @Test
+        @DisplayName("Should use custom ParserConfig")
+        void shouldUseCustomParserConfig() {
+            // Given
+            ParserConfig customConfig = ParserConfig.builder()
+                    .maxPayloadSize(1024)
+                    .maxStringSize(512)
+                    .maxArraySize(10)
+                    .maxDepth(5)
+                    .build();
+
+            // When
+            JWKSKeyLoader loaderWithCustomConfig = JWKSKeyLoader.builder()
+                    .originalString(jwksContent)
+                    .etag(TEST_ETAG)
+                    .parserConfig(customConfig)
+                    .securityEventCounter(new SecurityEventCounter())
+                    .build();
+
+            // Then
+            assertEquals(customConfig, loaderWithCustomConfig.getParserConfig(),
+                    "Loader should use the provided ParserConfig");
+            assertTrue(loaderWithCustomConfig.isNotEmpty(),
+                    "Loader should still parse valid JWKS with custom config");
+        }
+
+        @Test
+        @DisplayName("Should reject JWKS content exceeding maximum size")
+        void shouldRejectJwksContentExceedingMaximumSize() {
+            // Given
+            int maxSize = 100; // Small size for testing
+            ParserConfig restrictiveConfig = ParserConfig.builder()
+                    .maxPayloadSize(maxSize)
+                    .build();
+
+            // Create a large JWKS content that exceeds the maximum size
+            StringBuilder largeContent = new StringBuilder("{\"keys\":[");
+            // Add enough padding to exceed maxSize
+            largeContent.append("\"x\":\"").append("a".repeat(maxSize)).append("\"}]}");
+
+            // When
+            JWKSKeyLoader loader = JWKSKeyLoader.builder()
+                    .originalString(largeContent.toString())
+                    .parserConfig(restrictiveConfig)
+                    .securityEventCounter(new SecurityEventCounter())
+                    .build();
+
+            // Then
+            assertFalse(loader.isNotEmpty(), "Loader should reject content exceeding maximum size");
+            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN,
+                    "JWKS content size exceeds maximum allowed size");
+        }
+
+        @Test
+        @DisplayName("Should use default ParserConfig when not provided")
+        void shouldUseDefaultParserConfigWhenNotProvided() {
+            // Given/When
+            JWKSKeyLoader defaultLoader = JWKSKeyLoader.builder()
+                    .originalString(jwksContent)
+                    .securityEventCounter(new SecurityEventCounter())
+                    .build();
+
+            // Then
+            assertNotNull(defaultLoader.getParserConfig(), "Default ParserConfig should not be null");
+            assertEquals(ParserConfig.DEFAULT_MAX_PAYLOAD_SIZE,
+                    defaultLoader.getParserConfig().getMaxPayloadSize(),
+                    "Default max payload size should be used");
+        }
+    }
+
+    @Nested
     @DisplayName("Equals and HashCode")
     class EqualsAndHashCodeTests {
         @Test
-        @DisplayName("Should be equal when content and etag are the same")
+        @DisplayName("Should be equal when content, etag, and ParserConfig are the same")
         void shouldBeEqualWhenContentAndEtagAreSame() {
             // Given
-            JWKSKeyLoader sameLoader = new JWKSKeyLoader(jwksContent, TEST_ETAG);
+            ParserConfig config = keyLoader.getParserConfig();
+            JWKSKeyLoader sameLoader = JWKSKeyLoader.builder()
+                    .originalString(jwksContent)
+                    .etag(TEST_ETAG)
+                    .parserConfig(config)
+                    .securityEventCounter(securityEventCounter)
+                    .build();
 
             // When/Then
-            assertEquals(keyLoader, sameLoader, "Loaders with same content and etag should be equal");
+            assertEquals(keyLoader, sameLoader, "Loaders with same content, etag, and ParserConfig should be equal");
             assertEquals(keyLoader.hashCode(), sameLoader.hashCode(), "Hash codes should be equal");
         }
 
@@ -214,7 +313,11 @@ class JWKSKeyLoaderTest {
         void shouldNotBeEqualWhenContentIsDifferent() {
             // Given
             String differentContent = InMemoryJWKSFactory.createValidJwksWithKeyId("different-kid");
-            JWKSKeyLoader differentLoader = new JWKSKeyLoader(differentContent, TEST_ETAG);
+            JWKSKeyLoader differentLoader = JWKSKeyLoader.builder()
+                    .originalString(differentContent)
+                    .etag(TEST_ETAG)
+                    .securityEventCounter(new SecurityEventCounter())
+                    .build();
 
             // When/Then
             assertNotEquals(keyLoader, differentLoader, "Loaders with different content should not be equal");
@@ -225,11 +328,34 @@ class JWKSKeyLoaderTest {
         @DisplayName("Should not be equal when etag is different")
         void shouldNotBeEqualWhenEtagIsDifferent() {
             // Given
-            JWKSKeyLoader differentEtagLoader = new JWKSKeyLoader(jwksContent, "different-etag");
+            JWKSKeyLoader differentEtagLoader = JWKSKeyLoader.builder()
+                    .originalString(jwksContent)
+                    .etag("different-etag")
+                    .securityEventCounter(new SecurityEventCounter())
+                    .build();
 
             // When/Then
             assertNotEquals(keyLoader, differentEtagLoader, "Loaders with different etags should not be equal");
             assertNotEquals(keyLoader.hashCode(), differentEtagLoader.hashCode(), "Hash codes should not be equal");
+        }
+
+        @Test
+        @DisplayName("Should not be equal when ParserConfig is different")
+        void shouldNotBeEqualWhenParserConfigIsDifferent() {
+            // Given
+            ParserConfig customConfig = ParserConfig.builder()
+                    .maxPayloadSize(1024)
+                    .build();
+            JWKSKeyLoader differentConfigLoader = JWKSKeyLoader.builder()
+                    .originalString(jwksContent)
+                    .etag(TEST_ETAG)
+                    .parserConfig(customConfig)
+                    .securityEventCounter(new SecurityEventCounter())
+                    .build();
+
+            // When/Then
+            assertNotEquals(keyLoader, differentConfigLoader, "Loaders with different ParserConfig should not be equal");
+            assertNotEquals(keyLoader.hashCode(), differentConfigLoader.hashCode(), "Hash codes should not be equal");
         }
     }
 }

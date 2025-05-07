@@ -22,6 +22,7 @@ This document provides detailed specifications for the security aspects of the J
 * link:technical-components.adoc[Technical Components] - Implementation details
 * link:testing.adoc[Testing] - Testing approach and coverage
 * link:token-size-validation.adoc[Token Size Validation] - Token size validation details
+* link:jwks-size-recommendations.adoc[JWKS Size Recommendations] - JWKS size limits and recommendations
 * link:token-decryption.adoc[Token Decryption] - Future JWE support
 
 == Security Measures
@@ -101,6 +102,22 @@ The following tests verify the implementation:
 ** JsonReaderFactory caching tests
 
 These security measures protect against common attacks such as memory exhaustion, stack overflow, and malformed input attacks.
+
+=== JWKS Size Limits
+_See Requirement link:../Requirements.adoc#CUI-JWT-8.1[CUI-JWT-8.1: Token Size Limits] and link:../Requirements.adoc#CUI-JWT-8.2[CUI-JWT-8.2: Safe Parsing]_
+
+==== Status: IMPLEMENTED
+
+The following classes implement this specification:
+
+* link:../../src/main/java/de/cuioss/jwt/validation/jwks/key/JWKSKeyLoader.java[JWKSKeyLoader]
+* link:../../src/main/java/de/cuioss/jwt/validation/ParserConfig.java[ParserConfig]
+
+To prevent denial of service attacks and memory exhaustion, the library enforces size limits on JWKS content. Based on research of typical JWKS sizes from major identity providers and industry standards, a default upper bound of 64 KB is recommended.
+
+The `JWKSKeyLoader` class checks the size of JWKS content against the maximum payload size configured in `ParserConfig` before parsing. If the content exceeds the limit, it logs a warning and returns an empty result.
+
+For detailed information about JWKS size recommendations, including analysis of typical JWKS content sizes, industry standards, and implementation recommendations, please refer to the link:jwks-size-recommendations.adoc[JWKS Size Recommendations] document.
 
 === Claims Validation
 _See Requirement link:../Requirements.adoc#CUI-JWT-8.4[CUI-JWT-8.4: Claims Validation]_

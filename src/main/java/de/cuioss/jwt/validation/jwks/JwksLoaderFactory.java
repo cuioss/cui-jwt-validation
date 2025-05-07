@@ -89,13 +89,19 @@ public class JwksLoaderFactory {
         try {
             String jwksContent = new String(Files.readAllBytes(Path.of(filePath)));
             LOGGER.debug("Successfully read JWKS from file: %s", filePath);
-            JWKSKeyLoader keyLoader = new JWKSKeyLoader(jwksContent);
+            JWKSKeyLoader keyLoader = JWKSKeyLoader.builder()
+                    .originalString(jwksContent)
+                    .securityEventCounter(securityEventCounter)
+                    .build();
             LOGGER.debug("Successfully loaded %s keys", keyLoader.keySet().size());
             return keyLoader;
         } catch (IOException e) {
             LOGGER.warn(e, JWTValidationLogMessages.WARN.FAILED_TO_READ_JWKS_FILE.format(filePath));
             securityEventCounter.increment(SecurityEventCounter.EventType.FAILED_TO_READ_JWKS_FILE);
-            return new JWKSKeyLoader("{}"); // Empty JWKS
+            return JWKSKeyLoader.builder()
+                    .originalString("{}")
+                    .securityEventCounter(securityEventCounter)
+                    .build(); // Empty JWKS
         }
     }
 
@@ -109,13 +115,19 @@ public class JwksLoaderFactory {
     public static JwksLoader createInMemoryLoader(@NonNull String jwksContent, @NonNull SecurityEventCounter securityEventCounter) {
         LOGGER.debug("Resolving key loader for in-memory JWKS data");
         try {
-            JWKSKeyLoader keyLoader = new JWKSKeyLoader(jwksContent);
+            JWKSKeyLoader keyLoader = JWKSKeyLoader.builder()
+                    .originalString(jwksContent)
+                    .securityEventCounter(securityEventCounter)
+                    .build();
             LOGGER.debug("Successfully loaded %s key(s)", keyLoader.keySet().size());
             return keyLoader;
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             LOGGER.warn(e, JWTValidationLogMessages.WARN.JWKS_JSON_PARSE_FAILED.format(e.getMessage()));
             securityEventCounter.increment(SecurityEventCounter.EventType.JWKS_JSON_PARSE_FAILED);
-            return new JWKSKeyLoader("{}"); // Empty JWKS
+            return JWKSKeyLoader.builder()
+                    .originalString("{}")
+                    .securityEventCounter(securityEventCounter)
+                    .build(); // Empty JWKS
         }
     }
 

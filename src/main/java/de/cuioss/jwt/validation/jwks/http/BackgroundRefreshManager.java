@@ -95,7 +95,7 @@ class BackgroundRefreshManager implements AutoCloseable {
                 // Preemptively refresh the cache
                 cacheManager.refresh();
                 LOGGER.debug(DEBUG.REFRESHING_KEYS.format(config.getJwksUri().toString()));
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
                 LOGGER.warn(e, WARN.JWKS_REFRESH_ERROR.format(e.getMessage()));
             }
         }, refreshTimeSeconds, refreshTimeSeconds, TimeUnit.SECONDS);

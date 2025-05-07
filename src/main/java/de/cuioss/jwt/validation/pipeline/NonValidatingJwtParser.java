@@ -20,6 +20,7 @@ import de.cuioss.jwt.validation.ParserConfig;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
+import jakarta.json.JsonException;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonReader;
 import lombok.AccessLevel;
@@ -197,7 +198,7 @@ public class NonValidatingJwtParser {
         try {
             // Decode token parts
             return decodeTokenParts(parts, token, logWarnings);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             if (logWarnings) {
                 LOGGER.warn(e, JWTValidationLogMessages.WARN.FAILED_TO_DECODE_JWT.format());
                 securityEventCounter.increment(SecurityEventCounter.EventType.FAILED_TO_DECODE_JWT);
@@ -323,7 +324,7 @@ public class NonValidatingJwtParser {
                     .createReader(new StringReader(new String(decoded, StandardCharsets.UTF_8)))) {
                 return Optional.of(reader.readObject());
             }
-        } catch (Exception e) {
+        } catch (IllegalArgumentException | JsonException e) {
             if (logWarnings) {
                 LOGGER.warn(e, JWTValidationLogMessages.WARN.FAILED_TO_DECODE_JWT.format());
                 securityEventCounter.increment(SecurityEventCounter.EventType.FAILED_TO_DECODE_JWT);

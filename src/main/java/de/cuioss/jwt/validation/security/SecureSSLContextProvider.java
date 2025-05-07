@@ -222,7 +222,7 @@ public class SecureSSLContextProvider {
                 LOGGER.debug(DEBUG.NO_SSL_CONTEXT.format(minimumTlsVersion));
                 return secureContext;
             }
-        } catch (Exception e) {
+        } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
             // If we can't create a secure context, use the provided context or try to get the default
             try {
                 return sslContext != null ? sslContext : SSLContext.getDefault();

@@ -79,9 +79,9 @@ public class HttpJwksLoader implements JwksLoader, AutoCloseable {
     public HttpJwksLoader(@NonNull HttpJwksLoaderConfig config, @NonNull SecurityEventCounter securityEventCounter) {
         this.config = config;
         this.httpClient = JwksHttpClient.create(config);
-        this.cacheManager = new JwksCacheManager(config, this::loadJwksKeyLoader);
-        this.backgroundRefreshManager = new BackgroundRefreshManager(config, cacheManager);
         this.securityEventCounter = securityEventCounter;
+        this.cacheManager = new JwksCacheManager(config, this::loadJwksKeyLoader, securityEventCounter);
+        this.backgroundRefreshManager = new BackgroundRefreshManager(config, cacheManager);
 
         // Initial JWKS content fetch to populate cache
         cacheManager.resolve();
@@ -128,11 +128,14 @@ public class HttpJwksLoader implements JwksLoader, AutoCloseable {
                     result.keyLoader().keySet().size()));
 
             return result.keyLoader();
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             LOGGER.warn(e, WARN.JWKS_FETCH_FAILED.format(e.getMessage()));
             securityEventCounter.increment(SecurityEventCounter.EventType.JWKS_FETCH_FAILED);
             // Return the last valid result if available, or an empty JWKS
-            return cacheManager.getLastValidResult().orElse(new JWKSKeyLoader("{}"));
+            return cacheManager.getLastValidResult().orElse(JWKSKeyLoader.builder()
+                    .originalString("{}")
+                    .securityEventCounter(securityEventCounter)
+                    .build());
         }
     }
 
@@ -159,7 +162,7 @@ public class HttpJwksLoader implements JwksLoader, AutoCloseable {
                 cacheManager.refresh();
                 keyLoader = cacheManager.resolve();
                 keyInfo = keyLoader.getKeyInfo(kid);
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
                 // Handle connection errors gracefully
                 LOGGER.warn(e, WARN.JWKS_FETCH_FAILED.format(e.getMessage()));
                 securityEventCounter.increment(SecurityEventCounter.EventType.JWKS_FETCH_FAILED);

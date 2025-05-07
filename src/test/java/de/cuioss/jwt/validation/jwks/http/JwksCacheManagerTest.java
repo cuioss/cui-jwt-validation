@@ -16,6 +16,7 @@
 package de.cuioss.jwt.validation.jwks.http;
 
 import de.cuioss.jwt.validation.jwks.key.JWKSKeyLoader;
+import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import de.cuioss.tools.concurrent.ConcurrentTools;
@@ -42,6 +43,7 @@ class JwksCacheManagerTest {
     private HttpJwksLoaderConfig config;
     private JwksCacheManager cacheManager;
     private AtomicInteger loaderCallCount;
+    private SecurityEventCounter securityEventCounter;
 
     @BeforeEach
     void setUp() {
@@ -51,13 +53,18 @@ class JwksCacheManagerTest {
                 .build();
 
         loaderCallCount = new AtomicInteger(0);
+        securityEventCounter = new SecurityEventCounter();
 
         Function<String, JWKSKeyLoader> cacheLoader = key -> {
             loaderCallCount.incrementAndGet();
-            return new JWKSKeyLoader(JWKS_CONTENT, ETAG);
+            return JWKSKeyLoader.builder()
+                    .originalString(JWKS_CONTENT)
+                    .etag(ETAG)
+                    .securityEventCounter(securityEventCounter)
+                    .build();
         };
 
-        cacheManager = new JwksCacheManager(config, cacheLoader);
+        cacheManager = new JwksCacheManager(config, cacheLoader, securityEventCounter);
     }
 
     @Test
@@ -150,7 +157,7 @@ class JwksCacheManagerTest {
             throw new RuntimeException("Test exception");
         };
 
-        JwksCacheManager failingCacheManager = new JwksCacheManager(config, failingLoader);
+        JwksCacheManager failingCacheManager = new JwksCacheManager(config, failingLoader, securityEventCounter);
 
         // Set the last valid result
         failingCacheManager.updateCache(JWKS_CONTENT, ETAG);
@@ -172,7 +179,7 @@ class JwksCacheManagerTest {
             throw new RuntimeException("Test exception");
         };
 
-        JwksCacheManager failingCacheManager = new JwksCacheManager(config, failingLoader);
+        JwksCacheManager failingCacheManager = new JwksCacheManager(config, failingLoader, securityEventCounter);
 
         // When
         JWKSKeyLoader result = failingCacheManager.resolve();

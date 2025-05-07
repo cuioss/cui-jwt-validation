@@ -21,6 +21,7 @@ import com.github.benmanes.caffeine.cache.LoadingCache;
 import de.cuioss.jwt.validation.JWTValidationLogMessages.DEBUG;
 import de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
 import de.cuioss.jwt.validation.jwks.key.JWKSKeyLoader;
+import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.NonNull;
 
@@ -56,6 +57,9 @@ class JwksCacheManager {
     @NonNull
     private final HttpJwksLoaderConfig config;
 
+    @NonNull
+    private final SecurityEventCounter securityEventCounter;
+
     private final LoadingCache<String, JWKSKeyLoader> jwksCache;
     private JWKSKeyLoader lastValidResult;
     private final AtomicInteger accessCount;
@@ -67,10 +71,13 @@ class JwksCacheManager {
      *
      * @param config      the configuration
      * @param cacheLoader function to load a JWKSKeyLoader when cache misses
+     * @param securityEventCounter the counter for security events
      */
     JwksCacheManager(@NonNull HttpJwksLoaderConfig config,
-            @NonNull Function<String, JWKSKeyLoader> cacheLoader) {
+                     @NonNull Function<String, JWKSKeyLoader> cacheLoader,
+                     @NonNull SecurityEventCounter securityEventCounter) {
         this.config = config;
+        this.securityEventCounter = securityEventCounter;
         this.lastValidResult = null;
         this.accessCount = new AtomicInteger(0);
         this.hitCount = new AtomicInteger(0);
@@ -177,12 +184,15 @@ class JwksCacheManager {
             }
 
             return result;
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             LOGGER.warn(e, WARN.FALLBACK_TO_LAST_VALID_JWKS_EXCEPTION.format(e.getMessage()));
             if (lastValidResult != null && lastValidResult.isNotEmpty()) {
                 return lastValidResult;
             }
-            return new JWKSKeyLoader(EMPTY_JWKS);
+            return JWKSKeyLoader.builder()
+                    .originalString(EMPTY_JWKS)
+                    .securityEventCounter(securityEventCounter)
+                    .build();
         }
     }
 
@@ -204,7 +214,11 @@ class JwksCacheManager {
         }
 
         // Create new JWKSKeyLoader with the content and etag
-        JWKSKeyLoader newLoader = new JWKSKeyLoader(jwksContent, etag);
+        JWKSKeyLoader newLoader = JWKSKeyLoader.builder()
+                .originalString(jwksContent)
+                .etag(etag)
+                .securityEventCounter(securityEventCounter)
+                .build();
 
         // Only update lastValidResult if the new loader has valid keys
         if (newLoader.isNotEmpty()) {
@@ -237,7 +251,10 @@ class JwksCacheManager {
         if (lastValidResult != null && lastValidResult.isNotEmpty()) {
             return lastValidResult;
         }
-        return new JWKSKeyLoader(EMPTY_JWKS);
+        return JWKSKeyLoader.builder()
+                .originalString(EMPTY_JWKS)
+                .securityEventCounter(securityEventCounter)
+                .build();
     }
 
     /**

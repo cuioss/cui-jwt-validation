@@ -284,7 +284,7 @@ class TokenClaimValidatorEdgeCaseTest {
      */
     private static class FailingJwksKeyLoader extends JWKSKeyLoader {
         public FailingJwksKeyLoader() {
-            super("{}"); // Empty JWKS
+            super("{}", null, null, new SecurityEventCounter()); // Empty JWKS
         }
 
         @Override

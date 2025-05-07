@@ -16,6 +16,7 @@
 package de.cuioss.jwt.validation.jwks.http;
 
 import de.cuioss.jwt.validation.jwks.key.JWKSKeyLoader;
+import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import org.junit.jupiter.api.DisplayName;
@@ -163,12 +164,16 @@ class BackgroundRefreshManagerTest {
     // Helper method to create a cache manager for testing
     private JwksCacheManager createCacheManager(HttpJwksLoaderConfig config) {
         AtomicInteger loaderCallCount = new AtomicInteger(0);
+        SecurityEventCounter securityEventCounter = new SecurityEventCounter();
 
         Function<String, JWKSKeyLoader> cacheLoader = key -> {
             loaderCallCount.incrementAndGet();
-            return new JWKSKeyLoader(JWKS_CONTENT);
+            return JWKSKeyLoader.builder()
+                    .originalString(JWKS_CONTENT)
+                    .securityEventCounter(securityEventCounter)
+                    .build();
         };
 
-        return new JwksCacheManager(config, cacheLoader);
+        return new JwksCacheManager(config, cacheLoader, securityEventCounter);
     }
 }

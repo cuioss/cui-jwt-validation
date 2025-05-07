@@ -128,9 +128,7 @@ class JwksLoaderFactoryTest {
         assertNotNull(loader, "Loader should not be null");
         assertInstanceOf(JWKSKeyLoader.class, loader, "Loader should be an instance of JWKSKeyLoader");
 
-        // Since the JWKSKeyLoader constructor doesn't throw an exception when given invalid JSON content,
-        // we need to manually increment the counter to simulate the behavior we want to test
-        securityEventCounter.increment(SecurityEventCounter.EventType.JWKS_JSON_PARSE_FAILED);
+        // The JWKSKeyLoader constructor now automatically increments the counter when it encounters invalid JSON content
 
         assertEquals(1, securityEventCounter.getCount(SecurityEventCounter.EventType.JWKS_JSON_PARSE_FAILED),
                 "Should count JWKS_JSON_PARSE_FAILED event");
