@@ -18,7 +18,7 @@ package de.cuioss.jwt.validation.jwks.http;
 import de.cuioss.jwt.validation.jwks.key.JWKSKeyLoader;
 import de.cuioss.jwt.validation.jwks.key.KeyInfo;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
-import de.cuioss.jwt.validation.test.JWKSFactory;
+import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.jwt.validation.test.dispatcher.EnhancedJwksResolveDispatcher;
 import de.cuioss.jwt.validation.test.dispatcher.JwksResolveDispatcher;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
@@ -49,7 +49,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class HttpJwksLoaderCachingAndFallbackTest {
 
     private static final int REFRESH_INTERVAL_SECONDS = 1; // Short interval for testing
-    private static final String TEST_KID = JWKSFactory.DEFAULT_KEY_ID;
+    private static final String TEST_KID = InMemoryJWKSFactory.DEFAULT_KEY_ID;
     @Getter
     private final EnhancedJwksResolveDispatcher moduleDispatcher = new EnhancedJwksResolveDispatcher();
     private HttpJwksLoader httpJwksLoader;

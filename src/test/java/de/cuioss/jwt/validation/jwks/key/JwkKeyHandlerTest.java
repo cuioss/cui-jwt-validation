@@ -15,7 +15,7 @@
  */
 package de.cuioss.jwt.validation.jwks.key;
 
-import de.cuioss.jwt.validation.test.JWKSFactory;
+import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
@@ -42,9 +42,18 @@ class JwkKeyHandlerTest {
         }
     }
 
+    // Helper method to extract a single JWK from a JWKS
+    private String extractSingleJwk(String jwksString) {
+        try (JsonReader reader = Json.createReader(new StringReader(jwksString))) {
+            JsonObject jwks = reader.readObject();
+            return jwks.getJsonArray("keys").getJsonObject(0).toString();
+        }
+    }
+
     // Helper method to create a single RSA JWK
     private JsonObject createRsaJwk() {
-        String jwkString = JWKSFactory.createSingleJwk(JWKSFactory.DEFAULT_KEY_ID);
+        String jwksString = InMemoryJWKSFactory.createDefaultJwks();
+        String jwkString = extractSingleJwk(jwksString);
         return createJsonObject(jwkString);
     }
 

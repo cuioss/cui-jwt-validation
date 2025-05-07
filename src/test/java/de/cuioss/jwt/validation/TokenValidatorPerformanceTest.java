@@ -15,7 +15,7 @@
  */
 package de.cuioss.jwt.validation;
 
-import de.cuioss.jwt.validation.test.JWKSFactory;
+import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.jwt.validation.test.TestTokenProducer;
 import de.cuioss.jwt.validation.test.generator.AccessTokenGenerator;
 import de.cuioss.jwt.validation.test.generator.IDTokenGenerator;
@@ -69,7 +69,7 @@ class TokenValidatorPerformanceTest {
     @BeforeEach
     void setUp() {
         // Create a JWKSKeyLoader with the default JWKS content
-        String jwksContent = JWKSFactory.createDefaultJwks();
+        String jwksContent = InMemoryJWKSFactory.createDefaultJwks();
 
         // Create issuer config
         IssuerConfig issuerConfig = IssuerConfig.builder()

@@ -43,7 +43,7 @@ public class TestTokenProducer {
     public static final String SUBJECT = Generators.letterStrings(10, 12).next();
 
     // Constants for file paths
-    public static final String BASE_PATH = KeyMaterialHandler.BASE_PATH;
+    public static final String BASE_PATH = "src/test/resources/token/";
 
     // Constants for token claims files
     public static final String SOME_SCOPES = BASE_PATH + "some-scopes.json";
@@ -53,7 +53,7 @@ public class TestTokenProducer {
 
 
     /**
-     * Loads JSON claims from64EncodedContent a file.
+     * Loads JSON claims from a file.
      *
      * @param path the path to the JSON file
      * @return the JSON object
@@ -67,7 +67,7 @@ public class TestTokenProducer {
     }
 
     /**
-     * Adds claims from64EncodedContent a JSON file to a JWT builder.
+     * Adds claims from a JSON file to a JWT builder.
      *
      * @param builder    the JWT builder
      * @param claimsPath the path to the JSON claims file
@@ -103,11 +103,11 @@ public class TestTokenProducer {
         try {
             JwtBuilder builder = Jwts.builder().issuer(ISSUER)
                     .subject(SUBJECT)
-                    .issuedAt(Date.from(Instant.now())).expiration(Date.from(Instant.now().plusSeconds(3600))) // Set expiration to 1 hour from64EncodedContent now
+                    .issuedAt(Date.from(Instant.now())).expiration(Date.from(Instant.now().plusSeconds(3600))) // Set expiration to 1 hour from now
                     .header().add("kid", "default-key-id").and() // Add key ID to header
-                    .signWith(KeyMaterialHandler.getDefaultPrivateKey());
+                    .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey());
 
-            // Add claims from64EncodedContent file if provided
+            // Add claims from file if provided
             if (claimsPath != null) {
                 addClaims(builder, claimsPath);
             }
@@ -123,16 +123,16 @@ public class TestTokenProducer {
                 .subject(SUBJECT)
                 .issuedAt(Date.from(Instant.now())).expiration(Date.from(Instant.now().plusSeconds(3600))) // 1 hour expiration
                 .header().add("kid", "default-key-id").and() // Add key ID to header
-                .signWith(KeyMaterialHandler.getDefaultPrivateKey())
+                .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
                 .compact();
     }
 
     public static String validSignedJWTWithClaims(String claimsPath, String subject) {
         try {
             JwtBuilder builder = Jwts.builder().issuer(ISSUER).subject(subject)
-                    .signWith(KeyMaterialHandler.getDefaultPrivateKey());
+                    .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey());
 
-            // Add claims from64EncodedContent file if provided
+            // Add claims from file if provided
             if (claimsPath != null) {
                 addClaims(builder, claimsPath);
             }
@@ -148,9 +148,9 @@ public class TestTokenProducer {
             JwtBuilder builder = Jwts.builder().issuer(ISSUER)
                     .subject(SUBJECT)
                     .issuedAt(Date.from(OffsetDateTime.ofInstant(expireAt, ZoneId.systemDefault()).minusMinutes(5).toInstant())).expiration(Date.from(expireAt))
-                    .signWith(KeyMaterialHandler.getDefaultPrivateKey());
+                    .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey());
 
-            // Add claims from64EncodedContent file
+            // Add claims from file
             addClaims(builder, SOME_SCOPES);
 
             return builder.compact();
@@ -167,7 +167,7 @@ public class TestTokenProducer {
      */
     public static String validSignedJWTWithNotBefore(Instant notBefore) {
         try {
-            // Always set the expiration time to 1 hour in the future from64EncodedContent now,
+            // Always set the expiration time to 1 hour in the future from now,
             // regardless of the notBefore time, to ensure the validation is not expired
             Instant expirationTime = Instant.now().plusSeconds(3600);
 
@@ -177,9 +177,9 @@ public class TestTokenProducer {
                     .issuedAt(Date.from(Instant.now().minusSeconds(300))).expiration(Date.from(expirationTime))
                     .claim("nbf", notBefore.getEpochSecond())
                     .header().add("kid", "default-key-id").and() // Add key ID to header
-                    .signWith(KeyMaterialHandler.getDefaultPrivateKey());
+                    .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey());
 
-            // Add claims from64EncodedContent file
+            // Add claims from file
             addClaims(builder, SOME_SCOPES);
 
             return builder.compact();
@@ -195,7 +195,7 @@ public class TestTokenProducer {
 
         // Parse the validation using JJWT
         Jws<Claims> parsedToken = Jwts.parser()
-                .verifyWith(KeyMaterialHandler.getDefaultPublicKey())
+                .verifyWith(InMemoryKeyMaterialHandler.getDefaultPublicKey())
                 .build()
                 .parseSignedClaims(token);
 

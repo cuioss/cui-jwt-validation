@@ -16,7 +16,7 @@
 package de.cuioss.jwt.validation.jwks.http;
 
 import de.cuioss.jwt.validation.jwks.key.JWKSKeyLoader;
-import de.cuioss.jwt.validation.test.JWKSFactory;
+import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Tests BackgroundRefreshManager")
 class BackgroundRefreshManagerTest {
 
-    private static final String JWKS_CONTENT = JWKSFactory.createDefaultJwks();
+    private static final String JWKS_CONTENT = InMemoryJWKSFactory.createDefaultJwks();
     private static final String JWKS_URI = "https://example.com/.well-known/jwks.json";
 
     @Test
@@ -134,7 +134,7 @@ class BackgroundRefreshManagerTest {
         // When
         manager.close();
         manager.close(); // Close again
-        
+
         // Then
         // No exception should be thrown
         assertTrue(true, "Multiple close calls should complete without exceptions");

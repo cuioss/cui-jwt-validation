@@ -17,7 +17,7 @@ package de.cuioss.jwt.validation.jwks.http;
 
 import de.cuioss.jwt.validation.jwks.key.KeyInfo;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
-import de.cuioss.jwt.validation.test.JWKSFactory;
+import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.jwt.validation.test.dispatcher.EnhancedJwksResolveDispatcher;
 import de.cuioss.jwt.validation.test.dispatcher.JwksResolveDispatcher;
 import de.cuioss.jwt.validation.test.util.PerformanceStatistics;
@@ -55,7 +55,7 @@ class HttpJwksLoaderPerformanceTest {
 
     private static final CuiLogger LOGGER = new CuiLogger(HttpJwksLoaderPerformanceTest.class);
     private static final int REFRESH_INTERVAL_SECONDS = 1; // Short interval for testing
-    private static final String TEST_KID = JWKSFactory.DEFAULT_KEY_ID;
+    private static final String TEST_KID = InMemoryJWKSFactory.DEFAULT_KEY_ID;
     private static final String NON_EXISTENT_KID = "non-existent-kid";
 
     // Performance test configuration

@@ -18,7 +18,7 @@ package de.cuioss.jwt.validation.jwks.http;
 import de.cuioss.jwt.validation.JWTValidationLogMessages;
 import de.cuioss.jwt.validation.jwks.key.KeyInfo;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
-import de.cuioss.jwt.validation.test.JWKSFactory;
+import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.jwt.validation.test.dispatcher.JwksResolveDispatcher;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @EnableMockWebServer
 class HttpJwksLoaderTest {
 
-    private static final String TEST_KID = JWKSFactory.DEFAULT_KEY_ID;
+    private static final String TEST_KID = InMemoryJWKSFactory.DEFAULT_KEY_ID;
     private static final int REFRESH_INTERVAL = 60;
 
     @Getter

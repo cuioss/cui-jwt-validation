@@ -20,8 +20,8 @@ import de.cuioss.jwt.validation.domain.claim.ClaimValueType;
 import de.cuioss.jwt.validation.domain.claim.mapper.ClaimMapper;
 import de.cuioss.jwt.validation.domain.claim.mapper.JsonCollectionMapper;
 import de.cuioss.jwt.validation.domain.token.AccessTokenContent;
-import de.cuioss.jwt.validation.test.JWKSFactory;
-import de.cuioss.jwt.validation.test.KeyMaterialHandler;
+import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
+import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,7 +53,7 @@ class CustomClaimMapperTest {
     @BeforeEach
     void setUp() {
         // Create a JWKSKeyLoader with the default JWKS content
-        jwksContent = JWKSFactory.createDefaultJwks();
+        jwksContent = InMemoryJWKSFactory.createDefaultJwks();
 
         // Create a custom claim mapper for the "role" claim
         ClaimMapper roleMapper = new JsonCollectionMapper();
@@ -82,7 +82,7 @@ class CustomClaimMapperTest {
                 .expiration(Date.from(Instant.now().plusSeconds(3600))) // 1 hour expiration
                 .claim("scope", "openid profile email") // Add scope claim
                 .header().add("kid", "default-key-id").and() // Add key ID to header
-                .signWith(KeyMaterialHandler.getDefaultPrivateKey())
+                .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
                 .compact();
     }
 

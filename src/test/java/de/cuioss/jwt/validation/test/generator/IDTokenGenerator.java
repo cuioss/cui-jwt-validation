@@ -15,7 +15,7 @@
  */
 package de.cuioss.jwt.validation.test.generator;
 
-import de.cuioss.jwt.validation.test.KeyMaterialHandler;
+import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
 import de.cuioss.jwt.validation.test.TestTokenProducer;
 import de.cuioss.test.generator.Generators;
 import de.cuioss.test.generator.TypedGenerator;
@@ -102,7 +102,7 @@ public class IDTokenGenerator implements TypedGenerator<String> {
             }
 
             // Sign with default private key
-            builder.signWith(KeyMaterialHandler.getDefaultPrivateKey());
+            builder.signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey());
 
             return builder.compact();
         } catch (Exception e) {

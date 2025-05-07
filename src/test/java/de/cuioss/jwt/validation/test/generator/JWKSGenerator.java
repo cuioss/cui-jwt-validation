@@ -15,7 +15,7 @@
  */
 package de.cuioss.jwt.validation.test.generator;
 
-import de.cuioss.jwt.validation.test.JWKSFactory;
+import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.test.generator.TypedGenerator;
 
 /**
@@ -39,9 +39,9 @@ public class JWKSGenerator implements TypedGenerator<String> {
     @Override
     public String next() {
         if (useAlternativeMode) {
-            return JWKSFactory.createValidJwksWithKeyId(JWKSFactory.ALTERNATIVE_KEY_ID);
+            return InMemoryJWKSFactory.createValidJwksWithKeyId("test-key-id");
         } else {
-            return JWKSFactory.createDefaultJwks();
+            return InMemoryJWKSFactory.createDefaultJwks();
         }
     }
 }

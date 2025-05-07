@@ -18,9 +18,9 @@ package de.cuioss.jwt.validation;
 import de.cuioss.jwt.validation.domain.token.AccessTokenContent;
 import de.cuioss.jwt.validation.pipeline.TokenSignatureValidator;
 import de.cuioss.jwt.validation.security.AlgorithmPreferences;
-import de.cuioss.jwt.validation.test.JWKSFactory;
+import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
+import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
 import de.cuioss.jwt.validation.test.JwtTokenTamperingUtil;
-import de.cuioss.jwt.validation.test.KeyMaterialHandler;
 import de.cuioss.jwt.validation.test.TestTokenProducer;
 import de.cuioss.jwt.validation.test.generator.AccessTokenGenerator;
 import de.cuioss.jwt.validation.test.generator.IDTokenGenerator;
@@ -63,7 +63,7 @@ class OAuth2JWTBestPracticesComplianceTest {
     @BeforeEach
     void setUp() {
         // Get the default JWKS content
-        String jwksContent = JWKSFactory.createDefaultJwks();
+        String jwksContent = InMemoryJWKSFactory.createDefaultJwks();
 
         // Create issuer config
         IssuerConfig issuerConfig = IssuerConfig.builder()
@@ -113,7 +113,7 @@ class OAuth2JWTBestPracticesComplianceTest {
                     .claim("azp", CLIENT_ID)
                     .claim("aud", wrongAudience)
                     .header().add("kid", "default-key-id").and()
-                    .signWith(KeyMaterialHandler.getDefaultPrivateKey())
+                    .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
                     .compact();
 
             // When
@@ -156,7 +156,7 @@ class OAuth2JWTBestPracticesComplianceTest {
                     .claim("azp", CLIENT_ID)
                     .claim("aud", AUDIENCE)
                     .header().add("kid", "default-key-id").and()
-                    .signWith(KeyMaterialHandler.getDefaultPrivateKey())
+                    .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
                     .compact();
 
             // When
@@ -273,7 +273,7 @@ class OAuth2JWTBestPracticesComplianceTest {
                     .issuer(ISSUER)
                     .expectedAudience(AUDIENCE)
                     .expectedClientId(CLIENT_ID)
-                    .jwksContent(JWKSFactory.createDefaultJwks())
+                    .jwksContent(InMemoryJWKSFactory.createDefaultJwks())
                     .algorithmPreferences(new AlgorithmPreferences())
                     .build());
 

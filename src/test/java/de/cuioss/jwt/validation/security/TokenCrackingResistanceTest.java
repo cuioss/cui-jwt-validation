@@ -20,7 +20,7 @@ import de.cuioss.jwt.validation.ParserConfig;
 import de.cuioss.jwt.validation.TokenValidator;
 import de.cuioss.jwt.validation.jwks.JwksLoader;
 import de.cuioss.jwt.validation.jwks.key.KeyInfo;
-import de.cuioss.jwt.validation.test.JWKSFactory;
+import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.jwt.validation.test.generator.AccessTokenGenerator;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import de.cuioss.tools.logging.CuiLogger;
@@ -91,7 +91,7 @@ class TokenCrackingResistanceTest {
         issuerConfig = IssuerConfig.builder()
                 .issuer("https://test-issuer.com")
                 .expectedAudience("test-client")
-                .jwksContent(JWKSFactory.createDefaultJwks())
+                .jwksContent(InMemoryJWKSFactory.createDefaultJwks())
                 .build();
 
         // Create validation factory
