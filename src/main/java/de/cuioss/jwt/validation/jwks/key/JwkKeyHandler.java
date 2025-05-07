@@ -15,26 +15,19 @@
  */
 package de.cuioss.jwt.validation.jwks.key;
 
-import java.math.BigInteger;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
-import java.security.spec.ECFieldFp;
-import java.security.spec.ECParameterSpec;
-import java.security.spec.ECPoint;
-import java.security.spec.ECPublicKeySpec;
-import java.security.spec.EllipticCurve;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.RSAPublicKeySpec;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
-import org.bouncycastle.jce.ECNamedCurveTable;
-
 import de.cuioss.jwt.validation.security.BouncyCastleProviderSingleton;
 import jakarta.json.JsonObject;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.bouncycastle.jce.ECNamedCurveTable;
+
+import java.math.BigInteger;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.spec.*;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Utility class for handling JWK (JSON Web Key) operations.

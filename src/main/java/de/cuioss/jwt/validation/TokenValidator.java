@@ -15,11 +15,6 @@
  */
 package de.cuioss.jwt.validation;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-
 import de.cuioss.jwt.validation.domain.claim.ClaimValue;
 import de.cuioss.jwt.validation.domain.token.AccessTokenContent;
 import de.cuioss.jwt.validation.domain.token.IdTokenContent;
@@ -37,6 +32,11 @@ import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
 import lombok.Getter;
 import lombok.NonNull;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Main entry point for creating and validating JWT tokens.

@@ -15,16 +15,15 @@
  */
 package de.cuioss.jwt.validation.jwks.http;
 
-import java.net.URI;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-
-import javax.net.ssl.SSLContext;
-
 import de.cuioss.jwt.validation.security.SecureSSLContextProvider;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.Builder;
 import lombok.NonNull;
+
+import javax.net.ssl.SSLContext;
+import java.net.URI;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Configuration parameters for {@link HttpJwksLoader}.

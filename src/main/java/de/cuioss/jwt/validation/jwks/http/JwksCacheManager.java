@@ -15,20 +15,19 @@
  */
 package de.cuioss.jwt.validation.jwks.http;
 
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
-
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Expiry;
 import com.github.benmanes.caffeine.cache.LoadingCache;
-
 import de.cuioss.jwt.validation.JWTValidationLogMessages.DEBUG;
 import de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
 import de.cuioss.jwt.validation.jwks.key.JWKSKeyLoader;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.NonNull;
+
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 /**
  * Manages caching of JWKS content.
@@ -215,7 +214,7 @@ class JwksCacheManager {
             setCurrentEtag(etag);
             return new KeyRotationResult(newLoader, keyRotationDetected);
         } else if (lastValidResult != null && lastValidResult.isNotEmpty()) {
-            // If new loader is empty but we have a valid previous result, log warning and return previous
+            // If new loader is empty, but we have a valid previous result, log warning and return previous
             LOGGER.warn(WARN.FALLBACK_TO_LAST_VALID_JWKS_EMPTY::format);
             return new KeyRotationResult(lastValidResult, false);
         }

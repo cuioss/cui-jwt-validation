@@ -15,22 +15,18 @@
  */
 package de.cuioss.jwt.validation;
 
+import de.cuioss.jwt.validation.domain.claim.ClaimName;
+import de.cuioss.tools.logging.CuiLogger;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import de.cuioss.jwt.validation.domain.claim.ClaimName;
-import static de.cuioss.jwt.validation.domain.claim.ClaimName.AUDIENCE;
-import static de.cuioss.jwt.validation.domain.claim.ClaimName.EXPIRATION;
-import static de.cuioss.jwt.validation.domain.claim.ClaimName.ISSUED_AT;
-import static de.cuioss.jwt.validation.domain.claim.ClaimName.ISSUER;
-import static de.cuioss.jwt.validation.domain.claim.ClaimName.SCOPE;
-import static de.cuioss.jwt.validation.domain.claim.ClaimName.SUBJECT;
-import de.cuioss.tools.logging.CuiLogger;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import static de.cuioss.jwt.validation.domain.claim.ClaimName.*;
 
 /**
  * Defines the supported token types within the authentication system.

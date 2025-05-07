@@ -15,11 +15,11 @@
  */
 package de.cuioss.jwt.validation.jwks.key;
 
-import java.security.PublicKey;
-
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
+
+import java.security.PublicKey;
 
 /**
  * Class that holds information about a key, including the key itself and its algorithm.

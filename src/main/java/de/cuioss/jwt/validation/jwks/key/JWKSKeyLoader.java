@@ -15,14 +15,6 @@
  */
 package de.cuioss.jwt.validation.jwks.key;
 
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
 import de.cuioss.jwt.validation.jwks.JwksLoader;
 import de.cuioss.jwt.validation.jwks.http.HttpJwksLoader;
@@ -35,6 +27,10 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.ToString;
+
+import java.io.StringReader;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Implementation of {@link JwksLoader} that loads JWKS from a string content.
@@ -166,30 +162,64 @@ public class JWKSKeyLoader implements JwksLoader {
 
         String kty = keyType.get();
         String kid = JwkKeyConstants.KeyId.from(jwk).orElse("default-key-id");
-        try {
-            if (RSA_KEY_TYPE.equals(kty)) {
-                var publicKey = JwkKeyHandler.parseRsaKey(jwk);
-                // Determine algorithm if not specified
-                String alg = JwkKeyConstants.Algorithm.from(jwk).orElse("RS256");// Default to RS256 if not specified
-                result.put(kid, new KeyInfo(publicKey, alg, kid));
-                LOGGER.debug("Parsed RSA key with ID: %s and algorithm: %s", kid, alg);
-            } else if (EC_KEY_TYPE.equals(kty)) {
-                var publicKey = JwkKeyHandler.parseEcKey(jwk);
-                // Determine algorithm if not specified
-                var algOption = JwkKeyConstants.Algorithm.from(jwk);
-                String alg = algOption.orElse(null);
-                if (algOption.isEmpty()) {
-                    // Determine algorithm based on curve
-                    String curve = JwkKeyConstants.Curve.from(jwk).orElse("P-256");
-                    alg = JwkKeyHandler.determineEcAlgorithm(curve);
-                }
-                result.put(kid, new KeyInfo(publicKey, alg, kid));
-                LOGGER.debug("Parsed EC key with ID: %s and algorithm: %s", kid, alg);
-            } else {
+
+        KeyInfo keyInfo = switch (kty) {
+            case RSA_KEY_TYPE -> processRsaKey(jwk, kid);
+            case EC_KEY_TYPE -> processEcKey(jwk, kid);
+            default -> {
                 LOGGER.debug("Unsupported key type: %s for key ID: %s", kty, kid);
+                yield null;
             }
+        };
+
+        if (keyInfo != null) {
+            result.put(kid, keyInfo);
+        }
+    }
+
+    /**
+     * Process an RSA key and create a KeyInfo object.
+     *
+     * @param jwk the JWK object
+     * @param kid the key ID
+     * @return the KeyInfo object or null if processing failed
+     */
+    private KeyInfo processRsaKey(JsonObject jwk, String kid) {
+        try {
+            var publicKey = JwkKeyHandler.parseRsaKey(jwk);
+            // Determine algorithm if not specified
+            String alg = JwkKeyConstants.Algorithm.from(jwk).orElse("RS256");// Default to RS256 if not specified
+            LOGGER.debug("Parsed RSA key with ID: %s and algorithm: %s", kid, alg);
+            return new KeyInfo(publicKey, alg, kid);
         } catch (Exception e) {
             LOGGER.warn(e, WARN.RSA_KEY_PARSE_FAILED.format(kid, e.getMessage()));
+            return null;
+        }
+    }
+
+    /**
+     * Process an EC key and create a KeyInfo object.
+     *
+     * @param jwk the JWK object
+     * @param kid the key ID
+     * @return the KeyInfo object or null if processing failed
+     */
+    private KeyInfo processEcKey(JsonObject jwk, String kid) {
+        try {
+            var publicKey = JwkKeyHandler.parseEcKey(jwk);
+            // Determine algorithm if not specified
+            var algOption = JwkKeyConstants.Algorithm.from(jwk);
+            String alg = algOption.orElse(null);
+            if (algOption.isEmpty()) {
+                // Determine algorithm based on curve
+                String curve = JwkKeyConstants.Curve.from(jwk).orElse("P-256");
+                alg = JwkKeyHandler.determineEcAlgorithm(curve);
+            }
+            LOGGER.debug("Parsed EC key with ID: %s and algorithm: %s", kid, alg);
+            return new KeyInfo(publicKey, alg, kid);
+        } catch (Exception e) {
+            LOGGER.warn(e, WARN.RSA_KEY_PARSE_FAILED.format(kid, e.getMessage()));
+            return null;
         }
     }
 

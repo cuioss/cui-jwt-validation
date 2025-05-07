@@ -15,11 +15,11 @@
  */
 package de.cuioss.jwt.validation.jwks;
 
+import de.cuioss.jwt.validation.jwks.key.KeyInfo;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-
-import de.cuioss.jwt.validation.jwks.key.KeyInfo;
 
 /**
  * Interface for loading JSON Web Keys (JWK) from a JWKS source.

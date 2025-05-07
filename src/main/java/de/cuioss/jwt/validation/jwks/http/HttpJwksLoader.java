@@ -15,10 +15,6 @@
  */
 package de.cuioss.jwt.validation.jwks.http;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
 import de.cuioss.jwt.validation.JWTValidationLogMessages;
 import de.cuioss.jwt.validation.JWTValidationLogMessages.DEBUG;
 import de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
@@ -32,6 +28,10 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.ToString;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Implementation of {@link JwksLoader} that loads JWKS from an HTTP endpoint.

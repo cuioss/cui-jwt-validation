@@ -15,13 +15,13 @@
  */
 package de.cuioss.jwt.validation.jwks.http;
 
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import de.cuioss.jwt.validation.JWTValidationLogMessages.DEBUG;
 import de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.NonNull;
+
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Manages background refresh of JWKS content.

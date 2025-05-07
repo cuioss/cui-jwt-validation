@@ -42,11 +42,9 @@ import java.util.Map;
  * </ul>
  * <p>
  * This class maintains the raw token string and any claims that might be present in the
- * JWT structure, but does not enforce specific validation rules as refresh tokens
+ * JWT structure.
+ * However, it does not enforce specific validation rules as refresh tokens
  * are meant to be used only with the token endpoint, not validated by client applications.
- * <p>
- * Note that this class should only be used when the refresh token is in JWT format,
- * which can be determined by attempting to parse it as a JWT.
  * <p>
  * This implementation follows guidance from:
  * <ul>

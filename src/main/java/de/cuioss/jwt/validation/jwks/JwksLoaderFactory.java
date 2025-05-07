@@ -15,10 +15,6 @@
  */
 package de.cuioss.jwt.validation.jwks;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
 import de.cuioss.jwt.validation.JWTValidationLogMessages;
 import de.cuioss.jwt.validation.jwks.http.HttpJwksLoader;
 import de.cuioss.jwt.validation.jwks.http.HttpJwksLoaderConfig;
@@ -27,6 +23,10 @@ import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * Factory for creating instances of {@link JwksLoader}.

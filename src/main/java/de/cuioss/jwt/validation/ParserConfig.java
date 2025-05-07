@@ -15,14 +15,14 @@
  */
 package de.cuioss.jwt.validation;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import jakarta.json.Json;
 import jakarta.json.JsonReaderFactory;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Value;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Configuration class for the TokenValidator.
