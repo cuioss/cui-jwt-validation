@@ -156,15 +156,15 @@ To add a new diagram:
    b. Run the Maven build with the `build-plantuml` profile
 4. Reference the generated PNG in your documentation
 
-=== Automatisierte Überprüfung der Reproduzierbarkeit
+=== Automated Reproducibility Verification
 
-Die Reproduzierbarkeit des Builds wird automatisiert in der GitHub Actions Pipeline überprüft. Der Workflow "reproducible-build" führt dazu zwei Builds mit identischer Konfiguration durch und vergleicht die erzeugten Artefakte mit diffoscope. Nur wenn keine Unterschiede festgestellt werden, gilt der Build als reproduzierbar. Das Ergebnis wird durch eine Badge im README angezeigt.
+The reproducibility of the build is automatically verified in the GitHub Actions pipeline. The "reproducible-build" workflow performs two builds with identical configuration and compares the generated artifacts using diffoscope. The build is considered reproducible only if no differences are detected. The result is displayed as a badge in the README.
 
-Ablauf im Workflow:
+Workflow procedure:
 
-. Erster Build und Speichern des JAR-Artefakts
-. Zweiter Build mit identischer Konfiguration
-. Vergleich der beiden Artefakte mit diffoscope
-. Bei Unterschieden schlägt der Workflow fehl
+1. First build and storing the JAR artifact
+2. Second build with identical configuration
+3. Comparison of the two artifacts with diffoscope
+4. If differences are detected, the workflow fails
 
-Die diffoscope-Ausgabe kann zur Analyse im Fehlerfall genutzt werden. Weitere Informationen finden sich im Workflow unter `.github/workflows/maven.yml` (Job: `reproducible-build`).
+The diffoscope output can be used for analysis in case of failure. More information can be found in the workflow under `.github/workflows/maven.yml` (Job: `reproducible-build`).

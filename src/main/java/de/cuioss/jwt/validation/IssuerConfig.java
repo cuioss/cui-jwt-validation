@@ -61,6 +61,16 @@ import java.util.Set;
  * // Initialize the security event counter -> This is usually done by TokenValidator
  * issuerConfig.initSecurityEventCounter(new SecurityEventCounter());
  * </pre>
+ * <p>
+ * Implements requirements:
+ * <ul>
+ *   <li><a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/Requirements.adoc#CUI-JWT-3">CUI-JWT-3: Multi-Issuer Support</a></li>
+ *   <li><a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/Requirements.adoc#CUI-JWT-4">CUI-JWT-4: Key Management</a></li>
+ *   <li><a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/Requirements.adoc#CUI-JWT-8.4">CUI-JWT-8.4: Claims Validation</a></li>
+ * </ul>
+ * <p>
+ * For more detailed specifications, see the
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/technical-components.adoc#_issuerconfig_and_multi_issuer_support">Technical Components Specification - IssuerConfig and Multi-Issuer Support</a>
  *
  * @since 1.0
  */

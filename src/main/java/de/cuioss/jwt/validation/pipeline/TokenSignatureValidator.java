@@ -53,7 +53,12 @@ import java.util.Base64;
  * <p>
  * Using Bouncy Castle ensures consistent cryptographic operations across different JVM implementations
  * and provides support for modern cryptographic algorithms that may not be available in all JVM versions.
+ * <p>
+ * For more details on signature validation, see the
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/technical-components.adoc#token-validation-pipeline">Token Validation Pipeline</a>
+ * and <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/security.adoc">Security Specification</a>
  *
+ * @author Oliver Wolff
  * @since 1.0
  */
 public class TokenSignatureValidator {

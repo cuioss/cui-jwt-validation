@@ -33,7 +33,17 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests for {@link JwksLoaderFactory}.
+ * Tests for {@link JwksLoaderFactory} that verify different JWKS loading strategies.
+ * <p>
+ * Verifies requirements:
+ * <ul>
+ *   <li>CUI-JWT-4.1: JWKS Loading from different sources (HTTP, file, in-memory)</li>
+ *   <li>CUI-JWT-4.4: Graceful handling of JWKS loading failures</li>
+ *   <li>CUI-JWT-7.2: Security event tracking for JWKS operations</li>
+ * </ul>
+ *
+ * @author Oliver Wolff
+ * @see <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/technical-components.adoc#jwks-integration">JWKS Integration Specification</a>
  */
 @EnableTestLogger
 @DisplayName("Tests for JwksLoaderFactory")

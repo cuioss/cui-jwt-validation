@@ -115,10 +115,8 @@ import java.util.Optional;
  * assertFalse(invalidResult.isPresent());
  * </pre>
  * <p>
- * Implements requirements: {@code CUI-JWT-8.1: Token Size Limits} and {@code CUI-JWT-8.2: Safe Parsing}
- * <p>
  * For more details on the security aspects, see the
- * <a href="../../../../../../../doc/specification/security.adoc">Security Specification</a>.
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/security.adoc">Security Specification</a>
  *
  * @author Oliver Wolff
  * @since 1.0

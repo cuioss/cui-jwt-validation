@@ -15,6 +15,10 @@
  */
 package de.cuioss.jwt.validation.jwks;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import de.cuioss.jwt.validation.JWTValidationLogMessages;
 import de.cuioss.jwt.validation.jwks.http.HttpJwksLoader;
 import de.cuioss.jwt.validation.jwks.http.HttpJwksLoaderConfig;
@@ -23,10 +27,6 @@ import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 /**
  * Factory for creating instances of {@link JwksLoader}.
@@ -45,7 +45,7 @@ import java.nio.file.Path;
  * 
  * // Configure and create an HTTP-based JWKS loader
  * HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
- *     .jwksUrl("<a href="https://auth.example.com/.well-known/jwks.json">...</a>")
+ *     .jwksUrl("https://auth.example.com/.well-known/jwks.json")
  *     .refreshIntervalSeconds(60)
  *     .build();
  * JwksLoader loader = JwksLoaderFactory.createHttpLoader(config, securityEventCounter);
@@ -54,9 +54,7 @@ import java.nio.file.Path;
  * Optional&lt;KeyInfo&gt; keyInfo = loader.getKeyInfo("kid123");
  * </pre>
  * <p>
- * See specification: {@code doc/specification/technical-components.adoc#_jwksclient}
- * <p>
- * Implements requirement: {@code CUI-JWT-4.1: JWKS Endpoint Support}
+ * See specification: <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/technical-components.adoc#_jwksloader">Technical Components Specification - JwksLoader</a>
  *
  * @author Oliver Wolff
  * @since 1.0

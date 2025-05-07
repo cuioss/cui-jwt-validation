@@ -28,8 +28,24 @@ import java.util.Map;
 
 /**
  * Base implementation of {@link TokenContent}.
- * Provides common functionality for token content implementations.
+ * <p>
+ * This abstract class provides common functionality for token content implementations,
+ * including storage of claims, the raw token string, and token type. It serves as
+ * the foundation for specific token type implementations like:
+ * <ul>
+ *   <li>{@link AccessTokenContent} - For OAuth2/OIDC access tokens</li>
+ *   <li>{@link IdTokenContent} - For OIDC ID tokens</li>
+ *   <li>{@link RefreshTokenContent} - For OAuth2 refresh tokens</li>
+ * </ul>
+ * <p>
+ * The class is immutable and thread-safe, implementing equality and string representation
+ * via Lombok's {@code @EqualsAndHashCode} and {@code @ToString}.
+ * <p>
+ * For more details on token structure, see the
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/technical-components.adoc#token-structure">Token Structure</a>
+ * specification.
  *
+ * @author Oliver Wolff
  * @since 1.0
  */
 @ToString

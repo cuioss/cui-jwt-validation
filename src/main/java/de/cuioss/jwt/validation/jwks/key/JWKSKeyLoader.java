@@ -15,6 +15,15 @@
  */
 package de.cuioss.jwt.validation.jwks.key;
 
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+import de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
 import de.cuioss.jwt.validation.jwks.JwksLoader;
 import de.cuioss.jwt.validation.jwks.http.HttpJwksLoader;
 import de.cuioss.tools.logging.CuiLogger;
@@ -27,12 +36,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.ToString;
 
-import java.io.StringReader;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-
-import static de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
-
 /**
  * Implementation of {@link JwksLoader} that loads JWKS from a string content.
  * <p>
@@ -44,10 +47,8 @@ import static de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
  * The class stores the original JWKS content string and the ETag value from HTTP responses
  * to support content-based caching and HTTP 304 "Not Modified" handling in {@link HttpJwksLoader}.
  * <p>
- * Implements requirement: {@code CUI-JWT-8.5: Cryptographic Agility}
- * <p>
  * For more details on the security aspects, see the
- * <a href="../../../../../../../doc/specification/security.adoc">Security Specification</a>.
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/security.adoc">Security Specification</a>
  *
  * @author Oliver Wolff
  * @since 1.0

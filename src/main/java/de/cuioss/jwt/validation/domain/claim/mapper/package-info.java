@@ -17,7 +17,9 @@
 /**
  * Provides mappers for converting between JSON and typed claim values.
  * <p>
- * These mappers are used by the {@link de.cuioss.jwt.validation.domain.claim.ClaimName} enum
+ * These mappers implement the strategy pattern for claim extraction and conversion, 
+ * allowing the library to handle different claim formats and types consistently.
+ * They are used by the {@link de.cuioss.jwt.validation.domain.claim.ClaimName} enum
  * to convert JSON claim values to strongly-typed {@link de.cuioss.jwt.validation.domain.claim.ClaimValue} objects.
  * <p>
  * Key components:
@@ -29,9 +31,28 @@
  *   <li>{@link de.cuioss.jwt.validation.domain.claim.mapper.ScopeMapper} - Special mapper for the 'scope' claim</li>
  * </ul>
  * <p>
- * Each mapper is responsible for extracting a specific type of claim from a JSON object
- * and converting it to the appropriate Java type.
+ * The mappers handle various claim formats including:
+ * <ul>
+ *   <li>Simple string claims (subject, issuer)</li>
+ *   <li>Time-based claims in numeric format (expiration, issued-at)</li>
+ *   <li>Array-based claims (audiences)</li>
+ *   <li>Space-delimited string claims (scopes)</li>
+ * </ul>
+ * <p>
+ * All mappers handle null values gracefully by returning appropriate empty or default values,
+ * ensuring that token validation is robust against missing or malformed claims.
+ * <p>
+ * This package implements parts of the following requirements:
+ * <ul>
+ *   <li>CUI-JWT-4.3: Claim Extraction and Validation</li>
+ *   <li>CUI-JWT-4.4: Standard Claim Support</li>
+ * </ul>
+ * <p>
+ * For more details on claim handling, see the
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/technical-components.adoc#token-structure">Token Structure</a>
+ * specification.
  * 
+ * @author Oliver Wolff
  * @since 1.0
  * @see de.cuioss.jwt.validation.domain.claim.ClaimName
  * @see de.cuioss.jwt.validation.domain.claim.ClaimValue

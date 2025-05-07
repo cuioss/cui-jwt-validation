@@ -15,18 +15,22 @@
  */
 package de.cuioss.jwt.validation;
 
-import de.cuioss.jwt.validation.domain.claim.ClaimName;
-import de.cuioss.tools.logging.CuiLogger;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import static de.cuioss.jwt.validation.domain.claim.ClaimName.*;
+import de.cuioss.jwt.validation.domain.claim.ClaimName;
+import static de.cuioss.jwt.validation.domain.claim.ClaimName.AUDIENCE;
+import static de.cuioss.jwt.validation.domain.claim.ClaimName.EXPIRATION;
+import static de.cuioss.jwt.validation.domain.claim.ClaimName.ISSUED_AT;
+import static de.cuioss.jwt.validation.domain.claim.ClaimName.ISSUER;
+import static de.cuioss.jwt.validation.domain.claim.ClaimName.SCOPE;
+import static de.cuioss.jwt.validation.domain.claim.ClaimName.SUBJECT;
+import de.cuioss.tools.logging.CuiLogger;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Defines the supported token types within the authentication system.
@@ -39,6 +43,14 @@ import static de.cuioss.jwt.validation.domain.claim.ClaimName.*;
  *   <li>{@link #REFRESH_TOKEN}: OAuth2 Refresh-Token with "Refresh" type claim</li>
  *   <li>{@link #UNKNOWN}: Fallback type for unrecognized or missing type claims</li>
  * </ul>
+ * <p>
+ * Implements requirements:
+ * <ul>
+ *   <li><a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/Requirements.adoc#CUI-JWT-1.2">CUI-JWT-1.2: Token Types</a></li>
+ * </ul>
+ * <p>
+ * For more detailed specifications, see the
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/technical-components.adoc#_token_architecture_and_types">Technical Components Specification - Token Architecture and Types</a>
  *
  * @author Oliver Wolff
  * @since 1.0

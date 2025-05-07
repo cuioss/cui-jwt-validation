@@ -21,9 +21,28 @@ import lombok.NonNull;
 
 /***
  * A functional interface for mapping a claim from a {@link JsonObject} to a {@link ClaimValue}.
- * This is used to convert the JSON representation of a claim into its
- * corresponding Java object representation.
+ * <p>
+ * This interface is responsible for extracting and converting JWT claim values from their
+ * JSON representation into strongly-typed {@link ClaimValue} objects. It provides the
+ * foundational mapping capability for claim extraction in the JWT validation process.
+ * <p>
+ * The interface supports various claim types:
+ * <ul>
+ *   <li>Simple string claims</li>
+ *   <li>Date/time claims (numeric timestamps)</li>
+ *   <li>Array claims (e.g., audiences, roles, scopes)</li>
+ * </ul>
+ * <p>
+ * Implementations handle type conversion, format validation, and null safety.
+ * <p>
+ * Since this is a functional interface, it can be implemented using lambda expressions
+ * for custom claim mapping logic, making it flexible and extensible.
+ * <p>
+ * For more details on claim handling, see the
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/technical-components.adoc#token-structure">Token Structure</a>
+ * specification.
  *
+ * @author Oliver Wolff
  * @see ClaimValue
  * @since 1.0
  */

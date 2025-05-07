@@ -39,6 +39,18 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for the {@link TokenSignatureValidator} class.
+ * <p>
+ * Verifies requirements:
+ * <ul>
+ *   <li>CUI-JWT-3.1: Valid JWT Token Structure</li>
+ *   <li>CUI-JWT-3.2: Algorithm Selection and Validation</li>
+ *   <li>CUI-JWT-6.1: Signature Validation</li>
+ *   <li>CUI-JWT-6.2: Algorithm Confusion Protection</li>
+ *   <li>CUI-JWT-6.4: Key Material Handling</li>
+ * </ul>
+ *
+ * @author Oliver Wolff
+ * @see <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/security.adoc">Security Specification</a>
  */
 @EnableTestLogger(rootLevel = TestLogLevel.DEBUG)
 @DisplayName("Tests TokenSignatureValidator")

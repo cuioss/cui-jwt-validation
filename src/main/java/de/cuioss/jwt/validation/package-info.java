@@ -36,6 +36,13 @@
  *   <li>Custom claim mapping</li>
  * </ul>
  * <p>
+ * For detailed information about the library, see the following documentation:
+ * <ul>
+ *   <li><a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/Requirements.adoc">Requirements</a></li>
+ *   <li><a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/Specification.adoc">Specification</a></li>
+ *   <li><a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/Usage.adoc">Usage Guide</a></li>
+ * </ul>
+ * <p>
  * Note: The implementation is primarily tested with Keycloak as the identity provider.
  * Some features may be specific to Keycloak's token implementation.
  * 

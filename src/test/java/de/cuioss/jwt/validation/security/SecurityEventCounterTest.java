@@ -28,6 +28,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Test for {@link SecurityEventCounter}.
+ * <p>
+ * Verifies requirements:
+ * <ul>
+ *   <li>CUI-JWT-7.1: Security Event Monitoring</li>
+ *   <li>CUI-JWT-7.2: Security Event Tracking</li>
+ *   <li>CUI-JWT-7.3: Thread-Safe Monitoring</li>
+ * </ul>
+ * <p>
+ * This test class ensures that security events are properly counted, can be reset,
+ * and that the counter implementation is thread-safe for concurrent access.
+ *
+ * @author Oliver Wolff
+ * @see <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/security.adoc#security-controls">Security Controls Specification</a>
  */
 class SecurityEventCounterTest {
 

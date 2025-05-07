@@ -31,10 +31,8 @@ import java.util.Optional;
  * It implements cryptographic agility by allowing configuration of preferred algorithms
  * and supporting algorithm migration.
  * <p>
- * Implements requirement: {@code CUI-JWT-8.5: Cryptographic Agility}
- * <p>
  * For more details on the security aspects, see the
- * <a href="../../../../../../../doc/specification/security.adoc">Security Specification</a>.
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/security.adoc">Security Specification</a>
  *
  * @author Oliver Wolff
  * @since 1.0

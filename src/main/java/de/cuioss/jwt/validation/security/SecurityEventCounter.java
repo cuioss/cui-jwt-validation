@@ -33,9 +33,24 @@ import java.util.stream.Collectors;
  * The counter follows the same naming/numbering scheme as {@link JWTValidationLogMessages}
  * for consistency and easier correlation between logs and metrics.
  * <p>
+ * Security events that are tracked include:
+ * <ul>
+ *   <li>Token format issues - empty tokens, size violations, decoding failures</li>
+ *   <li>Missing claims - required fields not present in tokens</li>
+ *   <li>Validation failures - expired tokens, audience mismatches</li>
+ *   <li>Signature issues - validation failures, missing keys</li>
+ *   <li>Algorithm issues - unsupported or insecure algorithms</li>
+ *   <li>JWKS issues - endpoint failures, parsing errors</li>
+ *   <li>Successful operations - token creations</li>
+ * </ul>
+ * <p>
  * This implementation is structured to simplify later integration with micrometer
  * but does not create any dependency on it.
- * 
+ * <p>
+ * For more details on the security monitoring aspects, see the
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/security.adoc">Security Specification</a>
+ *
+ * @author Oliver Wolff
  * @since 1.0
  */
 public class SecurityEventCounter {

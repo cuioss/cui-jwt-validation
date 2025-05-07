@@ -28,9 +28,34 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Represents the content of an OpenID Connect ID-Token.
- * Provides access to ID-Token specific claims.
+ * Represents the content of an OpenID Connect ID Token.
+ * <p>
+ * This class provides access to ID Token specific claims and functionality, focusing on
+ * user identity information as defined in the OpenID Connect Core specification.
+ * <p>
+ * ID Tokens typically contain:
+ * <ul>
+ *   <li>Standard JWT claims (iss, sub, exp, iat)</li>
+ *   <li>Authentication information (auth_time, nonce, acr)</li>
+ *   <li>User identity information (name, email, etc.)</li>
+ *   <li>Audience (aud) and authorized party (azp) claims</li>
+ * </ul>
+ * <p>
+ * The ID Token is used for authentication purposes and contains claims about the authentication
+ * event and the authenticated user. It is not intended for authorization purposes - that's
+ * what the access token is for.
+ * <p>
+ * This implementation follows the standards defined in:
+ * <ul>
+ *   <li><a href="https://openid.net/specs/openid-connect-core-1_0.html">OpenID Connect Core 1.0</a></li>
+ *   <li><a href="https://tools.ietf.org/html/rfc7519">RFC 7519 - JWT</a></li>
+ * </ul>
+ * <p>
+ * For more details on token structure and usage, see the
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/technical-components.adoc#token-types">Token Types</a>
+ * specification.
  *
+ * @author Oliver Wolff
  * @since 1.0
  */
 @ToString(callSuper = true)

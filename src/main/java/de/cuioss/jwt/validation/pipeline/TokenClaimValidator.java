@@ -55,13 +55,12 @@ import java.util.stream.Collectors;
  * The azp claim validation is an important security measure to prevent client confusion attacks
  * where tokens issued for one client are used with a different client.
  * <p>
- * Implements requirement: {@code CUI-JWT-8.4: ClaimNames Validation}
- * <p>
  * For more details on the security aspects, see the
- * <a href="../../../../../../../doc/specification/security.adoc">Security Specification</a>.
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/security.adoc">Security Specification</a>
  * <p>
  * Note: Issuer (iss) validation is handled by {@link TokenHeaderValidator}.
  *
+ * @author Oliver Wolff
  * @since 1.0
  */
 @Builder

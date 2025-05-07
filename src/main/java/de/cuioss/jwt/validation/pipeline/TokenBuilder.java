@@ -31,7 +31,23 @@ import java.util.Optional;
 
 /**
  * Builder for creating token content objects from decoded JWT tokens.
+ * <p>
+ * This class is responsible for transforming decoded JWT tokens into strongly-typed
+ * token content objects for further processing in the application.
+ * <p>
+ * It supports creating different types of tokens:
+ * <ul>
+ *   <li>Access Tokens - via {@link #createAccessToken}</li>
+ *   <li>ID Tokens - via {@link #createIdToken}</li>
+ * </ul>
+ * <p>
+ * During token creation, the builder extracts and maps claims from the token body
+ * using appropriate claim mappers based on the issuer configuration or standard claim names.
+ * <p>
+ * For more details on the token building process, see the
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/technical-components.adoc#token-validation-pipeline">Token Validation Pipeline</a>
  *
+ * @author Oliver Wolff
  * @since 1.0
  */
 public class TokenBuilder {

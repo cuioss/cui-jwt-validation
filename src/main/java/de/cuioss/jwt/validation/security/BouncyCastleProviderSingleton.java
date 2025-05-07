@@ -28,6 +28,13 @@ import java.security.Security;
  * in a thread-safe manner, avoiding potential concurrency issues that can occur
  * with static initializer blocks.
  * <p>
+ * BouncyCastle is used for:
+ * <ul>
+ *   <li>Support for modern cryptographic algorithms across all JVM versions</li>
+ *   <li>Consistent implementation of ECDSA signature verification</li>
+ *   <li>Support for RSA-PSS signatures (PS256, PS384, PS512)</li>
+ * </ul>
+ * <p>
  * Usage:
  * <pre>
  * // Get the provider name
@@ -36,7 +43,14 @@ import java.security.Security;
  * // Use the provider name with Signature.getInstance
  * Signature signature = Signature.getInstance(algorithm, providerName);
  * </pre>
+ * <p>
+ * This implementation uses the initialization-on-demand holder idiom for thread-safe
+ * lazy initialization, which is the recommended way to implement singletons in Java.
+ * <p>
+ * For more information on the cryptographic algorithms supported, see the
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/security.adoc">Security Specification</a>
  *
+ * @author Oliver Wolff
  * @since 1.0
  */
 @SuppressWarnings("java:S6548") // owolff: A singleton here is ok and better than the alternative: static initializer

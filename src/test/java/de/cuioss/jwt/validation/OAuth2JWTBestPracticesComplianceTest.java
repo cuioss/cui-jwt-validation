@@ -44,9 +44,15 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Tests compliance with the OAuth 2.0 JWT Best Current Practices.
  * <p>
- * This test class verifies that the library correctly implements the requirements
- * specified in OAuth 2.0 JWT Best Current Practices.
+ * Verifies requirements:
+ * <ul>
+ *   <li>CUI-JWT-3.1: OAuth2 JWT Best Practices</li>
+ *   <li>CUI-JWT-3.2: Audience Validation</li>
+ *   <li>CUI-JWT-3.3: Issuer Validation</li>
+ *   <li>CUI-JWT-6.1: Token Size Validation</li>
+ * </ul>
  *
+ * @author Oliver Wolff
  * @see <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-jwt-bcp-09">OAuth 2.0 JWT Best Current Practices</a>
  */
 @EnableGeneratorController

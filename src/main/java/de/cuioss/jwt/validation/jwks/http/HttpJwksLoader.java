@@ -15,7 +15,13 @@
  */
 package de.cuioss.jwt.validation.jwks.http;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
 import de.cuioss.jwt.validation.JWTValidationLogMessages;
+import de.cuioss.jwt.validation.JWTValidationLogMessages.DEBUG;
+import de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
 import de.cuioss.jwt.validation.jwks.JwksLoader;
 import de.cuioss.jwt.validation.jwks.key.JWKSKeyLoader;
 import de.cuioss.jwt.validation.jwks.key.KeyInfo;
@@ -26,13 +32,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.ToString;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
-import static de.cuioss.jwt.validation.JWTValidationLogMessages.DEBUG;
-import static de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
 
 /**
  * Implementation of {@link JwksLoader} that loads JWKS from an HTTP endpoint.
@@ -49,10 +48,8 @@ import static de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
  *   <li>Cache size limits: Prevents memory issues in multi-issuer environments</li>
  * </ul>
  * <p>
- * Implements requirement: {@code CUI-JWT-8.3: Secure Communication}
- * <p>
  * For more details on the security aspects, see the
- * <a href="../../../../../../../doc/specification/security.adoc">Security Specification</a>.
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/security.adoc">Security Specification</a>
  *
  * @author Oliver Wolff
  * @since 1.0

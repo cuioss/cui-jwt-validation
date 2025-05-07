@@ -43,7 +43,18 @@
  * <p>
  * This package implements security best practices for JWT token processing, including
  * token size validation, proper signature verification, and claim validation.
+ * <p>
+ * Implements requirements:
+ * <ul>
+ *   <li><a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/Requirements.adoc#CUI-JWT-3">CUI-JWT-3: Token Validation Pipeline</a></li>
+ *   <li><a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/Requirements.adoc#CUI-JWT-5">CUI-JWT-5: Signature Validation</a></li>
+ *   <li><a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/Requirements.adoc#CUI-JWT-7">CUI-JWT-7: Claim Validation</a></li>
+ * </ul>
+ * <p>
+ * For more detailed specifications, see the
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/technical-components.adoc">Technical Components Specification</a>
  * 
+ * @author Oliver Wolff
  * @since 1.0
  * @see de.cuioss.jwt.validation.TokenValidator
  * @see de.cuioss.jwt.validation.domain.token.TokenContent

@@ -38,6 +38,15 @@
  *   <li>Fallback mechanisms - using cached keys when refresh fails</li>
  *   <li>Secure HTTP connections - using TLS for JWKS endpoints</li>
  * </ul>
+ * <p>
+ * Implements requirements:
+ * <ul>
+ *   <li><a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/Requirements.adoc#CUI-JWT-4">CUI-JWT-4: Key Management</a></li>
+ *   <li><a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/Requirements.adoc#CUI-JWT-8.5">CUI-JWT-8.5: Cryptographic Agility</a></li>
+ * </ul>
+ * <p>
+ * For more detailed specifications, see the
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/technical-components.adoc#_jwksloader">Technical Components Specification - JwksLoader</a>
  * 
  * @since 1.0
  * @see de.cuioss.jwt.validation.pipeline.TokenSignatureValidator

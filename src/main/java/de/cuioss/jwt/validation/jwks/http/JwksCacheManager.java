@@ -15,20 +15,20 @@
  */
 package de.cuioss.jwt.validation.jwks.http;
 
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.Expiry;
-import com.github.benmanes.caffeine.cache.LoadingCache;
-import de.cuioss.jwt.validation.jwks.key.JWKSKeyLoader;
-import de.cuioss.tools.logging.CuiLogger;
-import lombok.NonNull;
-
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
-import static de.cuioss.jwt.validation.JWTValidationLogMessages.DEBUG;
-import static de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Expiry;
+import com.github.benmanes.caffeine.cache.LoadingCache;
+
+import de.cuioss.jwt.validation.JWTValidationLogMessages.DEBUG;
+import de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
+import de.cuioss.jwt.validation.jwks.key.JWKSKeyLoader;
+import de.cuioss.tools.logging.CuiLogger;
+import lombok.NonNull;
 
 /**
  * Manages caching of JWKS content.
@@ -41,8 +41,12 @@ import static de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
  *   <li>Content-based caching to avoid unnecessary updates</li>
  *   <li>Fallback to last valid result when errors occur</li>
  * </ul>
+ * <p>
+ * For more details on caching and key management, see the
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/technical-components.adoc#_jwksloader">Technical Components Specification</a>
  *
  * @author Oliver Wolff
+ * @since 1.0
  */
 class JwksCacheManager {
 

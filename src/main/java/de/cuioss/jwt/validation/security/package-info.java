@@ -18,12 +18,15 @@
  * Provides security-related functionality for JWT Token handling.
  * <p>
  * This package contains classes that implement security best practices for JWT Token
- * processing, including algorithm preferences and secure SSL context provision.
+ * processing, including algorithm preferences, secure SSL context provision, and security
+ * event monitoring.
  * <p>
  * Key components:
  * <ul>
  *   <li>{@link de.cuioss.jwt.validation.security.AlgorithmPreferences} - Manages algorithm preferences for JWT Token signatures</li>
+ *   <li>{@link de.cuioss.jwt.validation.security.BouncyCastleProviderSingleton} - Provides consistent cryptographic services</li>
  *   <li>{@link de.cuioss.jwt.validation.security.SecureSSLContextProvider} - Provides secure SSL contexts for HTTPS connections</li>
+ *   <li>{@link de.cuioss.jwt.validation.security.SecurityEventCounter} - Tracks security-relevant events for monitoring</li>
  * </ul>
  * <p>
  * The classes in this package implement security best practices, including:
@@ -32,11 +35,25 @@
  *   <li>Secure defaults - using strong algorithms by default</li>
  *   <li>Explicit rejection of insecure algorithms</li>
  *   <li>Secure TLS configuration for HTTPS connections</li>
+ *   <li>Security event monitoring and metrics</li>
  * </ul>
  * <p>
  * These security features are used throughout the JWT Token handling framework to ensure
- * secure validation validation and JWKS retrieval.
+ * secure token validation and JWKS retrieval.
+ * <p>
+ * This package implements the following requirements:
+ * <ul>
+ *   <li>CUI-JWT-8.1: Default Security Considerations</li>
+ *   <li>CUI-JWT-8.2: Strict Input Validation</li>
+ *   <li>CUI-JWT-8.3: Secure Communication</li>
+ *   <li>CUI-JWT-8.4: ClaimNames Validation</li>
+ *   <li>CUI-JWT-8.5: Cryptographic Agility</li>
+ * </ul>
+ * <p>
+ * For more details on the security aspects, see the
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/security.adoc">Security Specification</a>
  * 
+ * @author Oliver Wolff
  * @since 1.0
  * @see de.cuioss.jwt.validation.pipeline.TokenSignatureValidator
  * @see de.cuioss.jwt.validation.jwks.http.HttpJwksLoader

@@ -15,6 +15,11 @@
  */
 package de.cuioss.jwt.validation;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
 import de.cuioss.jwt.validation.domain.claim.ClaimValue;
 import de.cuioss.jwt.validation.domain.token.AccessTokenContent;
 import de.cuioss.jwt.validation.domain.token.IdTokenContent;
@@ -32,11 +37,6 @@ import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
 import lombok.Getter;
 import lombok.NonNull;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * Main entry point for creating and validating JWT tokens.
@@ -91,6 +91,16 @@ import java.util.Optional;
  * // Access the security event counter for monitoring
  * SecurityEventCounter securityEventCounter = tokenValidator.getSecurityEventCounter();
  * </pre>
+ * <p>
+ * Implements requirements:
+ * <ul>
+ *   <li><a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/Requirements.adoc#CUI-JWT-1">CUI-JWT-1: Token Parsing and Validation</a></li>
+ *   <li><a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/Requirements.adoc#CUI-JWT-2">CUI-JWT-2: Token Representation</a></li>
+ *   <li><a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/Requirements.adoc#CUI-JWT-3">CUI-JWT-3: Multi-Issuer Support</a></li>
+ * </ul>
+ * <p>
+ * For more detailed specifications, see the
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/technical-components.adoc#_tokenvalidator">Technical Components Specification</a>
  *
  * @since 1.0
  */

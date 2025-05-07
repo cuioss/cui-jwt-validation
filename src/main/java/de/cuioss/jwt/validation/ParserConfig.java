@@ -15,14 +15,14 @@
  */
 package de.cuioss.jwt.validation;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import jakarta.json.Json;
 import jakarta.json.JsonReaderFactory;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Value;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Configuration class for the TokenValidator.
@@ -42,6 +42,15 @@ import java.util.Map;
  *     .logWarningsOnDecodeFailure(false)
  *     .build();
  * </pre>
+ * <p>
+ * Implements requirements:
+ * <ul>
+ *   <li><a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/Requirements.adoc#CUI-JWT-8.1">CUI-JWT-8.1: Token Size Limits</a></li>
+ *   <li><a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/Requirements.adoc#CUI-JWT-8.2">CUI-JWT-8.2: Safe Parsing</a></li>
+ * </ul>
+ * <p>
+ * For more detailed specifications, see the
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/token-size-validation.adoc">Token Size Validation Specification</a>
  *
  * @since 1.0
  */

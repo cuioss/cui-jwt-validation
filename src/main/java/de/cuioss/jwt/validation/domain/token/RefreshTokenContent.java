@@ -27,9 +27,34 @@ import java.io.Serial;
 import java.util.Map;
 
 /**
- * Represents the content of an OAuth 2.0 Refresh-Token in JWT format.
- * This is only used when the Refresh-Token is in JWT format.
+ * Represents the content of an OAuth 2.0 Refresh Token in JWT format.
+ * <p>
+ * While most OAuth 2.0 implementations use opaque tokens for refresh tokens,
+ * some authorization servers issue JWT-formatted refresh tokens. This class
+ * provides a container for such JWT-based refresh tokens.
+ * <p>
+ * Unlike {@link AccessTokenContent} and {@link IdTokenContent} which extend {@link BaseTokenContent},
+ * this class implements {@link MinimalTokenContent} directly because:
+ * <ul>
+ *   <li>Refresh tokens often have minimal to no claims</li>
+ *   <li>The structure can vary significantly between authorization servers</li>
+ *   <li>Validation requirements are minimal for refresh tokens</li>
+ * </ul>
+ * <p>
+ * This class maintains the raw token string and any claims that might be present in the
+ * JWT structure, but does not enforce specific validation rules as refresh tokens
+ * are meant to be used only with the token endpoint, not validated by client applications.
+ * <p>
+ * Note that this class should only be used when the refresh token is in JWT format,
+ * which can be determined by attempting to parse it as a JWT.
+ * <p>
+ * This implementation follows guidance from:
+ * <ul>
+ *   <li><a href="https://tools.ietf.org/html/rfc6749">RFC 6749 - OAuth 2.0</a></li>
+ *   <li><a href="https://tools.ietf.org/html/rfc7519">RFC 7519 - JWT</a></li>
+ * </ul>
  *
+ * @author Oliver Wolff
  * @since 1.0
  */
 @ToString

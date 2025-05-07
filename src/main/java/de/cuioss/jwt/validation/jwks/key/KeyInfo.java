@@ -15,11 +15,11 @@
  */
 package de.cuioss.jwt.validation.jwks.key;
 
+import java.security.PublicKey;
+
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
-
-import java.security.PublicKey;
 
 /**
  * Class that holds information about a key, including the key itself and its algorithm.
@@ -27,10 +27,8 @@ import java.security.PublicKey;
  * This class is used to store keys along with their algorithm information to support
  * cryptographic agility.
  * <p>
- * Implements requirement: {@code CUI-JWT-8.5: Cryptographic Agility}
- * <p>
  * For more details on the security aspects, see the
- * <a href="../../../../../../../doc/specification/security.adoc">Security Specification</a>.
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/security.adoc">Security Specification</a>
  *
  * @author Oliver Wolff
  * @since 1.0

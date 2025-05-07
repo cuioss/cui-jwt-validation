@@ -35,6 +35,20 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Test suite for {@link TokenValidator}.
+ * <p>
+ * Verifies requirements:
+ * <ul>
+ *   <li>CUI-JWT-1.1: JWT Validation</li>
+ *   <li>CUI-JWT-1.2: Multi-Issuer Support</li>
+ *   <li>CUI-JWT-4.2: Token Types</li>
+ *   <li>CUI-JWT-6.1: Token Size Validation</li>
+ * </ul>
+ * 
+ * @author Oliver Wolff
+ * @see <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/token-size-validation.adoc">Token Size Validation Specification</a>
+ */
 @EnableTestLogger
 @DisplayName("Tests TokenValidator functionality")
 class TokenValidatorTest {

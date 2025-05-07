@@ -39,6 +39,15 @@
  *   <li>Proper key identification using key IDs</li>
  *   <li>Safe parsing of key material</li>
  * </ul>
+ * <p>
+ * Implements requirements:
+ * <ul>
+ *   <li><a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/Requirements.adoc#CUI-JWT-4">CUI-JWT-4: Key Management</a></li>
+ *   <li><a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/Requirements.adoc#CUI-JWT-8.5">CUI-JWT-8.5: Cryptographic Agility</a></li>
+ * </ul>
+ * <p>
+ * For more detailed specifications, see the
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/technical-components.adoc#_jwksloader">Technical Components Specification - JwksLoader</a>
  * 
  * @since 1.0
  * @see de.cuioss.jwt.validation.jwks.JwksLoader

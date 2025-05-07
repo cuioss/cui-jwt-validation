@@ -22,6 +22,16 @@ import lombok.experimental.UtilityClass;
 /**
  * Provides logging messages for the cui-jwt-validation module.
  * All messages follow the format: JWTValidation-[identifier]: [message]
+ * <p>
+ * Implements requirements:
+ * <ul>
+ *   <li><a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/Requirements.adoc#CUI-JWT-7">CUI-JWT-7: Logging</a></li>
+ *   <li><a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/Requirements.adoc#CUI-JWT-7.1">CUI-JWT-7.1: Structured Logging</a></li>
+ *   <li><a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/Requirements.adoc#CUI-JWT-7.2">CUI-JWT-7.2: Helpful Error Messages</a></li>
+ * </ul>
+ * <p>
+ * For more detailed information about log messages, see the
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/LogMessages.adoc">Log Messages Documentation</a>
  *
  * @since 1.0
  */

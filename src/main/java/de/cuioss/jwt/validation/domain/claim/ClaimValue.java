@@ -30,10 +30,32 @@ import java.util.SortedSet;
 
 /**
  * Represents a typed claim value in a JWT Token.
- * All implementations must be immutable, properly implement equals/hashCode,
- * and be serializable.
+ * <p>
+ * This class provides a type-safe representation of JWT claim values,
+ * supporting multiple claim value types including:
+ * <ul>
+ *   <li>String values - for simple claims like 'sub', 'iss'</li>
+ *   <li>Date/time values - for temporal claims like 'exp', 'iat', 'nbf'</li>
+ *   <li>String lists - for array claims like 'aud', 'scopes'</li>
+ * </ul>
+ * <p>
+ * The implementation maintains the original string representation from the token
+ * to preserve full fidelity with the source data, while also providing convenient
+ * typed access to the parsed value.
+ * <p>
+ * All static factory methods create immutable instances, making this class
+ * thread-safe and suitable for concurrent use. The class provides comprehensive
+ * equality checking and properly implements {@code Serializable} to support
+ * caching or serialization scenarios.
+ * <p>
+ * For more details on JWT claim handling, see the
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/technical-components.adoc#token-structure">Token Structure</a>
+ * specification.
  *
+ * @author Oliver Wolff
  * @since 1.0
+ * @see ClaimName
+ * @see ClaimValueType
  */
 @ToString
 @EqualsAndHashCode

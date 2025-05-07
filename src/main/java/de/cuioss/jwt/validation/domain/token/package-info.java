@@ -17,20 +17,37 @@
 /**
  * Provides interfaces and implementations for JWT Token content.
  * <p>
- * Key components:
+ * This package defines a comprehensive type hierarchy for representing different
+ * token types in OAuth 2.0 and OpenID Connect:
  * <ul>
  *   <li>{@link de.cuioss.jwt.validation.domain.token.TokenContent} - Base interface for JWT Token content</li>
  *   <li>{@link de.cuioss.jwt.validation.domain.token.MinimalTokenContent} - Minimal interface for token content with raw token string and type</li>
  *   <li>{@link de.cuioss.jwt.validation.domain.token.BaseTokenContent} - Abstract base implementation of token content</li>
- *   <li>{@link de.cuioss.jwt.validation.domain.token.AccessTokenContent} - Specialized interface for OAuth2 access tokens</li>
- *   <li>{@link de.cuioss.jwt.validation.domain.token.IdTokenContent} - Specialized interface for OpenID Connect ID tokens</li>
- *   <li>{@link de.cuioss.jwt.validation.domain.token.RefreshTokenContent} - Specialized interface for OAuth2 refresh tokens</li>
+ *   <li>{@link de.cuioss.jwt.validation.domain.token.AccessTokenContent} - Specialized implementation for OAuth2 access tokens</li>
+ *   <li>{@link de.cuioss.jwt.validation.domain.token.IdTokenContent} - Specialized implementation for OpenID Connect ID tokens</li>
+ *   <li>{@link de.cuioss.jwt.validation.domain.token.RefreshTokenContent} - Specialized implementation for OAuth2 refresh tokens</li>
  * </ul>
  * <p>
- * This package provides a type hierarchy for different validation types, with specialized interfaces
- * for each validation type defined in the OAuth2 and OpenID Connect specifications. The interfaces
- * provide convenient access to common claims and validation-specific functionality.
- * 
+ * The token implementations:
+ * <ul>
+ *   <li>Provide type-safe access to claims through consistent APIs</li>
+ *   <li>Implement token-type specific functionality (e.g., scope validation for access tokens)</li>
+ *   <li>Support both required and optional claims defined in the specifications</li>
+ *   <li>Maintain immutability for thread safety</li>
+ * </ul>
+ * <p>
+ * This package implements the following requirements:
+ * <ul>
+ *   <li>CUI-JWT-4.1: JWT Token Structure</li>
+ *   <li>CUI-JWT-4.2: Token Types</li>
+ *   <li>CUI-JWT-5.1: OpenID Connect Support</li>
+ * </ul>
+ * <p>
+ * For more details on token structure and usage, see the
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/technical-components.adoc#token-types">Token Types</a>
+ * specification.
+ *
+ * @author Oliver Wolff
  * @since 1.0
  * @see de.cuioss.jwt.validation.domain.claim.ClaimName
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc6749">RFC 6749 - OAuth 2.0</a>

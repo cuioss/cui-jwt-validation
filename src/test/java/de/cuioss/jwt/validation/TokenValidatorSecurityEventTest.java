@@ -31,6 +31,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests for the security event counting functionality in {@link TokenValidator}.
+ * <p>
+ * Verifies requirements:
+ * <ul>
+ *   <li>CUI-JWT-7.1: Security Event Tracking</li>
+ *   <li>CUI-JWT-7.2: Monitoring of Token Validation Failures</li>
+ *   <li>CUI-JWT-7.3: Detection of Potential Security Incidents</li>
+ * </ul>
+ *
+ * @author Oliver Wolff
+ * @see <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/security.adoc">Security Specification</a>
  */
 @EnableTestLogger
 @DisplayName("Tests TokenValidator security event counting")

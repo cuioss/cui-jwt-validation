@@ -15,6 +15,11 @@
  */
 package de.cuioss.jwt.validation.jwks.key;
 
+import java.math.BigInteger;
+import java.util.Base64;
+import java.util.Optional;
+import java.util.regex.Pattern;
+
 import de.cuioss.jwt.validation.JWTValidationLogMessages;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
@@ -22,11 +27,6 @@ import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
-
-import java.math.BigInteger;
-import java.util.Base64;
-import java.util.Optional;
-import java.util.regex.Pattern;
 
 /**
  * Utility class for handling JWK (JSON Web Key) constants and operations.
@@ -37,6 +37,7 @@ import java.util.regex.Pattern;
  * For more details on the JWK specification, see the
  * <a href="https://datatracker.ietf.org/doc/html/rfc7517">RFC 7517 - JSON Web Key (JWK)</a>.
  *
+ * @author Oliver Wolff
  * @since 1.0
  */
 @UtilityClass

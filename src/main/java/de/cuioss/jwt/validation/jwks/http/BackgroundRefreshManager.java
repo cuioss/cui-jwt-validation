@@ -15,14 +15,13 @@
  */
 package de.cuioss.jwt.validation.jwks.http;
 
-import de.cuioss.tools.logging.CuiLogger;
-import lombok.NonNull;
-
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static de.cuioss.jwt.validation.JWTValidationLogMessages.DEBUG;
-import static de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
+import de.cuioss.jwt.validation.JWTValidationLogMessages.DEBUG;
+import de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
+import de.cuioss.tools.logging.CuiLogger;
+import lombok.NonNull;
 
 /**
  * Manages background refresh of JWKS content.
@@ -33,8 +32,12 @@ import static de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
  *   <li>Preemptively refreshing keys before they expire</li>
  *   <li>Managing the executor service lifecycle</li>
  * </ul>
+ * <p>
+ * For more details on background refresh strategy, see the
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/technical-components.adoc#_jwksloader">Technical Components Specification</a>
  *
  * @author Oliver Wolff
+ * @since 1.0
  */
 class BackgroundRefreshManager implements AutoCloseable {
 

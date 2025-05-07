@@ -15,27 +15,32 @@
  */
 package de.cuioss.jwt.validation.jwks.key;
 
-import de.cuioss.jwt.validation.security.BouncyCastleProviderSingleton;
-import jakarta.json.JsonObject;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
-import org.bouncycastle.jce.ECNamedCurveTable;
-
 import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
-import java.security.spec.*;
+import java.security.spec.ECFieldFp;
+import java.security.spec.ECParameterSpec;
+import java.security.spec.ECPoint;
+import java.security.spec.ECPublicKeySpec;
+import java.security.spec.EllipticCurve;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.RSAPublicKeySpec;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.bouncycastle.jce.ECNamedCurveTable;
+
+import de.cuioss.jwt.validation.security.BouncyCastleProviderSingleton;
+import jakarta.json.JsonObject;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 /**
  * Utility class for handling JWK (JSON Web Key) operations.
  * <p>
  * This class provides methods for parsing and validating RSA and EC keys from JWK format.
  * It isolates the low-level cryptographic operations from the JWKSKeyLoader class.
- * <p>
- * Implements requirement: {@code CUI-JWT-8.5: Cryptographic Agility}
  * <p>
  * This class uses Bouncy Castle (bcprov-jdk18on) for cryptographic operations, specifically:
  * <ul>
@@ -47,7 +52,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * to ensure consistent cryptographic operations across different JVM implementations.
  * <p>
  * For more details on the security aspects, see the
- * <a href="../../../../../../../doc/specification/security.adoc">Security Specification</a>.
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/security.adoc">Security Specification</a>
  *
  * @author Oliver Wolff
  * @since 1.0

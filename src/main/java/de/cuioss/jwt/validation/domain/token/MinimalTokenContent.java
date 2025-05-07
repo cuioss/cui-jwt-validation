@@ -20,10 +20,23 @@ import de.cuioss.jwt.validation.TokenType;
 import java.io.Serializable;
 
 /**
- * Provides elements that are applicable on every Token.
- * Compare to the {@link TokenContent} this interface does not provide JWT-specific content like claims.
- * Currently, it is only relevant for {@link TokenType#REFRESH_TOKEN}
+ * Minimal interface for token content that applies to all token types.
+ * <p>
+ * Unlike {@link TokenContent}, this interface does not provide access to JWT-specific
+ * content like claims. It contains only the most fundamental token properties:
+ * <ul>
+ *   <li>The raw token string</li>
+ *   <li>The token type (access token, ID token, refresh token)</li>
+ * </ul>
+ * <p>
+ * This interface is particularly important for {@link TokenType#REFRESH_TOKEN}
+ * which may not be a standard JWT token with claims but might use a different
+ * format or structure based on the authorization server implementation.
+ * <p>
+ * All token content classes in the library implement this interface, providing
+ * a common base for token handling regardless of the specific token format.
  *
+ * @author Oliver Wolff
  * @since 1.0
  */
 public interface MinimalTokenContent extends Serializable {

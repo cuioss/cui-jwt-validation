@@ -15,15 +15,16 @@
  */
 package de.cuioss.jwt.validation.jwks.http;
 
+import java.net.URI;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
+import javax.net.ssl.SSLContext;
+
 import de.cuioss.jwt.validation.security.SecureSSLContextProvider;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.Builder;
 import lombok.NonNull;
-
-import javax.net.ssl.SSLContext;
-import java.net.URI;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Configuration parameters for {@link HttpJwksLoader}.
@@ -33,8 +34,12 @@ import java.util.concurrent.ScheduledExecutorService;
  * and adaptive caching parameters.
  * <p>
  * It provides validation for all parameters and default values where appropriate.
+ * <p>
+ * For more detailed information about the HTTP-based JWKS loading, see the
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/technical-components.adoc#_jwksloader">Technical Components Specification</a>
  *
  * @author Oliver Wolff
+ * @since 1.0
  */
 @Builder
 public class HttpJwksLoaderConfig {

@@ -38,10 +38,15 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests compliance with the JWT specification defined in RFC 7519.
+ * <p>
+ * Verifies requirements:
+ * <ul>
+ *   <li>CUI-JWT-2.1: RFC 7519 Compliance</li>
+ *   <li>CUI-JWT-2.2: JWT Structure</li>
+ *   <li>CUI-JWT-2.3: Standard JWT Claims</li>
+ * </ul>
  * 
- * This test class verifies that the library correctly implements the requirements
- * specified in RFC 7519 - JSON Web Token (JWT).
- * 
+ * @author Oliver Wolff
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc7519">RFC 7519 - JSON Web Token (JWT)</a>
  */
 @DisplayName("RFC 7519 JWT Compliance Tests")

@@ -27,10 +27,26 @@ import java.util.Optional;
 
 /**
  * Class representing a decoded JWT token.
- * Contains the decoded header, body, signature, issuer, and kid-header.
- * <em>Caution: </em> This class is not guaranteed to be validated.
- * It is usually created by {@link NonValidatingJwtParser}.
+ * <p>
+ * This class holds the parsed components of a JWT token after Base64 decoding and JSON parsing,
+ * but before any validation occurs. It contains:
+ * <ul>
+ *   <li>The decoded header as a JsonObject</li>
+ *   <li>The decoded payload (body) as a JsonObject</li>
+ *   <li>The signature part as a String</li>
+ *   <li>Convenience methods for accessing common JWT fields</li>
+ *   <li>The original token parts and raw token string</li>
+ * </ul>
+ * <p>
+ * <strong>Security Note:</strong> This class is not guaranteed to contain a validated token.
+ * It is usually created by {@link NonValidatingJwtParser} and should be passed to
+ * {@link TokenHeaderValidator}, {@link TokenSignatureValidator}, and {@link TokenClaimValidator}
+ * for proper validation.
+ * <p>
+ * For more details on the token validation process, see the
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/technical-components.adoc#token-validation-pipeline">Token Validation Pipeline</a>
  *
+ * @author Oliver Wolff
  * @since 1.0
  */
 @ToString

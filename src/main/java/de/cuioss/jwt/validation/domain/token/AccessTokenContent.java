@@ -28,8 +28,33 @@ import java.util.*;
 
 /**
  * Represents the content of an OAuth 2.0 access token.
- * Provides access to access token specific claims like scopes.
+ * <p>
+ * This class provides access to access token specific claims and functionality, including:
+ * <ul>
+ *   <li>Scope validation with detailed logging capabilities</li>
+ *   <li>Access to audience claims</li>
+ *   <li>User identity information (email, preferred username)</li>
+ * </ul>
+ * <p>
+ * Access tokens typically contain:
+ * <ul>
+ *   <li>Standard JWT claims (iss, sub, exp, iat)</li>
+ *   <li>OAuth-specific claims like scope/scopes and audience</li>
+ *   <li>Optional identity claims depending on the authorization server</li>
+ * </ul>
+ * <p>
+ * This implementation follows the standards defined in:
+ * <ul>
+ *   <li><a href="https://tools.ietf.org/html/rfc6749">RFC 6749 - OAuth 2.0</a></li>
+ *   <li><a href="https://tools.ietf.org/html/rfc7519">RFC 7519 - JWT</a></li>
+ *   <li><a href="https://tools.ietf.org/html/rfc8693">RFC 8693 - Token Exchange</a></li>
+ * </ul>
+ * <p>
+ * For more details on token structure and usage, see the
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/technical-components.adoc#token-types">Token Types</a>
+ * specification.
  *
+ * @author Oliver Wolff
  * @since 1.0
  */
 @ToString(callSuper = true)

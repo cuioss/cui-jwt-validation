@@ -24,8 +24,28 @@ import java.util.Optional;
 
 /**
  * Base interface for JWT Token content.
- * Provides access to claims. Raw token string and validation type are provided through {@link MinimalTokenContent}.
+ * <p>
+ * This interface defines the common contract for all JWT token objects,
+ * providing structured access to token claims and metadata. It extends
+ * {@link MinimalTokenContent} to include basic token information.
+ * <p>
+ * The interface provides:
+ * <ul>
+ *   <li>Access to all claims in the token via {@link #getClaims()}</li>
+ *   <li>Convenience methods for common claims (subject, issuer, expiration time)</li>
+ *   <li>Type-safe claim retrieval</li>
+ *   <li>Expiration checking</li>
+ * </ul>
+ * <p>
+ * JWT tokens implementing this interface follow the standards defined in
+ * <a href="https://tools.ietf.org/html/rfc7519">RFC 7519</a> for claim names
+ * and semantic behavior.
+ * <p>
+ * For more details on token structure, see the
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/technical-components.adoc#token-structure">Token Structure</a>
+ * specification.
  *
+ * @author Oliver Wolff
  * @since 1.0
  */
 public interface TokenContent extends MinimalTokenContent {

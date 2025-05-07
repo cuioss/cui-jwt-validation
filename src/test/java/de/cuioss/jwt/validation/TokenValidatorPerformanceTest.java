@@ -41,8 +41,19 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Performance tests for TokenValidator.
+ * Performance tests for {@link TokenValidator}.
+ * <p>
  * Tests the behavior of TokenValidator under concurrent load with multiple threads.
+ * <p>
+ * Verifies requirements:
+ * <ul>
+ *   <li>CUI-JWT-5.1: Token Validation Performance</li>
+ *   <li>CUI-JWT-5.2: Concurrent Token Processing</li>
+ *   <li>CUI-JWT-5.3: Performance Monitoring</li>
+ * </ul>
+ *
+ * @author Oliver Wolff
+ * @see <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/technical-components.adoc#performance">Performance Specification</a>
  */
 @EnableTestLogger
 @DisplayName("Tests TokenValidator performance")

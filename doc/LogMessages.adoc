@@ -1,8 +1,23 @@
 = Log Messages for JWT Token Module
 :toc: left
-:toclevels: 2
+:toclevels: 3
+:toc-title: Table of Contents
+:sectnums:
 
 == Overview
+
+This document provides a reference for all log messages used in the JWT Token Validation library.
+
+=== Document Navigation
+
+* link:../README.adoc[README] - Project overview and introduction
+* link:Usage.adoc[Usage Guide] - How to use the library with code examples
+* link:Requirements.adoc[Requirements] - Functional and non-functional requirements
+* link:Specification.adoc[Specification] - Technical specifications
+* link:threat-model/Threat-Model.adoc[Threat Model] - Security analysis and mitigations
+* link:Build.adoc[Building and Development] - Information for contributors
+
+=== Log Message Format
 
 All messages follow the format: JWTValidation-[identifier]: [message]
 
@@ -13,6 +28,12 @@ The log message levels follow these identifier ranges:
 * ERROR Level: 200-299
 
 Note: Only log level INFO and above are documented in this file.
+
+=== Using Log Messages for Troubleshooting
+
+The log messages can be used for troubleshooting issues with the JWT Token Validation library. Each log message is associated with a specific component and provides information about what is happening in the system.
+
+For more details about security events related to these log messages, see the SecurityEventCounter implementation in link:specification/technical-components.adoc#_securityeventcounter[Technical Components].
 
 == INFO Level (001-099)
 

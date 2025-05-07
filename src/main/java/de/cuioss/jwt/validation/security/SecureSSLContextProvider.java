@@ -29,13 +29,27 @@ import static de.cuioss.jwt.validation.JWTValidationLogMessages.DEBUG;
 import static de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
 
 /**
- * Constants for TLS versions used in the application.
- * Defines allowed and forbidden TLS versions for secure communication.
+ * Provider for secure SSL contexts used in HTTPS communications.
  * <p>
- * Implements requirement: {@code CUI-JWT-8.3: Secure Communication}
+ * This class enforces secure TLS versions when establishing connections to JWKS endpoints
+ * and other services. It ensures that only modern, secure TLS protocols are used:
+ * <ul>
+ *   <li>TLS 1.2 - Minimum recommended version</li>
+ *   <li>TLS 1.3 - Preferred when available</li>
+ * </ul>
+ * <p>
+ * The class prevents the use of insecure, deprecated protocols:
+ * <ul>
+ *   <li>TLS 1.0 - Deprecated due to security vulnerabilities</li>
+ *   <li>TLS 1.1 - Deprecated due to security vulnerabilities</li>
+ *   <li>SSL 3.0 - Deprecated due to security vulnerabilities (POODLE attack)</li>
+ * </ul>
  * <p>
  * For more details on the security aspects, see the
- * <a href="../../../../../../../doc/specification/security.adoc">Security Specification</a>.
+ * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/security.adoc">Security Specification</a>
+ *
+ * @author Oliver Wolff
+ * @since 1.0
  */
 public class SecureSSLContextProvider {
 
