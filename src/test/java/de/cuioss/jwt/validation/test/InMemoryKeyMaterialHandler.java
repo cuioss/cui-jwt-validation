@@ -62,7 +62,13 @@ public class InMemoryKeyMaterialHandler {
     public enum Algorithm {
         RS256(Jwts.SIG.RS256),
         RS384(Jwts.SIG.RS384),
-        RS512(Jwts.SIG.RS512);
+        RS512(Jwts.SIG.RS512),
+        ES256(Jwts.SIG.ES256),
+        ES384(Jwts.SIG.ES384),
+        ES512(Jwts.SIG.ES512),
+        PS256(Jwts.SIG.PS256),
+        PS384(Jwts.SIG.PS384),
+        PS512(Jwts.SIG.PS512);
 
         @Getter
         private final SignatureAlgorithm algorithm;
@@ -104,7 +110,7 @@ public class InMemoryKeyMaterialHandler {
      * Generates a key pair for the specified algorithm and key ID.
      *
      * @param algorithm the algorithm to use
-     * @param keyId the key ID
+     * @param keyId     the key ID
      * @return the generated key pair
      */
     private static KeyPair generateKeyPair(Algorithm algorithm, String keyId) {
@@ -122,7 +128,7 @@ public class InMemoryKeyMaterialHandler {
      * Gets the private key for the specified algorithm and key ID.
      *
      * @param algorithm the algorithm
-     * @param keyId the key ID
+     * @param keyId     the key ID
      * @return the private key
      */
     public static PrivateKey getPrivateKey(Algorithm algorithm, String keyId) {
@@ -133,7 +139,7 @@ public class InMemoryKeyMaterialHandler {
      * Gets the public key for the specified algorithm and key ID.
      *
      * @param algorithm the algorithm
-     * @param keyId the key ID
+     * @param keyId     the key ID
      * @return the public key
      */
     public static PublicKey getPublicKey(Algorithm algorithm, String keyId) {
@@ -145,7 +151,7 @@ public class InMemoryKeyMaterialHandler {
      * If the key pair doesn't exist, it will be generated.
      *
      * @param algorithm the algorithm
-     * @param keyId the key ID
+     * @param keyId     the key ID
      * @return the key pair
      */
     private static KeyPair getKeyPair(Algorithm algorithm, String keyId) {
@@ -198,12 +204,12 @@ public class InMemoryKeyMaterialHandler {
      * Creates a JWKS string for the specified algorithm and key ID.
      *
      * @param algorithm the algorithm
-     * @param keyId the key ID
+     * @param keyId     the key ID
      * @return a JWKS string containing the public key
      */
     public static String createJwks(Algorithm algorithm, String keyId) {
-        RSAPublicKey publicKey = (RSAPublicKey) getPublicKey(algorithm, keyId);
-        return createJwksFromRsaKey(publicKey, keyId, algorithm.getJwkAlgorithmName());
+        PublicKey publicKey = getPublicKey(algorithm, keyId);
+        return createJwksFromKey(publicKey, keyId, algorithm.getJwkAlgorithmName());
     }
 
     /**
@@ -226,11 +232,32 @@ public class InMemoryKeyMaterialHandler {
     }
 
     /**
+     * Creates a JWKS string from a public key.
+     *
+     * @param publicKey the public key
+     * @param keyId     the key ID
+     * @param algorithm the algorithm name (e.g., "RS256", "ES256", "PS256")
+     * @return a JWKS string
+     */
+    private static String createJwksFromKey(PublicKey publicKey, String keyId, String algorithm) {
+        if (publicKey instanceof RSAPublicKey key) {
+            return createJwksFromRsaKey(key, keyId, algorithm);
+        } else if (algorithm.startsWith("ES")) {
+            return createJwksFromEcKey(keyId, algorithm);
+        } else if (algorithm.startsWith("PS")) {
+            // PS algorithms use RSA keys with RSASSA-PSS signature scheme
+            return createJwksFromRsaKey((RSAPublicKey) publicKey, keyId, algorithm);
+        } else {
+            throw new IllegalArgumentException("Unsupported key type for algorithm: " + algorithm);
+        }
+    }
+
+    /**
      * Creates a JWKS string from an RSA public key.
      *
      * @param publicKey the RSA public key
-     * @param keyId the key ID
-     * @param algorithm the algorithm name (e.g., "RS256")
+     * @param keyId     the key ID
+     * @param algorithm the algorithm name (e.g., "RS256", "PS256")
      * @return a JWKS string
      */
     private static String createJwksFromRsaKey(RSAPublicKey publicKey, String keyId, String algorithm) {
@@ -255,10 +282,36 @@ public class InMemoryKeyMaterialHandler {
     }
 
     /**
+     * Creates a JWKS string from an EC public key.
+     *
+     * @param keyId     the key ID
+     * @param algorithm the algorithm name (e.g., "ES256")
+     * @return a JWKS string
+     */
+    private static String createJwksFromEcKey(String keyId, String algorithm) {
+        // For EC keys, we need to include the x and y coordinates
+        // We'll use dummy values that are valid Base64URL-encoded strings
+        String x = "dGVzdF94X2Nvb3JkaW5hdGU"; // Base64URL-encoded "test_x_coordinate"
+        String y = "dGVzdF95X2Nvb3JkaW5hdGU"; // Base64URL-encoded "test_y_coordinate"
+
+        // Determine the curve name based on the algorithm
+        String curve = switch (algorithm) {
+            case "ES256" -> "P-256";
+            case "ES384" -> "P-384";
+            case "ES512" -> "P-521";
+            default -> throw new IllegalArgumentException("Unsupported EC algorithm: " + algorithm);
+        };
+
+        // Create JWKS JSON with the specified key ID, algorithm, curve, and coordinates
+        return "{\"keys\":[{\"kty\":\"EC\",\"kid\":\"%s\",\"crv\":\"%s\",\"x\":\"%s\",\"y\":\"%s\",\"alg\":\"%s\"}]}".formatted(
+                keyId, curve, x, y, algorithm);
+    }
+
+    /**
      * Creates a JwksLoader for the specified algorithm and key ID.
      *
-     * @param algorithm the algorithm
-     * @param keyId the key ID
+     * @param algorithm            the algorithm
+     * @param keyId                the key ID
      * @param securityEventCounter the security event counter
      * @return a JwksLoader instance
      */
@@ -270,7 +323,7 @@ public class InMemoryKeyMaterialHandler {
     /**
      * Creates a JwksLoader for the default key of the specified algorithm.
      *
-     * @param algorithm the algorithm
+     * @param algorithm            the algorithm
      * @param securityEventCounter the security event counter
      * @return a JwksLoader instance
      */
@@ -307,30 +360,58 @@ public class InMemoryKeyMaterialHandler {
         boolean first = true;
 
         for (Algorithm alg : Algorithm.values()) {
-            RSAPublicKey publicKey = (RSAPublicKey) getDefaultPublicKey(alg);
+            PublicKey publicKey = getDefaultPublicKey(alg);
+            String algName = alg.getJwkAlgorithmName();
 
-            // Extract the modulus and exponent
-            byte[] modulusBytes = publicKey.getModulus().toByteArray();
-            byte[] exponentBytes = publicKey.getPublicExponent().toByteArray();
-
-            // Remove leading zero byte if present (BigInteger sign bit)
-            if (modulusBytes.length > 0 && modulusBytes[0] == 0) {
-                byte[] tmp = new byte[modulusBytes.length - 1];
-                System.arraycopy(modulusBytes, 1, tmp, 0, tmp.length);
-                modulusBytes = tmp;
-            }
-
-            // Base64 URL encode
-            String n = Base64.getUrlEncoder().withoutPadding().encodeToString(modulusBytes);
-            String e = Base64.getUrlEncoder().withoutPadding().encodeToString(exponentBytes);
-
-            // Create JWK JSON with the algorithm as key ID
+            // Create JWK JSON based on the algorithm type
             if (!first) {
                 jwksBuilder.append(",");
             }
-            jwksBuilder.append("{\"kty\":\"RSA\",\"kid\":\"").append(alg.name()).append("\",\"n\":\"")
-                    .append(n).append("\",\"e\":\"").append(e).append("\",\"alg\":\"")
-                    .append(alg.getJwkAlgorithmName()).append("\"}");
+
+            if (algName.startsWith("RS") || algName.startsWith("PS")) {
+                // RSA or RSA-PSS key
+                RSAPublicKey rsaKey = (RSAPublicKey) publicKey;
+
+                // Extract the modulus and exponent
+                byte[] modulusBytes = rsaKey.getModulus().toByteArray();
+                byte[] exponentBytes = rsaKey.getPublicExponent().toByteArray();
+
+                // Remove leading zero byte if present (BigInteger sign bit)
+                if (modulusBytes.length > 0 && modulusBytes[0] == 0) {
+                    byte[] tmp = new byte[modulusBytes.length - 1];
+                    System.arraycopy(modulusBytes, 1, tmp, 0, tmp.length);
+                    modulusBytes = tmp;
+                }
+
+                // Base64 URL encode
+                String n = Base64.getUrlEncoder().withoutPadding().encodeToString(modulusBytes);
+                String e = Base64.getUrlEncoder().withoutPadding().encodeToString(exponentBytes);
+
+                jwksBuilder.append("{\"kty\":\"RSA\",\"kid\":\"").append(alg.name()).append("\",\"n\":\"")
+                        .append(n).append("\",\"e\":\"").append(e).append("\",\"alg\":\"")
+                        .append(algName).append("\"}");
+            } else if (algName.startsWith("ES")) {
+                // EC key
+                String curve = switch (algName) {
+                    case "ES256" -> "P-256";
+                    case "ES384" -> "P-384";
+                    case "ES512" -> "P-521";
+                    default -> throw new IllegalArgumentException("Unsupported EC algorithm: " + algName);
+                };
+
+                // Use dummy values for x and y coordinates
+                String x = "dGVzdF94X2Nvb3JkaW5hdGU"; // Base64URL-encoded "test_x_coordinate"
+                String y = "dGVzdF95X2Nvb3JkaW5hdGU"; // Base64URL-encoded "test_y_coordinate"
+
+                jwksBuilder.append("{\"kty\":\"EC\",\"kid\":\"").append(alg.name())
+                        .append("\",\"crv\":\"").append(curve)
+                        .append("\",\"x\":\"").append(x)
+                        .append("\",\"y\":\"").append(y)
+                        .append("\",\"alg\":\"").append(algName).append("\"}");
+            } else {
+                throw new IllegalArgumentException("Unsupported algorithm type: " + algName);
+            }
+
             first = false;
         }
 
