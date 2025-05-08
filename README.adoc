@@ -64,6 +64,23 @@ The library itself includes the API as a provided dependency, but you need to pr
 
 Alternatively, you can use any other Jakarta JSON API implementation.
 
+==== Test Artifact
+
+The library also provides a test artifact with utilities for testing JWT validation in your applications:
+
+[source,xml]
+----
+    <dependency>
+        <groupId>de.cuioss</groupId>
+        <artifactId>cui-jwt-validation</artifactId>
+        <classifier>test</classifier>
+        <scope>test</scope>
+    </dependency>
+----
+
+This artifact contains utility classes for creating and manipulating JWT tokens for testing purposes.
+See the link:doc/unit-testing/README.adoc[Test Utilities Documentation] for more details.
+
 == Architecture Overview
 
 image::doc/plantuml/component-overview.png[Component Overview]
@@ -115,6 +132,7 @@ The project includes comprehensive documentation to help you get started and und
 * link:doc/threat-model/Threat-Model.adoc[Threat Model] - Security analysis and mitigations
 * link:doc/LogMessages.adoc[Log Messages] - Logging and troubleshooting
 * link:doc/Build.adoc[Building and Development] - Information for contributors
+* link:doc/unit-testing/README.adoc[Test Utilities] - Documentation for the test artifact and utilities
 
 == Next Steps
 

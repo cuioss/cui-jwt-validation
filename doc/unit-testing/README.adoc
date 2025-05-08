@@ -1,8 +1,60 @@
-= In-Memory Key Material Handling for JWT Validation
+= JWT Validation Test Utilities
+:doctype: book
+:toc: left
+:toclevels: 3
+:sectnums:
+:sectnumlevels: 3
+:icons: font
 
-This package provides classes for in-memory key material handling for JWT token testing and validation. These classes are designed to replace the existing file-based key material handling with a more flexible, in-memory approach that supports multiple algorithms.
+== Overview
 
-== Classes
+This document describes the test utilities provided by the `cui-jwt-validation` project for testing JWT validation functionality in your applications.
+
+== Test Artifact
+
+The project provides a test artifact with the classifier `test` that contains utility classes for testing JWT validation. This artifact is published alongside the main artifact and can be included in your project's test dependencies.
+
+=== Maven Dependency
+
+To use the test utilities in your project, add the following dependency to your `pom.xml`:
+
+[source,xml]
+----
+<dependency>
+    <groupId>de.cuioss</groupId>
+    <artifactId>cui-jwt-validation</artifactId>
+    <version>${version}</version>
+    <classifier>test</classifier>
+    <scope>test</scope>
+</dependency>
+----
+
+=== Contents
+
+The test artifact includes the following packages:
+
+* `de.cuioss.jwt.validation.test` - Core test utilities
+* `de.cuioss.jwt.validation.test.dispatcher` - Mock dispatchers for JWKS resolution
+* `de.cuioss.jwt.validation.test.generator` - Token and claim generators
+* `de.cuioss.jwt.validation.test.util` - Utility classes for testing
+
+== Key Test Utilities
+
+=== TestTokenProducer
+
+The `TestTokenProducer` class provides methods for creating JWT tokens for testing purposes:
+
+[source,java]
+----
+// Create a valid signed JWT with default claims
+String token = TestTokenProducer.validSignedEmptyJWT();
+
+// Create a valid signed JWT with custom claims
+String tokenWithClaims = TestTokenProducer.validSignedJWTWithClaims("path/to/claims.json");
+
+// Create a valid signed JWT with custom expiration
+String tokenWithExpiration = TestTokenProducer.validSignedJWTExpireAt(Instant.now().plus(1, ChronoUnit.HOURS));
+----
 
 === InMemoryKeyMaterialHandler
 
@@ -102,36 +154,7 @@ JwksLoader rs384JwksLoader = InMemoryJWKSFactory.createJwksLoader(InMemoryKeyMat
 JwksLoader multiAlgorithmJwksLoader = InMemoryJWKSFactory.createMultiAlgorithmJwksLoader(securityEventCounter);
 ----
 
-== Advantages Over the Original Implementation
-
-. *No Filesystem Dependency*: Keys are generated on the fly and stored in memory, eliminating the need for filesystem access.
-. *Multiple Algorithm Support*: Supports RS256, RS384, and RS512 algorithms, allowing for more comprehensive testing.
-. *Dynamic Key Generation*: Keys are generated on demand, making it easier to create keys with different algorithms and key IDs.
-. *Simplified Testing*: Provides a more flexible and easier-to-use API for testing JWT token validation.
-. *BouncyCastle Integration*: Uses BouncyCastle for cryptographic operations, ensuring consistent behavior across different environments.
-
-== Migration Guide
-
-To migrate from the original `KeyMaterialHandler` and `JWKSFactory` to the new in-memory implementation:
-
-. Replace `KeyMaterialHandler` with `InMemoryKeyMaterialHandler`
-. Replace `JWKSFactory` with `InMemoryJWKSFactory`
-. Update method calls to use the new API
-
-=== Example Migration
-
-[source,java]
-----
-// Before
-String jwks = JWKSFactory.createDefaultJwks();
-JwksLoader jwksLoader = KeyMaterialHandler.createDefaultJwksLoader();
-
-// After
-String jwks = InMemoryJWKSFactory.createDefaultJwks();
-JwksLoader jwksLoader = InMemoryKeyMaterialHandler.createDefaultJwksLoader();
-----
-
-== Testing
+=== Testing In-Memory Key Material
 
 The `InMemoryKeyHandlingTest` class provides tests for the `InMemoryKeyMaterialHandler` and `InMemoryJWKSFactory` classes. These tests verify that:
 
@@ -147,4 +170,66 @@ To run the tests:
 [source,bash]
 ----
 mvn test -Dtest=InMemoryKeyHandlingTest
+----
+
+=== JwtTokenTamperingUtil
+
+The `JwtTokenTamperingUtil` class provides methods for tampering with JWT tokens for testing validation:
+
+[source,java]
+----
+// Create a tampered token with modified claims
+String tamperedToken = JwtTokenTamperingUtil.tamperWithClaim(originalToken, "sub", "modified-subject");
+
+// Create a token with an invalid signature
+String invalidSignatureToken = JwtTokenTamperingUtil.invalidateSignature(originalToken);
+----
+
+=== Token Generators
+
+The test artifact includes various token generators for creating different types of tokens:
+
+* `AccessTokenGenerator` - Generates access tokens
+* `IDTokenGenerator` - Generates ID tokens
+* `RefreshTokenGenerator` - Generates refresh tokens
+* `ValidTokenContentGenerator` - Generates valid token content
+* `InvalidTokenContentGenerator` - Generates invalid token content for testing validation
+
+== Usage Examples
+
+=== Testing Token Validation
+
+[source,java]
+----
+@Test
+void shouldValidateToken() {
+    // Arrange
+    String token = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_SCOPES);
+    TokenValidator validator = new TokenValidator();
+
+    // Act
+    ValidationResult result = validator.validate(token);
+
+    // Assert
+    assertTrue(result.isValid());
+}
+----
+
+=== Testing Invalid Tokens
+
+[source,java]
+----
+@Test
+void shouldRejectTamperedToken() {
+    // Arrange
+    String validToken = TestTokenProducer.validSignedEmptyJWT();
+    String tamperedToken = JwtTokenTamperingUtil.tamperWithClaim(validToken, "iss", "invalid-issuer");
+    TokenValidator validator = new TokenValidator();
+
+    // Act
+    ValidationResult result = validator.validate(tamperedToken);
+
+    // Assert
+    assertFalse(result.isValid());
+}
 ----
