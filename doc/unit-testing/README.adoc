@@ -165,13 +165,6 @@ The `InMemoryKeyHandlingTest` class provides tests for the `InMemoryKeyMaterialH
 . Tokens can be created and verified with the default key
 . The InMemoryJWKSFactory can create valid JWKS content
 
-To run the tests:
-
-[source,bash]
-----
-mvn test -Dtest=InMemoryKeyHandlingTest
-----
-
 === JwtTokenTamperingUtil
 
 The `JwtTokenTamperingUtil` class provides methods for tampering with JWT tokens for testing validation:
