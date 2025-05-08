@@ -163,6 +163,34 @@ class ClaimNameTest {
                         ClaimValue.forPlainString("JWT")
                 ),
 
+                // ROLES - String list type
+                Arguments.of(
+                        ClaimName.ROLES,
+                        createJsonObjectWithArrayClaim("roles", Arrays.asList("admin", "user", "manager")),
+                        ClaimValue.forList("[\"admin\",\"user\",\"manager\"]", Arrays.asList("admin", "user", "manager"))
+                ),
+
+                // ROLES - Single role as string
+                Arguments.of(
+                        ClaimName.ROLES,
+                        createJsonObjectWithStringClaim("roles", "admin"),
+                        ClaimValue.forList("admin", List.of("admin"))
+                ),
+
+                // GROUPS - String list type
+                Arguments.of(
+                        ClaimName.GROUPS,
+                        createJsonObjectWithArrayClaim("groups", Arrays.asList("group1", "group2", "group3")),
+                        ClaimValue.forList("[\"group1\",\"group2\",\"group3\"]", Arrays.asList("group1", "group2", "group3"))
+                ),
+
+                // GROUPS - Single group as string
+                Arguments.of(
+                        ClaimName.GROUPS,
+                        createJsonObjectWithStringClaim("groups", "group1"),
+                        ClaimValue.forList("group1", List.of("group1"))
+                ),
+
                 // AUTHORIZED_PARTY - String type
                 Arguments.of(
                         ClaimName.AUTHORIZED_PARTY,
@@ -260,6 +288,12 @@ class ClaimNameTest {
 
         assertEquals("typ", ClaimName.TYPE.getName());
         assertEquals(ClaimValueType.STRING, ClaimName.TYPE.getValueType());
+
+        assertEquals("roles", ClaimName.ROLES.getName());
+        assertEquals(ClaimValueType.STRING_LIST, ClaimName.ROLES.getValueType());
+
+        assertEquals("groups", ClaimName.GROUPS.getName());
+        assertEquals(ClaimValueType.STRING_LIST, ClaimName.GROUPS.getValueType());
 
         assertEquals("azp", ClaimName.AUTHORIZED_PARTY.getName());
         assertEquals(ClaimValueType.STRING, ClaimName.AUTHORIZED_PARTY.getValueType());

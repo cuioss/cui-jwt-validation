@@ -18,6 +18,7 @@ package de.cuioss.jwt.validation.domain.token;
 import de.cuioss.jwt.validation.TokenType;
 import de.cuioss.jwt.validation.domain.claim.ClaimName;
 import de.cuioss.jwt.validation.domain.claim.ClaimValue;
+import de.cuioss.jwt.validation.domain.claim.CollectionClaimHandler;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -32,6 +33,7 @@ import java.util.*;
  * This class provides access to access token specific claims and functionality, including:
  * <ul>
  *   <li>Scope validation with detailed logging capabilities</li>
+ *   <li>Role and group validation for role-based and group-based access control</li>
  *   <li>Access to audience claims</li>
  *   <li>User identity information (email, preferred username)</li>
  * </ul>
@@ -107,6 +109,32 @@ public class AccessTokenContent extends BaseTokenContent {
     }
 
     /**
+     * Gets the roles from the token claims.
+     * <p>
+     * The "roles" claim is a common but not standardized claim used for role-based access control.
+     *
+     * @return a List of role strings, or an empty list if the roles claim is not present
+     */
+    public List<String> getRoles() {
+        return getClaimOption(ClaimName.ROLES)
+                .map(ClaimValue::getAsList)
+                .orElse(Collections.emptyList());
+    }
+
+    /**
+     * Gets the groups from the token claims.
+     * <p>
+     * The "groups" claim is a common but not standardized claim used for group-based access control.
+     *
+     * @return a List of group strings, or an empty list if the groups claim is not present
+     */
+    public List<String> getGroups() {
+        return getClaimOption(ClaimName.GROUPS)
+                .map(ClaimValue::getAsList)
+                .orElse(Collections.emptyList());
+    }
+
+    /**
      * Gets the email address associated with this token.
      * If not provided in the constructor, tries to extract from the claims.
      *
@@ -133,15 +161,9 @@ public class AccessTokenContent extends BaseTokenContent {
      * @return boolean indicating whether the token provides all given Scopes
      */
     public boolean providesScopes(Collection<String> expectedScopes) {
-        if (null == expectedScopes || expectedScopes.isEmpty()) {
-            LOGGER.debug("No scopes to check against");
-            return true;
-        }
-        var availableScopes = getScopes();
-        @SuppressWarnings("SlowListContainsAll") // owolff: The implementation already uses a Set
-        var result = availableScopes.containsAll(expectedScopes);
-        LOGGER.debug("Scope check result=%s (expected=%s, available=%s)", result, expectedScopes, availableScopes);
-        return result;
+        return getClaimOption(ClaimName.SCOPE)
+                .map(claimValue -> new CollectionClaimHandler(claimValue).providesValues(expectedScopes))
+                .orElse(false);
     }
 
     /**
@@ -151,16 +173,11 @@ public class AccessTokenContent extends BaseTokenContent {
      * {@link #providesScopes(Collection)} it log on debug the corresponding scopes
      */
     public boolean providesScopesAndDebugIfScopesAreMissing(Collection<String> expectedScopes, String logContext,
-                                                            CuiLogger logger) {
-        Set<String> delta = determineMissingScopes(expectedScopes);
-        if (delta.isEmpty()) {
-            logger.trace("All expected scopes are present: {}, {}", expectedScopes, logContext);
-            return true;
-        }
-        logger.debug(
-                "Current Token does not provide all needed scopes:\nMissing in token='{}',\nExpected='{}'\nPresent in Token='{}', {}",
-                delta, expectedScopes, getScopes(), logContext);
-        return false;
+            CuiLogger logger) {
+        return getClaimOption(ClaimName.SCOPE)
+                .map(claimValue -> new CollectionClaimHandler(claimValue)
+                        .providesValuesAndDebugIfValuesMissing(expectedScopes, logContext, logger))
+                .orElse(false);
     }
 
     /**
@@ -169,11 +186,90 @@ public class AccessTokenContent extends BaseTokenContent {
      * {@link TreeSet} containing all missing scopes.
      */
     public Set<String> determineMissingScopes(Collection<String> expectedScopes) {
-        if (providesScopes(expectedScopes)) {
-            return Collections.emptySet();
-        }
-        Set<String> scopeDelta = new TreeSet<>(expectedScopes);
-        getScopes().forEach(scopeDelta::remove);
-        return scopeDelta;
+        return getClaimOption(ClaimName.SCOPE)
+                .map(claimValue -> new CollectionClaimHandler(claimValue).determineMissingValues(expectedScopes))
+                .orElse(new TreeSet<>(expectedScopes));
+    }
+
+    /**
+     * Checks if the token provides all expected roles.
+     *
+     * @param expectedRoles the roles to check for
+     * @return true if the token contains all expected roles, false otherwise
+     */
+    public boolean providesRoles(Collection<String> expectedRoles) {
+        return getClaimOption(ClaimName.ROLES)
+                .map(claimValue -> new CollectionClaimHandler(claimValue).providesValues(expectedRoles))
+                .orElse(false);
+    }
+
+    /**
+     * Checks if the token provides all expected roles and logs debug information if any are missing.
+     *
+     * @param expectedRoles the roles to check for
+     * @param logContext additional context information for logging
+     * @param logger the logger to use for logging
+     * @return true if the token contains all expected roles, false otherwise
+     */
+    public boolean providesRolesAndDebugIfRolesMissing(Collection<String> expectedRoles, String logContext,
+            CuiLogger logger) {
+        return getClaimOption(ClaimName.ROLES)
+                .map(claimValue -> new CollectionClaimHandler(claimValue)
+                        .providesValuesAndDebugIfValuesMissing(expectedRoles, logContext, logger))
+                .orElse(false);
+    }
+
+    /**
+     * Determines which expected roles are missing from the token.
+     *
+     * @param expectedRoles the roles to check for
+     * @return an empty Set if the token provides all expected roles, otherwise a
+     *         {@link TreeSet} containing all missing roles
+     */
+    public Set<String> determineMissingRoles(Collection<String> expectedRoles) {
+        return getClaimOption(ClaimName.ROLES)
+                .map(claimValue -> new CollectionClaimHandler(claimValue).determineMissingValues(expectedRoles))
+                .orElse(new TreeSet<>(expectedRoles));
+    }
+
+    /**
+     * Checks if the token provides all expected groups.
+     *
+     * @param expectedGroups the groups to check for
+     * @return true if the token contains all expected groups, false otherwise
+     */
+    public boolean providesGroups(Collection<String> expectedGroups) {
+        return getClaimOption(ClaimName.GROUPS)
+                .map(claimValue -> new CollectionClaimHandler(claimValue).providesValues(expectedGroups))
+                .orElse(false);
+    }
+
+    /**
+     * Checks if the token provides all expected groups and logs debug information if any are missing.
+     *
+     * @param expectedGroups the groups to check for
+     * @param logContext additional context information for logging
+     * @param logger the logger to use for logging
+     * @return true if the token contains all expected groups, false otherwise
+     */
+    public boolean providesGroupsAndDebugIfGroupsMissing(Collection<String> expectedGroups, String logContext,
+            CuiLogger logger) {
+        return getClaimOption(ClaimName.GROUPS)
+                .map(claimValue -> new CollectionClaimHandler(claimValue)
+                        .providesValuesAndDebugIfValuesMissing(expectedGroups, logContext, logger))
+                .orElse(false);
+    }
+
+    /**
+     * Determines which expected groups are missing from the token.
+     *
+     * @param expectedGroups the groups to check for
+     * @return an empty Set if the token provides all expected groups, otherwise a
+     *         {@link TreeSet} containing all missing groups
+     */
+    public Set<String> determineMissingGroups(Collection<String> expectedGroups) {
+        return getClaimOption(ClaimName.GROUPS)
+                .map(claimValue -> new CollectionClaimHandler(claimValue).determineMissingValues(expectedGroups))
+                .orElse(new TreeSet<>(expectedGroups));
     }
 }
