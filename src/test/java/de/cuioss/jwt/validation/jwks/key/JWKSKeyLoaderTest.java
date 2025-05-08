@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
 
+import static de.cuioss.jwt.validation.JWTValidationLogMessages.ERROR.JWKS_CONTENT_SIZE_EXCEEDED;
 import static org.junit.jupiter.api.Assertions.*;
 
 @EnableTestLogger(debug = {JWKSKeyLoader.class}, trace = {JWKSKeyLoader.class})
@@ -126,7 +127,7 @@ class JWKSKeyLoaderTest {
 
             // Then
             assertFalse(keyInfo.isPresent(), "Key info should not be present when JWKS is invalid");
-            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to parse JWKS JSON");
+            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.ERROR, "Failed to parse JWKS JSON");
         }
 
         @Test
@@ -254,21 +255,20 @@ class JWKSKeyLoaderTest {
                     .build();
 
             // Create a large JWKS content that exceeds the maximum size
-            StringBuilder largeContent = new StringBuilder("{\"keys\":[");
             // Add enough padding to exceed maxSize
-            largeContent.append("\"x\":\"").append("a".repeat(maxSize)).append("\"}]}");
 
             // When
             JWKSKeyLoader loader = JWKSKeyLoader.builder()
-                    .originalString(largeContent.toString())
+                    .originalString("{\"keys\":[" + "\"x\":\"" + "a".repeat(maxSize) + "\"}]}"
+                    // When
+                    )
                     .parserConfig(restrictiveConfig)
                     .securityEventCounter(new SecurityEventCounter())
                     .build();
 
             // Then
             assertFalse(loader.isNotEmpty(), "Loader should reject content exceeding maximum size");
-            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN,
-                    "JWKS content size exceeds maximum allowed size");
+            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.ERROR, JWKS_CONTENT_SIZE_EXCEEDED.resolveIdentifierString());
         }
 
         @Test

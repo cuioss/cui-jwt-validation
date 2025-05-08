@@ -104,7 +104,7 @@ class InMemoryJwksLoaderTest {
 
         // Then
         assertFalse(key.isPresent(), "Key should not be present when JWKS is invalid");
-        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to parse JWKS JSON");
+        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.ERROR, "Failed to parse JWKS JSON");
 
     }
 

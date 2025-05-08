@@ -152,6 +152,18 @@ public final class JWTValidationLogMessages {
                 .identifier(201)
                 .template("Failed to validate validation signature: %s")
                 .build();
+
+        public static final LogRecord JWKS_CONTENT_SIZE_EXCEEDED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(202)
+                .template("JWKS content size exceeds maximum allowed size (upperLimit=%s, actual=%s)")
+                .build();
+
+        public static final LogRecord JWKS_INVALID_JSON = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(203)
+                .template("Failed to parse JWKS JSON: %s")
+                .build();
     }
 
     /**

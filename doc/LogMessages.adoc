@@ -89,4 +89,6 @@ For more details about security events related to these log messages, see the Se
 |===
 |ID |Component |Message |Description
 |JWTValidation-201 |TOKEN |Failed to validate token signature: %s |Logged when a token signature validation fails
+|JWTValidation-202 |JWKS |JWKS content size exceeds maximum allowed size (upperLimit=%s, actual=%s) |Logged when the JWKS content size exceeds the maximum allowed size, showing both the configured upper limit and the actual content size
+|JWTValidation-203 |JWKS |Failed to parse JWKS JSON: %s |Logged when there is an error parsing the JWKS JSON
 |===

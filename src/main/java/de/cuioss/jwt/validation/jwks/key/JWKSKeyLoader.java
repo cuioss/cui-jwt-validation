@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.validation.jwks.key;
 
+import de.cuioss.jwt.validation.JWTValidationLogMessages.ERROR;
 import de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
 import de.cuioss.jwt.validation.ParserConfig;
 import de.cuioss.jwt.validation.jwks.JwksLoader;
@@ -226,8 +227,10 @@ public class JWKSKeyLoader implements JwksLoader {
         Map<String, KeyInfo> result = new ConcurrentHashMap<>();
 
         // Check if the JWKS content size exceeds the maximum allowed size
-        if (jwksContent.getBytes(StandardCharsets.UTF_8).length > parserConfig.getMaxPayloadSize()) {
-            LOGGER.warn(WARN.JWKS_JSON_PARSE_FAILED.format("JWKS content size exceeds maximum allowed size"));
+        int actualSize = jwksContent.getBytes(StandardCharsets.UTF_8).length;
+        int upperLimit = parserConfig.getMaxPayloadSize();
+        if (actualSize > upperLimit) {
+            LOGGER.error(ERROR.JWKS_CONTENT_SIZE_EXCEEDED.format(upperLimit, actualSize));
             securityEventCounter.increment(EventType.JWKS_JSON_PARSE_FAILED);
             return result;
         }
@@ -241,7 +244,7 @@ public class JWKSKeyLoader implements JwksLoader {
             }
         } catch (JsonException e) {
             // Handle invalid JSON format
-            LOGGER.warn(e, WARN.JWKS_JSON_PARSE_FAILED.format(e.getMessage()));
+            LOGGER.error(e, ERROR.JWKS_INVALID_JSON.format(e.getMessage()));
             securityEventCounter.increment(EventType.JWKS_JSON_PARSE_FAILED);
         }
 
