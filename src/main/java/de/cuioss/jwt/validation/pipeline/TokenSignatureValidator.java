@@ -135,7 +135,7 @@ public class TokenSignatureValidator {
         try {
             LOGGER.debug("All checks passed, verifying signature");
             return verifySignature(decodedJwt, keyInfo.get().getKey(), algorithm.get());
-        } catch (RuntimeException e) {
+        } catch (IllegalArgumentException e) {
             LOGGER.warn(JWTValidationLogMessages.ERROR.SIGNATURE_VALIDATION_FAILED.format(e.getMessage()), e);
             securityEventCounter.increment(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED);
             return false;

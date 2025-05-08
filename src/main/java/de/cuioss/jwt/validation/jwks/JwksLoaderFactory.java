@@ -21,6 +21,7 @@ import de.cuioss.jwt.validation.jwks.http.HttpJwksLoaderConfig;
 import de.cuioss.jwt.validation.jwks.key.JWKSKeyLoader;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.tools.logging.CuiLogger;
+import jakarta.json.JsonException;
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
 
@@ -121,7 +122,7 @@ public class JwksLoaderFactory {
                     .build();
             LOGGER.debug("Successfully loaded %s key(s)", keyLoader.keySet().size());
             return keyLoader;
-        } catch (RuntimeException e) {
+        } catch (JsonException | IllegalArgumentException e) {
             LOGGER.warn(e, JWTValidationLogMessages.WARN.JWKS_JSON_PARSE_FAILED.format(e.getMessage()));
             securityEventCounter.increment(SecurityEventCounter.EventType.JWKS_JSON_PARSE_FAILED);
             return JWKSKeyLoader.builder()

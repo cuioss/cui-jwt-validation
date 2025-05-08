@@ -24,6 +24,7 @@ import de.cuioss.jwt.validation.jwks.key.KeyInfo;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
+import jakarta.json.JsonException;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
@@ -128,7 +129,7 @@ public class HttpJwksLoader implements JwksLoader, AutoCloseable {
                     result.keyLoader().keySet().size()));
 
             return result.keyLoader();
-        } catch (RuntimeException e) {
+        } catch (IllegalArgumentException | IllegalStateException | JsonException e) {
             LOGGER.warn(e, WARN.JWKS_FETCH_FAILED.format(e.getMessage()));
             securityEventCounter.increment(SecurityEventCounter.EventType.JWKS_FETCH_FAILED);
             // Return the last valid result if available, or an empty JWKS
@@ -162,7 +163,7 @@ public class HttpJwksLoader implements JwksLoader, AutoCloseable {
                 cacheManager.refresh();
                 keyLoader = cacheManager.resolve();
                 keyInfo = keyLoader.getKeyInfo(kid);
-            } catch (RuntimeException e) {
+            } catch (IllegalArgumentException | IllegalStateException | JsonException e) {
                 // Handle connection errors gracefully
                 LOGGER.warn(e, WARN.JWKS_FETCH_FAILED.format(e.getMessage()));
                 securityEventCounter.increment(SecurityEventCounter.EventType.JWKS_FETCH_FAILED);

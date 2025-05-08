@@ -151,7 +151,7 @@ public class JWKSKeyLoader implements JwksLoader {
             }
             try {
                 return new JWKSKeyLoader(originalString, etag, parserConfig, securityEventCounter);
-            } catch (RuntimeException e) {
+            } catch (JsonException | IllegalStateException | IllegalArgumentException e) {
                 // If an exception occurs during construction, log it and return an empty JWKSKeyLoader
                 LOGGER.warn(e, WARN.JWKS_JSON_PARSE_FAILED.format(e.getMessage()));
                 securityEventCounter.increment(EventType.JWKS_JSON_PARSE_FAILED);
