@@ -162,7 +162,7 @@ The following JSON structures are automatically detected and properly mapped:
 
 === Unsupported JSON Structures
 
-The following JSON structures are NOT automatically split into multiple values:
+The following JSON structures are NOT automatically split into multiple values by the default `JsonCollectionMapper`:
 
 [source]
 ----
@@ -186,6 +186,8 @@ The following JSON structures are NOT automatically split into multiple values:
   "roles": "admin:user:manager"
 }
 ----
+
+NOTE: Character-separated strings (like comma or colon-separated) can be handled using the `StringSplitterMapper`. See the <<Using StringSplitterMapper for Delimited Strings>> section for details.
 
 === Using Roles and Groups
 
@@ -216,19 +218,42 @@ Set<String> missingGroups = accessToken.determineMissingGroups(requiredGroups);
 
 If your identity provider uses a different format for roles or groups, you can configure a custom mapper:
 
+==== Using StringSplitterMapper for Delimited Strings
+
+The library provides a `StringSplitterMapper` that can split string claims by a specified character. This is useful when roles or groups are provided as a single string with values separated by a specific character:
+
 [source,java]
 ----
-// Create a custom mapper for space-separated roles
-ClaimMapper customRoleMapper = new CustomSpaceSeparatedMapper();
+// Create a mapper that splits by comma
+StringSplitterMapper commaMapper = new StringSplitterMapper(',');
 
-// Configure the issuer to use the custom mapper
+// Create a mapper that splits by colon
+StringSplitterMapper colonMapper = new StringSplitterMapper(':');
+
+// Configure the issuer to use the custom mappers
 IssuerConfig issuerConfig = IssuerConfig.builder()
         .issuer("https://issuer.com")
         .jwksLoader(jwksLoader)
-        .claimMapper("roles", customRoleMapper)
-        .claimMapper("groups", customRoleMapper)
+        .claimMapper("roles", commaMapper) // For comma-separated roles
+        .claimMapper("groups", colonMapper) // For colon-separated groups
         .build();
 ----
+
+The `StringSplitterMapper` is particularly useful for handling formats that the default `JsonCollectionMapper` doesn't support:
+
+* Comma-separated strings: `"roles": "admin,user,manager"` → `["admin", "user", "manager"]`
+* Colon-separated strings: `"roles": "admin:user:manager"` → `["admin", "user", "manager"]`
+* Any other character-separated strings
+
+The mapper:
+* Only works with string values (not arrays or other types)
+* Trims whitespace from each value
+* Omits empty values
+* Preserves the original string in the claim value
+
+==== Using Other Custom Mappers
+
+You can also implement your own custom mappers for special formats:
 
 == Security Settings
 _See link:specification/technical-components.adoc[Technical Specification] for details_
