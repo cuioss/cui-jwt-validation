@@ -39,6 +39,8 @@ class AccessTokenContentTest {
     private static final String TEST_EMAIL = "test@example.com";
     private static final List<String> TEST_SCOPES = Arrays.asList("openid", "profile", "email");
     private static final List<String> TEST_AUDIENCE = Arrays.asList("client1", "client2");
+    private static final List<String> TEST_ROLES = Arrays.asList("admin", "user", "manager");
+    private static final List<String> TEST_GROUPS = Arrays.asList("group1", "group2", "group3");
 
     @Test
     @DisplayName("Should create AccessTokenContent with valid parameters")
@@ -194,6 +196,64 @@ class AccessTokenContentTest {
     }
 
     @Test
+    @DisplayName("Should return roles correctly when present")
+    void shouldReturnRolesCorrectlyWhenPresent() {
+        // Given an AccessTokenContent with roles claim
+        Map<String, ClaimValue> claims = new HashMap<>();
+        claims.put(ClaimName.ROLES.getName(), ClaimValue.forList(TEST_ROLES.toString(), TEST_ROLES));
+        var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
+
+        // When getting the roles
+        List<String> roles = accessTokenContent.getRoles();
+
+        // Then the roles should contain the correct values
+        assertEquals(TEST_ROLES, roles, "Roles should match");
+    }
+
+    @Test
+    @DisplayName("Should return empty list when roles not present")
+    void shouldReturnEmptyListWhenRolesNotPresent() {
+        // Given an AccessTokenContent without roles claim
+        Map<String, ClaimValue> claims = new HashMap<>();
+        var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
+
+        // When getting the roles
+        List<String> roles = accessTokenContent.getRoles();
+
+        // Then the roles should be empty
+        assertTrue(roles.isEmpty(), "Roles should be empty");
+    }
+
+    @Test
+    @DisplayName("Should return groups correctly when present")
+    void shouldReturnGroupsCorrectlyWhenPresent() {
+        // Given an AccessTokenContent with groups claim
+        Map<String, ClaimValue> claims = new HashMap<>();
+        claims.put(ClaimName.GROUPS.getName(), ClaimValue.forList(TEST_GROUPS.toString(), TEST_GROUPS));
+        var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
+
+        // When getting the groups
+        List<String> groups = accessTokenContent.getGroups();
+
+        // Then the groups should contain the correct values
+        assertEquals(TEST_GROUPS, groups, "Groups should match");
+    }
+
+    @Test
+    @DisplayName("Should return empty list when groups not present")
+    void shouldReturnEmptyListWhenGroupsNotPresent() {
+        // Given an AccessTokenContent without groups claim
+        Map<String, ClaimValue> claims = new HashMap<>();
+        var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
+
+        // When getting the groups
+        List<String> groups = accessTokenContent.getGroups();
+
+        // Then the groups should be empty
+        assertTrue(groups.isEmpty(), "Groups should be empty");
+    }
+
+    @Test
     @DisplayName("Should return true when token provides all expected scopes")
     void shouldReturnTrueWhenTokenProvidesAllExpectedScopes() {
         // Given an AccessTokenContent with scopes
@@ -345,5 +405,245 @@ class AccessTokenContentTest {
         assertEquals(2, missingScopes.size(), "There should be exactly 2 missing scopes");
         assertTrue(missingScopes.contains(missingScope1), "Missing scopes should contain " + missingScope1);
         assertTrue(missingScopes.contains(missingScope2), "Missing scopes should contain " + missingScope2);
+    }
+
+    @Test
+    @DisplayName("Should return true when token provides all expected roles")
+    void shouldReturnTrueWhenTokenProvidesAllExpectedRoles() {
+        // Given an AccessTokenContent with roles
+        Map<String, ClaimValue> claims = new HashMap<>();
+        claims.put(ClaimName.ROLES.getName(), ClaimValue.forList(TEST_ROLES.toString(), TEST_ROLES));
+        var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
+
+        // When checking if token provides a subset of roles
+        List<String> expectedRoles = new ArrayList<>(TEST_ROLES).subList(0, 2); // First two roles
+        boolean result = accessTokenContent.providesRoles(expectedRoles);
+
+        // Then the result should be true
+        assertTrue(result, "Token should provide all expected roles");
+    }
+
+    @Test
+    @DisplayName("Should return false when token does not provide all expected roles")
+    void shouldReturnFalseWhenTokenDoesNotProvideAllExpectedRoles() {
+        // Given an AccessTokenContent with roles
+        Map<String, ClaimValue> claims = new HashMap<>();
+        claims.put(ClaimName.ROLES.getName(), ClaimValue.forList(TEST_ROLES.toString(), TEST_ROLES));
+        var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
+
+        // When checking if token provides roles including one that's not in the token
+        List<String> expectedRoles = new ArrayList<>(TEST_ROLES);
+        expectedRoles.add("non_existent_role");
+        boolean result = accessTokenContent.providesRoles(expectedRoles);
+
+        // Then the result should be false
+        assertFalse(result, "Token should not provide all expected roles");
+    }
+
+    @Test
+    @DisplayName("Should return false when roles claim is not present")
+    void shouldReturnFalseWhenRolesClaimIsNotPresent() {
+        // Given an AccessTokenContent without roles claim
+        Map<String, ClaimValue> claims = new HashMap<>();
+        var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
+
+        // When checking if token provides roles
+        boolean result = accessTokenContent.providesRoles(List.of("admin"));
+
+        // Then the result should be false
+        assertFalse(result, "Token should not provide any roles when claim is not present");
+    }
+
+    @Test
+    @DisplayName("Should return true when token provides all expected roles with debug logging")
+    void shouldReturnTrueWhenTokenProvidesAllExpectedRolesWithDebugLogging() {
+        // Given an AccessTokenContent with roles
+        Map<String, ClaimValue> claims = new HashMap<>();
+        claims.put(ClaimName.ROLES.getName(), ClaimValue.forList(TEST_ROLES.toString(), TEST_ROLES));
+        var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
+
+        // When checking if token provides a subset of roles with debug logging
+        List<String> expectedRoles = new ArrayList<>(TEST_ROLES).subList(0, 2); // First two roles
+        boolean result = accessTokenContent.providesRolesAndDebugIfRolesMissing(
+                expectedRoles, "Test context", LOGGER);
+
+        // Then the result should be true
+        assertTrue(result, "Token should provide all expected roles");
+    }
+
+    @Test
+    @DisplayName("Should return false when token does not provide all expected roles with debug logging")
+    void shouldReturnFalseWhenTokenDoesNotProvideAllExpectedRolesWithDebugLogging() {
+        // Given an AccessTokenContent with roles
+        Map<String, ClaimValue> claims = new HashMap<>();
+        claims.put(ClaimName.ROLES.getName(), ClaimValue.forList(TEST_ROLES.toString(), TEST_ROLES));
+        var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
+
+        // When checking if token provides roles including one that's not in the token with debug logging
+        List<String> expectedRoles = new ArrayList<>(TEST_ROLES);
+        expectedRoles.add("non_existent_role");
+        boolean result = accessTokenContent.providesRolesAndDebugIfRolesMissing(
+                expectedRoles, "Test context", LOGGER);
+
+        // Then the result should be false
+        assertFalse(result, "Token should not provide all expected roles");
+    }
+
+    @Test
+    @DisplayName("Should return empty set when token provides all expected roles")
+    void shouldReturnEmptySetWhenTokenProvidesAllExpectedRoles() {
+        // Given an AccessTokenContent with roles
+        Map<String, ClaimValue> claims = new HashMap<>();
+        claims.put(ClaimName.ROLES.getName(), ClaimValue.forList(TEST_ROLES.toString(), TEST_ROLES));
+        var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
+
+        // When determining missing roles for a subset of the token's roles
+        List<String> expectedRoles = new ArrayList<>(TEST_ROLES).subList(0, 2); // First two roles
+        Set<String> missingRoles = accessTokenContent.determineMissingRoles(expectedRoles);
+
+        // Then the result should be an empty set
+        assertTrue(missingRoles.isEmpty(), "There should be no missing roles");
+    }
+
+    @Test
+    @DisplayName("Should return set of missing roles when token does not provide all expected roles")
+    void shouldReturnSetOfMissingRolesWhenTokenDoesNotProvideAllExpectedRoles() {
+        // Given an AccessTokenContent with roles
+        Map<String, ClaimValue> claims = new HashMap<>();
+        claims.put(ClaimName.ROLES.getName(), ClaimValue.forList(TEST_ROLES.toString(), TEST_ROLES));
+        var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
+
+        // When determining missing roles including ones that are not in the token
+        List<String> expectedRoles = new ArrayList<>(TEST_ROLES);
+        String missingRole1 = "non_existent_role1";
+        String missingRole2 = "non_existent_role2";
+        expectedRoles.add(missingRole1);
+        expectedRoles.add(missingRole2);
+        Set<String> missingRoles = accessTokenContent.determineMissingRoles(expectedRoles);
+
+        // Then the result should contain the missing roles
+        assertEquals(2, missingRoles.size(), "There should be exactly 2 missing roles");
+        assertTrue(missingRoles.contains(missingRole1), "Missing roles should contain " + missingRole1);
+        assertTrue(missingRoles.contains(missingRole2), "Missing roles should contain " + missingRole2);
+    }
+
+    @Test
+    @DisplayName("Should return true when token provides all expected groups")
+    void shouldReturnTrueWhenTokenProvidesAllExpectedGroups() {
+        // Given an AccessTokenContent with groups
+        Map<String, ClaimValue> claims = new HashMap<>();
+        claims.put(ClaimName.GROUPS.getName(), ClaimValue.forList(TEST_GROUPS.toString(), TEST_GROUPS));
+        var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
+
+        // When checking if token provides a subset of groups
+        List<String> expectedGroups = new ArrayList<>(TEST_GROUPS).subList(0, 2); // First two groups
+        boolean result = accessTokenContent.providesGroups(expectedGroups);
+
+        // Then the result should be true
+        assertTrue(result, "Token should provide all expected groups");
+    }
+
+    @Test
+    @DisplayName("Should return false when token does not provide all expected groups")
+    void shouldReturnFalseWhenTokenDoesNotProvideAllExpectedGroups() {
+        // Given an AccessTokenContent with groups
+        Map<String, ClaimValue> claims = new HashMap<>();
+        claims.put(ClaimName.GROUPS.getName(), ClaimValue.forList(TEST_GROUPS.toString(), TEST_GROUPS));
+        var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
+
+        // When checking if token provides groups including one that's not in the token
+        List<String> expectedGroups = new ArrayList<>(TEST_GROUPS);
+        expectedGroups.add("non_existent_group");
+        boolean result = accessTokenContent.providesGroups(expectedGroups);
+
+        // Then the result should be false
+        assertFalse(result, "Token should not provide all expected groups");
+    }
+
+    @Test
+    @DisplayName("Should return false when groups claim is not present")
+    void shouldReturnFalseWhenGroupsClaimIsNotPresent() {
+        // Given an AccessTokenContent without groups claim
+        Map<String, ClaimValue> claims = new HashMap<>();
+        var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
+
+        // When checking if token provides groups
+        boolean result = accessTokenContent.providesGroups(List.of("group1"));
+
+        // Then the result should be false
+        assertFalse(result, "Token should not provide any groups when claim is not present");
+    }
+
+    @Test
+    @DisplayName("Should return true when token provides all expected groups with debug logging")
+    void shouldReturnTrueWhenTokenProvidesAllExpectedGroupsWithDebugLogging() {
+        // Given an AccessTokenContent with groups
+        Map<String, ClaimValue> claims = new HashMap<>();
+        claims.put(ClaimName.GROUPS.getName(), ClaimValue.forList(TEST_GROUPS.toString(), TEST_GROUPS));
+        var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
+
+        // When checking if token provides a subset of groups with debug logging
+        List<String> expectedGroups = new ArrayList<>(TEST_GROUPS).subList(0, 2); // First two groups
+        boolean result = accessTokenContent.providesGroupsAndDebugIfGroupsMissing(
+                expectedGroups, "Test context", LOGGER);
+
+        // Then the result should be true
+        assertTrue(result, "Token should provide all expected groups");
+    }
+
+    @Test
+    @DisplayName("Should return false when token does not provide all expected groups with debug logging")
+    void shouldReturnFalseWhenTokenDoesNotProvideAllExpectedGroupsWithDebugLogging() {
+        // Given an AccessTokenContent with groups
+        Map<String, ClaimValue> claims = new HashMap<>();
+        claims.put(ClaimName.GROUPS.getName(), ClaimValue.forList(TEST_GROUPS.toString(), TEST_GROUPS));
+        var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
+
+        // When checking if token provides groups including one that's not in the token with debug logging
+        List<String> expectedGroups = new ArrayList<>(TEST_GROUPS);
+        expectedGroups.add("non_existent_group");
+        boolean result = accessTokenContent.providesGroupsAndDebugIfGroupsMissing(
+                expectedGroups, "Test context", LOGGER);
+
+        // Then the result should be false
+        assertFalse(result, "Token should not provide all expected groups");
+    }
+
+    @Test
+    @DisplayName("Should return empty set when token provides all expected groups")
+    void shouldReturnEmptySetWhenTokenProvidesAllExpectedGroups() {
+        // Given an AccessTokenContent with groups
+        Map<String, ClaimValue> claims = new HashMap<>();
+        claims.put(ClaimName.GROUPS.getName(), ClaimValue.forList(TEST_GROUPS.toString(), TEST_GROUPS));
+        var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
+
+        // When determining missing groups for a subset of the token's groups
+        List<String> expectedGroups = new ArrayList<>(TEST_GROUPS).subList(0, 2); // First two groups
+        Set<String> missingGroups = accessTokenContent.determineMissingGroups(expectedGroups);
+
+        // Then the result should be an empty set
+        assertTrue(missingGroups.isEmpty(), "There should be no missing groups");
+    }
+
+    @Test
+    @DisplayName("Should return set of missing groups when token does not provide all expected groups")
+    void shouldReturnSetOfMissingGroupsWhenTokenDoesNotProvideAllExpectedGroups() {
+        // Given an AccessTokenContent with groups
+        Map<String, ClaimValue> claims = new HashMap<>();
+        claims.put(ClaimName.GROUPS.getName(), ClaimValue.forList(TEST_GROUPS.toString(), TEST_GROUPS));
+        var accessTokenContent = new AccessTokenContent(claims, SAMPLE_TOKEN, TEST_EMAIL);
+
+        // When determining missing groups including ones that are not in the token
+        List<String> expectedGroups = new ArrayList<>(TEST_GROUPS);
+        String missingGroup1 = "non_existent_group1";
+        String missingGroup2 = "non_existent_group2";
+        expectedGroups.add(missingGroup1);
+        expectedGroups.add(missingGroup2);
+        Set<String> missingGroups = accessTokenContent.determineMissingGroups(expectedGroups);
+
+        // Then the result should contain the missing groups
+        assertEquals(2, missingGroups.size(), "There should be exactly 2 missing groups");
+        assertTrue(missingGroups.contains(missingGroup1), "Missing groups should contain " + missingGroup1);
+        assertTrue(missingGroups.contains(missingGroup2), "Missing groups should contain " + missingGroup2);
     }
 }

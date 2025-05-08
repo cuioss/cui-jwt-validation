@@ -199,6 +199,36 @@ public enum ClaimName {
     },
 
     /**
+     * The "roles" claim identifies the roles assigned to the user.
+     * This is a common but not specified claim in JWT tokens.
+     * <p>
+     * While not part of the core JWT or OpenID Connect specifications,
+     * this claim is commonly used in authorization scenarios to represent
+     * the user's roles for role-based access control (RBAC).
+     */
+    ROLES("roles", ClaimValueType.STRING_LIST) {
+        @Override
+        public @NonNull ClaimValue map(@NonNull JsonObject jsonObject) {
+            return new JsonCollectionMapper().map(jsonObject, getName());
+        }
+    },
+
+    /**
+     * The "groups" claim identifies the groups the user belongs to.
+     * This is a common but not specified claim in JWT tokens.
+     * <p>
+     * While not part of the core JWT or OpenID Connect specifications,
+     * this claim is commonly used in authorization scenarios to represent
+     * the user's group memberships for group-based access control.
+     */
+    GROUPS("groups", ClaimValueType.STRING_LIST) {
+        @Override
+        public @NonNull ClaimValue map(@NonNull JsonObject jsonObject) {
+            return new JsonCollectionMapper().map(jsonObject, getName());
+        }
+    },
+
+    /**
      * The "azp" (authorized party) claim identifies the party to which the ID Token was issued.
      * Optional by OpenID Connect Core 1.0 for ID_TOKEN type.
      *

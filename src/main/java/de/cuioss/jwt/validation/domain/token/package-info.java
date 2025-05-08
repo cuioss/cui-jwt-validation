@@ -31,8 +31,9 @@
  * The token implementations:
  * <ul>
  *   <li>Provide type-safe access to claims through consistent APIs</li>
- *   <li>Implement token-type specific functionality (e.g., scope validation for access tokens)</li>
+ *   <li>Implement token-type specific functionality (e.g., scope, role, and group validation for access tokens)</li>
  *   <li>Support both required and optional claims defined in the specifications</li>
+ *   <li>Support common but non-standardized claims like roles and groups</li>
  *   <li>Maintain immutability for thread safety</li>
  * </ul>
  * <p>

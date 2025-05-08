@@ -26,6 +26,7 @@
  *   <li>{@link de.cuioss.jwt.validation.domain.claim.ClaimName} - Enumeration of standard JWT claim names with their expected value types</li>
  *   <li>{@link de.cuioss.jwt.validation.domain.claim.ClaimValue} - Represents a claim value with type information</li>
  *   <li>{@link de.cuioss.jwt.validation.domain.claim.ClaimValueType} - Enumeration of supported claim value types</li>
+ *   <li>{@link de.cuioss.jwt.validation.domain.claim.CollectionClaimHandler} - Utility for handling collection-based claims like scopes, roles, and groups</li>
  * </ul>
  * <p>
  * The claim processing supports:
@@ -33,6 +34,7 @@
  *   <li>Standard JWT claims (iss, sub, aud, exp, nbf, iat, jti)</li>
  *   <li>OpenID Connect claims (name, email, preferred_username)</li>
  *   <li>OAuth 2.0 claims (scope, client_id)</li>
+ *   <li>Common authorization claims (roles, groups)</li>
  *   <li>Custom claims through extension points</li>
  * </ul>
  * <p>
