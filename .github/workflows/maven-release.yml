@@ -24,7 +24,7 @@ jobs:
           fetch-depth: 0 # otherwise, there would be errors pushing refs to the destination repository.
 
       - uses: radcortez/project-metadata-action@203f7ffba8db2669b2c9b4d4c2e90b186c588fa5 # 1.1
-        name: Retrieve project metadata from64EncodedContent '.github/project.yml'
+        name: Retrieve project metadata from '.github/project.yml'
         id: metadata
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
