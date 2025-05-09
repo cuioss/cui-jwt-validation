@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>de.cuioss</groupId>
         <artifactId>cui-java-parent</artifactId>
-        <version>0.9.9.5</version>
+        <version>0.9.9.6</version>
         <relativePath/>
     </parent>
     <artifactId>cui-jwt-validation</artifactId>
-    <name>JWT Token Validation</name>
     <version>1.0.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+    <name>JWT Token Validation</name>
     <description>A comprehensive framework for validating JWT tokens in multi-issuer environments.
         The module provides robust token parsing, validation, and management capabilities
         with a focus on security and ease of use, using Bouncy Castle for cryptographic operations.
     </description>
-    <packaging>jar</packaging>
     <url>https://github.com/cuioss/cui-jwt-validation/</url>
     <scm>
         <url>https://github.com/cuioss/cui-jwt-validation/</url>
