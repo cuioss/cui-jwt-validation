@@ -57,7 +57,7 @@ import java.util.Set;
  *         .refreshIntervalSeconds(60)
  *         .build())
  *     .build();
- * 
+ *
  * // Initialize the security event counter -> This is usually done by TokenValidator
  * issuerConfig.initSecurityEventCounter(new SecurityEventCounter());
  * </pre>
@@ -135,7 +135,7 @@ public class IssuerConfig {
     /**
      * The JwksLoader instance used for loading JWKS keys.
      * This is initialized in the initSecurityEventCounter method.
-     * Therefore, any configured will be overridden
+     * Therefore, any configured JwksLoader will be overridden
      */
     JwksLoader jwksLoader;
 
