@@ -117,7 +117,8 @@ IssuerConfig issuerConfig = IssuerConfig.builder()
 TokenValidator validator = new TokenValidator(issuerConfig);
 
 // Validate token
-Optional<AccessTokenContent> accessToken = validator.createAccessToken(tokenString);
+// This will throw TokenValidationException if validation fails
+AccessTokenContent accessToken = validator.createAccessToken(tokenString);
 ----
 
 For more detailed examples and best practices, see the link:doc/Usage.adoc[Usage Guide].
