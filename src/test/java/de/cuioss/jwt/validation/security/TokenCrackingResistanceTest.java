@@ -18,10 +18,13 @@ package de.cuioss.jwt.validation.security;
 import de.cuioss.jwt.validation.IssuerConfig;
 import de.cuioss.jwt.validation.ParserConfig;
 import de.cuioss.jwt.validation.TokenValidator;
+import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.jwks.JwksLoader;
 import de.cuioss.jwt.validation.jwks.key.KeyInfo;
 import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
+import de.cuioss.jwt.validation.test.TestTokenProducer;
 import de.cuioss.jwt.validation.test.generator.AccessTokenGenerator;
+import de.cuioss.test.generator.junit.EnableGeneratorController;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import de.cuioss.tools.logging.CuiLogger;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +35,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.Base64;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -78,6 +80,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @EnableTestLogger
 @DisplayName("Token Cracking Resistance Tests")
+@EnableGeneratorController
 class TokenCrackingResistanceTest {
 
     private static final CuiLogger LOGGER = new CuiLogger(TokenCrackingResistanceTest.class);
@@ -89,7 +92,7 @@ class TokenCrackingResistanceTest {
     void setUp() {
         // Create issuer config with JWKS content
         issuerConfig = IssuerConfig.builder()
-                .issuer("https://test-issuer.com")
+                .issuer(TestTokenProducer.ISSUER)
                 .expectedAudience("test-client")
                 .jwksContent(InMemoryJWKSFactory.createDefaultJwks())
                 .build();
@@ -185,8 +188,16 @@ class TokenCrackingResistanceTest {
         String tamperedToken = parts[0] + "." + parts[1] + "." + signature.substring(0, signature.length() - 1) + "X";
 
         // Verify that the tampered validation is rejected
-        Optional<?> result = tokenValidator.createAccessToken(tamperedToken);
-        assertFalse(result.isPresent(), "Tampered validation should be rejected");
+        TokenValidationException exception = assertThrows(TokenValidationException.class,
+                () -> tokenValidator.createAccessToken(tamperedToken),
+                "Tampered token should be rejected");
+
+        // Verify the exception has a valid event type
+        assertNotNull(exception.getEventType(), "Exception should have an event type");
+
+        // Verify the exception is related to signature validation
+        assertEquals(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED, exception.getEventType(),
+                "Exception should have SIGNATURE_VALIDATION_FAILED event type");
     }
 
     @ParameterizedTest

@@ -32,7 +32,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -86,11 +85,10 @@ class OpenIDConnectComplianceTest {
             String token = idTokenGenerator.next();
 
             // When
-            Optional<IdTokenContent> result = tokenValidator.createIdToken(token);
+            IdTokenContent result = tokenValidator.createIdToken(token);
 
             // Then
-            assertTrue(result.isPresent(), "Token should be parsed successfully");
-            assertEquals(ISSUER, result.get().getIssuer(),
+            assertEquals(ISSUER, result.getIssuer(),
                     "Issuer claim should match the expected value");
         }
 
@@ -112,11 +110,10 @@ class OpenIDConnectComplianceTest {
                     .compact();
 
             // When
-            Optional<IdTokenContent> result = tokenValidator.createIdToken(token);
+            IdTokenContent result = tokenValidator.createIdToken(token);
 
             // Then
-            assertTrue(result.isPresent(), "Token should be parsed successfully");
-            assertEquals(subject, result.get().getSubject(),
+            assertEquals(subject, result.getSubject(),
                     "Subject claim should match the expected value");
         }
 
@@ -127,11 +124,10 @@ class OpenIDConnectComplianceTest {
             String token = idTokenGenerator.next();
 
             // When
-            Optional<IdTokenContent> result = tokenValidator.createIdToken(token);
+            IdTokenContent result = tokenValidator.createIdToken(token);
 
             // Then
-            assertTrue(result.isPresent(), "Token should be parsed successfully");
-            assertEquals(List.of(CLIENT_ID), result.get().getAudience(),
+            assertEquals(List.of(CLIENT_ID), result.getAudience(),
                     "Audience claim should match the expected value");
         }
 
@@ -142,13 +138,12 @@ class OpenIDConnectComplianceTest {
             String token = idTokenGenerator.next();
 
             // When
-            Optional<IdTokenContent> result = tokenValidator.createIdToken(token);
+            IdTokenContent result = tokenValidator.createIdToken(token);
 
             // Then
-            assertTrue(result.isPresent(), "Token should be parsed successfully");
-            assertNotNull(result.get().getExpirationTime(),
+            assertNotNull(result.getExpirationTime(),
                     "Expiration time claim should be present");
-            assertFalse(result.get().isExpired(),
+            assertFalse(result.isExpired(),
                     "Token should not be expired");
         }
 
@@ -159,11 +154,10 @@ class OpenIDConnectComplianceTest {
             String token = idTokenGenerator.next();
 
             // When
-            Optional<IdTokenContent> result = tokenValidator.createIdToken(token);
+            IdTokenContent result = tokenValidator.createIdToken(token);
 
             // Then
-            assertTrue(result.isPresent(), "Token should be parsed successfully");
-            assertNotNull(result.get().getIssuedAtTime(),
+            assertNotNull(result.getIssuedAtTime(),
                     "Issued At claim should be present");
         }
 
@@ -186,11 +180,10 @@ class OpenIDConnectComplianceTest {
                     .compact();
 
             // When
-            Optional<IdTokenContent> result = tokenValidator.createIdToken(token);
+            IdTokenContent result = tokenValidator.createIdToken(token);
 
             // Then
-            assertTrue(result.isPresent(), "Token should be parsed successfully");
-            assertTrue(result.get().getClaims().containsKey("auth_time"),
+            assertTrue(result.getClaims().containsKey("auth_time"),
                     "Authentication Time claim should be present");
         }
 
@@ -213,13 +206,12 @@ class OpenIDConnectComplianceTest {
                     .compact();
 
             // When
-            Optional<IdTokenContent> result = tokenValidator.createIdToken(token);
+            IdTokenContent result = tokenValidator.createIdToken(token);
 
             // Then
-            assertTrue(result.isPresent(), "Token should be parsed successfully");
-            assertTrue(result.get().getClaims().containsKey("nonce"),
+            assertTrue(result.getClaims().containsKey("nonce"),
                     "Nonce claim should be present");
-            assertEquals(nonce, result.get().getClaims().get("nonce").getOriginalString(),
+            assertEquals(nonce, result.getClaims().get("nonce").getOriginalString(),
                     "Nonce claim should match the expected value");
         }
 
@@ -230,13 +222,12 @@ class OpenIDConnectComplianceTest {
             String token = idTokenGenerator.next();
 
             // When
-            Optional<IdTokenContent> result = tokenValidator.createIdToken(token);
+            IdTokenContent result = tokenValidator.createIdToken(token);
 
             // Then
-            assertTrue(result.isPresent(), "Token should be parsed successfully");
-            assertTrue(result.get().getClaimOption(ClaimName.AUTHORIZED_PARTY).isPresent(),
+            assertTrue(result.getClaimOption(ClaimName.AUTHORIZED_PARTY).isPresent(),
                     "Authorized Party claim should be present");
-            assertEquals(CLIENT_ID, result.get().getClaimOption(ClaimName.AUTHORIZED_PARTY).get().getOriginalString(),
+            assertEquals(CLIENT_ID, result.getClaimOption(ClaimName.AUTHORIZED_PARTY).get().getOriginalString(),
                     "Authorized Party claim should match the expected value");
         }
     }
@@ -264,11 +255,10 @@ class OpenIDConnectComplianceTest {
                     .compact();
 
             // When
-            Optional<IdTokenContent> result = tokenValidator.createIdToken(token);
+            IdTokenContent result = tokenValidator.createIdToken(token);
 
             // Then
-            assertTrue(result.isPresent(), "Token should be parsed successfully");
-            assertEquals(name, result.get().getName().orElse(null),
+            assertEquals(name, result.getName().orElse(null),
                     "Name claim should match the expected value");
         }
 
@@ -291,11 +281,10 @@ class OpenIDConnectComplianceTest {
                     .compact();
 
             // When
-            Optional<IdTokenContent> result = tokenValidator.createIdToken(token);
+            IdTokenContent result = tokenValidator.createIdToken(token);
 
             // Then
-            assertTrue(result.isPresent(), "Token should be parsed successfully");
-            assertEquals(email, result.get().getEmail().orElse(null),
+            assertEquals(email, result.getEmail().orElse(null),
                     "Email claim should match the expected value");
         }
 
@@ -318,13 +307,12 @@ class OpenIDConnectComplianceTest {
                     .compact();
 
             // When
-            Optional<IdTokenContent> result = tokenValidator.createIdToken(token);
+            IdTokenContent result = tokenValidator.createIdToken(token);
 
             // Then
-            assertTrue(result.isPresent(), "Token should be parsed successfully");
-            assertTrue(result.get().getClaimOption(ClaimName.PREFERRED_USERNAME).isPresent(),
+            assertTrue(result.getClaimOption(ClaimName.PREFERRED_USERNAME).isPresent(),
                     "Preferred Username claim should be present");
-            assertEquals(preferredUsername, result.get().getClaimOption(ClaimName.PREFERRED_USERNAME).get().getOriginalString(),
+            assertEquals(preferredUsername, result.getClaimOption(ClaimName.PREFERRED_USERNAME).get().getOriginalString(),
                     "Preferred Username claim should match the expected value");
         }
     }

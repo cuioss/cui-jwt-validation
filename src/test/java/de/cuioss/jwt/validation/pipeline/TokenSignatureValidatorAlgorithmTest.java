@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.validation.pipeline;
 
+import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.jwks.JwksLoader;
 import de.cuioss.jwt.validation.jwks.JwksLoaderFactory;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
@@ -33,11 +34,9 @@ import org.junit.jupiter.params.provider.EnumSource;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.Optional;
 
 import static de.cuioss.jwt.validation.test.TestTokenProducer.ISSUER;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for the {@link TokenSignatureValidator} class focusing on different algorithms.
@@ -96,15 +95,12 @@ class TokenSignatureValidatorAlgorithmTest {
         String token = createToken(algorithm);
 
         // Parse the token
-        Optional<DecodedJwt> decodedJwtOpt = jwtParser.decode(token);
-        assertTrue(decodedJwtOpt.isPresent(), "Token should be decoded successfully");
-        DecodedJwt decodedJwt = decodedJwtOpt.get();
+        DecodedJwt decodedJwt = jwtParser.decode(token);
+        assertNotNull(decodedJwt, "Token should be decoded successfully");
 
-        // Validate the signature
-        boolean result = validator.validateSignature(decodedJwt);
-
-        // Assert that the signature is valid
-        assertTrue(result, "Token with valid " + algorithm + " signature should be validated");
+        // Validate the signature - should not throw an exception
+        assertDoesNotThrow(() -> validator.validateSignature(decodedJwt),
+                "Token with valid " + algorithm + " signature should be validated without exceptions");
     }
 
     @ParameterizedTest
@@ -125,16 +121,20 @@ class TokenSignatureValidatorAlgorithmTest {
                 validToken, JwtTokenTamperingUtil.TamperingStrategy.MODIFY_SIGNATURE_LAST_CHAR);
 
         // Parse the tampered token
-        Optional<DecodedJwt> decodedJwtOpt = jwtParser.decode(tamperedToken);
-        assertTrue(decodedJwtOpt.isPresent(), "Tampered token should be decoded successfully");
-        DecodedJwt decodedJwt = decodedJwtOpt.get();
+        DecodedJwt decodedJwt = jwtParser.decode(tamperedToken);
+        assertNotNull(decodedJwt, "Tampered token should be decoded successfully");
 
-        // Validate the signature
-        boolean result = validator.validateSignature(decodedJwt);
+        // Validate the signature - should throw an exception
+        TokenValidationException exception = assertThrows(TokenValidationException.class,
+                () -> validator.validateSignature(decodedJwt),
+                "Token with tampered " + algorithm + " signature should be rejected");
 
-        // Assert that the signature is invalid
-        assertFalse(result, "Token with tampered " + algorithm + " signature should be rejected");
-        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to validate validation signature");
+        // Verify the exception has the correct event type
+        assertEquals(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED, exception.getEventType(),
+                "Exception should have SIGNATURE_VALIDATION_FAILED event type");
+
+        // Verify log message
+        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Invalid signature");
 
         // Verify security event was recorded
         assertTrue(securityEventCounter.getCount(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED) > initialCount,

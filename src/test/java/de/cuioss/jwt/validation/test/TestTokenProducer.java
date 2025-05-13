@@ -41,6 +41,7 @@ public class TestTokenProducer {
     public static final String ISSUER = "Token-Test-testIssuer";
     public static final String WRONG_ISSUER = Generators.nonBlankStrings().next();
     public static final String SUBJECT = Generators.letterStrings(10, 12).next();
+    public static final String CLIENT_ID = "test-client";
 
     // Constants for file paths
     public static final String BASE_PATH = "src/test/resources/token/";
@@ -148,6 +149,9 @@ public class TestTokenProducer {
             JwtBuilder builder = Jwts.builder().issuer(ISSUER)
                     .subject(SUBJECT)
                     .issuedAt(Date.from(OffsetDateTime.ofInstant(expireAt, ZoneId.systemDefault()).minusMinutes(5).toInstant())).expiration(Date.from(expireAt))
+                    .claim("azp", "test-client") // Add authorized party claim
+                    .claim("typ", "Bearer") // Add type claim
+                    .header().add("kid", "default-key-id").and() // Add key ID to header
                     .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey());
 
             // Add claims from file
@@ -174,8 +178,11 @@ public class TestTokenProducer {
             JwtBuilder builder = Jwts.builder()
                     .issuer(ISSUER)
                     .subject(SUBJECT)
-                    .issuedAt(Date.from(Instant.now().minusSeconds(300))).expiration(Date.from(expirationTime))
-                    .claim("nbf", notBefore.getEpochSecond())
+                    .issuedAt(Date.from(Instant.now().minusSeconds(300)))
+                    .expiration(Date.from(expirationTime))
+                    .notBefore(Date.from(notBefore)) // Use JJWT's built-in notBefore method
+                    .claim("azp", CLIENT_ID) // Add authorized party claim
+                    .claim("aud", CLIENT_ID) // Add audience claim
                     .header().add("kid", "default-key-id").and() // Add key ID to header
                     .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey());
 

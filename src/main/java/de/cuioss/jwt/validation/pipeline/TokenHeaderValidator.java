@@ -17,6 +17,7 @@ package de.cuioss.jwt.validation.pipeline;
 
 import de.cuioss.jwt.validation.IssuerConfig;
 import de.cuioss.jwt.validation.JWTValidationLogMessages;
+import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.tools.logging.CuiLogger;
 import jakarta.annotation.Nonnull;
@@ -65,75 +66,79 @@ public class TokenHeaderValidator {
 
 
     /**
-     * Validates a decoded JWT Token's header.     *
+     * Validates a decoded JWT Token's header.
      *
      * @param decodedJwt the decoded JWT Token to validate
-     * @return true if the validation header is valid, false otherwise.
+     * @throws TokenValidationException if the token header is invalid
      */
-    public boolean validate(@Nonnull DecodedJwt decodedJwt) {
+    public void validate(@Nonnull DecodedJwt decodedJwt) {
         LOGGER.trace("Validating validation header");
 
-        if (!validateAlgorithm(decodedJwt)) {
-            return false;
-        }
-
-        if (!validateIssuer(decodedJwt)) {
-            return false;
-        }
+        validateAlgorithm(decodedJwt);
+        validateIssuer(decodedJwt);
 
         LOGGER.debug("Token header is valid");
-        return true;
     }
 
     /**
      * Validates the validation's algorithm against the configured algorithm preferences.
      *
      * @param decodedJwt the decoded JWT Token
-     * @return true if the algorithm is valid, false otherwise
+     * @throws TokenValidationException if the algorithm is invalid
      */
-    private boolean validateAlgorithm(DecodedJwt decodedJwt) {
+    private void validateAlgorithm(DecodedJwt decodedJwt) {
         var algorithm = decodedJwt.getAlg();
 
         if (algorithm.isEmpty()) {
             LOGGER.warn(JWTValidationLogMessages.WARN.MISSING_CLAIM.format("alg"));
             securityEventCounter.increment(SecurityEventCounter.EventType.MISSING_CLAIM);
-            return false;
+            throw new TokenValidationException(
+                    SecurityEventCounter.EventType.MISSING_CLAIM,
+                    "Missing required algorithm (alg) claim in token header"
+            );
         }
 
         if (!issuerConfig.getAlgorithmPreferences().isSupported(algorithm.get())) {
             LOGGER.warn(JWTValidationLogMessages.WARN.UNSUPPORTED_ALGORITHM.format(algorithm.get()));
             securityEventCounter.increment(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM);
-            return false;
+            throw new TokenValidationException(
+                    SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM,
+                    "Unsupported algorithm: " + algorithm.get()
+            );
         }
 
         LOGGER.debug("Algorithm is valid: %s", algorithm.get());
-        return true;
     }
 
     /**
      * Validates the validation's issuer against the configured expected issuers.
      *
      * @param decodedJwt the decoded JWT Token
-     * @return true if the issuer is valid, false otherwise
+     * @throws TokenValidationException if the issuer is invalid
      */
     @SuppressWarnings("java:S3655") // Suppress warning for using Optional.get()
     // as we check for presence before calling it
-    private boolean validateIssuer(DecodedJwt decodedJwt) {
+    private void validateIssuer(DecodedJwt decodedJwt) {
 
         if (decodedJwt.getIssuer().isEmpty()) {
             LOGGER.warn(JWTValidationLogMessages.WARN.MISSING_CLAIM.format("iss"));
             securityEventCounter.increment(SecurityEventCounter.EventType.MISSING_CLAIM);
-            return false;
+            throw new TokenValidationException(
+                    SecurityEventCounter.EventType.MISSING_CLAIM,
+                    "Missing required issuer (iss) claim in token"
+            );
         }
         var givenIssuer = decodedJwt.getIssuer().get();
 
         if (!issuerConfig.getIssuer().equals(givenIssuer)) {
             LOGGER.warn(JWTValidationLogMessages.WARN.ISSUER_MISMATCH.format(givenIssuer, issuerConfig.getIssuer()));
             securityEventCounter.increment(SecurityEventCounter.EventType.ISSUER_MISMATCH);
-            return false;
+            throw new TokenValidationException(
+                    SecurityEventCounter.EventType.ISSUER_MISMATCH,
+                    "Issuer mismatch: expected '" + issuerConfig.getIssuer() + "' but found '" + givenIssuer + "'"
+            );
         }
 
         LOGGER.debug("Successfully validated issuer: %s", givenIssuer);
-        return true;
     }
 }

@@ -20,6 +20,7 @@ import de.cuioss.jwt.validation.domain.token.AccessTokenContent;
 import de.cuioss.jwt.validation.domain.token.IdTokenContent;
 import de.cuioss.jwt.validation.domain.token.RefreshTokenContent;
 import de.cuioss.jwt.validation.domain.token.TokenContent;
+import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.jwks.JwksLoader;
 import de.cuioss.jwt.validation.pipeline.DecodedJwt;
 import de.cuioss.jwt.validation.pipeline.NonValidatingJwtParser;
@@ -162,19 +163,18 @@ public class TokenValidator {
      * Creates an access token from the given token string.
      *
      * @param tokenString The token string to parse, must not be null
-     * @return The parsed access token, which may be empty if the token is invalid or no parser is found
+     * @return The parsed access token
+     * @throws TokenValidationException if the token is invalid
      */
-    public Optional<AccessTokenContent> createAccessToken(@NonNull String tokenString) {
+    public AccessTokenContent createAccessToken(@NonNull String tokenString) {
         LOGGER.debug("Creating access token");
-        Optional<AccessTokenContent> result = processTokenPipeline(
+        AccessTokenContent result = processTokenPipeline(
                 tokenString,
                 (decodedJwt, issuerConfig) -> new TokenBuilder(issuerConfig).createAccessToken(decodedJwt)
         );
 
-        if (result.isPresent()) {
-            LOGGER.debug(JWTValidationLogMessages.DEBUG.ACCESS_TOKEN_CREATED::format);
-            securityEventCounter.increment(SecurityEventCounter.EventType.ACCESS_TOKEN_CREATED);
-        }
+        LOGGER.debug(JWTValidationLogMessages.DEBUG.ACCESS_TOKEN_CREATED::format);
+        securityEventCounter.increment(SecurityEventCounter.EventType.ACCESS_TOKEN_CREATED);
 
         return result;
     }
@@ -183,19 +183,18 @@ public class TokenValidator {
      * Creates an ID token from the given token string.
      *
      * @param tokenString The token string to parse, must not be null
-     * @return The parsed ID token, which may be empty if the token is invalid or no parser is found
+     * @return The parsed ID token
+     * @throws TokenValidationException if the token is invalid
      */
-    public Optional<IdTokenContent> createIdToken(@NonNull String tokenString) {
+    public IdTokenContent createIdToken(@NonNull String tokenString) {
         LOGGER.debug("Creating ID token");
-        Optional<IdTokenContent> result = processTokenPipeline(
+        IdTokenContent result = processTokenPipeline(
                 tokenString,
                 (decodedJwt, issuerConfig) -> new TokenBuilder(issuerConfig).createIdToken(decodedJwt)
         );
 
-        if (result.isPresent()) {
-            LOGGER.debug(JWTValidationLogMessages.DEBUG.ID_TOKEN_CREATED::format);
-            securityEventCounter.increment(SecurityEventCounter.EventType.ID_TOKEN_CREATED);
-        }
+        LOGGER.debug(JWTValidationLogMessages.DEBUG.ID_TOKEN_CREATED::format);
+        securityEventCounter.increment(SecurityEventCounter.EventType.ID_TOKEN_CREATED);
 
         return result;
     }
@@ -204,27 +203,36 @@ public class TokenValidator {
      * Creates a refresh token from the given token string.
      *
      * @param tokenString The token string to parse, must not be null
-     * @return The parsed refresh token, which may be empty if the token is invalid or no parser is found
+     * @return The parsed refresh token
+     * @throws TokenValidationException if the token is invalid
      */
-    @SuppressWarnings("java:S3655") // owolff: false positive: isPresent is checked
-    public Optional<RefreshTokenContent> createRefreshToken(@NonNull String tokenString) {
+    @SuppressWarnings("java:S3655") //owolff: False Positive: isPresent is checked
+    public RefreshTokenContent createRefreshToken(@NonNull String tokenString) {
         LOGGER.debug("Creating refresh token");
         // For refresh tokens, we don't need the full pipeline
         if (MoreStrings.isBlank(tokenString)) {
             LOGGER.warn(JWTValidationLogMessages.WARN.TOKEN_IS_EMPTY::format);
             securityEventCounter.increment(SecurityEventCounter.EventType.TOKEN_EMPTY);
-            return Optional.empty();
+            throw new TokenValidationException(
+                    SecurityEventCounter.EventType.TOKEN_EMPTY,
+                    "Token is empty or null"
+            );
         }
         Map<String, ClaimValue> claims = Collections.emptyMap();
-        var decoded = jwtParser.decode(tokenString, false);
-        if (decoded.isPresent() && decoded.get().getBody().isPresent()) {
-            LOGGER.debug("Adding claims, because of being a JWT");
-            claims = TokenBuilder.extractClaimsForRefreshToken(decoded.get().getBody().get());
+        try {
+            DecodedJwt decoded = jwtParser.decode(tokenString, false);
+            if (decoded.getBody().isPresent()) {
+                LOGGER.debug("Adding claims, because of being a JWT");
+                claims = TokenBuilder.extractClaimsForRefreshToken(decoded.getBody().get());
+            }
+        } catch (TokenValidationException e) {
+            // Ignore validation exceptions for refresh tokens
+            LOGGER.debug("Ignoring validation exception for refresh token: %s", e.getMessage());
         }
         var refreshToken = new RefreshTokenContent(tokenString, claims);
         LOGGER.debug(JWTValidationLogMessages.DEBUG.REFRESH_TOKEN_CREATED::format);
         securityEventCounter.increment(SecurityEventCounter.EventType.REFRESH_TOKEN_CREATED);
-        return Optional.of(refreshToken);
+        return refreshToken;
     }
 
     /**
@@ -245,9 +253,10 @@ public class TokenValidator {
      * @param tokenString  the token string to process
      * @param tokenBuilder function to build the token from the decoded JWT and issuer config
      * @param <T>          the type of token to create
-     * @return an Optional containing the validated token, or empty if validation fails
+     * @return the validated token
+     * @throws TokenValidationException if validation fails
      */
-    private <T extends TokenContent> Optional<T> processTokenPipeline(
+    private <T extends TokenContent> T processTokenPipeline(
             String tokenString,
             TokenBuilderFunction<T> tokenBuilder) {
 
@@ -255,23 +264,24 @@ public class TokenValidator {
         if (MoreStrings.isBlank(tokenString)) {
             LOGGER.warn(JWTValidationLogMessages.WARN.TOKEN_IS_EMPTY::format);
             securityEventCounter.increment(SecurityEventCounter.EventType.TOKEN_EMPTY);
-            return Optional.empty();
+            throw new TokenValidationException(
+                    SecurityEventCounter.EventType.TOKEN_EMPTY,
+                    "Token is empty or null"
+            );
         }
 
         // 2. Decode the token - fail fast for malformed tokens
-        Optional<DecodedJwt> decodedJwt = jwtParser.decode(tokenString);
-        if (decodedJwt.isEmpty()) {
-            LOGGER.warn(JWTValidationLogMessages.WARN.FAILED_TO_DECODE_JWT::format);
-            securityEventCounter.increment(SecurityEventCounter.EventType.FAILED_TO_DECODE_JWT);
-            return Optional.empty();
-        }
+        DecodedJwt decodedJwt = jwtParser.decode(tokenString);
 
         // 3. Get the issuer - fail fast for missing issuer
-        Optional<String> issuer = decodedJwt.get().getIssuer();
+        Optional<String> issuer = decodedJwt.getIssuer();
         if (issuer.isEmpty()) {
             LOGGER.warn(JWTValidationLogMessages.WARN.MISSING_CLAIM.format("iss"));
             securityEventCounter.increment(SecurityEventCounter.EventType.MISSING_CLAIM);
-            return Optional.empty();
+            throw new TokenValidationException(
+                    SecurityEventCounter.EventType.MISSING_CLAIM,
+                    "Missing required issuer (iss) claim in token"
+            );
         }
 
         // 4. Look up the issuer config - fail fast for unknown issuer
@@ -279,15 +289,15 @@ public class TokenValidator {
         if (issuerConfig == null) {
             LOGGER.warn(JWTValidationLogMessages.WARN.NO_ISSUER_CONFIG.format(issuer.get()));
             securityEventCounter.increment(SecurityEventCounter.EventType.NO_ISSUER_CONFIG);
-            return Optional.empty();
+            throw new TokenValidationException(
+                    SecurityEventCounter.EventType.NO_ISSUER_CONFIG,
+                    "No issuer configuration found for issuer: " + issuer.get()
+            );
         }
 
         // 5. Validate header - create validator only if needed
         TokenHeaderValidator headerValidator = new TokenHeaderValidator(issuerConfig, securityEventCounter);
-        if (!headerValidator.validate(decodedJwt.get())) {
-            LOGGER.debug("Token header validation failed");
-            return Optional.empty();
-        }
+        headerValidator.validate(decodedJwt);
 
         // 6. Validate signature - create validator only if needed
         // Initialize the JwksLoader if needed
@@ -295,30 +305,27 @@ public class TokenValidator {
         JwksLoader jwksLoader = issuerConfig.getJwksLoader();
 
         TokenSignatureValidator signatureValidator = new TokenSignatureValidator(jwksLoader, securityEventCounter);
-        if (!signatureValidator.validateSignature(decodedJwt.get())) {
-            LOGGER.debug("Token signature validation failed");
-            return Optional.empty();
-        }
+        signatureValidator.validateSignature(decodedJwt);
 
         // 7. Build token - only if header and signature are valid
-        Optional<T> token = tokenBuilder.apply(decodedJwt.get(), issuerConfig);
+        Optional<T> token = tokenBuilder.apply(decodedJwt, issuerConfig);
         if (token.isEmpty()) {
             LOGGER.debug("Token building failed");
-            return Optional.empty();
+            throw new TokenValidationException(
+                    SecurityEventCounter.EventType.MISSING_CLAIM,
+                    "Failed to build token from decoded JWT"
+            );
         }
 
         // 8. Validate claims - create validator only if token is built successfully
         TokenClaimValidator claimValidator = new TokenClaimValidator(issuerConfig, securityEventCounter);
+        TokenContent validatedContent = claimValidator.validate(token.get());
+
+        // Safe cast because the token builder creates the correct type
         @SuppressWarnings("unchecked")
-        Optional<T> validatedToken = claimValidator.validate(token.get())
-                .map(validatedContent -> (T) validatedContent);
+        T validatedToken = (T) validatedContent;
 
-        if (validatedToken.isEmpty()) {
-            LOGGER.debug("Token claim validation failed");
-        } else {
-            LOGGER.debug("Token successfully validated");
-        }
-
+        LOGGER.debug("Token successfully validated");
         return validatedToken;
     }
 

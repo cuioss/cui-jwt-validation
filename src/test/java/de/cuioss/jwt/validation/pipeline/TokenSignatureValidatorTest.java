@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.validation.pipeline;
 
+import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.jwks.JwksLoader;
 import de.cuioss.jwt.validation.jwks.JwksLoaderFactory;
 import de.cuioss.jwt.validation.jwks.key.KeyInfo;
@@ -75,9 +76,8 @@ class TokenSignatureValidatorTest {
         String token = validSignedJWTWithClaims(SOME_SCOPES);
 
         // Parse the validation
-        Optional<DecodedJwt> decodedJwtOpt = jwtParser.decode(token);
-        assertTrue(decodedJwtOpt.isPresent(), "Token should be decoded successfully");
-        DecodedJwt decodedJwt = decodedJwtOpt.get();
+        DecodedJwt decodedJwt = jwtParser.decode(token);
+        assertNotNull(decodedJwt, "Token should be decoded successfully");
 
         // Create an in-memory JwksLoader with a valid key
         String jwksContent = InMemoryJWKSFactory.createDefaultJwks();
@@ -86,11 +86,9 @@ class TokenSignatureValidatorTest {
         // Create the validator with the in-memory JwksLoader and security event counter
         TokenSignatureValidator validator = new TokenSignatureValidator(jwksLoader, securityEventCounter);
 
-        // Validate the signature
-        boolean result = validator.validateSignature(decodedJwt);
-
-        // Assert that the signature is valid
-        assertTrue(result, "Token with valid signature should be validated");
+        // Validate the signature - should not throw an exception
+        assertDoesNotThrow(() -> validator.validateSignature(decodedJwt),
+                "Token with valid signature should be validated without exceptions");
     }
 
     @Test
@@ -116,9 +114,8 @@ class TokenSignatureValidatorTest {
         String tamperedToken = header + "." + encodedModifiedPayload + "." + parts[2];
 
         // Parse the tampered validation
-        Optional<DecodedJwt> decodedJwtOpt = jwtParser.decode(tamperedToken);
-        assertTrue(decodedJwtOpt.isPresent(), "Tampered validation should be decoded successfully");
-        DecodedJwt decodedJwt = decodedJwtOpt.get();
+        DecodedJwt decodedJwt = jwtParser.decode(tamperedToken);
+        assertNotNull(decodedJwt, "Tampered validation should be decoded successfully");
 
         // Create an in-memory JwksLoader with a valid key
         String jwksContent = InMemoryJWKSFactory.createDefaultJwks();
@@ -127,12 +124,17 @@ class TokenSignatureValidatorTest {
         // Create the validator with the in-memory JwksLoader and security event counter
         TokenSignatureValidator validator = new TokenSignatureValidator(jwksLoader, securityEventCounter);
 
-        // Validate the signature
-        boolean result = validator.validateSignature(decodedJwt);
+        // Validate the signature - should throw an exception
+        TokenValidationException exception = assertThrows(TokenValidationException.class,
+                () -> validator.validateSignature(decodedJwt),
+                "Token with invalid signature should be rejected");
 
-        // Assert that the signature is invalid
-        assertFalse(result, "Token with invalid signature should be rejected");
-        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Failed to validate validation signature: Invalid signature");
+        // Verify the exception has the correct event type
+        assertEquals(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED, exception.getEventType(),
+                "Exception should have SIGNATURE_VALIDATION_FAILED event type");
+
+        // Verify log message
+        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Invalid signature");
 
         // Verify security event was recorded
         assertTrue(securityEventCounter.getCount(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED) > initialCount,
@@ -149,9 +151,8 @@ class TokenSignatureValidatorTest {
         String token = validSignedJWTWithClaims(SOME_SCOPES);
 
         // Parse the validation
-        Optional<DecodedJwt> decodedJwtOpt = jwtParser.decode(token);
-        assertTrue(decodedJwtOpt.isPresent(), "Token should be decoded successfully");
-        DecodedJwt decodedJwt = decodedJwtOpt.get();
+        DecodedJwt decodedJwt = jwtParser.decode(token);
+        assertNotNull(decodedJwt, "Token should be decoded successfully");
 
         // Create an in-memory JwksLoader with a different key ID
         String jwksContent = InMemoryJWKSFactory.createValidJwksWithKeyId("different-key-id");
@@ -160,11 +161,16 @@ class TokenSignatureValidatorTest {
         // Create the validator with the in-memory JwksLoader and security event counter
         TokenSignatureValidator validator = new TokenSignatureValidator(jwksLoader, securityEventCounter);
 
-        // Validate the signature
-        boolean result = validator.validateSignature(decodedJwt);
+        // Validate the signature - should throw an exception
+        TokenValidationException exception = assertThrows(TokenValidationException.class,
+                () -> validator.validateSignature(decodedJwt),
+                "Token with unknown key ID should be rejected");
 
-        // Assert that validation fails
-        assertFalse(result, "Validation should fail when key is not found");
+        // Verify the exception has the correct event type
+        assertEquals(SecurityEventCounter.EventType.KEY_NOT_FOUND, exception.getEventType(),
+                "Exception should have KEY_NOT_FOUND event type");
+
+        // Verify log message
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "No key found with ID");
 
         // Verify security event was recorded
@@ -182,9 +188,8 @@ class TokenSignatureValidatorTest {
         String token = createTokenWithoutKid();
 
         // Parse the validation
-        Optional<DecodedJwt> decodedJwtOpt = jwtParser.decode(token);
-        assertTrue(decodedJwtOpt.isPresent(), "Token should be decoded successfully");
-        DecodedJwt decodedJwt = decodedJwtOpt.get();
+        DecodedJwt decodedJwt = jwtParser.decode(token);
+        assertNotNull(decodedJwt, "Token should be decoded successfully");
 
         // Create an in-memory JwksLoader with a valid key
         String jwksContent = InMemoryJWKSFactory.createDefaultJwks();
@@ -193,11 +198,16 @@ class TokenSignatureValidatorTest {
         // Create the validator with the in-memory JwksLoader and security event counter
         TokenSignatureValidator validator = new TokenSignatureValidator(jwksLoader, securityEventCounter);
 
-        // Validate the signature
-        boolean result = validator.validateSignature(decodedJwt);
+        // Validate the signature - should throw an exception
+        TokenValidationException exception = assertThrows(TokenValidationException.class,
+                () -> validator.validateSignature(decodedJwt),
+                "Token with missing kid should be rejected");
 
-        // Assert that validation fails
-        assertFalse(result, "Validation should fail when kid is missing");
+        // Verify the exception has the correct event type
+        assertEquals(SecurityEventCounter.EventType.MISSING_CLAIM, exception.getEventType(),
+                "Exception should have MISSING_CLAIM event type");
+
+        // Verify log message
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Token is missing required claim: kid");
 
         // Verify security event was recorded
@@ -216,9 +226,8 @@ class TokenSignatureValidatorTest {
         String token = createAlgorithmConfusionToken();
 
         // Parse the validation
-        Optional<DecodedJwt> decodedJwtOpt = jwtParser.decode(token);
-        assertTrue(decodedJwtOpt.isPresent(), "Token should be decoded successfully");
-        DecodedJwt decodedJwt = decodedJwtOpt.get();
+        DecodedJwt decodedJwt = jwtParser.decode(token);
+        assertNotNull(decodedJwt, "Token should be decoded successfully");
 
         // Create an in-memory JwksLoader with a valid key
         String jwksContent = InMemoryJWKSFactory.createDefaultJwks();
@@ -227,11 +236,16 @@ class TokenSignatureValidatorTest {
         // Create the validator with the in-memory JwksLoader and security event counter
         TokenSignatureValidator validator = new TokenSignatureValidator(jwksLoader, securityEventCounter);
 
-        // Validate the signature
-        boolean result = validator.validateSignature(decodedJwt);
+        // Validate the signature - should throw an exception
+        TokenValidationException exception = assertThrows(TokenValidationException.class,
+                () -> validator.validateSignature(decodedJwt),
+                "Token with algorithm confusion should be rejected");
 
-        // Assert that validation fails
-        assertFalse(result, "Token with algorithm confusion should be rejected");
+        // Verify the exception has the correct event type
+        assertEquals(SecurityEventCounter.EventType.KEY_NOT_FOUND, exception.getEventType(),
+                "Exception should have KEY_NOT_FOUND event type");
+
+        // Verify log message
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "No key found with ID: wrong-key-id");
 
         // Verify security event was recorded
@@ -249,9 +263,8 @@ class TokenSignatureValidatorTest {
         String token = validSignedJWTWithClaims(SOME_SCOPES);
 
         // Parse the validation
-        Optional<DecodedJwt> decodedJwtOpt = jwtParser.decode(token);
-        assertTrue(decodedJwtOpt.isPresent(), "Token should be decoded successfully");
-        DecodedJwt decodedJwt = decodedJwtOpt.get();
+        DecodedJwt decodedJwt = jwtParser.decode(token);
+        assertNotNull(decodedJwt, "Token should be decoded successfully");
 
         // Create a custom JwksLoader that returns a key with incompatible algorithm
         JwksLoader jwksLoader = new JwksLoader() {
@@ -282,11 +295,16 @@ class TokenSignatureValidatorTest {
         // Create the validator with the custom JwksLoader and security event counter
         TokenSignatureValidator validator = new TokenSignatureValidator(jwksLoader, securityEventCounter);
 
-        // Validate the signature
-        boolean result = validator.validateSignature(decodedJwt);
+        // Validate the signature - should throw an exception
+        TokenValidationException exception = assertThrows(TokenValidationException.class,
+                () -> validator.validateSignature(decodedJwt),
+                "Token with algorithm mismatch should be rejected");
 
-        // Assert that validation fails
-        assertFalse(result, "Validation should fail when algorithm doesn't match");
+        // Verify the exception has the correct event type
+        assertEquals(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM, exception.getEventType(),
+                "Exception should have UNSUPPORTED_ALGORITHM event type");
+
+        // Verify log message
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Unsupported algorithm");
 
         // Verify security event was recorded

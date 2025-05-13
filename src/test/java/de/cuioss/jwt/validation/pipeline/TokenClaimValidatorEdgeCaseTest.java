@@ -20,6 +20,7 @@ import de.cuioss.jwt.validation.JWTValidationLogMessages;
 import de.cuioss.jwt.validation.domain.claim.ClaimName;
 import de.cuioss.jwt.validation.domain.claim.ClaimValue;
 import de.cuioss.jwt.validation.domain.token.TokenContent;
+import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.jwks.key.JWKSKeyLoader;
 import de.cuioss.jwt.validation.jwks.key.KeyInfo;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
@@ -37,8 +38,7 @@ import org.junit.jupiter.api.Test;
 import java.time.OffsetDateTime;
 import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Edge case tests for {@link TokenClaimValidator}.
@@ -78,10 +78,11 @@ class TokenClaimValidatorEdgeCaseTest {
 
             // When validating a token that is about to expire (5 seconds from now)
             TokenContent tokenAboutToExpire = createTokenWithExpirationTime(OffsetDateTime.now().plusSeconds(5));
-            var result = validator.validate(tokenAboutToExpire);
 
-            // Then the validation should pass
-            assertTrue(result.isPresent(), "Token should be valid when about to expire but not yet expired");
+            // Then the validation should pass (no exception thrown)
+            TokenContent result = validator.validate(tokenAboutToExpire);
+            // If we get here, the validation passed
+            assertFalse(result.isExpired(), "Token should be valid when about to expire but not yet expired");
         }
 
         @Test
@@ -97,10 +98,10 @@ class TokenClaimValidatorEdgeCaseTest {
 
             // When validating a token that has just expired (5 seconds ago)
             TokenContent tokenJustExpired = createTokenWithExpirationTime(OffsetDateTime.now().minusSeconds(5));
-            var result = validator.validate(tokenJustExpired);
 
-            // Then the validation should fail
-            assertTrue(result.isEmpty(), "Token should be invalid when just expired");
+            // Then the validation should fail with a TokenValidationException
+            assertThrows(TokenValidationException.class, () -> validator.validate(tokenJustExpired),
+                    "Token should be invalid when just expired");
 
             // Verify that the appropriate warning is logged
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, JWTValidationLogMessages.WARN.TOKEN_EXPIRED.resolveIdentifierString());
@@ -124,10 +125,11 @@ class TokenClaimValidatorEdgeCaseTest {
 
             // When validating a token with a not before time in the past
             TokenContent tokenWithPastNotBefore = createTokenWithNotBeforeTime(OffsetDateTime.now().minusMinutes(5));
-            var result = validator.validate(tokenWithPastNotBefore);
 
-            // Then the validation should pass
-            assertTrue(result.isPresent(), "Token should be valid with not before time in the past");
+            // Then the validation should pass (no exception thrown)
+            TokenContent result = validator.validate(tokenWithPastNotBefore);
+            // If we get here, the validation passed
+            assertNotNull(result, "Token should be valid with not before time in the past");
         }
 
         @Test
@@ -144,10 +146,11 @@ class TokenClaimValidatorEdgeCaseTest {
             // When validating a token with a not before time slightly in the future (30 seconds)
             // This should be within the allowed clock skew (60 seconds)
             TokenContent tokenWithFutureNotBefore = createTokenWithNotBeforeTime(OffsetDateTime.now().plusSeconds(30));
-            var result = validator.validate(tokenWithFutureNotBefore);
 
-            // Then the validation should pass
-            assertTrue(result.isPresent(), "Token should be valid with not before time slightly in the future (within clock skew)");
+            // Then the validation should pass (no exception thrown)
+            TokenContent result = validator.validate(tokenWithFutureNotBefore);
+            // If we get here, the validation passed
+            assertNotNull(result, "Token should be valid with not before time slightly in the future (within clock skew)");
         }
 
         @Test
@@ -164,10 +167,10 @@ class TokenClaimValidatorEdgeCaseTest {
             // When validating a token with a not before time far in the future (90 seconds)
             // This should be beyond the allowed clock skew (60 seconds)
             TokenContent tokenWithFarFutureNotBefore = createTokenWithNotBeforeTime(OffsetDateTime.now().plusSeconds(90));
-            var result = validator.validate(tokenWithFarFutureNotBefore);
 
-            // Then the validation should fail
-            assertTrue(result.isEmpty(), "Token should be invalid with not before time far in the future (beyond clock skew)");
+            // Then the validation should fail with a TokenValidationException
+            assertThrows(TokenValidationException.class, () -> validator.validate(tokenWithFarFutureNotBefore),
+                    "Token should be invalid with not before time far in the future (beyond clock skew)");
 
             // Verify that the appropriate warning is logged
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, JWTValidationLogMessages.WARN.TOKEN_NBF_FUTURE.resolveIdentifierString());
@@ -202,11 +205,9 @@ class TokenClaimValidatorEdgeCaseTest {
             TokenContent validToken = createValidToken();
             DecodedJwt decodedJwt = ((TokenContentImpl) validToken).toDecodedJwt();
 
-            // When validating the signature
-            boolean result = signatureValidator.validateSignature(decodedJwt);
-
-            // Then the validation should fail gracefully
-            assertFalse(result, "Signature validation should fail when network error occurs");
+            // When validating the signature, it should throw a TokenValidationException
+            assertThrows(TokenValidationException.class, () -> signatureValidator.validateSignature(decodedJwt),
+                    "Signature validation should throw an exception when network error occurs");
         }
     }
 

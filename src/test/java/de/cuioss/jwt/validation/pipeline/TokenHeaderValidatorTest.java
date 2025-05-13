@@ -16,6 +16,7 @@
 package de.cuioss.jwt.validation.pipeline;
 
 import de.cuioss.jwt.validation.IssuerConfig;
+import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.security.AlgorithmPreferences;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.jwt.validation.test.TestTokenProducer;
@@ -28,7 +29,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -108,14 +108,11 @@ class TokenHeaderValidatorTest {
 
             // And a validation with a supported algorithm (RS256)
             String token = TestTokenProducer.validSignedEmptyJWT();
-            Optional<DecodedJwt> decodedJwt = JWT_PARSER.decode(token);
-            assertTrue(decodedJwt.isPresent(), "Token should be decoded successfully");
+            DecodedJwt decodedJwt = JWT_PARSER.decode(token);
 
-            // When validating the validation
-            boolean isValid = validator.validate(decodedJwt.get());
-
-            // Then the validation should pass
-            assertTrue(isValid, "Token with supported algorithm should be valid");
+            // When validating the validation, it should not throw an exception
+            assertDoesNotThrow(() -> validator.validate(decodedJwt),
+                    "Token with supported algorithm should be valid");
         }
 
         @Test
@@ -134,15 +131,17 @@ class TokenHeaderValidatorTest {
 
             // And a validation with an unsupported algorithm (RS256)
             String token = TestTokenProducer.validSignedEmptyJWT();
-            Optional<DecodedJwt> decodedJwt = JWT_PARSER.decode(token);
-            assertTrue(decodedJwt.isPresent(), "Token should be decoded successfully");
-            assertEquals("RS256", decodedJwt.get().getAlg().orElse(null), "Token should use RS256 algorithm");
+            DecodedJwt decodedJwt = JWT_PARSER.decode(token);
+            assertEquals("RS256", decodedJwt.getAlg().orElse(null), "Token should use RS256 algorithm");
 
-            // When validating the validation
-            boolean isValid = validator.validate(decodedJwt.get());
+            // When validating the validation, it should throw an exception
+            var exception = assertThrows(TokenValidationException.class,
+                    () -> validator.validate(decodedJwt),
+                    "Token with unsupported algorithm should throw TokenValidationException");
 
-            // Then the validation should fail
-            assertFalse(isValid, "Token with unsupported algorithm should be invalid");
+            // Verify the exception has the correct event type
+            assertEquals(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM, exception.getEventType(),
+                    "Exception should have UNSUPPORTED_ALGORITHM event type");
 
             // And a warning should be logged
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Unsupported algorithm: RS256");
@@ -167,11 +166,14 @@ class TokenHeaderValidatorTest {
             // And a validation with a missing algorithm (manually created since generators always include alg)
             DecodedJwt decodedJwt = new DecodedJwt(null, null, null, new String[]{"", "", ""}, "");
 
-            // When validating the validation
-            boolean isValid = validator.validate(decodedJwt);
+            // When validating the validation, it should throw an exception
+            var exception = assertThrows(TokenValidationException.class,
+                    () -> validator.validate(decodedJwt),
+                    "Token with missing algorithm should throw TokenValidationException");
 
-            // Then the validation should fail
-            assertFalse(isValid, "Token with missing algorithm should be invalid");
+            // Verify the exception has the correct event type
+            assertEquals(SecurityEventCounter.EventType.MISSING_CLAIM, exception.getEventType(),
+                    "Exception should have MISSING_CLAIM event type");
 
             // And a warning should be logged
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Token is missing required claim: alg");
@@ -197,15 +199,12 @@ class TokenHeaderValidatorTest {
 
             // And a validation with the expected issuer
             String token = TestTokenProducer.validSignedEmptyJWT();
-            Optional<DecodedJwt> decodedJwt = JWT_PARSER.decode(token);
-            assertTrue(decodedJwt.isPresent(), "Token should be decoded successfully");
-            assertEquals(EXPECTED_ISSUER, decodedJwt.get().getIssuer().orElse(null), "Token should have expected issuer");
+            DecodedJwt decodedJwt = JWT_PARSER.decode(token);
+            assertEquals(EXPECTED_ISSUER, decodedJwt.getIssuer().orElse(null), "Token should have expected issuer");
 
-            // When validating the validation
-            boolean isValid = validator.validate(decodedJwt.get());
-
-            // Then the validation should pass
-            assertTrue(isValid, "Token with expected issuer should be valid");
+            // When validating the validation, it should not throw an exception
+            assertDoesNotThrow(() -> validator.validate(decodedJwt),
+                    "Token with expected issuer should be valid");
         }
 
         @Test
@@ -223,11 +222,14 @@ class TokenHeaderValidatorTest {
             // And a validation with a wrong issuer
             DecodedJwt decodedJwt = new InvalidDecodedJwtGenerator().withCustomIssuer(WRONG_ISSUER).next();
 
-            // When validating the validation
-            boolean isValid = validator.validate(decodedJwt);
+            // When validating the validation, it should throw an exception
+            var exception = assertThrows(TokenValidationException.class,
+                    () -> validator.validate(decodedJwt),
+                    "Token with wrong issuer should throw TokenValidationException");
 
-            // Then the validation should fail
-            assertFalse(isValid, "Token with wrong issuer should be invalid");
+            // Verify the exception has the correct event type
+            assertEquals(SecurityEventCounter.EventType.ISSUER_MISMATCH, exception.getEventType(),
+                    "Exception should have ISSUER_MISMATCH event type");
 
             // And a warning should be logged
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN,
@@ -253,11 +255,14 @@ class TokenHeaderValidatorTest {
             // And a validation with a missing issuer
             DecodedJwt decodedJwt = new InvalidDecodedJwtGenerator().withMissingIssuer().next();
 
-            // When validating the validation
-            boolean isValid = validator.validate(decodedJwt);
+            // When validating the validation, it should throw an exception
+            var exception = assertThrows(TokenValidationException.class,
+                    () -> validator.validate(decodedJwt),
+                    "Token with missing issuer should throw TokenValidationException");
 
-            // Then the validation should fail
-            assertFalse(isValid, "Token with missing issuer should be invalid");
+            // Verify the exception has the correct event type
+            assertEquals(SecurityEventCounter.EventType.MISSING_CLAIM, exception.getEventType(),
+                    "Exception should have MISSING_CLAIM event type");
 
             // And a warning should be logged
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "Token is missing required claim: iss");
@@ -281,19 +286,21 @@ class TokenHeaderValidatorTest {
 
             // And a validation with a different issuer
             String token = TestTokenProducer.validSignedEmptyJWT();
-            Optional<DecodedJwt> decodedJwt = JWT_PARSER.decode(token);
-            assertTrue(decodedJwt.isPresent(), "Token should be decoded successfully");
-            assertEquals(EXPECTED_ISSUER, decodedJwt.get().getIssuer().orElse(null), "Token should have expected issuer");
+            DecodedJwt decodedJwt = JWT_PARSER.decode(token);
+            assertEquals(EXPECTED_ISSUER, decodedJwt.getIssuer().orElse(null), "Token should have expected issuer");
 
-            // When validating the validation
-            boolean isValid = validator.validate(decodedJwt.get());
+            // When validating the validation, it should throw an exception
+            var exception = assertThrows(TokenValidationException.class,
+                    () -> validator.validate(decodedJwt),
+                    "Token with mismatched issuer should throw TokenValidationException");
 
-            // Then the validation should fail (issuer validation fails)
-            assertFalse(isValid, "Validation should fail when validation issuer doesn't match expected issuer");
+            // Verify the exception has the correct event type
+            assertEquals(SecurityEventCounter.EventType.ISSUER_MISMATCH, exception.getEventType(),
+                    "Exception should have ISSUER_MISMATCH event type");
 
             // And a warning should be logged
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN,
-                    "Token issuer '" + EXPECTED_ISSUER + "' does not match expected issuer");
+                    "Token issuer '" + EXPECTED_ISSUER + "' does not match expected issuer 'dummy-issuer'");
 
             // Verify security event was recorded
             assertEquals(initialCount + 1, SECURITY_EVENT_COUNTER.getCount(SecurityEventCounter.EventType.ISSUER_MISMATCH),

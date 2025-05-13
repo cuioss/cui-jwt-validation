@@ -19,6 +19,7 @@ import de.cuioss.jwt.validation.IssuerConfig;
 import de.cuioss.jwt.validation.JWTValidationLogMessages;
 import de.cuioss.jwt.validation.TokenType;
 import de.cuioss.jwt.validation.domain.token.TokenContent;
+import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.jwt.validation.test.generator.InvalidTokenContentGenerator;
 import de.cuioss.jwt.validation.test.generator.ValidTokenContentGenerator;
@@ -177,11 +178,12 @@ class TokenClaimValidatorTest {
             // Create a validation with all mandatory claims using the ValidTokenContentGenerator
             TokenContent tokenContent = new ValidTokenContentGenerator().next();
 
-            // When validating the validation
-            var result = validator.validate(tokenContent);
+            // When validating the validation - should not throw an exception
+            TokenContent result = assertDoesNotThrow(() -> validator.validate(tokenContent),
+                    "Token should be valid with all mandatory claims");
 
             // Then the validation should pass
-            assertTrue(result.isPresent(), "Token should be valid with all mandatory claims");
+            assertNotNull(result, "Validated token should not be null");
         }
 
         @Test
@@ -204,11 +206,14 @@ class TokenClaimValidatorTest {
                     .withMissingSubject()
                     .next();
 
-            // When validating the validation
-            var result = validator.validate(tokenContent);
+            // When validating the validation - should throw an exception
+            TokenValidationException exception = assertThrows(TokenValidationException.class,
+                    () -> validator.validate(tokenContent),
+                    "Token with missing mandatory claims should be rejected");
 
-            // Then the validation should fail
-            assertTrue(result.isEmpty(), "Token should be invalid when mandatory claims are missing");
+            // Verify the exception has the correct event type
+            assertEquals(SecurityEventCounter.EventType.MISSING_CLAIM, exception.getEventType(),
+                    "Exception should have MISSING_CLAIM event type");
 
             // Verify that the appropriate warning is logged
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, JWTValidationLogMessages.WARN.MISSING_CLAIM.resolveIdentifierString());
@@ -233,12 +238,13 @@ class TokenClaimValidatorTest {
                     .build();
             var validator = createValidator(issuerConfig);
 
-            // When validating a token with a matching audience
+            // When validating a token with a matching audience - should not throw an exception
             TokenContent tokenContent = new ValidTokenContentGenerator().next();
-            var result = validator.validate(tokenContent);
+            TokenContent result = assertDoesNotThrow(() -> validator.validate(tokenContent),
+                    "Token should be valid with matching audience");
 
             // Then the validation should pass
-            assertTrue(result.isPresent(), "Token should be valid with matching audience");
+            assertNotNull(result, "Validated token should not be null");
         }
 
         @Test
@@ -255,14 +261,19 @@ class TokenClaimValidatorTest {
                     .build();
             var validator = createValidator(issuerConfig);
 
-            // When validating a token with a missing audience
+            // When validating a token with a missing audience - should throw an exception
             TokenContent tokenContent = new InvalidTokenContentGenerator(TokenType.ID_TOKEN)
                     .withMissingAudience()
                     .next();
-            var result = validator.validate(tokenContent);
 
             // Then the validation should fail
-            assertTrue(result.isEmpty(), "Token should be invalid with missing audience");
+            TokenValidationException exception = assertThrows(TokenValidationException.class,
+                    () -> validator.validate(tokenContent),
+                    "Token with missing audience should be rejected for ID tokens");
+
+            // Verify the exception has the correct event type
+            assertEquals(SecurityEventCounter.EventType.MISSING_CLAIM, exception.getEventType(),
+                    "Exception should have MISSING_CLAIM event type");
 
             // Verify that the appropriate warning is logged
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, JWTValidationLogMessages.WARN.MISSING_CLAIM.resolveIdentifierString());
@@ -273,7 +284,7 @@ class TokenClaimValidatorTest {
         }
 
         @Test
-        @DisplayName("Should fail validation for token with non-matching audience for Access-Tokens")
+        @DisplayName("Should not fail validation for token with non-matching audience for Access-Tokens")
         void shouldFailValidationForTokenWithNonMatchingAudienceForAccessToken() {
             // Given a validator with expected audience
             var issuerConfig = IssuerConfig.builder()
@@ -283,14 +294,17 @@ class TokenClaimValidatorTest {
                     .build();
             var validator = createValidator(issuerConfig);
 
-            // When validating a token with a missing audience
+            // When validating a token with a missing audience - should not throw an exception for access tokens
             TokenContent tokenContent = new InvalidTokenContentGenerator(TokenType.ACCESS_TOKEN)
                     .withMissingAudience()
                     .next();
-            var result = validator.validate(tokenContent);
 
-            // Then the validation should fail
-            assertFalse(result.isEmpty(), "Token should be valid with missing audience for access-token");
+            // Then the validation should pass (access tokens can have missing audience)
+            TokenContent result = assertDoesNotThrow(() -> validator.validate(tokenContent),
+                    "Token should be valid with missing audience for access-token");
+
+            // Verify the result is not null
+            assertNotNull(result, "Validated token should not be null");
         }
     }
 
@@ -308,12 +322,13 @@ class TokenClaimValidatorTest {
                     .build();
             var validator = createValidator(issuerConfig);
 
-            // When validating a token with a matching authorized party
+            // When validating a token with a matching authorized party - should not throw an exception
             TokenContent tokenContent = new ValidTokenContentGenerator().next();
-            var result = validator.validate(tokenContent);
+            TokenContent result = assertDoesNotThrow(() -> validator.validate(tokenContent),
+                    "Token should be valid with matching authorized party");
 
             // Then the validation should pass
-            assertTrue(result.isPresent(), "Token should be valid with matching authorized party");
+            assertNotNull(result, "Validated token should not be null");
         }
 
         @Test
@@ -335,10 +350,15 @@ class TokenClaimValidatorTest {
             TokenContent tokenContent = new InvalidTokenContentGenerator()
                     .withMissingAuthorizedParty()
                     .next();
-            var result = validator.validate(tokenContent);
 
             // Then the validation should fail
-            assertTrue(result.isEmpty(), "Token should be invalid with missing authorized party");
+            TokenValidationException exception = assertThrows(TokenValidationException.class,
+                    () -> validator.validate(tokenContent),
+                    "Token with missing authorized party should be rejected");
+
+            // Verify the exception has the correct event type
+            assertEquals(SecurityEventCounter.EventType.MISSING_CLAIM, exception.getEventType(),
+                    "Exception should have MISSING_CLAIM event type");
 
             // Verify that the appropriate warning is logged
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, JWTValidationLogMessages.WARN.MISSING_CLAIM.resolveIdentifierString());

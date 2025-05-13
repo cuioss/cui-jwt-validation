@@ -63,48 +63,57 @@ public class SecurityEventCounter {
      */
     public enum EventType {
         // Token format issues
-        TOKEN_EMPTY(JWTValidationLogMessages.WARN.TOKEN_IS_EMPTY),
-        TOKEN_SIZE_EXCEEDED(JWTValidationLogMessages.WARN.TOKEN_SIZE_EXCEEDED),
-        FAILED_TO_DECODE_JWT(JWTValidationLogMessages.WARN.FAILED_TO_DECODE_JWT),
-        INVALID_JWT_FORMAT(JWTValidationLogMessages.WARN.INVALID_JWT_FORMAT),
-        FAILED_TO_DECODE_HEADER(JWTValidationLogMessages.WARN.FAILED_TO_DECODE_HEADER),
-        FAILED_TO_DECODE_PAYLOAD(JWTValidationLogMessages.WARN.FAILED_TO_DECODE_PAYLOAD),
-        DECODED_PART_SIZE_EXCEEDED(JWTValidationLogMessages.WARN.DECODED_PART_SIZE_EXCEEDED),
+        TOKEN_EMPTY(JWTValidationLogMessages.WARN.TOKEN_IS_EMPTY, EventCategory.INVALID_STRUCTURE),
+        TOKEN_SIZE_EXCEEDED(JWTValidationLogMessages.WARN.TOKEN_SIZE_EXCEEDED, EventCategory.INVALID_STRUCTURE),
+        FAILED_TO_DECODE_JWT(JWTValidationLogMessages.WARN.FAILED_TO_DECODE_JWT, EventCategory.INVALID_STRUCTURE),
+        INVALID_JWT_FORMAT(JWTValidationLogMessages.WARN.INVALID_JWT_FORMAT, EventCategory.INVALID_STRUCTURE),
+        FAILED_TO_DECODE_HEADER(JWTValidationLogMessages.WARN.FAILED_TO_DECODE_HEADER, EventCategory.INVALID_STRUCTURE),
+        FAILED_TO_DECODE_PAYLOAD(JWTValidationLogMessages.WARN.FAILED_TO_DECODE_PAYLOAD, EventCategory.INVALID_STRUCTURE),
+        DECODED_PART_SIZE_EXCEEDED(JWTValidationLogMessages.WARN.DECODED_PART_SIZE_EXCEEDED, EventCategory.INVALID_STRUCTURE),
 
         // Missing claims
-        MISSING_CLAIM(JWTValidationLogMessages.WARN.MISSING_CLAIM),
-        MISSING_RECOMMENDED_ELEMENT(JWTValidationLogMessages.WARN.MISSING_RECOMMENDED_ELEMENT),
+        MISSING_CLAIM(JWTValidationLogMessages.WARN.MISSING_CLAIM, EventCategory.SEMANTIC_ISSUES),
+        MISSING_RECOMMENDED_ELEMENT(JWTValidationLogMessages.WARN.MISSING_RECOMMENDED_ELEMENT, EventCategory.SEMANTIC_ISSUES),
 
         // Validation failures
-        TOKEN_EXPIRED(JWTValidationLogMessages.WARN.TOKEN_EXPIRED),
-        TOKEN_NBF_FUTURE(JWTValidationLogMessages.WARN.TOKEN_NBF_FUTURE),
-        AUDIENCE_MISMATCH(JWTValidationLogMessages.WARN.AUDIENCE_MISMATCH),
-        AZP_MISMATCH(JWTValidationLogMessages.WARN.AZP_MISMATCH),
-        ISSUER_MISMATCH(JWTValidationLogMessages.WARN.ISSUER_MISMATCH),
-        NO_ISSUER_CONFIG(JWTValidationLogMessages.WARN.NO_ISSUER_CONFIG),
+        TOKEN_EXPIRED(JWTValidationLogMessages.WARN.TOKEN_EXPIRED, EventCategory.SEMANTIC_ISSUES),
+        TOKEN_NBF_FUTURE(JWTValidationLogMessages.WARN.TOKEN_NBF_FUTURE, EventCategory.SEMANTIC_ISSUES),
+        AUDIENCE_MISMATCH(JWTValidationLogMessages.WARN.AUDIENCE_MISMATCH, EventCategory.SEMANTIC_ISSUES),
+        AZP_MISMATCH(JWTValidationLogMessages.WARN.AZP_MISMATCH, EventCategory.SEMANTIC_ISSUES),
+        ISSUER_MISMATCH(JWTValidationLogMessages.WARN.ISSUER_MISMATCH, EventCategory.SEMANTIC_ISSUES),
+        NO_ISSUER_CONFIG(JWTValidationLogMessages.WARN.NO_ISSUER_CONFIG, EventCategory.SEMANTIC_ISSUES),
 
         // Signature issues
-        SIGNATURE_VALIDATION_FAILED(JWTValidationLogMessages.ERROR.SIGNATURE_VALIDATION_FAILED),
-        KEY_NOT_FOUND(JWTValidationLogMessages.WARN.KEY_NOT_FOUND),
+        SIGNATURE_VALIDATION_FAILED(JWTValidationLogMessages.ERROR.SIGNATURE_VALIDATION_FAILED, EventCategory.INVALID_SIGNATURE),
+        KEY_NOT_FOUND(JWTValidationLogMessages.WARN.KEY_NOT_FOUND, EventCategory.INVALID_SIGNATURE),
 
         // Algorithm issues
-        UNSUPPORTED_ALGORITHM(JWTValidationLogMessages.WARN.UNSUPPORTED_ALGORITHM),
+        UNSUPPORTED_ALGORITHM(JWTValidationLogMessages.WARN.UNSUPPORTED_ALGORITHM, EventCategory.INVALID_SIGNATURE),
 
         // JWKS issues
-        JWKS_FETCH_FAILED(JWTValidationLogMessages.WARN.JWKS_FETCH_FAILED),
-        JWKS_JSON_PARSE_FAILED(JWTValidationLogMessages.WARN.JWKS_JSON_PARSE_FAILED),
-        FAILED_TO_READ_JWKS_FILE(JWTValidationLogMessages.WARN.FAILED_TO_READ_JWKS_FILE),
-        KEY_ROTATION_DETECTED(JWTValidationLogMessages.WARN.KEY_ROTATION_DETECTED),
+        JWKS_FETCH_FAILED(JWTValidationLogMessages.WARN.JWKS_FETCH_FAILED, EventCategory.INVALID_SIGNATURE),
+        JWKS_JSON_PARSE_FAILED(JWTValidationLogMessages.WARN.JWKS_JSON_PARSE_FAILED, EventCategory.INVALID_SIGNATURE),
+        FAILED_TO_READ_JWKS_FILE(JWTValidationLogMessages.WARN.FAILED_TO_READ_JWKS_FILE, EventCategory.INVALID_SIGNATURE),
+        KEY_ROTATION_DETECTED(JWTValidationLogMessages.WARN.KEY_ROTATION_DETECTED, EventCategory.INVALID_SIGNATURE),
 
         // Successful operations
-        ACCESS_TOKEN_CREATED(JWTValidationLogMessages.DEBUG.ACCESS_TOKEN_CREATED),
-        ID_TOKEN_CREATED(JWTValidationLogMessages.DEBUG.ID_TOKEN_CREATED),
-        REFRESH_TOKEN_CREATED(JWTValidationLogMessages.DEBUG.REFRESH_TOKEN_CREATED);
+        ACCESS_TOKEN_CREATED(JWTValidationLogMessages.DEBUG.ACCESS_TOKEN_CREATED, null),
+        ID_TOKEN_CREATED(JWTValidationLogMessages.DEBUG.ID_TOKEN_CREATED, null),
+        REFRESH_TOKEN_CREATED(JWTValidationLogMessages.DEBUG.REFRESH_TOKEN_CREATED, null);
 
         private final LogRecord logRecord;
+        private final EventCategory category;
 
-        EventType(LogRecord logRecord) {
+        EventType(LogRecord logRecord, EventCategory category) {
             this.logRecord = logRecord;
+            this.category = category;
+        }
+
+        /**
+         * @return the event category for this event type, or null for successful operations
+         */
+        public EventCategory getCategory() {
+            return category;
         }
 
         /**

@@ -15,9 +15,10 @@
  */
 package de.cuioss.jwt.validation;
 
-import de.cuioss.jwt.validation.domain.token.AccessTokenContent;
 import de.cuioss.jwt.validation.domain.token.RefreshTokenContent;
+import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.security.AlgorithmPreferences;
+import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
 import de.cuioss.jwt.validation.test.TestTokenProducer;
@@ -30,8 +31,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -88,17 +87,17 @@ class TokenValidatorTest {
             var token = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.REFRESH_TOKEN);
             var parsedToken = tokenValidator.createRefreshToken(token);
 
-            assertTrue(parsedToken.isPresent(), "Token should be present");
-            assertNotNull(parsedToken.get().getRawToken(), "Token string should not be null");
-            assertEquals(token, parsedToken.get().getRawToken(), "Raw validation should match input");
+            assertNotNull(parsedToken, "Token should not be null");
+            assertNotNull(parsedToken.getRawToken(), "Token string should not be null");
+            assertEquals(token, parsedToken.getRawToken(), "Raw validation should match input");
 
             // Verify claims are extracted
-            assertNotNull(parsedToken.get().getClaims(), "Claims should not be null");
-            assertFalse(parsedToken.get().getClaims().isEmpty(), "Claims should not be empty");
+            assertNotNull(parsedToken.getClaims(), "Claims should not be null");
+            assertFalse(parsedToken.getClaims().isEmpty(), "Claims should not be empty");
 
             // The test validation should have standard claims
-            assertTrue(parsedToken.get().getClaims().containsKey("sub"), "Claims should contain subject");
-            assertTrue(parsedToken.get().getClaims().containsKey("iss"), "Claims should contain issuer");
+            assertTrue(parsedToken.getClaims().containsKey("sub"), "Claims should contain subject");
+            assertTrue(parsedToken.getClaims().containsKey("iss"), "Claims should contain issuer");
         }
 
         @Test
@@ -108,37 +107,37 @@ class TokenValidatorTest {
             var token = "not-a-jwt-validation";
             var parsedToken = tokenValidator.createRefreshToken(token);
 
-            assertTrue(parsedToken.isPresent(), "Token should be present");
-            assertNotNull(parsedToken.get().getRawToken(), "Token string should not be null");
-            assertEquals(token, parsedToken.get().getRawToken(), "Raw validation should match input");
+            assertNotNull(parsedToken, "Token should not be null");
+            assertNotNull(parsedToken.getRawToken(), "Token string should not be null");
+            assertEquals(token, parsedToken.getRawToken(), "Raw validation should match input");
 
             // Verify claims are empty
-            assertNotNull(parsedToken.get().getClaims(), "Claims should not be null");
-            assertTrue(parsedToken.get().getClaims().isEmpty(), "Claims should be empty for non-JWT Token");
+            assertNotNull(parsedToken.getClaims(), "Claims should not be null");
+            assertTrue(parsedToken.getClaims().isEmpty(), "Claims should be empty for non-JWT Token");
         }
 
         @Test
         @DisplayName("Should create access token")
         void shouldCreateAccessToken() {
             var token = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_SCOPES);
-            var parsedToken = tokenValidator.createAccessToken(token);
 
             // The validation should be validated by the pipeline
             // With our current setup, we expect it to fail validation
             // This is because we need more sophisticated setup for the full pipeline
-            assertFalse(parsedToken.isPresent(), "Token should not be present with current test setup");
+            assertThrows(TokenValidationException.class, () -> tokenValidator.createAccessToken(token),
+                    "Token should fail validation with current test setup");
         }
 
         @Test
         @DisplayName("Should create ID-Token")
         void shouldCreateIdToken() {
             var token = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_ID_TOKEN);
-            var parsedToken = tokenValidator.createIdToken(token);
 
             // The validation should be validated by the pipeline
             // With our current setup, we expect it to fail validation
             // This is because we need more sophisticated setup for the full pipeline
-            assertFalse(parsedToken.isPresent(), "Token should not be present with current test setup");
+            assertThrows(TokenValidationException.class, () -> tokenValidator.createIdToken(token),
+                    "Token should fail validation with current test setup");
         }
     }
 
@@ -160,9 +159,12 @@ class TokenValidatorTest {
             var factory = new TokenValidator(customConfig, issuerConfig);
 
             // Verify it rejects a validation that exceeds the custom max size
-            var parsedToken = factory.createAccessToken(largeToken);
+            var exception = assertThrows(TokenValidationException.class,
+                    () -> factory.createAccessToken(largeToken),
+                    "Token exceeding custom max size should be rejected");
 
-            assertFalse(parsedToken.isPresent(), "Token exceeding custom max size should be rejected");
+            assertEquals(SecurityEventCounter.EventType.TOKEN_SIZE_EXCEEDED, exception.getEventType(),
+                    "Exception should have TOKEN_SIZE_EXCEEDED event type");
         }
 
         @Test
@@ -182,9 +184,12 @@ class TokenValidatorTest {
                     .compact();
 
             // Verify it rejects a validation with a payload that exceeds the custom max size
-            var parsedToken = factory.createAccessToken(token);
+            var exception = assertThrows(TokenValidationException.class,
+                    () -> factory.createAccessToken(token),
+                    "Token with payload exceeding custom max size should be rejected");
 
-            assertFalse(parsedToken.isPresent(), "Token with payload exceeding custom max size should be rejected");
+            assertEquals(SecurityEventCounter.EventType.DECODED_PART_SIZE_EXCEEDED, exception.getEventType(),
+                    "Exception should have DECODED_PART_SIZE_EXCEEDED event type");
         }
     }
 
@@ -196,12 +201,20 @@ class TokenValidatorTest {
         @DisplayName("Should handle empty or blank token strings")
         void shouldProvideEmptyFallbackOnEmptyInput() {
             // Test with empty string
-            var emptyToken = tokenValidator.createAccessToken("");
-            assertFalse(emptyToken.isPresent(), "Token should not be present for empty input");
+            var emptyException = assertThrows(TokenValidationException.class,
+                    () -> tokenValidator.createAccessToken(""),
+                    "Empty token should throw TokenValidationException");
+
+            assertEquals(SecurityEventCounter.EventType.TOKEN_EMPTY, emptyException.getEventType(),
+                    "Exception should have TOKEN_EMPTY event type");
 
             // Test with blank string
-            var blankToken = tokenValidator.createAccessToken("   ");
-            assertFalse(blankToken.isPresent(), "Token should not be present for blank input");
+            var blankException = assertThrows(TokenValidationException.class,
+                    () -> tokenValidator.createAccessToken("   "),
+                    "Blank token should throw TokenValidationException");
+
+            assertEquals(SecurityEventCounter.EventType.TOKEN_EMPTY, blankException.getEventType(),
+                    "Exception should have TOKEN_EMPTY event type");
         }
 
         @Test
@@ -209,9 +222,12 @@ class TokenValidatorTest {
         void shouldHandleInvalidTokenFormat() {
             var initialTokenString = Generators.letterStrings(10, 20).next();
 
-            var token = tokenValidator.createAccessToken(initialTokenString);
+            var exception = assertThrows(TokenValidationException.class,
+                    () -> tokenValidator.createAccessToken(initialTokenString),
+                    "Invalid token format should throw TokenValidationException");
 
-            assertFalse(token.isPresent(), "Token should not be present for invalid format");
+            assertEquals(SecurityEventCounter.EventType.INVALID_JWT_FORMAT, exception.getEventType(),
+                    "Exception should have INVALID_JWT_FORMAT event type");
         }
 
         @Test
@@ -224,9 +240,12 @@ class TokenValidatorTest {
                     .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
                     .compact();
 
-            var parsedToken = tokenValidator.createAccessToken(token);
+            var exception = assertThrows(TokenValidationException.class,
+                    () -> tokenValidator.createAccessToken(token),
+                    "Unknown issuer should throw TokenValidationException");
 
-            assertFalse(parsedToken.isPresent(), "Token with unknown issuer should not be valid");
+            assertEquals(SecurityEventCounter.EventType.NO_ISSUER_CONFIG, exception.getEventType(),
+                    "Exception should have NO_ISSUER_CONFIG event type");
         }
     }
 
@@ -240,10 +259,9 @@ class TokenValidatorTest {
         @DisplayName("Should log warning when validation is empty")
         void shouldLogWarningWhenTokenIsEmpty() {
             // When creating a validation with an empty string
-            Optional<AccessTokenContent> result = tokenValidator.createAccessToken(EMPTY_TOKEN);
-
-            // Then the validation creation should fail
-            assertFalse(result.isPresent(), "Token creation should fail with empty validation");
+            assertThrows(TokenValidationException.class,
+                    () -> tokenValidator.createAccessToken(EMPTY_TOKEN),
+                    "Empty token should throw TokenValidationException");
 
             // And the appropriate warning should be logged
             LogAsserts.assertLogMessagePresent(TestLogLevel.WARN, JWTValidationLogMessages.WARN.TOKEN_IS_EMPTY.format());
@@ -253,10 +271,9 @@ class TokenValidatorTest {
         @DisplayName("Should log warning when validation format is invalid")
         void shouldLogWarningWhenTokenFormatIsInvalid() {
             // When creating a validation with an invalid format
-            Optional<AccessTokenContent> result = tokenValidator.createAccessToken(INVALID_TOKEN);
-
-            // Then the validation creation should fail
-            assertFalse(result.isPresent(), "Token creation should fail with invalid validation format");
+            assertThrows(TokenValidationException.class,
+                    () -> tokenValidator.createAccessToken(INVALID_TOKEN),
+                    "Invalid token format should throw TokenValidationException");
 
             // And the appropriate warning should be logged
             LogAsserts.assertLogMessagePresent(TestLogLevel.WARN, JWTValidationLogMessages.WARN.FAILED_TO_DECODE_JWT.format());
@@ -269,11 +286,10 @@ class TokenValidatorTest {
             String tokenWithUnknownIssuer = TestTokenProducer.validSignedJWTWithClaims(
                     TestTokenProducer.SOME_SCOPES, "unknown-issuer");
 
-            // When creating an access token
-            Optional<AccessTokenContent> result = tokenValidator.createAccessToken(tokenWithUnknownIssuer);
-
-            // Then the validation creation should fail
-            assertFalse(result.isPresent(), "Token creation should fail with unknown issuer");
+            // When creating an access token, it should throw an exception
+            assertThrows(TokenValidationException.class,
+                    () -> tokenValidator.createAccessToken(tokenWithUnknownIssuer),
+                    "Token with unknown issuer should throw TokenValidationException");
 
             // And a warning should be logged
             // The exact message might vary, but we should see a warning related to validation validation
@@ -286,8 +302,14 @@ class TokenValidatorTest {
             // Given a valid token string but missing required claims
             String validToken = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_SCOPES);
 
-            // When creating an access token
-            tokenValidator.createAccessToken(validToken);
+            // When creating an access token, it should throw an exception
+            var exception = assertThrows(TokenValidationException.class,
+                    () -> tokenValidator.createAccessToken(validToken),
+                    "Token with missing claims should throw TokenValidationException");
+
+            // Verify the exception has the expected event type
+            assertEquals(SecurityEventCounter.EventType.MISSING_CLAIM, exception.getEventType(),
+                    "Exception should have MISSING_CLAIM event type");
 
             // Then the appropriate warning message should be logged
             // Note: The actual message might vary, but we should at least see a warning message
@@ -301,8 +323,14 @@ class TokenValidatorTest {
             // Given a valid token string but missing required claims
             String validToken = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_ID_TOKEN);
 
-            // When creating an ID-Token
-            tokenValidator.createIdToken(validToken);
+            // When creating an ID-Token, it should throw an exception
+            var exception = assertThrows(TokenValidationException.class,
+                    () -> tokenValidator.createIdToken(validToken),
+                    "ID-Token with missing claims should throw TokenValidationException");
+
+            // Verify the exception has the expected event type
+            assertEquals(SecurityEventCounter.EventType.MISSING_CLAIM, exception.getEventType(),
+                    "Exception should have MISSING_CLAIM event type");
 
             // Then the appropriate warning message should be logged
             // Note: The actual message might vary, but we should at least see a warning message
@@ -317,10 +345,11 @@ class TokenValidatorTest {
             String validToken = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.REFRESH_TOKEN);
 
             // When creating a Refresh-Token
-            Optional<RefreshTokenContent> result = tokenValidator.createRefreshToken(validToken);
+            RefreshTokenContent result = tokenValidator.createRefreshToken(validToken);
 
             // Then the validation should be created successfully
-            assertTrue(result.isPresent(), "Refresh validation should be created successfully");
+            assertNotNull(result, "Refresh token should be created successfully");
+            assertEquals(validToken, result.getRawToken(), "Raw token should match input");
 
             // For refresh tokens, we don't need to check for specific log messages
             // as the test itself verifies the functionality works
@@ -343,11 +372,13 @@ class TokenValidatorTest {
             // Create a new validation factory with the new issuer config
             TokenValidator newTokenValidator = new TokenValidator(newIssuerConfig);
 
-            // When creating an access token
-            Optional<AccessTokenContent> result = newTokenValidator.createAccessToken(tokenWithUnknownKeyId);
+            // When creating an access token, it should throw an exception
+            var exception = assertThrows(TokenValidationException.class,
+                    () -> newTokenValidator.createAccessToken(tokenWithUnknownKeyId),
+                    "Token with unknown key ID should throw TokenValidationException");
 
-            // Then the validation creation should fail
-            assertFalse(result.isPresent(), "Token creation should fail with unknown key ID");
+            assertEquals(SecurityEventCounter.EventType.KEY_NOT_FOUND, exception.getEventType(),
+                    "Exception should have KEY_NOT_FOUND event type");
 
             // And a warning should be logged about key issues
             // The exact message might vary, but we should see a warning related to keys

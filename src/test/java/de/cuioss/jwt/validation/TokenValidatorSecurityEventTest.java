@@ -15,10 +15,12 @@
  */
 package de.cuioss.jwt.validation;
 
+import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.security.AlgorithmPreferences;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
+import de.cuioss.jwt.validation.test.JwtTokenTamperingUtil;
 import de.cuioss.jwt.validation.test.TestTokenProducer;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import io.jsonwebtoken.Jwts;
@@ -26,8 +28,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for the security event counting functionality in {@link TokenValidator}.
@@ -76,30 +77,48 @@ class TokenValidatorSecurityEventTest {
         // Get initial count
         long initialCount = tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.TOKEN_EMPTY);
 
-        // Process empty validation
-        tokenValidator.createAccessToken("");
+        // Process empty validation - expect exception
+        TokenValidationException exception = assertThrows(TokenValidationException.class,
+                () -> tokenValidator.createAccessToken(""),
+                "Empty token should throw TokenValidationException");
+
+        // Verify exception has the correct event type
+        assertEquals(SecurityEventCounter.EventType.TOKEN_EMPTY, exception.getEventType(),
+                "Exception should have TOKEN_EMPTY event type");
 
         // Verify count increased
         assertEquals(initialCount + 1, tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.TOKEN_EMPTY));
 
-        // Process another empty validation
-        tokenValidator.createRefreshToken("   ");
+        // Process another empty validation - expect exception
+        exception = assertThrows(TokenValidationException.class,
+                () -> tokenValidator.createRefreshToken("   "),
+                "Empty token should throw TokenValidationException");
+
+        // Verify exception has the correct event type
+        assertEquals(SecurityEventCounter.EventType.TOKEN_EMPTY, exception.getEventType(),
+                "Exception should have TOKEN_EMPTY event type");
 
         // Verify count increased again
         assertEquals(initialCount + 2, tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.TOKEN_EMPTY));
     }
 
     @Test
-    @DisplayName("Should count failed to decode JWT events")
+    @DisplayName("Should count invalid JWT format events")
     void shouldCountFailedToDecodeJwtEvents() {
         // Get initial count
-        long initialCount = tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.FAILED_TO_DECODE_JWT);
+        long initialCount = tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.INVALID_JWT_FORMAT);
 
-        // Process invalid validation
-        tokenValidator.createAccessToken("invalid-validation");
+        // Process invalid validation - expect exception
+        TokenValidationException exception = assertThrows(TokenValidationException.class,
+                () -> tokenValidator.createAccessToken("invalid-validation"),
+                "Invalid token should throw TokenValidationException");
+
+        // Verify exception has the correct event type
+        assertEquals(SecurityEventCounter.EventType.INVALID_JWT_FORMAT, exception.getEventType(),
+                "Exception should have INVALID_JWT_FORMAT event type");
 
         // Verify count increased
-        assertEquals(initialCount + 1, tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.FAILED_TO_DECODE_JWT));
+        assertEquals(initialCount + 1, tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.INVALID_JWT_FORMAT));
     }
 
     @Test
@@ -114,8 +133,14 @@ class TokenValidatorSecurityEventTest {
                 .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
                 .compact();
 
-        // Process validation without issuer
-        tokenValidator.createAccessToken(token);
+        // Process validation without issuer - expect exception
+        TokenValidationException exception = assertThrows(TokenValidationException.class,
+                () -> tokenValidator.createAccessToken(token),
+                "Token without issuer should throw TokenValidationException");
+
+        // Verify exception has the correct event type
+        assertEquals(SecurityEventCounter.EventType.MISSING_CLAIM, exception.getEventType(),
+                "Exception should have MISSING_CLAIM event type");
 
         // Verify count increased
         assertTrue(tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.MISSING_CLAIM) > initialCount,
@@ -135,8 +160,14 @@ class TokenValidatorSecurityEventTest {
                 .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
                 .compact();
 
-        // Process validation with unknown issuer
-        tokenValidator.createAccessToken(token);
+        // Process validation with unknown issuer - expect exception
+        TokenValidationException exception = assertThrows(TokenValidationException.class,
+                () -> tokenValidator.createAccessToken(token),
+                "Token with unknown issuer should throw TokenValidationException");
+
+        // Verify exception has the correct event type
+        assertEquals(SecurityEventCounter.EventType.NO_ISSUER_CONFIG, exception.getEventType(),
+                "Exception should have NO_ISSUER_CONFIG event type");
 
         // Verify count increased
         assertEquals(initialCount + 1, tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.NO_ISSUER_CONFIG));
@@ -148,12 +179,21 @@ class TokenValidatorSecurityEventTest {
         // Get initial count
         long initialCount = tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED);
 
-        // Create a validation with invalid signature
+        // Create a validation with invalid signature using JwtTokenTamperingUtil
         String validToken = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_SCOPES);
-        String invalidToken = validToken.substring(0, validToken.lastIndexOf('.') + 1) + "invalid-signature";
+        String invalidToken = JwtTokenTamperingUtil.applyTamperingStrategy(
+                validToken,
+                JwtTokenTamperingUtil.TamperingStrategy.MODIFY_SIGNATURE_LAST_CHAR
+        );
 
-        // Process validation with invalid signature
-        tokenValidator.createAccessToken(invalidToken);
+        // Process validation with invalid signature - expect exception
+        TokenValidationException exception = assertThrows(TokenValidationException.class,
+                () -> tokenValidator.createAccessToken(invalidToken),
+                "Token with invalid signature should throw TokenValidationException");
+
+        // Verify exception has the correct event type
+        assertEquals(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED, exception.getEventType(),
+                "Exception should have SIGNATURE_VALIDATION_FAILED event type");
 
         // Verify count increased
         assertTrue(tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED) > initialCount,
@@ -163,19 +203,19 @@ class TokenValidatorSecurityEventTest {
     @Test
     @DisplayName("Should reset security event counters")
     void shouldResetSecurityEventCounters() {
-        // Generate some events
-        tokenValidator.createAccessToken("");
-        tokenValidator.createAccessToken("invalid-validation");
+        // Generate some events - expect exceptions but we don't need to check them here
+        assertThrows(TokenValidationException.class, () -> tokenValidator.createAccessToken(""));
+        assertThrows(TokenValidationException.class, () -> tokenValidator.createAccessToken("invalid-validation"));
 
         // Verify counts are non-zero
         assertTrue(tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.TOKEN_EMPTY) > 0);
-        assertTrue(tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.FAILED_TO_DECODE_JWT) > 0);
+        assertTrue(tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.INVALID_JWT_FORMAT) > 0);
 
         // Reset counters
         tokenValidator.getSecurityEventCounter().reset();
 
         // Verify counts are zero
         assertEquals(0, tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.TOKEN_EMPTY));
-        assertEquals(0, tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.FAILED_TO_DECODE_JWT));
+        assertEquals(0, tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.INVALID_JWT_FORMAT));
     }
 }

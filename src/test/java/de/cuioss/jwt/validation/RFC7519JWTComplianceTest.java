@@ -17,9 +17,12 @@ package de.cuioss.jwt.validation;
 
 import de.cuioss.jwt.validation.domain.claim.ClaimName;
 import de.cuioss.jwt.validation.domain.token.AccessTokenContent;
+import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.security.AlgorithmPreferences;
+import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
+import de.cuioss.jwt.validation.test.JwtTokenTamperingUtil;
 import de.cuioss.jwt.validation.test.TestTokenProducer;
 import de.cuioss.jwt.validation.test.generator.AccessTokenGenerator;
 import io.jsonwebtoken.Jwts;
@@ -32,7 +35,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -91,11 +93,11 @@ class RFC7519JWTComplianceTest {
             String token = accessTokenGenerator.next();
 
             // When
-            Optional<AccessTokenContent> result = tokenValidator.createAccessToken(token);
+            AccessTokenContent result = tokenValidator.createAccessToken(token);
 
             // Then
-            assertTrue(result.isPresent(), "Token should be parsed successfully");
-            assertEquals(ISSUER, result.get().getIssuer(),
+            assertNotNull(result, "Token should be parsed successfully");
+            assertEquals(ISSUER, result.getIssuer(),
                     "Issuer claim should match the expected value");
         }
 
@@ -106,11 +108,11 @@ class RFC7519JWTComplianceTest {
             String token = accessTokenGenerator.next();
 
             // When
-            Optional<AccessTokenContent> result = tokenValidator.createAccessToken(token);
+            AccessTokenContent result = tokenValidator.createAccessToken(token);
 
             // Then
-            assertTrue(result.isPresent(), "Token should be parsed successfully");
-            assertNotNull(result.get().getSubject(),
+            assertNotNull(result, "Token should be parsed successfully");
+            assertNotNull(result.getSubject(),
                     "Subject claim should be present");
         }
 
@@ -121,12 +123,12 @@ class RFC7519JWTComplianceTest {
             String token = accessTokenGenerator.next();
 
             // When
-            Optional<AccessTokenContent> result = tokenValidator.createAccessToken(token);
+            AccessTokenContent result = tokenValidator.createAccessToken(token);
 
             // Then
-            assertTrue(result.isPresent(), "Token should be parsed successfully");
-            assertTrue(result.get().getAudience().isPresent(), "Audience claim should be present");
-            assertEquals(List.of(CLIENT_ID), result.get().getAudience().get(),
+            assertNotNull(result, "Token should be parsed successfully");
+            assertTrue(result.getAudience().isPresent(), "Audience claim should be present");
+            assertEquals(List.of(CLIENT_ID), result.getAudience().get(),
                     "Audience claim should match the expected value");
         }
 
@@ -137,13 +139,13 @@ class RFC7519JWTComplianceTest {
             String token = accessTokenGenerator.next();
 
             // When
-            Optional<AccessTokenContent> result = tokenValidator.createAccessToken(token);
+            AccessTokenContent result = tokenValidator.createAccessToken(token);
 
             // Then
-            assertTrue(result.isPresent(), "Token should be parsed successfully");
-            assertNotNull(result.get().getExpirationTime(),
+            assertNotNull(result, "Token should be parsed successfully");
+            assertNotNull(result.getExpirationTime(),
                     "Expiration time claim should be present");
-            assertFalse(result.get().isExpired(),
+            assertFalse(result.isExpired(),
                     "Token should not be expired");
         }
 
@@ -166,11 +168,11 @@ class RFC7519JWTComplianceTest {
                     .compact();
 
             // When
-            Optional<AccessTokenContent> result = tokenValidator.createAccessToken(token);
+            AccessTokenContent result = tokenValidator.createAccessToken(token);
 
             // Then
-            assertTrue(result.isPresent(), "Token should be parsed successfully");
-            assertTrue(result.get().getNotBefore().isPresent(),
+            assertNotNull(result, "Token should be parsed successfully");
+            assertTrue(result.getNotBefore().isPresent(),
                     "Not Before claim should be present");
         }
 
@@ -181,11 +183,11 @@ class RFC7519JWTComplianceTest {
             String token = accessTokenGenerator.next();
 
             // When
-            Optional<AccessTokenContent> result = tokenValidator.createAccessToken(token);
+            AccessTokenContent result = tokenValidator.createAccessToken(token);
 
             // Then
-            assertTrue(result.isPresent(), "Token should be parsed successfully");
-            assertNotNull(result.get().getIssuedAtTime(),
+            assertNotNull(result, "Token should be parsed successfully");
+            assertNotNull(result.getIssuedAtTime(),
                     "Issued At claim should be present");
         }
 
@@ -208,13 +210,13 @@ class RFC7519JWTComplianceTest {
                     .compact();
 
             // When
-            Optional<AccessTokenContent> result = tokenValidator.createAccessToken(token);
+            AccessTokenContent result = tokenValidator.createAccessToken(token);
 
             // Then
-            assertTrue(result.isPresent(), "Token should be parsed successfully");
-            assertTrue(result.get().getClaimOption(ClaimName.TOKEN_ID).isPresent(),
+            assertNotNull(result, "Token should be parsed successfully");
+            assertTrue(result.getClaimOption(ClaimName.TOKEN_ID).isPresent(),
                     "JWT ID claim should be present");
-            assertEquals(jwtId, result.get().getClaimOption(ClaimName.TOKEN_ID).get().getOriginalString(),
+            assertEquals(jwtId, result.getClaimOption(ClaimName.TOKEN_ID).get().getOriginalString(),
                     "JWT ID claim should match the expected value");
         }
     }
@@ -258,12 +260,12 @@ class RFC7519JWTComplianceTest {
             String token = accessTokenGenerator.next();
 
             // When
-            Optional<AccessTokenContent> result = tokenValidator.createAccessToken(token);
+            AccessTokenContent result = tokenValidator.createAccessToken(token);
 
             // Then
-            assertTrue(result.isPresent(), "Token should be parsed successfully");
+            assertNotNull(result, "Token should be parsed successfully");
             // Note: The TokenContent interface doesn't provide direct access to header claims
-            // This is tested indirectly by the fact that the validation is successfully validated
+            // This is tested indirectly by the fact that the token is successfully validated
         }
     }
 
@@ -278,18 +280,17 @@ class RFC7519JWTComplianceTest {
             String token = accessTokenGenerator.next();
 
             // When
-            Optional<AccessTokenContent> result = tokenValidator.createAccessToken(token);
+            AccessTokenContent result = tokenValidator.createAccessToken(token);
 
             // Then
-            assertTrue(result.isPresent(), "Token with valid signature should be parsed successfully");
+            assertNotNull(result, "Token with valid signature should be parsed successfully");
         }
 
         @Test
         @DisplayName("7.2: Reject validation with invalid signature")
         void shouldRejectInvalidSignature() {
-
-            // Create a validation with an invalid signature by using a different key to sign it
-            String invalidToken = Jwts.builder()
+            // Create a valid token first
+            String validToken = Jwts.builder()
                     .issuer(ISSUER)
                     .subject("test-subject")
                     .issuedAt(Date.from(Instant.now()))
@@ -298,15 +299,22 @@ class RFC7519JWTComplianceTest {
                     .claim("azp", CLIENT_ID)
                     .claim("aud", CLIENT_ID)
                     .header().add("kid", "default-key-id").and()
-                    // Use a different key to sign (this will create an invalid signature)
-                    .signWith(Jwts.SIG.HS256.key().build())
+                    .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
                     .compact();
 
-            // When
-            Optional<AccessTokenContent> result = tokenValidator.createAccessToken(invalidToken);
+            // Tamper with the signature using JwtTokenTamperingUtil
+            String invalidToken = JwtTokenTamperingUtil.applyTamperingStrategy(
+                    validToken,
+                    JwtTokenTamperingUtil.TamperingStrategy.MODIFY_SIGNATURE_LAST_CHAR
+            );
 
-            // Then
-            assertFalse(result.isPresent(), "Token with invalid signature should be rejected");
+            // When/Then
+            TokenValidationException exception = assertThrows(TokenValidationException.class,
+                    () -> tokenValidator.createAccessToken(invalidToken),
+                    "Token with invalid signature should be rejected");
+
+            assertEquals(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED, exception.getEventType(),
+                    "Exception should have SIGNATURE_VALIDATION_FAILED event type");
         }
 
         @Test
@@ -316,11 +324,13 @@ class RFC7519JWTComplianceTest {
             Instant expiredTime = Instant.now().minus(1, ChronoUnit.HOURS);
             String token = TestTokenProducer.validSignedJWTExpireAt(expiredTime);
 
-            // When
-            Optional<AccessTokenContent> result = tokenValidator.createAccessToken(token);
+            // When/Then
+            TokenValidationException exception = assertThrows(TokenValidationException.class,
+                    () -> tokenValidator.createAccessToken(token),
+                    "Expired token should be rejected");
 
-            // Then
-            assertFalse(result.isPresent(), "Expired validation should be rejected");
+            assertEquals(SecurityEventCounter.EventType.TOKEN_EXPIRED, exception.getEventType(),
+                    "Exception should have TOKEN_EXPIRED event type");
         }
 
         @Test
@@ -330,11 +340,13 @@ class RFC7519JWTComplianceTest {
             Instant futureTime = Instant.now().plus(1, ChronoUnit.HOURS);
             String token = TestTokenProducer.validSignedJWTWithNotBefore(futureTime);
 
-            // When
-            Optional<AccessTokenContent> result = tokenValidator.createAccessToken(token);
+            // When/Then
+            TokenValidationException exception = assertThrows(TokenValidationException.class,
+                    () -> tokenValidator.createAccessToken(token),
+                    "Token not yet valid should be rejected");
 
-            // Then
-            assertFalse(result.isPresent(), "Token not yet valid should be rejected");
+            assertEquals(SecurityEventCounter.EventType.TOKEN_NBF_FUTURE, exception.getEventType(),
+                    "Exception should have TOKEN_NBF_FUTURE event type");
         }
     }
 
@@ -349,17 +361,16 @@ class RFC7519JWTComplianceTest {
             String token = accessTokenGenerator.next();
 
             // When
-            Optional<AccessTokenContent> result = tokenValidator.createAccessToken(token);
+            AccessTokenContent result = tokenValidator.createAccessToken(token);
 
             // Then
-            assertTrue(result.isPresent(), "Token should be parsed successfully");
-            AccessTokenContent accessToken = result.get();
+            assertNotNull(result, "Token should be parsed successfully");
 
             // Verify that standard claims are accessible
-            assertNotNull(accessToken.getIssuer(), "Issuer claim should be accessible");
-            assertNotNull(accessToken.getSubject(), "Subject claim should be accessible");
-            assertNotNull(accessToken.getExpirationTime(), "Expiration time claim should be accessible");
-            assertNotNull(accessToken.getIssuedAtTime(), "Issued at claim should be accessible");
+            assertNotNull(result.getIssuer(), "Issuer claim should be accessible");
+            assertNotNull(result.getSubject(), "Subject claim should be accessible");
+            assertNotNull(result.getExpirationTime(), "Expiration time claim should be accessible");
+            assertNotNull(result.getIssuedAtTime(), "Issued at claim should be accessible");
         }
 
         @Test
@@ -383,16 +394,15 @@ class RFC7519JWTComplianceTest {
                     .compact();
 
             // When
-            Optional<AccessTokenContent> result = tokenValidator.createAccessToken(token);
+            AccessTokenContent result = tokenValidator.createAccessToken(token);
 
             // Then
-            assertTrue(result.isPresent(), "Token should be parsed successfully");
-            AccessTokenContent accessToken = result.get();
+            assertNotNull(result, "Token should be parsed successfully");
 
             // Verify that custom claim is accessible
-            assertTrue(accessToken.getClaims().containsKey(customClaimName),
+            assertTrue(result.getClaims().containsKey(customClaimName),
                     "Custom claim should be accessible");
-            assertEquals(customClaimValue, accessToken.getClaims().get(customClaimName).getOriginalString(),
+            assertEquals(customClaimValue, result.getClaims().get(customClaimName).getOriginalString(),
                     "Custom claim should have the expected value");
         }
     }
