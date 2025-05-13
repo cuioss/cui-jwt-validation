@@ -296,9 +296,10 @@ void shouldRejectAccessTokenWithInvalidSignature(String token) {
     // Tamper with the token using one of the tampering strategies
     String tamperedToken = JwtTokenTamperingUtil.tamperWithToken(token);
 
-    // Verify that the tampered token is rejected
-    var result = tokenValidator.createAccessToken(tamperedToken);
-    assertFalse(result.isPresent(), "Token with invalid signature should be rejected");
+    // Verify that the tampered token is rejected by throwing TokenValidationException
+    assertThrows(TokenValidationException.class, () -> {
+        tokenValidator.createAccessToken(tamperedToken);
+    }, "Token with invalid signature should be rejected with TokenValidationException");
 }
 ----
 
@@ -365,9 +366,14 @@ void shouldRejectAccessTokenWithInvalidSignature(String token) {
     // Tamper with the token using one of the tampering strategies
     String tamperedToken = JwtTokenTamperingUtil.tamperWithToken(token);
 
-    // Verify that the tampered token is rejected
-    var result = tokenValidator.createAccessToken(tamperedToken);
-    assertFalse(result.isPresent(), "Token with invalid signature should be rejected");
+    // Verify that the tampered token is rejected by throwing TokenValidationException
+    TokenValidationException exception = assertThrows(TokenValidationException.class, () -> {
+        tokenValidator.createAccessToken(tamperedToken);
+    }, "Token with invalid signature should be rejected with TokenValidationException");
+
+    // Verify that the exception contains the correct event type and category
+    assertEquals(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED, exception.getEventType());
+    assertEquals(EventCategory.InvalidSignature, exception.getEventType().getCategory());
 }
 ----
 

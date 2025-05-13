@@ -45,9 +45,10 @@ IssuerConfig issuerConfig = IssuerConfig.builder()
 TokenValidator validator = new TokenValidator(issuerConfig);
 
 // Create and validate tokens
-Optional<AccessTokenContent> accessToken = validator.createAccessToken(tokenString);
-Optional<IdTokenContent> idToken = validator.createIdToken(tokenString);
-Optional<RefreshTokenContent> refreshToken = validator.createRefreshToken(tokenString);
+// These methods will throw TokenValidationException if validation fails
+AccessTokenContent accessToken = validator.createAccessToken(tokenString);
+IdTokenContent idToken = validator.createIdToken(tokenString);
+RefreshTokenContent refreshToken = validator.createRefreshToken(tokenString);
 ----
 
 == Multi-Issuer Support
@@ -115,7 +116,8 @@ IssuerConfig issuerConfig = IssuerConfig.builder()
 TokenValidator validator = new TokenValidator(issuerConfig);
 
 // The custom mapper will be used when processing tokens with the "role" claim
-Optional<AccessTokenContent> accessToken = validator.createAccessToken(tokenString);
+// This method will throw TokenValidationException if validation fails
+AccessTokenContent accessToken = validator.createAccessToken(tokenString);
 ----
 
 == Roles and Groups Configuration
@@ -302,7 +304,7 @@ These security settings help prevent various attacks:
 2. Set appropriate refresh intervals for JWKS key rotation (e.g., 60 seconds)
 3. Configure token size limits to prevent memory exhaustion attacks
 4. Use secure TLS versions (TLS 1.2+) for JWKS endpoint communication
-5. Implement proper error handling for token validation failures
+5. Implement proper error handling for TokenValidationException, which provides detailed information about validation failures including the event type and category
 6. Don't store sensitive information in tokens
 7. Validate all token claims, especially issuer, audience, and expiration (implicitly done)
 8. Remember that while token expiration is checked during validation, tokens can expire after validation - implement additional expiration checks in client code
