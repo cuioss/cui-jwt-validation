@@ -26,6 +26,7 @@ import de.cuioss.jwt.validation.test.JwtTokenTamperingUtil;
 import de.cuioss.jwt.validation.test.TestTokenProducer;
 import de.cuioss.jwt.validation.test.generator.AccessTokenGenerator;
 import de.cuioss.jwt.validation.test.generator.IDTokenGenerator;
+import de.cuioss.jwt.validation.test.generator.TokenGenerators;
 import de.cuioss.test.generator.junit.EnableGeneratorController;
 import de.cuioss.test.generator.junit.parameterized.TypeGeneratorSource;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
@@ -66,7 +67,6 @@ class OAuth2JWTBestPracticesComplianceTest {
 
 
     private TokenValidator tokenValidator;
-    private AccessTokenGenerator accessTokenGenerator;
 
     @BeforeEach
     void setUp() {
@@ -83,9 +83,6 @@ class OAuth2JWTBestPracticesComplianceTest {
 
         // Create validation factory
         tokenValidator = new TokenValidator(issuerConfig);
-
-        // Create access token generator
-        accessTokenGenerator = new AccessTokenGenerator(false);
     }
 
     @Nested
@@ -96,7 +93,7 @@ class OAuth2JWTBestPracticesComplianceTest {
         @DisplayName("3.1: Validate audience claim")
         void shouldValidateAudienceClaim() {
             // Given
-            String token = accessTokenGenerator.next();
+            String token = TokenGenerators.accessTokens().next();
 
             // When
             AccessTokenContent result = tokenValidator.createAccessToken(token);
@@ -113,7 +110,7 @@ class OAuth2JWTBestPracticesComplianceTest {
         void shouldRejectTokenWithIncorrectAudience() {
             // Given
             // First verify that a token with correct audience passes validation
-            String correctToken = accessTokenGenerator.next();
+            String correctToken = TokenGenerators.accessTokens().next();
             assertNotNull(tokenValidator.createAccessToken(correctToken),
                     "Token with correct audience should be accepted");
 
@@ -142,7 +139,7 @@ class OAuth2JWTBestPracticesComplianceTest {
         @DisplayName("3.2: Validate issuer claim")
         void shouldValidateIssuerClaim() {
             // Given
-            String token = accessTokenGenerator.next();
+            String token = TokenGenerators.accessTokens().next();
 
             // When
             AccessTokenContent result = tokenValidator.createAccessToken(token);
@@ -189,7 +186,7 @@ class OAuth2JWTBestPracticesComplianceTest {
         @DisplayName("3.3: Validate validation signature")
         void shouldValidateTokenSignature() {
             // Given
-            String token = accessTokenGenerator.next();
+            String token = TokenGenerators.accessTokens().next();
 
             // When
             AccessTokenContent result = tokenValidator.createAccessToken(token);
@@ -253,7 +250,7 @@ class OAuth2JWTBestPracticesComplianceTest {
         @DisplayName("3.8: Validate validation expiration")
         void shouldValidateTokenExpiration() {
             // Given
-            String token = accessTokenGenerator.next();
+            String token = TokenGenerators.accessTokens().next();
 
             // When
             AccessTokenContent result = tokenValidator.createAccessToken(token);

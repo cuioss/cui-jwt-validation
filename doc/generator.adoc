@@ -1,0 +1,264 @@
+= Token Generator Documentation
+:toc: left
+:toclevels: 3
+:sectnums:
+:sectnumlevels: 4
+:icons: font
+:source-highlighter: highlightjs
+
+== Overview
+
+This document provides an analysis of the token generator approach used in the project's test suite. It identifies all unit tests that use token generators and the methods of generating tokens that are currently in use. The goal is to document the current state of token generation to facilitate future simplification and unification of the generator usage.
+
+== Token Generator Components
+
+=== Core Token Content Generators
+
+==== TokenContentImpl
+
+`TokenContentImpl` is the core implementation of the `TokenContent` interface used for testing. It generates token content with configurable claims based on the token type and claim control parameters.
+
+Key features:
+
+* Implements `TokenContent` interface
+* Generates raw tokens and claims
+* Converts to `DecodedJwt`
+* Configurable via `ClaimControlParameter`
+
+==== ClaimControlParameter
+
+`ClaimControlParameter` controls which claims are included or excluded in generated tokens. It uses a builder pattern for configuration.
+
+Key features:
+
+* Controls presence/absence of standard claims (issuer, subject, expiration, etc.)
+* Can create expired tokens
+* Provides default configurations for different token types
+* Used by both valid and invalid token generators
+
+==== ClaimValueGenerator
+
+`ClaimValueGenerator` creates individual claim values for tokens in tests.
+
+Key features:
+
+* Generates three types of claim values: STRING, STRING_LIST, and DATETIME
+* Configurable to allow null original strings
+* Can be restricted to generate only a specific type of claim value
+
+=== Valid Token Generators
+
+==== ValidTokenContentGenerator
+
+`ValidTokenContentGenerator` creates valid token content for tests.
+
+Key features:
+
+* Implements `TypedGenerator<TokenContentImpl>`
+* Configurable with different `TokenType` values
+* Creates tokens with all required claims for the specified token type
+* Uses `ClaimControlParameter.defaultForTokenType()`
+
+==== DecodedJwtGenerator
+
+`DecodedJwtGenerator` creates valid decoded JWTs for tests.
+
+Key features:
+
+* Uses `ValidTokenContentGenerator` internally
+* Generates `DecodedJwt` instances
+
+=== Invalid Token Generators
+
+==== InvalidTokenContentGenerator
+
+`InvalidTokenContentGenerator` creates invalid token content for tests.
+
+Key features:
+
+* Implements `TypedGenerator<TokenContentImpl>`
+* Builder-like interface for creating various invalid token scenarios
+* Methods for creating tokens with missing issuer, subject, expiration, etc.
+* Methods for creating expired tokens
+
+==== InvalidDecodedJwtGenerator
+
+`InvalidDecodedJwtGenerator` creates invalid decoded JWTs for tests.
+
+Key features:
+
+* Uses `InvalidTokenContentGenerator` internally
+* Generates `DecodedJwt` instances with various validation issues
+
+=== JWT String Generators
+
+==== AccessTokenGenerator
+
+`AccessTokenGenerator` creates JWT access token strings.
+
+Key features:
+
+* Implements `TypedGenerator<String>`
+* Creates actual JWT strings using the io.jsonwebtoken library
+* Can be configured in "default" or "alternative" mode for signing
+* Uses other generators (ScopeGenerator, RoleGenerator, EmailGenerator) for claim values
+
+==== IDTokenGenerator
+
+Similar to `AccessTokenGenerator` but creates ID tokens.
+
+==== RefreshTokenGenerator
+
+Similar to `AccessTokenGenerator` but creates refresh tokens.
+
+=== Support Generators
+
+==== ScopeGenerator
+
+Generates scope strings for access tokens.
+
+==== RoleGenerator
+
+Generates role sets for tokens.
+
+==== GroupGenerator
+
+Generates group sets for tokens.
+
+==== JWKSGenerator
+
+Generates JSON Web Key Sets (JWKS) for testing.
+
+=== Unified Access
+
+==== TokenGenerators
+
+Factory class that provides unified access to various token generators.
+
+Key features:
+
+* Static methods for creating generators for access tokens, ID tokens, refresh tokens, JWKS, scopes, roles, and groups
+* Each token generator has a "default" and "alternative" mode
+* Attempts to unify the token generation approach
+
+=== Test Support Utilities
+
+==== TestTokenProducer
+
+Provides methods for creating test tokens with various configurations.
+
+Key features:
+
+* Loads claims from JSON files
+* Adds claims to a JWT builder
+* Creates valid signed JWTs with different expiration and "not before" times
+
+==== JwtTokenTamperingUtil
+
+Utility for tampering with tokens to test validation error handling.
+
+Key features:
+
+* Supports various tampering strategies (header, payload, signature)
+* Used in security tests
+
+== Unit Tests Using Token Generators
+
+=== Token Validation Tests
+
+* `TokenClaimValidatorTest` - Uses `ValidTokenContentGenerator` and `InvalidTokenContentGenerator` to test claim validation
+* `TokenClaimValidatorEdgeCaseTest` - Uses `ValidTokenContentGenerator` to test edge cases in claim validation
+
+=== Security Tests
+
+* `TokenValidationSecurityTest` - Uses `AccessTokenGenerator` to test security aspects of token validation
+* `TokenSecurityPropertiesTest` - Uses `AccessTokenGenerator` to test security properties of generated tokens
+
+=== Compliance Tests
+
+* `RFC7519JWTComplianceTest` - Uses `AccessTokenGenerator` to test compliance with RFC 7519 (JWT)
+* `OAuth2JWTBestPracticesComplianceTest` - Uses `AccessTokenGenerator` to test compliance with OAuth 2.0 best practices
+
+=== Performance Tests
+
+* `TokenValidatorPerformanceTest` - Uses `AccessTokenGenerator` to test token validation performance
+
+=== Utility Tests
+
+* `JwtTokenTamperingUtilTest` - Uses `AccessTokenGenerator` to test token tampering utilities
+
+== Token Generation Methods
+
+=== Method 1: TokenContent-based Generation
+
+This approach uses `TokenContentImpl` with `ClaimControlParameter` to generate token content objects that can be used in tests. The tokens are not actual JWT strings but objects that implement the `TokenContent` interface.
+
+Pros:
+
+* Highly configurable
+* Easy to create both valid and invalid tokens
+* Good for testing token validation logic
+
+Cons:
+
+* Not actual JWT strings
+* Requires conversion to JWT strings for some tests
+
+=== Method 2: Direct JWT String Generation
+
+This approach uses generators like `AccessTokenGenerator` to create actual JWT strings using the io.jsonwebtoken library.
+
+Pros:
+
+* Creates actual JWT strings that can be parsed and validated
+* Good for testing end-to-end token validation
+* Includes signing with keys
+
+Cons:
+
+* Less configurable than TokenContent-based generation
+* Separate generators for different token types
+
+=== Method 3: TestTokenProducer
+
+This approach uses `TestTokenProducer` to create JWT strings with claims loaded from JSON files.
+
+Pros:
+
+* Can load complex claim sets from JSON files
+* Good for testing specific token scenarios
+
+Cons:
+
+* Less programmatic control over token content
+* Requires maintaining JSON files
+
+== Recommendations for Simplification/Unification
+
+=== Short-term Improvements
+
+1. **Increase usage of TokenGenerators factory**: The `TokenGenerators` class provides a unified interface for token generation, but it's not widely used in the project. Increasing its usage would improve consistency.
+
+2. **Standardize generator initialization**: Many tests create their own generator instances with different configurations. Standardizing how generators are initialized would improve consistency.
+
+3. **Document generator usage patterns**: Create clear documentation on when to use each type of generator and how to configure them for different test scenarios.
+
+=== Medium-term Refactorings
+
+1. **Unify TokenContent and JWT string generation**: Create a bridge between `TokenContentImpl` and JWT string generators to allow easy conversion between the two approaches.
+
+2. **Create a unified token builder API**: Develop a fluent builder API that can create both `TokenContent` objects and JWT strings with the same configuration.
+
+3. **Consolidate duplicate generators**: Some generators have overlapping functionality. Consolidating them would reduce code duplication and improve maintainability.
+
+=== Long-term Architecture
+
+1. **Token generation framework**: Develop a comprehensive token generation framework that supports all token types and validation scenarios with a consistent API.
+
+2. **Test data factory**: Create a test data factory that can generate tokens with realistic data for different test scenarios.
+
+3. **Declarative token specification**: Allow tokens to be specified declaratively (e.g., via annotations or configuration files) to reduce boilerplate code in tests.
+
+== Conclusion
+
+The current token generator approach in the project provides good coverage for testing token validation, but it could benefit from simplification and unification. The recommendations in this document provide a roadmap for improving the token generation approach without disrupting existing tests.

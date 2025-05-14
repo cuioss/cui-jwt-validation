@@ -18,9 +18,7 @@ package de.cuioss.jwt.validation;
 import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.jwt.validation.test.TestTokenProducer;
-import de.cuioss.jwt.validation.test.generator.AccessTokenGenerator;
-import de.cuioss.jwt.validation.test.generator.IDTokenGenerator;
-import de.cuioss.jwt.validation.test.generator.RefreshTokenGenerator;
+import de.cuioss.jwt.validation.test.generator.TokenGenerators;
 import de.cuioss.jwt.validation.test.util.PerformanceStatistics;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import de.cuioss.tools.concurrent.ConcurrentTools;
@@ -68,11 +66,6 @@ class TokenValidatorPerformanceTest {
     private static final int DEFAULT_THREAD_COUNT = 100;
     private static final int DEFAULT_REQUESTS_PER_THREAD = 20;
     private static final int DEFAULT_PAUSE_MILLIS = 10; // 10 milliseconds
-
-    // Token generators
-    private final AccessTokenGenerator accessTokenGenerator = new AccessTokenGenerator(false);
-    private final IDTokenGenerator idTokenGenerator = new IDTokenGenerator(false);
-    private final RefreshTokenGenerator refreshTokenGenerator = new RefreshTokenGenerator(false);
 
     // Token factory
     private TokenValidator tokenValidator;
@@ -270,15 +263,15 @@ class TokenValidatorPerformanceTest {
         try {
             switch (tokenType) {
                 case ACCESS:
-                    String accessToken = accessTokenGenerator.next();
+                    String accessToken = TokenGenerators.accessTokens().next();
                     tokenValidator.createAccessToken(accessToken);
                     return true;
                 case ID:
-                    String idToken = idTokenGenerator.next();
+                    String idToken = TokenGenerators.idTokens().next();
                     tokenValidator.createIdToken(idToken);
                     return true;
                 case REFRESH:
-                    String refreshToken = refreshTokenGenerator.next();
+                    String refreshToken = TokenGenerators.refreshTokens().next();
                     tokenValidator.createRefreshToken(refreshToken);
                     return true;
                 default:

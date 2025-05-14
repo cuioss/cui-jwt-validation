@@ -24,7 +24,7 @@ import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
 import de.cuioss.jwt.validation.test.JwtTokenTamperingUtil;
 import de.cuioss.jwt.validation.test.TestTokenProducer;
-import de.cuioss.jwt.validation.test.generator.AccessTokenGenerator;
+import de.cuioss.jwt.validation.test.generator.TokenGenerators;
 import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -59,7 +59,6 @@ class RFC7519JWTComplianceTest {
     private static final String CLIENT_ID = "test-client";
 
     private TokenValidator tokenValidator;
-    private AccessTokenGenerator accessTokenGenerator;
 
     @BeforeEach
     void setUp() {
@@ -77,9 +76,6 @@ class RFC7519JWTComplianceTest {
 
         // Create validation factory
         tokenValidator = new TokenValidator(issuerConfig);
-
-        // Create access token generator
-        accessTokenGenerator = new AccessTokenGenerator(false);
     }
 
     @Nested
@@ -90,7 +86,7 @@ class RFC7519JWTComplianceTest {
         @DisplayName("4.1.1: 'iss' (Issuer) Claim")
         void shouldHandleIssuerClaim() {
             // Given
-            String token = accessTokenGenerator.next();
+            String token = TokenGenerators.accessTokens().next();
 
             // When
             AccessTokenContent result = tokenValidator.createAccessToken(token);
@@ -105,7 +101,7 @@ class RFC7519JWTComplianceTest {
         @DisplayName("4.1.2: 'sub' (Subject) Claim")
         void shouldHandleSubjectClaim() {
             // Given
-            String token = accessTokenGenerator.next();
+            String token = TokenGenerators.accessTokens().next();
 
             // When
             AccessTokenContent result = tokenValidator.createAccessToken(token);
@@ -120,7 +116,7 @@ class RFC7519JWTComplianceTest {
         @DisplayName("4.1.3: 'aud' (Audience) Claim")
         void shouldHandleAudienceClaim() {
             // Given
-            String token = accessTokenGenerator.next();
+            String token = TokenGenerators.accessTokens().next();
 
             // When
             AccessTokenContent result = tokenValidator.createAccessToken(token);
@@ -136,7 +132,7 @@ class RFC7519JWTComplianceTest {
         @DisplayName("4.1.4: 'exp' (Expiration Time) Claim")
         void shouldHandleExpirationTimeClaim() {
             // Given
-            String token = accessTokenGenerator.next();
+            String token = TokenGenerators.accessTokens().next();
 
             // When
             AccessTokenContent result = tokenValidator.createAccessToken(token);
@@ -180,7 +176,7 @@ class RFC7519JWTComplianceTest {
         @DisplayName("4.1.6: 'iat' (Issued At) Claim")
         void shouldHandleIssuedAtClaim() {
             // Given
-            String token = accessTokenGenerator.next();
+            String token = TokenGenerators.accessTokens().next();
 
             // When
             AccessTokenContent result = tokenValidator.createAccessToken(token);
@@ -229,7 +225,7 @@ class RFC7519JWTComplianceTest {
         @DisplayName("3.1: JWT Format - Three-part structure")
         void shouldHandleThreePartStructure() {
             // Given
-            String token = accessTokenGenerator.next();
+            String token = TokenGenerators.accessTokens().next();
             String[] parts = token.split("\\.");
 
             // Then
@@ -241,7 +237,7 @@ class RFC7519JWTComplianceTest {
         @DisplayName("3.1: JWT Format - Base64URL encoding")
         void shouldHandleBase64UrlEncoding() {
             // Given
-            String token = accessTokenGenerator.next();
+            String token = TokenGenerators.accessTokens().next();
             String[] parts = token.split("\\.");
 
             // Then
@@ -257,7 +253,7 @@ class RFC7519JWTComplianceTest {
         @DisplayName("3.2: JWT Header - 'alg' and 'typ' claims")
         void shouldHandleHeaderClaims() {
             // Given
-            String token = accessTokenGenerator.next();
+            String token = TokenGenerators.accessTokens().next();
 
             // When
             AccessTokenContent result = tokenValidator.createAccessToken(token);
@@ -277,7 +273,7 @@ class RFC7519JWTComplianceTest {
         @DisplayName("7.2: Validate signature")
         void shouldValidateSignature() {
             // Given
-            String token = accessTokenGenerator.next();
+            String token = TokenGenerators.accessTokens().next();
 
             // When
             AccessTokenContent result = tokenValidator.createAccessToken(token);
@@ -358,7 +354,7 @@ class RFC7519JWTComplianceTest {
         @DisplayName("5.1: JWT Claims Set - JSON object")
         void shouldHandleJsonClaimsSet() {
             // Given
-            String token = accessTokenGenerator.next();
+            String token = TokenGenerators.accessTokens().next();
 
             // When
             AccessTokenContent result = tokenValidator.createAccessToken(token);

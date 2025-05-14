@@ -24,7 +24,7 @@ import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.security.AlgorithmPreferences;
 import de.cuioss.jwt.validation.test.JwtTokenTamperingUtil.TamperingStrategy;
 import de.cuioss.jwt.validation.test.generator.AccessTokenGenerator;
-import de.cuioss.jwt.validation.test.generator.IDTokenGenerator;
+import de.cuioss.jwt.validation.test.generator.TokenGenerators;
 import de.cuioss.test.generator.junit.EnableGeneratorController;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,8 +48,6 @@ class JwtTokenTamperingUtilTest {
     private static final String AUDIENCE = CLIENT_ID;
 
     private TokenValidator tokenValidator;
-    private AccessTokenGenerator accessTokenGenerator;
-    private IDTokenGenerator idTokenGenerator;
 
     @BeforeEach
     void setUp() {
@@ -64,16 +62,14 @@ class JwtTokenTamperingUtilTest {
                 .build();
         tokenValidator = new TokenValidator(config, issuerConfig);
 
-        // Create validation generators
-        accessTokenGenerator = new AccessTokenGenerator();
-        idTokenGenerator = new IDTokenGenerator(false);
+        // No need to create token generators, using TokenGenerators factory
     }
 
     @Test
     @DisplayName("Should validate untampered access token")
     void shouldValidateUntamperedAccessToken() {
         // Given
-        String token = accessTokenGenerator.next();
+        String token = TokenGenerators.accessTokens().next();
 
         // When
         AccessTokenContent result = tokenValidator.createAccessToken(token);
@@ -86,7 +82,7 @@ class JwtTokenTamperingUtilTest {
     @DisplayName("Should validate untampered ID-Token")
     void shouldValidateUntamperedIdToken() {
         // Given
-        String token = idTokenGenerator.next();
+        String token = TokenGenerators.idTokens().next();
 
         // When
         IdTokenContent result = tokenValidator.createIdToken(token);
@@ -100,7 +96,7 @@ class JwtTokenTamperingUtilTest {
     @DisplayName("Should reject tampered access token")
     void shouldRejectTamperedAccessToken(TamperingStrategy strategy) {
         // Given
-        String originalToken = accessTokenGenerator.next();
+        String originalToken = TokenGenerators.accessTokens().next();
         String tamperedToken = JwtTokenTamperingUtil.applyTamperingStrategy(originalToken, strategy);
 
         // Verify that the validation was actually tampered
@@ -122,7 +118,7 @@ class JwtTokenTamperingUtilTest {
     @DisplayName("Should reject tampered ID-Token")
     void shouldRejectTamperedIdToken(TamperingStrategy strategy) {
         // Given
-        String originalToken = idTokenGenerator.next();
+        String originalToken = TokenGenerators.idTokens().next();
         String tamperedToken = JwtTokenTamperingUtil.applyTamperingStrategy(originalToken, strategy);
 
         // Verify that the validation was actually tampered
@@ -143,7 +139,7 @@ class JwtTokenTamperingUtilTest {
     @DisplayName("Should apply all tampering strategies to a validation")
     void shouldApplyAllTamperingStrategiesToToken() {
         // Given
-        String originalToken = accessTokenGenerator.next();
+        String originalToken = TokenGenerators.accessTokens().next();
 
         // When/Then
         for (TamperingStrategy strategy : TamperingStrategy.values()) {

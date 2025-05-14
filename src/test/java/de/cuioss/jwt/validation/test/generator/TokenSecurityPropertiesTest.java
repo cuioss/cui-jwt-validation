@@ -32,10 +32,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for the security properties of generated tokens.
@@ -104,7 +101,7 @@ class TokenSecurityPropertiesTest {
     @DisplayName("Tokens should have sufficient entropy")
     void tokensShouldHaveSufficientEntropy() {
         // Generate a token
-        String token = new AccessTokenGenerator(false).next();
+        String token = TokenGenerators.accessTokens().next();
 
         // Split the token into its parts
         String[] parts = token.split("\\.");
@@ -159,9 +156,9 @@ class TokenSecurityPropertiesTest {
     @DisplayName("Tokens should have unpredictable signatures")
     void tokensShouldHaveUnpredictableSignatures() {
         // Generate multiple tokens
-        String token1 = new AccessTokenGenerator(false).next();
-        String token2 = new AccessTokenGenerator(false).next();
-        String token3 = new AccessTokenGenerator(false).next();
+        String token1 = TokenGenerators.accessTokens().next();
+        String token2 = TokenGenerators.accessTokens().next();
+        String token3 = TokenGenerators.accessTokens().next();
 
         // Split the tokens into their parts
         String[] parts1 = token1.split("\\.");
