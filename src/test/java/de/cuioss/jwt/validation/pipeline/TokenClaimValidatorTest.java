@@ -21,8 +21,7 @@ import de.cuioss.jwt.validation.TokenType;
 import de.cuioss.jwt.validation.domain.token.TokenContent;
 import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
-import de.cuioss.jwt.validation.test.generator.InvalidTokenContentGenerator;
-import de.cuioss.jwt.validation.test.generator.ValidTokenContentGenerator;
+import de.cuioss.jwt.validation.test.generator.TokenGenerators;
 import de.cuioss.test.generator.junit.EnableGeneratorController;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
@@ -175,8 +174,8 @@ class TokenClaimValidatorTest {
                     .build();
             var validator = createValidator(issuerConfig);
 
-            // Create a validation with all mandatory claims using the ValidTokenContentGenerator
-            TokenContent tokenContent = new ValidTokenContentGenerator().next();
+            // Create a validation with all mandatory claims using the TokenGenerators factory
+            TokenContent tokenContent = TokenGenerators.validTokenContent().next();
 
             // When validating the validation - should not throw an exception
             TokenContent result = assertDoesNotThrow(() -> validator.validate(tokenContent),
@@ -200,8 +199,8 @@ class TokenClaimValidatorTest {
                     .build();
             var validator = createValidator(issuerConfig);
 
-            // Create a validation missing mandatory claims using the InvalidTokenContentGenerator
-            TokenContent tokenContent = new InvalidTokenContentGenerator()
+            // Create a validation missing mandatory claims using the TokenGenerators factory
+            TokenContent tokenContent = TokenGenerators.invalidTokenContent()
                     .withMissingIssuer()
                     .withMissingSubject()
                     .next();
@@ -239,7 +238,7 @@ class TokenClaimValidatorTest {
             var validator = createValidator(issuerConfig);
 
             // When validating a token with a matching audience - should not throw an exception
-            TokenContent tokenContent = new ValidTokenContentGenerator().next();
+            TokenContent tokenContent = TokenGenerators.validTokenContent().next();
             TokenContent result = assertDoesNotThrow(() -> validator.validate(tokenContent),
                     "Token should be valid with matching audience");
 
@@ -262,7 +261,7 @@ class TokenClaimValidatorTest {
             var validator = createValidator(issuerConfig);
 
             // When validating a token with a missing audience - should throw an exception
-            TokenContent tokenContent = new InvalidTokenContentGenerator(TokenType.ID_TOKEN)
+            TokenContent tokenContent = TokenGenerators.invalidTokenContent(TokenType.ID_TOKEN)
                     .withMissingAudience()
                     .next();
 
@@ -295,7 +294,7 @@ class TokenClaimValidatorTest {
             var validator = createValidator(issuerConfig);
 
             // When validating a token with a missing audience - should not throw an exception for access tokens
-            TokenContent tokenContent = new InvalidTokenContentGenerator(TokenType.ACCESS_TOKEN)
+            TokenContent tokenContent = TokenGenerators.invalidTokenContent(TokenType.ACCESS_TOKEN)
                     .withMissingAudience()
                     .next();
 
@@ -323,7 +322,7 @@ class TokenClaimValidatorTest {
             var validator = createValidator(issuerConfig);
 
             // When validating a token with a matching authorized party - should not throw an exception
-            TokenContent tokenContent = new ValidTokenContentGenerator().next();
+            TokenContent tokenContent = TokenGenerators.validTokenContent().next();
             TokenContent result = assertDoesNotThrow(() -> validator.validate(tokenContent),
                     "Token should be valid with matching authorized party");
 
@@ -347,7 +346,7 @@ class TokenClaimValidatorTest {
 
             // When validating a token with a missing authorized party
             // Create a token with a missing authorized party claim
-            TokenContent tokenContent = new InvalidTokenContentGenerator()
+            TokenContent tokenContent = TokenGenerators.invalidTokenContent()
                     .withMissingAuthorizedParty()
                     .next();
 

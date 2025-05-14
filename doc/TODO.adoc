@@ -35,7 +35,7 @@ Steps:
 
 === Standardize generator initialization
 
-[ ] Create and implement consistent patterns for initializing token generators.
+[x] Create and implement consistent patterns for initializing token generators.
 
 Steps:
 

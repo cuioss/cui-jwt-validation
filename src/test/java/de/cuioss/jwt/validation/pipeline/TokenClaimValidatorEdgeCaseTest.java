@@ -26,7 +26,7 @@ import de.cuioss.jwt.validation.jwks.key.KeyInfo;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.jwt.validation.test.generator.ClaimControlParameter;
 import de.cuioss.jwt.validation.test.generator.TokenContentImpl;
-import de.cuioss.jwt.validation.test.generator.ValidTokenContentGenerator;
+import de.cuioss.jwt.validation.test.generator.TokenGenerators;
 import de.cuioss.test.generator.junit.EnableGeneratorController;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
@@ -53,7 +53,7 @@ class TokenClaimValidatorEdgeCaseTest {
     private static final String EXPECTED_AUDIENCE = "test-audience";
     private static final String EXPECTED_CLIENT_ID = "test-client-id";
 
-    private final ValidTokenContentGenerator validTokenGenerator = new ValidTokenContentGenerator();
+    // Using TokenGenerators factory for standardized generator initialization
     private final SecurityEventCounter securityEventCounter = new SecurityEventCounter();
 
     // Helper method to create a TokenClaimValidator with the shared SecurityEventCounter
@@ -250,12 +250,12 @@ class TokenClaimValidatorEdgeCaseTest {
     }
 
     /**
-     * Creates a valid validation using the ValidTokenContentGenerator.
+     * Creates a valid validation using the TokenGenerators factory.
      *
      * @return a valid TokenContent
      */
     private TokenContent createValidToken() {
-        return validTokenGenerator.next();
+        return TokenGenerators.validTokenContent().next();
     }
 
     /**

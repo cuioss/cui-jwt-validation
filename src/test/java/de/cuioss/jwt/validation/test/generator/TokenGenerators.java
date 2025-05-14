@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.validation.test.generator;
 
+import de.cuioss.jwt.validation.TokenType;
 import de.cuioss.test.generator.TypedGenerator;
 
 import java.util.Set;
@@ -127,5 +128,178 @@ public class TokenGenerators {
      */
     public static TypedGenerator<Set<String>> groups() {
         return new GroupGenerator();
+    }
+
+    /**
+     * Gets a generator for valid token content with default token type (ACCESS_TOKEN).
+     *
+     * @return a generator for valid token content
+     */
+    public static TypedGenerator<TokenContentImpl> validTokenContent() {
+        return new ValidTokenContentGenerator();
+    }
+
+    /**
+     * Gets a generator for valid token content with the specified token type.
+     *
+     * @param tokenType the type of token to generate
+     * @return a generator for valid token content
+     */
+    public static TypedGenerator<TokenContentImpl> validTokenContent(TokenType tokenType) {
+        return new ValidTokenContentGenerator(tokenType);
+    }
+
+    /**
+     * Gets a generator for valid access token content.
+     *
+     * @return a generator for valid access token content
+     */
+    public static TypedGenerator<TokenContentImpl> validAccessTokenContent() {
+        return validTokenContent(TokenType.ACCESS_TOKEN);
+    }
+
+    /**
+     * Gets a generator for valid ID token content.
+     *
+     * @return a generator for valid ID token content
+     */
+    public static TypedGenerator<TokenContentImpl> validIdTokenContent() {
+        return validTokenContent(TokenType.ID_TOKEN);
+    }
+
+    /**
+     * Gets a generator for valid refresh token content.
+     *
+     * @return a generator for valid refresh token content
+     */
+    public static TypedGenerator<TokenContentImpl> validRefreshTokenContent() {
+        return validTokenContent(TokenType.REFRESH_TOKEN);
+    }
+
+    /**
+     * Gets a generator for invalid token content with default token type (ACCESS_TOKEN).
+     *
+     * @return a generator for invalid token content
+     */
+    public static InvalidTokenContentGenerator invalidTokenContent() {
+        return new InvalidTokenContentGenerator();
+    }
+
+    /**
+     * Gets a generator for invalid token content with the specified token type.
+     *
+     * @param tokenType the type of token to generate
+     * @return a generator for invalid token content
+     */
+    public static InvalidTokenContentGenerator invalidTokenContent(TokenType tokenType) {
+        return new InvalidTokenContentGenerator(tokenType);
+    }
+
+    /**
+     * Gets a generator for invalid access token content.
+     *
+     * @return a generator for invalid access token content
+     */
+    public static InvalidTokenContentGenerator invalidAccessTokenContent() {
+        return invalidTokenContent(TokenType.ACCESS_TOKEN);
+    }
+
+    /**
+     * Gets a generator for invalid ID token content.
+     *
+     * @return a generator for invalid ID token content
+     */
+    public static InvalidTokenContentGenerator invalidIdTokenContent() {
+        return invalidTokenContent(TokenType.ID_TOKEN);
+    }
+
+    /**
+     * Gets a generator for invalid refresh token content.
+     *
+     * @return a generator for invalid refresh token content
+     */
+    public static InvalidTokenContentGenerator invalidRefreshTokenContent() {
+        return invalidTokenContent(TokenType.REFRESH_TOKEN);
+    }
+
+    /**
+     * Gets a generator for token content with missing issuer.
+     *
+     * @return a generator for token content with missing issuer
+     */
+    public static InvalidTokenContentGenerator invalidTokenContentWithMissingIssuer() {
+        return invalidTokenContent().withMissingIssuer();
+    }
+
+    /**
+     * Gets a generator for token content with missing subject.
+     *
+     * @return a generator for token content with missing subject
+     */
+    public static InvalidTokenContentGenerator invalidTokenContentWithMissingSubject() {
+        return invalidTokenContent().withMissingSubject();
+    }
+
+    /**
+     * Gets a generator for token content with missing expiration.
+     *
+     * @return a generator for token content with missing expiration
+     */
+    public static InvalidTokenContentGenerator invalidTokenContentWithMissingExpiration() {
+        return invalidTokenContent().withMissingExpiration();
+    }
+
+    /**
+     * Gets a generator for expired token content.
+     *
+     * @return a generator for expired token content
+     */
+    public static InvalidTokenContentGenerator invalidTokenContentWithExpiredToken() {
+        return invalidTokenContent().withExpiredToken();
+    }
+
+    /**
+     * Gets a generator for token content with missing issuedAt.
+     *
+     * @return a generator for token content with missing issuedAt
+     */
+    public static InvalidTokenContentGenerator invalidTokenContentWithMissingIssuedAt() {
+        return invalidTokenContent().withMissingIssuedAt();
+    }
+
+    /**
+     * Gets a generator for token content with missing token type.
+     *
+     * @return a generator for token content with missing token type
+     */
+    public static InvalidTokenContentGenerator invalidTokenContentWithMissingTokenType() {
+        return invalidTokenContent().withMissingTokenType();
+    }
+
+    /**
+     * Gets a generator for token content with missing scope.
+     *
+     * @return a generator for token content with missing scope
+     */
+    public static InvalidTokenContentGenerator invalidTokenContentWithMissingScope() {
+        return invalidTokenContent().withMissingScope();
+    }
+
+    /**
+     * Gets a generator for token content with missing audience.
+     *
+     * @return a generator for token content with missing audience
+     */
+    public static InvalidTokenContentGenerator invalidTokenContentWithMissingAudience() {
+        return invalidTokenContent().withMissingAudience();
+    }
+
+    /**
+     * Gets a generator for token content with missing authorized party.
+     *
+     * @return a generator for token content with missing authorized party
+     */
+    public static InvalidTokenContentGenerator invalidTokenContentWithMissingAuthorizedParty() {
+        return invalidTokenContent().withMissingAuthorizedParty();
     }
 }
