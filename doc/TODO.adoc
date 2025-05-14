@@ -46,7 +46,7 @@ Steps:
 
 === Document generator usage patterns
 
-[ ] Create clear documentation on when to use each type of generator and how to configure them.
+[x] Create clear documentation on when to use each type of generator and how to configure them.
 
 Steps:
 
