@@ -16,14 +16,18 @@
 package de.cuioss.jwt.validation.test.generator;
 
 import de.cuioss.jwt.validation.TokenType;
+import de.cuioss.jwt.validation.domain.token.TokenContent;
 import de.cuioss.test.generator.TypedGenerator;
 
 import java.util.Set;
 
 /**
- * Factory for unified access to validation generators.
- * Provides access to generators for various validation types and JWKS.
+ * Factory for unified access to token generators.
+ * Provides access to generators for various token types and JWKS.
  * Includes variants for "default" or "alternative" mode.
+ * <p>
+ * This factory also provides methods for converting between TokenContent objects
+ * and JWT strings using the {@link TokenContentToJwtConverter}.
  */
 public class TokenGenerators {
 
@@ -301,5 +305,47 @@ public class TokenGenerators {
      */
     public static InvalidTokenContentGenerator invalidTokenContentWithMissingAuthorizedParty() {
         return invalidTokenContent().withMissingAuthorizedParty();
+    }
+
+    /**
+     * Converts a TokenContent object to a JWT string.
+     * <p>
+     * This method uses the {@link TokenContentToJwtConverter} to convert a TokenContent
+     * object to a properly signed JWT string.
+     *
+     * @param tokenContent the TokenContent to convert
+     * @return a JWT string representation of the TokenContent
+     * @throws IllegalArgumentException if the TokenContent is null
+     */
+    public static String toJwtString(TokenContent tokenContent) {
+        return TokenContentToJwtConverter.toJwtString(tokenContent);
+    }
+
+    /**
+     * Creates a TokenContent object from a JWT string.
+     * <p>
+     * This method uses the {@link TokenContentToJwtConverter} to parse a JWT string
+     * into a TokenContent object.
+     *
+     * @param jwtString the JWT string to parse
+     * @return a TokenContent representation of the JWT string
+     * @throws IllegalArgumentException if the JWT string is null or empty
+     */
+    public static TokenContent fromJwtString(String jwtString) {
+        return TokenContentToJwtConverter.fromJwtString(jwtString);
+    }
+
+    /**
+     * Generates a JWT string from a valid TokenContent of the specified type.
+     * <p>
+     * This method combines the functionality of {@link #validTokenContent(TokenType)}
+     * and {@link #toJwtString(TokenContent)} to generate a JWT string directly.
+     *
+     * @param tokenType the type of token to generate
+     * @return a JWT string of the specified type
+     */
+    public static String jwtStringFromTokenContent(TokenType tokenType) {
+        TokenContent tokenContent = validTokenContent(tokenType).next();
+        return toJwtString(tokenContent);
     }
 }

@@ -58,7 +58,7 @@ Steps:
 
 === Unify TokenContent and JWT string generation
 
-[ ] Create a bridge between `TokenContentImpl` and JWT string generators.
+[x] Create a bridge between `TokenContentImpl` and JWT string generators.
 
 Steps:
 
