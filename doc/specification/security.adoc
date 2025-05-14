@@ -254,7 +254,7 @@ The SecurityEventCounter is passed to all flow elements in the token processing 
 
 This provides a more granular view of security events, allowing for better monitoring and troubleshooting.
 
-==== Event Types
+==== Event Types and Categories
 
 The SecurityEventCounter.EventType enum defines all countable security events, including:
 
@@ -265,6 +265,31 @@ The SecurityEventCounter.EventType enum defines all countable security events, i
 * Algorithm issues (unsupported algorithms, rejected algorithms)
 * JWKS issues (fetch failures, parse failures)
 * Critical security issues (security breaches, violations)
+
+Each EventType is associated with an EventCategory that classifies the type of validation failure:
+
+* InvalidStructure: For malformed tokens, size violations, etc. (typically thrown by NonValidatingJwtParser or TokenHeaderValidator)
+* InvalidSignature: For signature verification failures (typically thrown by TokenSignatureValidator)
+* SemanticIssues: For semantic validation failures (typically thrown by TokenClaimValidator, e.g., time or audience issues)
+
+These categories help applications determine the appropriate response to validation failures, such as mapping to specific HTTP status codes or error messages.
+
+==== Exception-based Error Handling
+
+The library uses an exception-based approach for error handling through the TokenValidationException class. This runtime exception encapsulates:
+
+* EventType - The type of security event that caused the validation failure
+* EventCategory - The category of the validation failure
+* A detailed error message
+
+When a validation failure occurs, the appropriate component throws a TokenValidationException with the relevant EventType and message. This provides a structured way to handle validation failures and allows applications to:
+
+1. Catch specific types of validation failures
+2. Access detailed information about the failure
+3. Map validation failures to appropriate HTTP status codes
+4. Provide meaningful error messages to users
+
+The TokenValidationException is integrated with the SecurityEventCounter, ensuring that all validation failures are properly counted and logged.
 
 ==== Bidirectional Links to Log Messages
 

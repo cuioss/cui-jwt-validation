@@ -16,7 +16,9 @@
 package de.cuioss.jwt.validation.pipeline;
 
 import de.cuioss.jwt.validation.ParserConfig;
+import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
+import de.cuioss.jwt.validation.security.SecurityEventCounter.EventType;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
@@ -31,7 +33,6 @@ import org.junit.jupiter.params.provider.NullAndEmptySource;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -66,10 +67,8 @@ class NonValidatingJwtParserTest {
         @Test
         @DisplayName("Should decode valid validation")
         void shouldDecodeValidToken() {
-            Optional<DecodedJwt> result = parser.decode(VALID_TOKEN);
-
-            assertTrue(result.isPresent(), "Should decode a valid validation");
-            DecodedJwt jwt = result.get();
+            // When decoding a valid token, it should not throw an exception
+            DecodedJwt jwt = parser.decode(VALID_TOKEN);
 
             // Verify header
             assertTrue(jwt.getHeader().isPresent(), "Header should be present");
@@ -116,16 +115,25 @@ class NonValidatingJwtParserTest {
         @NullAndEmptySource
         @DisplayName("Should handle empty or null validation")
         void shouldHandleEmptyOrNullToken(String token) {
-            Optional<DecodedJwt> result = parser.decode(token);
-            assertFalse(result.isPresent(), "Should not decode an empty or null validation");
+            // When decoding an empty or null token, it should throw a TokenValidationException
+            TokenValidationException exception = assertThrows(TokenValidationException.class, () -> parser.decode(token),
+                    "Should throw TokenValidationException for empty or null token");
+
+            // Verify the exception has the correct event type
+            assertEquals(EventType.TOKEN_EMPTY, exception.getEventType(),
+                    "Exception should have TOKEN_EMPTY event type");
         }
 
         @ParameterizedTest
         @MethodSource("invalidTokenProvider")
         @DisplayName("Should handle invalid validation format")
         void shouldHandleInvalidTokenFormat(String invalidToken, String message) {
-            Optional<DecodedJwt> result = parser.decode(invalidToken);
-            assertFalse(result.isPresent(), message);
+            // When decoding an invalid token, it should throw a TokenValidationException
+            TokenValidationException exception = assertThrows(TokenValidationException.class, () -> parser.decode(invalidToken),
+                    message);
+
+            // Verify the exception has a valid event type
+            assertNotNull(exception.getEventType(), "Exception should have an event type");
         }
 
         @Test
@@ -134,8 +142,12 @@ class NonValidatingJwtParserTest {
             String invalidHeader = Base64.getUrlEncoder().encodeToString("not json".getBytes(StandardCharsets.UTF_8));
             String invalidToken = invalidHeader + "." + ENCODED_PAYLOAD + "." + ENCODED_SIGNATURE;
 
-            Optional<DecodedJwt> result = parser.decode(invalidToken);
-            assertFalse(result.isPresent(), "Should not decode a validation with invalid JSON");
+            // When decoding a token with invalid JSON, it should throw a TokenValidationException
+            TokenValidationException exception = assertThrows(TokenValidationException.class, () -> parser.decode(invalidToken),
+                    "Should throw TokenValidationException for token with invalid JSON");
+
+            // Verify the exception has a valid event type
+            assertNotNull(exception.getEventType(), "Exception should have an event type");
         }
     }
 
@@ -155,11 +167,10 @@ class NonValidatingJwtParserTest {
             String encodedPayloadWithoutIssuer = Base64.getUrlEncoder().encodeToString(payloadWithoutIssuer.getBytes(StandardCharsets.UTF_8));
             String tokenWithoutIssuer = ENCODED_HEADER + "." + encodedPayloadWithoutIssuer + "." + ENCODED_SIGNATURE;
 
-            Optional<DecodedJwt> result = parser.decode(tokenWithoutIssuer);
+            // When decoding a token without issuer, it should not throw an exception
+            DecodedJwt jwt = parser.decode(tokenWithoutIssuer);
 
-            assertTrue(result.isPresent(), "Should decode a validation without issuer");
-            DecodedJwt jwt = result.get();
-
+            // Verify issuer is not present
             assertFalse(jwt.getIssuer().isPresent(), "Issuer should not be present");
             assertEquals(tokenWithoutIssuer, jwt.getRawToken(), "Raw validation should match the original validation");
         }
@@ -175,11 +186,10 @@ class NonValidatingJwtParserTest {
             String encodedHeaderWithoutKid = Base64.getUrlEncoder().encodeToString(headerWithoutKid.getBytes(StandardCharsets.UTF_8));
             String tokenWithoutKid = encodedHeaderWithoutKid + "." + ENCODED_PAYLOAD + "." + ENCODED_SIGNATURE;
 
-            Optional<DecodedJwt> result = parser.decode(tokenWithoutKid);
+            // When decoding a token without kid, it should not throw an exception
+            DecodedJwt jwt = parser.decode(tokenWithoutKid);
 
-            assertTrue(result.isPresent(), "Should decode a validation without kid");
-            DecodedJwt jwt = result.get();
-
+            // Verify kid is not present
             assertFalse(jwt.getKid().isPresent(), "Key ID should not be present");
             assertEquals(tokenWithoutKid, jwt.getRawToken(), "Raw validation should match the original validation");
         }
@@ -193,9 +203,15 @@ class NonValidatingJwtParserTest {
         @DisplayName("Should respect max validation size")
         void shouldRespectMaxTokenSize() {
             // Create a validation that exceeds the max size
+            String largeToken = "a".repeat(ParserConfig.DEFAULT_MAX_TOKEN_SIZE + 1);
 
-            Optional<DecodedJwt> result = parser.decode("a".repeat(ParserConfig.DEFAULT_MAX_TOKEN_SIZE + 1));
-            assertFalse(result.isPresent(), "Should not decode a validation that exceeds max size");
+            // When decoding a token that exceeds the max size, it should throw a TokenValidationException
+            TokenValidationException exception = assertThrows(TokenValidationException.class, () -> parser.decode(largeToken),
+                    "Should throw TokenValidationException for token exceeding max size");
+
+            // Verify the exception has the correct event type
+            assertEquals(EventType.TOKEN_SIZE_EXCEEDED, exception.getEventType(),
+                    "Exception should have TOKEN_SIZE_EXCEEDED event type");
         }
 
         @Test
@@ -213,8 +229,13 @@ class NonValidatingJwtParserTest {
                     .config(config)
                     .build();
 
-            Optional<DecodedJwt> result = customParser.decode(largeToken);
-            assertFalse(result.isPresent(), "Should not decode a validation that exceeds custom max size");
+            // When decoding a token that exceeds the custom max size, it should throw a TokenValidationException
+            TokenValidationException exception = assertThrows(TokenValidationException.class, () -> customParser.decode(largeToken),
+                    "Should throw TokenValidationException for token exceeding custom max size");
+
+            // Verify the exception has the correct event type
+            assertEquals(EventType.TOKEN_SIZE_EXCEEDED, exception.getEventType(),
+                    "Exception should have TOKEN_SIZE_EXCEEDED event type");
         }
 
         @Test
@@ -226,13 +247,9 @@ class NonValidatingJwtParserTest {
                     + "a".repeat(ParserConfig.DEFAULT_MAX_PAYLOAD_SIZE + 1000) + "\"}";
 
             byte[] decodedBytes = largeJson.getBytes(StandardCharsets.UTF_8);
-            System.out.println("[DEBUG_LOG] Decoded part size: " + decodedBytes.length);
-            System.out.println("[DEBUG_LOG] Max payload size: " + ParserConfig.DEFAULT_MAX_PAYLOAD_SIZE);
 
             String encodedLargeHeader = Base64.getUrlEncoder().encodeToString(decodedBytes);
             String tokenWithLargeHeader = encodedLargeHeader + "." + ENCODED_PAYLOAD + "." + ENCODED_SIGNATURE;
-
-            System.out.println("[DEBUG_LOG] Encoded validation size: " + tokenWithLargeHeader.getBytes(StandardCharsets.UTF_8).length);
 
             // Create a parser with a security event counter we can check and a custom config with a small max payload size
             // but a large max validation size to ensure the validation passes the validation size check
@@ -246,18 +263,15 @@ class NonValidatingJwtParserTest {
                     .config(config)
                     .build();
 
-            // When
-            Optional<DecodedJwt> result = testParser.decode(tokenWithLargeHeader);
+            // When decoding a token with a large decoded part, it should throw a TokenValidationException
+            TokenValidationException exception = assertThrows(TokenValidationException.class, () -> testParser.decode(tokenWithLargeHeader),
+                    "Should throw TokenValidationException for token with large decoded part");
 
-            // Then
-            assertFalse(result.isPresent(), "Should not decode a validation with a decoded part exceeding max size");
+            // Verify the exception has the correct event type
+            assertEquals(EventType.DECODED_PART_SIZE_EXCEEDED, exception.getEventType(),
+                    "Exception should have DECODED_PART_SIZE_EXCEEDED event type");
 
-            // Check all possible event types that might be counted
-            System.out.println("[DEBUG_LOG] TOKEN_SIZE_EXCEEDED count: " + counter.getCount(SecurityEventCounter.EventType.TOKEN_SIZE_EXCEEDED));
-            System.out.println("[DEBUG_LOG] DECODED_PART_SIZE_EXCEEDED count: " + counter.getCount(SecurityEventCounter.EventType.DECODED_PART_SIZE_EXCEEDED));
-            System.out.println("[DEBUG_LOG] FAILED_TO_DECODE_JWT count: " + counter.getCount(SecurityEventCounter.EventType.FAILED_TO_DECODE_JWT));
-            System.out.println("[DEBUG_LOG] FAILED_TO_DECODE_HEADER count: " + counter.getCount(SecurityEventCounter.EventType.FAILED_TO_DECODE_HEADER));
-            System.out.println("[DEBUG_LOG] FAILED_TO_DECODE_PAYLOAD count: " + counter.getCount(SecurityEventCounter.EventType.FAILED_TO_DECODE_PAYLOAD));
+            // Check the event count
 
             assertEquals(1, counter.getCount(SecurityEventCounter.EventType.DECODED_PART_SIZE_EXCEEDED),
                     "Should count DECODED_PART_SIZE_EXCEEDED event");
@@ -275,9 +289,9 @@ class NonValidatingJwtParserTest {
             assertNotNull(defaultParser, "Should create a parser with default settings");
 
             // Verify it works with a valid validation
-            Optional<DecodedJwt> result = defaultParser.decode(VALID_TOKEN);
-            assertTrue(result.isPresent(), "Default parser should decode a valid validation");
-            assertEquals(VALID_TOKEN, result.get().getRawToken(), "Raw validation should match the original validation");
+            DecodedJwt result = defaultParser.decode(VALID_TOKEN);
+            assertNotNull(result, "Default parser should decode a valid validation");
+            assertEquals(VALID_TOKEN, result.getRawToken(), "Raw validation should match the original validation");
         }
     }
 
@@ -297,10 +311,16 @@ class NonValidatingJwtParserTest {
             // When - try to decode an invalid validation that will cause a general decoding failure
             // Create a validation with 3 parts but invalid Base64 in the middle part to trigger a JSON parsing exception
             String invalidToken = "eyJhbGciOiJIUzI1NiJ9.invalid_base64_payload.signature";
-            Optional<DecodedJwt> result = testParser.decode(invalidToken);
 
-            // Then
-            assertFalse(result.isPresent(), "Should not decode an invalid validation");
+            // When decoding an invalid token, it should throw a TokenValidationException
+            TokenValidationException exception = assertThrows(TokenValidationException.class, () -> testParser.decode(invalidToken),
+                    "Should throw TokenValidationException for token with invalid Base64 encoding");
+
+            // Verify the exception has the correct event type
+            assertEquals(EventType.FAILED_TO_DECODE_JWT, exception.getEventType(),
+                    "Exception should have FAILED_TO_DECODE_JWT event type");
+
+            // Verify the counter was incremented
             assertEquals(1, counter.getCount(SecurityEventCounter.EventType.FAILED_TO_DECODE_JWT),
                     "Should count FAILED_TO_DECODE_JWT event");
         }
@@ -320,10 +340,16 @@ class NonValidatingJwtParserTest {
 
             // When - try to decode a validation that exceeds the max size
             String largeToken = "a".repeat(config.getMaxTokenSize() + 1);
-            Optional<DecodedJwt> result = testParser.decode(largeToken);
 
-            // Then
-            assertFalse(result.isPresent(), "Should not decode a validation that exceeds max size");
+            // When decoding a token that exceeds the max size, it should throw a TokenValidationException
+            TokenValidationException exception = assertThrows(TokenValidationException.class, () -> testParser.decode(largeToken),
+                    "Should throw TokenValidationException for token exceeding max size");
+
+            // Verify the exception has the correct event type
+            assertEquals(EventType.TOKEN_SIZE_EXCEEDED, exception.getEventType(),
+                    "Exception should have TOKEN_SIZE_EXCEEDED event type");
+
+            // Verify the counter was incremented
             assertEquals(1, counter.getCount(SecurityEventCounter.EventType.TOKEN_SIZE_EXCEEDED),
                     "Should count TOKEN_SIZE_EXCEEDED event");
         }
@@ -347,8 +373,12 @@ class NonValidatingJwtParserTest {
             String encodedNestedJson = Base64.getUrlEncoder().encodeToString(nestedJson.toString().getBytes(StandardCharsets.UTF_8));
             String tokenWithDeepJson = encodedNestedJson + "." + ENCODED_PAYLOAD + "." + ENCODED_SIGNATURE;
 
-            Optional<DecodedJwt> result = parser.decode(tokenWithDeepJson);
-            assertFalse(result.isPresent(), "Should not decode a validation with JSON exceeding max depth");
+            // When decoding a token with JSON exceeding max depth, it should throw a TokenValidationException
+            TokenValidationException exception = assertThrows(TokenValidationException.class, () -> parser.decode(tokenWithDeepJson),
+                    "Should throw TokenValidationException for token with JSON exceeding max depth");
+
+            // Verify the exception has a valid event type
+            assertNotNull(exception.getEventType(), "Exception should have an event type");
         }
 
         @Test
@@ -367,12 +397,12 @@ class NonValidatingJwtParserTest {
             String encodedLargeArrayJson = Base64.getUrlEncoder().encodeToString(largeArrayJson.toString().getBytes(StandardCharsets.UTF_8));
             String tokenWithLargeArray = encodedLargeArrayJson + "." + ENCODED_PAYLOAD + "." + ENCODED_SIGNATURE;
 
-            Optional<DecodedJwt> result = parser.decode(tokenWithLargeArray);
-            assertTrue(result.isPresent(), "Should decode a validation with large JSON array within limits");
+            // When decoding a token with large JSON array within limits, it should not throw an exception
+            DecodedJwt result = parser.decode(tokenWithLargeArray);
 
             // Verify the array was parsed correctly
-            assertTrue(result.get().getHeader().isPresent(), "Header should be present");
-            JsonObject header = result.get().getHeader().get();
+            assertTrue(result.getHeader().isPresent(), "Header should be present");
+            JsonObject header = result.getHeader().get();
             assertTrue(header.containsKey("array"), "Array should be present in header");
         }
 
@@ -385,12 +415,12 @@ class NonValidatingJwtParserTest {
             String encodedLargeStringJson = Base64.getUrlEncoder().encodeToString(largeStringJson.getBytes(StandardCharsets.UTF_8));
             String tokenWithLargeString = encodedLargeStringJson + "." + ENCODED_PAYLOAD + "." + ENCODED_SIGNATURE;
 
-            Optional<DecodedJwt> result = parser.decode(tokenWithLargeString);
-            assertTrue(result.isPresent(), "Should decode a validation with large JSON string within limits");
+            // When decoding a token with large JSON string within limits, it should not throw an exception
+            DecodedJwt result = parser.decode(tokenWithLargeString);
 
             // Verify the string was parsed correctly
-            assertTrue(result.get().getHeader().isPresent(), "Header should be present");
-            JsonObject header = result.get().getHeader().get();
+            assertTrue(result.getHeader().isPresent(), "Header should be present");
+            JsonObject header = result.getHeader().get();
             assertTrue(header.containsKey("largeString"), "Large string should be present in header");
         }
 
@@ -402,15 +432,13 @@ class NonValidatingJwtParserTest {
             // the parser works correctly after the JsonReaderFactory is created
 
             // First decode should create and cache the JsonReaderFactory
-            Optional<DecodedJwt> result1 = parser.decode(VALID_TOKEN);
-            assertTrue(result1.isPresent(), "First decode should succeed");
+            DecodedJwt result1 = parser.decode(VALID_TOKEN);
 
             // Second decode should use the cached JsonReaderFactory
-            Optional<DecodedJwt> result2 = parser.decode(VALID_TOKEN);
-            assertTrue(result2.isPresent(), "Second decode should succeed");
+            DecodedJwt result2 = parser.decode(VALID_TOKEN);
 
             // Both results should be equal
-            assertEquals(result1.get().getRawToken(), result2.get().getRawToken(),
+            assertEquals(result1.getRawToken(), result2.getRawToken(),
                     "Both decodes should produce the same result");
         }
     }

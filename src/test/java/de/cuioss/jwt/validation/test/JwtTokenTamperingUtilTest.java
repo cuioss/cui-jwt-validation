@@ -20,6 +20,7 @@ import de.cuioss.jwt.validation.ParserConfig;
 import de.cuioss.jwt.validation.TokenValidator;
 import de.cuioss.jwt.validation.domain.token.AccessTokenContent;
 import de.cuioss.jwt.validation.domain.token.IdTokenContent;
+import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.security.AlgorithmPreferences;
 import de.cuioss.jwt.validation.test.JwtTokenTamperingUtil.TamperingStrategy;
 import de.cuioss.jwt.validation.test.generator.AccessTokenGenerator;
@@ -31,8 +32,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -77,10 +76,10 @@ class JwtTokenTamperingUtilTest {
         String token = accessTokenGenerator.next();
 
         // When
-        Optional<AccessTokenContent> result = tokenValidator.createAccessToken(token);
+        AccessTokenContent result = tokenValidator.createAccessToken(token);
 
         // Then
-        assertTrue(result.isPresent(), "Untampered validation should be valid");
+        assertNotNull(result, "Untampered token should be valid");
     }
 
     @Test
@@ -90,10 +89,10 @@ class JwtTokenTamperingUtilTest {
         String token = idTokenGenerator.next();
 
         // When
-        Optional<IdTokenContent> result = tokenValidator.createIdToken(token);
+        IdTokenContent result = tokenValidator.createIdToken(token);
 
         // Then
-        assertTrue(result.isPresent(), "Untampered validation should be valid");
+        assertNotNull(result, "Untampered token should be valid");
     }
 
     @ParameterizedTest
@@ -108,12 +107,14 @@ class JwtTokenTamperingUtilTest {
         assertNotEquals(originalToken, tamperedToken,
                 "Token should be tampered using strategy: " + strategy.getDescription());
 
-        // When
-        Optional<AccessTokenContent> result = tokenValidator.createAccessToken(tamperedToken);
+        // When/Then
+        TokenValidationException exception = assertThrows(TokenValidationException.class,
+                () -> tokenValidator.createAccessToken(tamperedToken),
+                "Tampered token should be rejected. Strategy: " + strategy.getDescription());
 
-        // Then
-        assertFalse(result.isPresent(),
-                "Tampered validation should be rejected. Strategy: " + strategy.getDescription());
+        // Verify the exception has a valid event type
+        assertNotNull(exception.getEventType(),
+                "Exception should have an event type. Strategy: " + strategy.getDescription());
     }
 
     @ParameterizedTest
@@ -128,12 +129,14 @@ class JwtTokenTamperingUtilTest {
         assertNotEquals(originalToken, tamperedToken,
                 "Token should be tampered using strategy: " + strategy.getDescription());
 
-        // When
-        Optional<IdTokenContent> result = tokenValidator.createIdToken(tamperedToken);
+        // When/Then
+        TokenValidationException exception = assertThrows(TokenValidationException.class,
+                () -> tokenValidator.createIdToken(tamperedToken),
+                "Tampered token should be rejected. Strategy: " + strategy.getDescription());
 
-        // Then
-        assertFalse(result.isPresent(),
-                "Tampered validation should be rejected. Strategy: " + strategy.getDescription());
+        // Verify the exception has a valid event type
+        assertNotNull(exception.getEventType(),
+                "Exception should have an event type. Strategy: " + strategy.getDescription());
     }
 
     @Test

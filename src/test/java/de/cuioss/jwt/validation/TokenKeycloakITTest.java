@@ -123,10 +123,7 @@ public class TokenKeycloakITTest extends KeycloakITBase {
         @DisplayName("Should handle valid access token")
         void shouldHandleValidAccessToken() {
             var tokenString = requestToken(parameterForScopedToken(SCOPES), TokenTypes.ACCESS);
-            var retrievedAccessToken = factory.createAccessToken(tokenString);
-
-            assertTrue(retrievedAccessToken.isPresent(), "Access validation should be present");
-            var accessToken = retrievedAccessToken.get();
+            var accessToken = factory.createAccessToken(tokenString);
 
             assertFalse(accessToken.isExpired(), "Token should not be expired");
             // Check if all scopes are present in the token
@@ -146,10 +143,9 @@ public class TokenKeycloakITTest extends KeycloakITBase {
             var tokenString = requestToken(parameterForScopedToken(SCOPES), TokenTypes.ID_TOKEN);
             var idToken = factory.createIdToken(tokenString);
 
-            assertTrue(idToken.isPresent(), "ID-Token should be present");
-            assertFalse(idToken.get().isExpired(), "Token should not be expired");
-            assertEquals(TestRealm.TestUser.EMAIL.toLowerCase(), idToken.get().getEmail().orElse(""), "Email should match test user");
-            assertEquals(TokenType.ID_TOKEN, idToken.get().getTokenType(), "Token type should be ID_TOKEN");
+            assertFalse(idToken.isExpired(), "Token should not be expired");
+            assertEquals(TestRealm.TestUser.EMAIL.toLowerCase(), idToken.getEmail().orElse(""), "Email should match test user");
+            assertEquals(TokenType.ID_TOKEN, idToken.getTokenType(), "Token type should be ID_TOKEN");
         }
     }
 
@@ -161,10 +157,9 @@ public class TokenKeycloakITTest extends KeycloakITBase {
         void shouldHandleValidRefreshToken() {
             var tokenString = requestToken(parameterForScopedToken(SCOPES), TokenTypes.REFRESH);
             var refreshToken = factory.createRefreshToken(tokenString);
-            assertTrue(refreshToken.isPresent(), "Refresh validation should be present");
-            assertNotNull(refreshToken.get().getRawToken(), "Token string should not be null");
-            assertEquals(TokenType.REFRESH_TOKEN, refreshToken.get().getTokenType(), "Token type should be REFRESH_TOKEN");
-            assertFalse(refreshToken.get().getClaims().isEmpty());
+            assertNotNull(refreshToken.getRawToken(), "Token string should not be null");
+            assertEquals(TokenType.REFRESH_TOKEN, refreshToken.getTokenType(), "Token type should be REFRESH_TOKEN");
+            assertFalse(refreshToken.getClaims().isEmpty());
         }
     }
 }

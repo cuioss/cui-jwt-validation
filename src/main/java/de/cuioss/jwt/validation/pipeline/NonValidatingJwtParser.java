@@ -17,6 +17,7 @@ package de.cuioss.jwt.validation.pipeline;
 
 import de.cuioss.jwt.validation.JWTValidationLogMessages;
 import de.cuioss.jwt.validation.ParserConfig;
+import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
@@ -33,7 +34,6 @@ import lombok.ToString;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.Optional;
 
 /**
  * This class provides a unified way to parse JWT tokens and extract common information
@@ -153,10 +153,10 @@ public class NonValidatingJwtParser {
      * </ul>
      *
      * @param token the JWT token string to parse
-     * @return an Optional containing the DecodedJwt if parsing is successful,
-     * or empty if the token is invalid or cannot be parsed
+     * @return the DecodedJwt if parsing is successful
+     * @throws TokenValidationException if the token is invalid or cannot be parsed
      */
-    public Optional<DecodedJwt> decode(String token) {
+    public DecodedJwt decode(String token) {
         return decode(token, config.isLogWarningsOnDecodeFailure());
     }
 
@@ -175,24 +175,45 @@ public class NonValidatingJwtParser {
      *
      * @param token       the JWT token string to parse
      * @param logWarnings whether to log warnings when decoding fails
-     * @return an Optional containing the DecodedJwt if parsing is successful,
-     * or empty if the token is invalid or cannot be parsed
+     * @return the DecodedJwt if parsing is successful
+     * @throws TokenValidationException if the token is invalid or cannot be parsed
      */
-    public Optional<DecodedJwt> decode(String token, boolean logWarnings) {
+    public DecodedJwt decode(String token, boolean logWarnings) {
         // Check if token is empty
-        if (isTokenEmpty(token, logWarnings)) {
-            return Optional.empty();
+        if (MoreStrings.isEmpty(token)) {
+            if (logWarnings) {
+                LOGGER.warn(JWTValidationLogMessages.WARN.TOKEN_IS_EMPTY::format);
+                securityEventCounter.increment(SecurityEventCounter.EventType.TOKEN_EMPTY);
+            }
+            throw new TokenValidationException(
+                    SecurityEventCounter.EventType.TOKEN_EMPTY,
+                    "Token is empty or null"
+            );
         }
 
         // Check if token size exceeds maximum
-        if (isTokenSizeExceeded(token, logWarnings)) {
-            return Optional.empty();
+        if (token.getBytes(StandardCharsets.UTF_8).length > config.getMaxTokenSize()) {
+            if (logWarnings) {
+                LOGGER.warn(JWTValidationLogMessages.WARN.TOKEN_SIZE_EXCEEDED.format(config.getMaxTokenSize()));
+                securityEventCounter.increment(SecurityEventCounter.EventType.TOKEN_SIZE_EXCEEDED);
+            }
+            throw new TokenValidationException(
+                    SecurityEventCounter.EventType.TOKEN_SIZE_EXCEEDED,
+                    "Token size exceeds maximum allowed size of " + config.getMaxTokenSize() + " bytes"
+            );
         }
 
         // Split token and validate format
         String[] parts = token.split("\\.");
-        if (isInvalidTokenFormat(parts, logWarnings)) {
-            return Optional.empty();
+        if (parts.length != 3) {
+            if (logWarnings) {
+                LOGGER.warn(JWTValidationLogMessages.WARN.INVALID_JWT_FORMAT.format(parts.length));
+                securityEventCounter.increment(SecurityEventCounter.EventType.INVALID_JWT_FORMAT);
+            }
+            throw new TokenValidationException(
+                    SecurityEventCounter.EventType.INVALID_JWT_FORMAT,
+                    "Invalid JWT format: expected 3 parts but found " + parts.length
+            );
         }
 
         try {
@@ -203,63 +224,14 @@ public class NonValidatingJwtParser {
                 LOGGER.warn(e, JWTValidationLogMessages.WARN.FAILED_TO_DECODE_JWT.format());
                 securityEventCounter.increment(SecurityEventCounter.EventType.FAILED_TO_DECODE_JWT);
             }
-            return Optional.empty();
+            throw new TokenValidationException(
+                    SecurityEventCounter.EventType.FAILED_TO_DECODE_JWT,
+                    "Failed to decode JWT: " + e.getMessage(),
+                    e
+            );
         }
     }
 
-    /**
-     * Helper method to check if a token is empty or null.
-     *
-     * @param token       the token string to check
-     * @param logWarnings whether to log warnings if token is empty
-     * @return true if token is empty or null, false otherwise
-     */
-    private boolean isTokenEmpty(String token, boolean logWarnings) {
-        if (MoreStrings.isEmpty(token)) {
-            if (logWarnings) {
-                LOGGER.warn(JWTValidationLogMessages.WARN.TOKEN_IS_EMPTY::format);
-                securityEventCounter.increment(SecurityEventCounter.EventType.TOKEN_EMPTY);
-            }
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Checks if the token size exceeds the maximum allowed size.
-     *
-     * @param token       the token to check
-     * @param logWarnings whether to log warnings
-     * @return true if the token size exceeds the maximum, false otherwise
-     */
-    private boolean isTokenSizeExceeded(String token, boolean logWarnings) {
-        if (token.getBytes(StandardCharsets.UTF_8).length > config.getMaxTokenSize()) {
-            if (logWarnings) {
-                LOGGER.warn(JWTValidationLogMessages.WARN.TOKEN_SIZE_EXCEEDED.format(config.getMaxTokenSize()));
-                securityEventCounter.increment(SecurityEventCounter.EventType.TOKEN_SIZE_EXCEEDED);
-            }
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Checks if the token format is invalid.
-     *
-     * @param parts       the token parts
-     * @param logWarnings whether to log warnings
-     * @return true if the token format is invalid, false otherwise
-     */
-    private boolean isInvalidTokenFormat(String[] parts, boolean logWarnings) {
-        if (parts.length != 3) {
-            if (logWarnings) {
-                LOGGER.warn(JWTValidationLogMessages.WARN.INVALID_JWT_FORMAT.format(parts.length));
-                securityEventCounter.increment(SecurityEventCounter.EventType.INVALID_JWT_FORMAT);
-            }
-            return true;
-        }
-        return false;
-    }
 
     /**
      * Decodes the token parts and creates a DecodedJwt object.
@@ -267,33 +239,20 @@ public class NonValidatingJwtParser {
      * @param parts       the token parts
      * @param token       the original token
      * @param logWarnings whether to log warnings
-     * @return an Optional containing the DecodedJwt if decoding is successful, or empty otherwise
+     * @return the DecodedJwt if decoding is successful
+     * @throws TokenValidationException if decoding fails
      */
-    private Optional<DecodedJwt> decodeTokenParts(String[] parts, String token, boolean logWarnings) {
+    private DecodedJwt decodeTokenParts(String[] parts, String token, boolean logWarnings) {
         // Decode the header (first part)
-        Optional<JsonObject> headerOpt = decodeJsonPart(parts[0], logWarnings);
-        if (headerOpt.isEmpty()) {
-            if (logWarnings) {
-                LOGGER.warn(JWTValidationLogMessages.WARN.FAILED_TO_DECODE_HEADER::format);
-                securityEventCounter.increment(SecurityEventCounter.EventType.FAILED_TO_DECODE_HEADER);
-            }
-            return Optional.empty();
-        }
+        JsonObject header = decodeJsonPart(parts[0], logWarnings);
 
         // Decode the payload (second part)
-        Optional<JsonObject> bodyOpt = decodeJsonPart(parts[1], logWarnings);
-        if (bodyOpt.isEmpty()) {
-            if (logWarnings) {
-                LOGGER.warn(JWTValidationLogMessages.WARN.FAILED_TO_DECODE_PAYLOAD::format);
-                securityEventCounter.increment(SecurityEventCounter.EventType.FAILED_TO_DECODE_PAYLOAD);
-            }
-            return Optional.empty();
-        }
+        JsonObject body = decodeJsonPart(parts[1], logWarnings);
 
         // The signature part (third part) is kept as is
         String signature = parts[2];
 
-        return Optional.of(new DecodedJwt(headerOpt.get(), bodyOpt.get(), signature, parts, token));
+        return new DecodedJwt(header, body, signature, parts, token);
     }
 
     /**
@@ -305,9 +264,10 @@ public class NonValidatingJwtParser {
      *
      * @param encodedPart the Base64Url encoded part
      * @param logWarnings whether to log warnings when decoding fails
-     * @return an Optional containing the decoded JsonObject, or empty if decoding fails
+     * @return the decoded JsonObject
+     * @throws TokenValidationException if decoding fails
      */
-    private Optional<JsonObject> decodeJsonPart(String encodedPart, boolean logWarnings) {
+    private JsonObject decodeJsonPart(String encodedPart, boolean logWarnings) {
         try {
             byte[] decoded = Base64.getUrlDecoder().decode(encodedPart);
 
@@ -316,20 +276,27 @@ public class NonValidatingJwtParser {
                     LOGGER.warn(JWTValidationLogMessages.WARN.DECODED_PART_SIZE_EXCEEDED.format(config.getMaxPayloadSize()));
                     securityEventCounter.increment(SecurityEventCounter.EventType.DECODED_PART_SIZE_EXCEEDED);
                 }
-                return Optional.empty();
+                throw new TokenValidationException(
+                        SecurityEventCounter.EventType.DECODED_PART_SIZE_EXCEEDED,
+                        "Decoded part size exceeds maximum allowed size of " + config.getMaxPayloadSize() + " bytes"
+                );
             }
 
             // Use the cached JsonReaderFactory with security settings
             try (JsonReader reader = config.getJsonReaderFactory()
                     .createReader(new StringReader(new String(decoded, StandardCharsets.UTF_8)))) {
-                return Optional.of(reader.readObject());
+                return reader.readObject();
             }
         } catch (IllegalArgumentException | JsonException e) {
             if (logWarnings) {
                 LOGGER.warn(e, JWTValidationLogMessages.WARN.FAILED_TO_DECODE_JWT.format());
                 securityEventCounter.increment(SecurityEventCounter.EventType.FAILED_TO_DECODE_JWT);
             }
-            return Optional.empty();
+            throw new TokenValidationException(
+                    SecurityEventCounter.EventType.FAILED_TO_DECODE_JWT,
+                    "Failed to decode JWT part: " + e.getMessage(),
+                    e
+            );
         }
     }
 

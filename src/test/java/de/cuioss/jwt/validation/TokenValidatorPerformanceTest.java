@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.validation;
 
+import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.jwt.validation.test.TestTokenProducer;
 import de.cuioss.jwt.validation.test.generator.AccessTokenGenerator;
@@ -30,7 +31,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -267,21 +267,26 @@ class TokenValidatorPerformanceTest {
      * @return true if the validation was processed successfully, false otherwise
      */
     private boolean processToken(TokenType tokenType) {
-        switch (tokenType) {
-            case ACCESS:
-                String accessToken = accessTokenGenerator.next();
-                Optional<?> accessResult = tokenValidator.createAccessToken(accessToken);
-                return accessResult.isPresent();
-            case ID:
-                String idToken = idTokenGenerator.next();
-                Optional<?> idResult = tokenValidator.createIdToken(idToken);
-                return idResult.isPresent();
-            case REFRESH:
-                String refreshToken = refreshTokenGenerator.next();
-                Optional<?> refreshResult = tokenValidator.createRefreshToken(refreshToken);
-                return refreshResult.isPresent();
-            default:
-                throw new IllegalArgumentException("Unsupported token type: " + tokenType);
+        try {
+            switch (tokenType) {
+                case ACCESS:
+                    String accessToken = accessTokenGenerator.next();
+                    tokenValidator.createAccessToken(accessToken);
+                    return true;
+                case ID:
+                    String idToken = idTokenGenerator.next();
+                    tokenValidator.createIdToken(idToken);
+                    return true;
+                case REFRESH:
+                    String refreshToken = refreshTokenGenerator.next();
+                    tokenValidator.createRefreshToken(refreshToken);
+                    return true;
+                default:
+                    throw new IllegalArgumentException("Unsupported token type: " + tokenType);
+            }
+        } catch (TokenValidationException e) {
+            LOGGER.debug("Token validation failed: %s", e.getMessage());
+            return false;
         }
     }
 

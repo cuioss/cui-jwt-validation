@@ -32,7 +32,6 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -90,13 +89,7 @@ class CustomClaimMapperTest {
     @DisplayName("Should use custom claim mapper for role claim")
     void shouldUseCustomClaimMapperForRoleClaim() {
         // Parse the validation
-        Optional<AccessTokenContent> parsedToken = tokenValidator.createAccessToken(tokenWithRoles);
-
-        // Verify the validation was parsed successfully
-        assertTrue(parsedToken.isPresent(), "Token should be present");
-
-        // Get the claims from the validation
-        AccessTokenContent tokenContent = parsedToken.get();
+        AccessTokenContent tokenContent = tokenValidator.createAccessToken(tokenWithRoles);
         ClaimValue roleClaim = tokenContent.getClaims().get(ROLE_CLAIM);
 
         // Verify the role claim was mapped correctly
@@ -122,13 +115,7 @@ class CustomClaimMapperTest {
                 issuerConfigWithoutCustomMapper);
 
         // Parse the validation
-        Optional<AccessTokenContent> parsedToken = factoryWithoutCustomMapper.createAccessToken(tokenWithRoles);
-
-        // Verify the validation was parsed successfully
-        assertTrue(parsedToken.isPresent(), "Token should be present");
-
-        // Get the claims from the validation
-        AccessTokenContent tokenContent = parsedToken.get();
+        AccessTokenContent tokenContent = factoryWithoutCustomMapper.createAccessToken(tokenWithRoles);
         ClaimValue roleClaim = tokenContent.getClaims().get(ROLE_CLAIM);
 
         // Verify the role claim was mapped using the default mapper

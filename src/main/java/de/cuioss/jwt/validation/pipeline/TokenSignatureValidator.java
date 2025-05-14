@@ -16,6 +16,7 @@
 package de.cuioss.jwt.validation.pipeline;
 
 import de.cuioss.jwt.validation.JWTValidationLogMessages;
+import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.jwks.JwksLoader;
 import de.cuioss.jwt.validation.security.BouncyCastleProviderSingleton;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
@@ -87,9 +88,9 @@ public class TokenSignatureValidator {
      * Validates the signature of a decoded JWT Token.
      *
      * @param decodedJwt the decoded JWT Token to validate
-     * @return true if the signature is valid, false otherwise
+     * @throws TokenValidationException if the signature is invalid
      */
-    public boolean validateSignature(@Nonnull DecodedJwt decodedJwt) {
+    public void validateSignature(@Nonnull DecodedJwt decodedJwt) {
         LOGGER.debug("Validating validation signature");
 
         // Get the kid from the validation header
@@ -97,7 +98,10 @@ public class TokenSignatureValidator {
         if (kid.isEmpty()) {
             LOGGER.warn(JWTValidationLogMessages.WARN.MISSING_CLAIM.format("kid"));
             securityEventCounter.increment(SecurityEventCounter.EventType.MISSING_CLAIM);
-            return false;
+            throw new TokenValidationException(
+                    SecurityEventCounter.EventType.MISSING_CLAIM,
+                    "Missing required key ID (kid) claim in token header"
+            );
         }
 
         // Get the algorithm from the validation header
@@ -105,7 +109,10 @@ public class TokenSignatureValidator {
         if (algorithm.isEmpty()) {
             LOGGER.warn(JWTValidationLogMessages.WARN.MISSING_CLAIM.format("alg"));
             securityEventCounter.increment(SecurityEventCounter.EventType.MISSING_CLAIM);
-            return false;
+            throw new TokenValidationException(
+                    SecurityEventCounter.EventType.MISSING_CLAIM,
+                    "Missing required algorithm (alg) claim in token header"
+            );
         }
 
         // Get the signature from the validation
@@ -113,7 +120,10 @@ public class TokenSignatureValidator {
         if (signature.isEmpty()) {
             LOGGER.warn(JWTValidationLogMessages.WARN.MISSING_CLAIM.format("signature"));
             securityEventCounter.increment(SecurityEventCounter.EventType.MISSING_CLAIM);
-            return false;
+            throw new TokenValidationException(
+                    SecurityEventCounter.EventType.MISSING_CLAIM,
+                    "Missing required signature in token"
+            );
         }
 
         // Get the key from the JwksLoader
@@ -121,24 +131,34 @@ public class TokenSignatureValidator {
         if (keyInfo.isEmpty()) {
             LOGGER.warn(JWTValidationLogMessages.WARN.KEY_NOT_FOUND.format(kid.get()));
             securityEventCounter.increment(SecurityEventCounter.EventType.KEY_NOT_FOUND);
-            return false;
+            throw new TokenValidationException(
+                    SecurityEventCounter.EventType.KEY_NOT_FOUND,
+                    "Key not found for key ID: " + kid.get()
+            );
         }
 
         // Verify that the key's algorithm matches the validation's algorithm
         if (!isAlgorithmCompatible(algorithm.get(), keyInfo.get().getAlgorithm())) {
             LOGGER.warn(JWTValidationLogMessages.WARN.UNSUPPORTED_ALGORITHM.format(algorithm.get()));
             securityEventCounter.increment(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM);
-            return false;
+            throw new TokenValidationException(
+                    SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM,
+                    "Algorithm not compatible with key: " + algorithm.get() + " is not compatible with " + keyInfo.get().getAlgorithm()
+            );
         }
 
         // Verify the signature
         try {
             LOGGER.debug("All checks passed, verifying signature");
-            return verifySignature(decodedJwt, keyInfo.get().getKey(), algorithm.get());
+            verifySignature(decodedJwt, keyInfo.get().getKey(), algorithm.get());
         } catch (IllegalArgumentException e) {
             LOGGER.warn(JWTValidationLogMessages.ERROR.SIGNATURE_VALIDATION_FAILED.format(e.getMessage()), e);
             securityEventCounter.increment(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED);
-            return false;
+            throw new TokenValidationException(
+                    SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED,
+                    "Signature validation failed: " + e.getMessage(),
+                    e
+            );
         }
     }
 
@@ -148,16 +168,19 @@ public class TokenSignatureValidator {
      * @param decodedJwt the decoded JWT Token
      * @param publicKey  the public key to use for verification
      * @param algorithm  the algorithm to use for verification
-     * @return true if the signature is valid, false otherwise
+     * @throws TokenValidationException if the signature is invalid
      */
-    private boolean verifySignature(DecodedJwt decodedJwt, PublicKey publicKey, String algorithm) {
+    private void verifySignature(DecodedJwt decodedJwt, PublicKey publicKey, String algorithm) {
         LOGGER.trace("Verifying signature:\nDecodedJwt: %s\nPublicKey: %s\nAlgorithm: %s", decodedJwt, publicKey, algorithm);
         // Get the parts of the validation
         String[] parts = decodedJwt.getParts();
         if (parts.length != 3) {
             LOGGER.warn(JWTValidationLogMessages.WARN.INVALID_JWT_FORMAT.format(parts.length));
             securityEventCounter.increment(SecurityEventCounter.EventType.INVALID_JWT_FORMAT);
-            return false;
+            throw new TokenValidationException(
+                    SecurityEventCounter.EventType.INVALID_JWT_FORMAT,
+                    "Invalid JWT format: expected 3 parts but found " + parts.length
+            );
         }
 
         // Get the data to verify (header.payload)
@@ -179,12 +202,19 @@ public class TokenSignatureValidator {
             } else {
                 LOGGER.warn(JWTValidationLogMessages.ERROR.SIGNATURE_VALIDATION_FAILED.format("Invalid signature"));
                 securityEventCounter.increment(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED);
+                throw new TokenValidationException(
+                        SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED,
+                        "Invalid signature"
+                );
             }
-            return isValid;
         } catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidKeyException | SignatureException e) {
             LOGGER.warn(e, JWTValidationLogMessages.ERROR.SIGNATURE_VALIDATION_FAILED.format(e.getMessage()));
             securityEventCounter.increment(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED);
-            return false;
+            throw new TokenValidationException(
+                    SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED,
+                    "Signature validation failed: " + e.getMessage(),
+                    e
+            );
         }
     }
 

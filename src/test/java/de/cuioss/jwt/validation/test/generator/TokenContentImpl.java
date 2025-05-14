@@ -123,7 +123,7 @@ public class TokenContentImpl implements TokenContent {
             // Build the body
             JsonObject body = bodyBuilder.build();
 
-            // Create a signature (not actually used for validation in tests)
+            // Create a signature (not used for validation in tests)
             String signature = "test-signature";
 
             // Create validation parts with unique identifier
