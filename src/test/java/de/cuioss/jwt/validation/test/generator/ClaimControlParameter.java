@@ -16,115 +16,46 @@
 package de.cuioss.jwt.validation.test.generator;
 
 import de.cuioss.jwt.validation.TokenType;
+import de.cuioss.jwt.validation.test.TestTokenHolder;
+import lombok.Builder;
+import lombok.Value;
 
 /**
  * Parameter object for controlling which claims should be included or excluded
- * when generating token content. Used by {@link TokenContentImpl} to create
+ * when generating token content.
+ * Used by {@link TestTokenHolder} to create
  * both valid and invalid tokens for testing purposes.
  */
+@Value
+@Builder
 public class ClaimControlParameter {
-    private final String tokenPrefix;
-    private final boolean missingIssuer;
-    private final boolean missingSubject;
-    private final boolean missingExpiration;
-    private final boolean expiredToken;
-    private final boolean missingIssuedAt;
-    private final boolean missingTokenType;
-    private final boolean missingScope;
-    private final boolean missingAudience;
-    private final boolean missingAuthorizedParty;
 
-    private ClaimControlParameter(Builder builder) {
-        this.tokenPrefix = builder.tokenPrefix;
-        this.missingIssuer = builder.missingIssuer;
-        this.missingSubject = builder.missingSubject;
-        this.missingExpiration = builder.missingExpiration;
-        this.expiredToken = builder.expiredToken;
-        this.missingIssuedAt = builder.missingIssuedAt;
-        this.missingTokenType = builder.missingTokenType;
-        this.missingScope = builder.missingScope;
-        this.missingAudience = builder.missingAudience;
-        this.missingAuthorizedParty = builder.missingAuthorizedParty;
-    }
+    @Builder.Default
+    boolean missingIssuer = false;
 
-    /**
-     * @return the validation prefix
-     */
-    public String getTokenPrefix() {
-        return tokenPrefix;
-    }
+    @Builder.Default
+    boolean missingSubject = false;
 
-    /**
-     * @return whether the issuer claim should be missing
-     */
-    public boolean isMissingIssuer() {
-        return missingIssuer;
-    }
+    @Builder.Default
+    boolean missingExpiration = false;
 
-    /**
-     * @return whether the subject claim should be missing
-     */
-    public boolean isMissingSubject() {
-        return missingSubject;
-    }
+    @Builder.Default
+    boolean expiredToken = false;
 
-    /**
-     * @return whether the expiration claim should be missing
-     */
-    public boolean isMissingExpiration() {
-        return missingExpiration;
-    }
+    @Builder.Default
+    boolean missingIssuedAt = false;
 
-    /**
-     * @return whether the validation should be expired
-     */
-    public boolean isExpiredToken() {
-        return expiredToken;
-    }
+    @Builder.Default
+    boolean missingTokenType = false;
 
-    /**
-     * @return whether the issued at claim should be missing
-     */
-    public boolean isMissingIssuedAt() {
-        return missingIssuedAt;
-    }
+    @Builder.Default
+    boolean missingScope = false;
 
-    /**
-     * @return whether the validation type claim should be missing
-     */
-    public boolean isMissingTokenType() {
-        return missingTokenType;
-    }
+    @Builder.Default
+    boolean missingAudience = false;
 
-    /**
-     * @return whether the scope claim should be missing (only relevant for ACCESS_TOKEN)
-     */
-    public boolean isMissingScope() {
-        return missingScope;
-    }
-
-    /**
-     * @return whether the audience claim should be missing (only relevant for ID_TOKEN)
-     */
-    public boolean isMissingAudience() {
-        return missingAudience;
-    }
-
-    /**
-     * @return whether the authorized party claim should be missing
-     */
-    public boolean isMissingAuthorizedParty() {
-        return missingAuthorizedParty;
-    }
-
-    /**
-     * Creates a builder for ClaimControlParameter.
-     *
-     * @return a new builder instance
-     */
-    public static Builder builder() {
-        return new Builder();
-    }
+    @Builder.Default
+    boolean missingAuthorizedParty = false;
 
     /**
      * Creates default parameters for a valid validation of the given type.
@@ -139,155 +70,6 @@ public class ClaimControlParameter {
         }
 
         // All tokens have the same default settings for valid tokens
-        return builder()
-                .tokenPrefix("valid-validation-")
-                .missingIssuer(false)
-                .missingSubject(false)
-                .missingExpiration(false)
-                .expiredToken(false)
-                .missingIssuedAt(false)
-                .missingTokenType(false)
-                .missingScope(false)
-                .missingAudience(false)
-                .build();
-    }
-
-    /**
-     * Builder for ClaimControlParameter.
-     */
-    public static class Builder {
-        private String tokenPrefix = "valid-validation-";
-        private boolean missingIssuer = false;
-        private boolean missingSubject = false;
-        private boolean missingExpiration = false;
-        private boolean expiredToken = false;
-        private boolean missingIssuedAt = false;
-        private boolean missingTokenType = false;
-        private boolean missingScope = false;
-        private boolean missingAudience = false;
-        private boolean missingAuthorizedParty = false;
-
-        private Builder() {
-            // Private constructor to enforce the use of the static factory method
-        }
-
-        /**
-         * Sets the validation prefix.
-         *
-         * @param tokenPrefix the prefix for the raw token string
-         * @return this builder for method chaining
-         */
-        public Builder tokenPrefix(String tokenPrefix) {
-            this.tokenPrefix = tokenPrefix;
-            return this;
-        }
-
-        /**
-         * Sets whether the issuer claim should be missing.
-         *
-         * @param missingIssuer true if the issuer claim should be missing
-         * @return this builder for method chaining
-         */
-        public Builder missingIssuer(boolean missingIssuer) {
-            this.missingIssuer = missingIssuer;
-            return this;
-        }
-
-        /**
-         * Sets whether the subject claim should be missing.
-         *
-         * @param missingSubject true if the subject claim should be missing
-         * @return this builder for method chaining
-         */
-        public Builder missingSubject(boolean missingSubject) {
-            this.missingSubject = missingSubject;
-            return this;
-        }
-
-        /**
-         * Sets whether the expiration claim should be missing.
-         *
-         * @param missingExpiration true if the expiration claim should be missing
-         * @return this builder for method chaining
-         */
-        public Builder missingExpiration(boolean missingExpiration) {
-            this.missingExpiration = missingExpiration;
-            return this;
-        }
-
-        /**
-         * Sets whether the validation should be expired.
-         *
-         * @param expiredToken true if the validation should be expired
-         * @return this builder for method chaining
-         */
-        public Builder expiredToken(boolean expiredToken) {
-            this.expiredToken = expiredToken;
-            return this;
-        }
-
-        /**
-         * Sets whether the issued at claim should be missing.
-         *
-         * @param missingIssuedAt true if the issued at claim should be missing
-         * @return this builder for method chaining
-         */
-        public Builder missingIssuedAt(boolean missingIssuedAt) {
-            this.missingIssuedAt = missingIssuedAt;
-            return this;
-        }
-
-        /**
-         * Sets whether the validation type claim should be missing.
-         *
-         * @param missingTokenType true if the validation type claim should be missing
-         * @return this builder for method chaining
-         */
-        public Builder missingTokenType(boolean missingTokenType) {
-            this.missingTokenType = missingTokenType;
-            return this;
-        }
-
-        /**
-         * Sets whether the scope claim should be missing (only relevant for ACCESS_TOKEN).
-         *
-         * @param missingScope true if the scope claim should be missing
-         * @return this builder for method chaining
-         */
-        public Builder missingScope(boolean missingScope) {
-            this.missingScope = missingScope;
-            return this;
-        }
-
-        /**
-         * Sets whether the audience claim should be missing (only relevant for ID_TOKEN).
-         *
-         * @param missingAudience true if the audience claim should be missing
-         * @return this builder for method chaining
-         */
-        public Builder missingAudience(boolean missingAudience) {
-            this.missingAudience = missingAudience;
-            return this;
-        }
-
-        /**
-         * Sets whether the authorized party claim should be missing.
-         *
-         * @param missingAuthorizedParty true if the authorized party claim should be missing
-         * @return this builder for method chaining
-         */
-        public Builder missingAuthorizedParty(boolean missingAuthorizedParty) {
-            this.missingAuthorizedParty = missingAuthorizedParty;
-            return this;
-        }
-
-        /**
-         * Builds a new ClaimControlParameter with the current builder settings.
-         *
-         * @return a new ClaimControlParameter instance
-         */
-        public ClaimControlParameter build() {
-            return new ClaimControlParameter(this);
-        }
+        return builder().build();
     }
 }

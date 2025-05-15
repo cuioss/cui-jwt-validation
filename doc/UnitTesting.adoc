@@ -1,0 +1,246 @@
+= JWT Validation Test Utilities
+:doctype: book
+:toc: left
+:toclevels: 3
+:sectnums:
+:sectnumlevels: 3
+:icons: font
+
+== Overview
+
+This document describes the test utilities provided by the `cui-jwt-validation` project for testing JWT validation functionality in your applications.
+
+== Test Artifact
+
+The project provides a test artifact with the classifier `test` that contains utility classes for testing JWT validation. This artifact is published alongside the main artifact and can be included in your project's test dependencies.
+
+=== Maven Dependency
+
+To use the test utilities in your project, add the following dependency to your `pom.xml`:
+
+[source,xml]
+----
+<dependency>
+    <groupId>de.cuioss</groupId>
+    <artifactId>cui-jwt-validation</artifactId>
+    <version>${version}</version>
+    <classifier>test</classifier>
+    <scope>test</scope>
+</dependency>
+----
+
+=== Contents
+
+The test artifact includes the following packages:
+
+* `de.cuioss.jwt.validation.test` - Core test utilities
+* `de.cuioss.jwt.validation.test.generator` - Token and claim generators
+
+== Key Test Utilities
+
+=== TestTokenHolder
+
+The `TestTokenHolder` class is a comprehensive implementation of `TokenContent` for testing purposes that allows for dynamic token generation:
+
+[source,java]
+----
+// Create a token holder with default parameters
+TestTokenHolder tokenHolder = new TestTokenHolder(TokenType.ACCESS_TOKEN, 
+    ClaimControlParameter.defaultForTokenType(TokenType.ACCESS_TOKEN));
+
+// Get the raw JWT token
+String token = tokenHolder.getRawToken();
+
+// Modify claims
+tokenHolder.withClaim("custom-claim", ClaimValue.forPlainString("custom-value"));
+
+// Remove claims
+tokenHolder.withoutClaim("sub");
+
+// Get an IssuerConfig configured for this token
+IssuerConfig issuerConfig = tokenHolder.getIssuerConfig();
+
+// Initialize security event counter if needed
+SecurityEventCounter securityEventCounter = new SecurityEventCounter();
+issuerConfig.initSecurityEventCounter(securityEventCounter);
+
+// Access and modify audience claim
+List<String> audience = tokenHolder.getAudience();
+tokenHolder.withAudience(List.of("new-audience"));
+
+// Access and modify authorized party claim (azp)
+String authorizedParty = tokenHolder.getAuthorizedParty();
+tokenHolder.withAuthorizedParty("new-client-id");
+----
+
+==== Key Features
+
+* *Dynamic Token Generation*: Creates JWT tokens on demand with configurable claims
+* *Claim Manipulation*: Add, remove, or modify claims
+* *Token Type Support*: Supports ACCESS_TOKEN, ID_TOKEN, and REFRESH_TOKEN types
+* *IssuerConfig Generation*: Creates an IssuerConfig configured for the token
+* *Key Material Integration*: Uses InMemoryKeyMaterialHandler for signing and verification
+* *Audience and Authorized Party Support*: Direct access to get and set audience and authorized party (azp) claims
+
+=== ClaimControlParameter
+
+The `ClaimControlParameter` class is a parameter object for controlling which claims should be included or excluded when generating token content:
+
+[source,java]
+----
+// Create parameters for a token with missing issuer and subject
+ClaimControlParameter params = ClaimControlParameter.builder()
+    .missingIssuer(true)
+    .missingSubject(true)
+    .build();
+
+// Create a token holder with these parameters
+TestTokenHolder tokenHolder = new TestTokenHolder(TokenType.ACCESS_TOKEN, params);
+
+// Get default parameters for a specific token type
+ClaimControlParameter defaultParams = ClaimControlParameter.defaultForTokenType(TokenType.ID_TOKEN);
+----
+
+==== Key Features
+
+* *Claim Control*: Control which standard claims are included or excluded
+* *Token Type Defaults*: Get default parameters for specific token types
+* *Builder Pattern*: Use the builder pattern for easy configuration
+
+=== TestTokenGenerators
+
+The `TestTokenGenerators` class provides factory methods for creating TypedGenerator instances that produce TestTokenHolder objects:
+
+[source,java]
+----
+// Get a generator for access tokens
+TypedGenerator<TestTokenHolder> accessTokenGenerator = TestTokenGenerators.accessTokens();
+
+// Generate an access token
+TestTokenHolder accessToken = accessTokenGenerator.next();
+String accessTokenString = accessToken.getRawToken();
+
+// Get a generator for ID tokens
+TypedGenerator<TestTokenHolder> idTokenGenerator = TestTokenGenerators.idTokens();
+
+// Generate an ID token
+TestTokenHolder idToken = idTokenGenerator.next();
+String idTokenString = idToken.getRawToken();
+
+// Get a generator for refresh tokens
+TypedGenerator<TestTokenHolder> refreshTokenGenerator = TestTokenGenerators.refreshTokens();
+
+// Generate a refresh token
+TestTokenHolder refreshToken = refreshTokenGenerator.next();
+String refreshTokenString = refreshToken.getRawToken();
+----
+
+==== Key Features
+
+* *Token Type Generators*: Provides generators for ACCESS_TOKEN, ID_TOKEN, and REFRESH_TOKEN types
+* *TypedGenerator Interface*: Implements the TypedGenerator interface for easy integration with testing frameworks
+* *Default Parameters*: Uses default parameters for each token type
+
+=== TestTokenSource (Preferred Approach)
+
+The `@TestTokenSource` annotation is the preferred way to inject test tokens into parameterized tests:
+
+[source,java]
+----
+@ParameterizedTest
+@TestTokenSource(value = TokenType.ACCESS_TOKEN, count = 5)
+@DisplayName("Test with access token")
+void shouldTestWithAccessToken(TestTokenHolder tokenHolder) {
+    // Given
+    String token = tokenHolder.getRawToken();
+
+    // When
+    AccessTokenContent result = new TokenValidator(tokenHolder.getIssuerConfig()).createAccessToken(token);
+
+    // Then
+    assertNotNull(result, "Token should be parsed successfully");
+    assertEquals(ISSUER, result.getIssuer(), "Issuer claim should match the expected value");
+}
+----
+
+==== Key Features
+
+* *JUnit 5 Integration*: Seamlessly integrates with JUnit 5 parameterized tests
+* *Token Type Selection*: Specify which token type to generate (ACCESS_TOKEN, ID_TOKEN, REFRESH_TOKEN)
+* *Multiple Tokens*: Generate multiple test tokens with the `count` parameter (default value of 5 is recommended for thorough testing)
+* *Simplified Testing*: Eliminates boilerplate code for token generation
+* *Consistent Approach*: Provides a standardized way to test with JWT tokens
+
+==== Example with Multiple Tokens
+
+[source,java]
+----
+@ParameterizedTest
+@TestTokenSource(value = TokenType.ACCESS_TOKEN, count = 5)
+@DisplayName("Test with multiple access tokens")
+void shouldTestWithMultipleAccessTokens(TestTokenHolder tokenHolder) {
+    // This test will run 5 times with different token holders
+
+    // Given
+    String token = tokenHolder.getRawToken();
+
+    // When
+    AccessTokenContent result = new TokenValidator(tokenHolder.getIssuerConfig()).createAccessToken(token);
+
+    // Then
+    assertNotNull(result, "Token should be parsed successfully");
+}
+----
+
+== Usage Examples
+
+=== Testing Token Validation
+
+[source,java]
+----
+@Test
+void shouldValidateToken() {
+    // Arrange
+    TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
+    String token = tokenHolder.getRawToken();
+
+    // Act - Using the simplified approach with the new TokenValidator constructor
+    AccessTokenContent result = new TokenValidator(tokenHolder.getIssuerConfig()).createAccessToken(token);
+
+    // Assert
+    assertNotNull(result);
+    assertEquals(tokenHolder.getClaims().get("sub").getOriginalString(), result.getSubject());
+}
+----
+
+=== Testing Invalid Tokens
+
+[source,java]
+----
+@Test
+void shouldRejectTokenWithMissingClaims() {
+    // Arrange
+    ClaimControlParameter params = ClaimControlParameter.builder()
+        .missingIssuer(true)
+        .build();
+
+    TestTokenHolder tokenHolder = new TestTokenHolder(TokenType.ACCESS_TOKEN, params);
+    String token = tokenHolder.getRawToken();
+
+    // Create an IssuerConfig for validation
+    IssuerConfig issuerConfig = IssuerConfig.builder()
+        .issuer("Token-Test-testIssuer")
+        .expectedAudience("test-client")
+        .expectedClientId("test-client")
+        .jwksContent(InMemoryJWKSFactory.createDefaultJwks())
+        .build();
+
+    TokenValidator validator = new TokenValidator(issuerConfig);
+
+    // Act/Assert
+    TokenValidationException exception = assertThrows(TokenValidationException.class,
+        () -> validator.createAccessToken(token));
+
+    assertEquals(SecurityEventCounter.EventType.MISSING_CLAIM, exception.getEventType());
+}
+----

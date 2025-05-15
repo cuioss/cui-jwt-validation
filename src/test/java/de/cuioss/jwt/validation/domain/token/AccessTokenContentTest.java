@@ -18,7 +18,7 @@ package de.cuioss.jwt.validation.domain.token;
 import de.cuioss.jwt.validation.TokenType;
 import de.cuioss.jwt.validation.domain.claim.ClaimName;
 import de.cuioss.jwt.validation.domain.claim.ClaimValue;
-import de.cuioss.jwt.validation.test.TestTokenProducer;
+import de.cuioss.jwt.validation.test.generator.TestTokenGenerators;
 import de.cuioss.jwt.validation.test.generator.ScopeGenerator;
 import de.cuioss.tools.logging.CuiLogger;
 import org.junit.jupiter.api.DisplayName;
@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class AccessTokenContentTest {
 
     private static final CuiLogger LOGGER = new CuiLogger(AccessTokenContentTest.class);
-    private static final String SAMPLE_TOKEN = TestTokenProducer.validSignedEmptyJWT();
+    private static final String SAMPLE_TOKEN = TestTokenGenerators.accessTokens().next().getRawToken();
     private static final String TEST_EMAIL = "test@example.com";
     private static final List<String> TEST_SCOPES = Arrays.asList("openid", "profile", "email");
     private static final List<String> TEST_AUDIENCE = Arrays.asList("client1", "client2");

@@ -101,7 +101,7 @@ class TokenSecurityPropertiesTest {
     @DisplayName("Tokens should have sufficient entropy")
     void tokensShouldHaveSufficientEntropy() {
         // Generate a token
-        String token = TokenGenerators.accessTokens().next();
+        String token = TestTokenGenerators.accessTokens().next().getRawToken();
 
         // Split the token into its parts
         String[] parts = token.split("\\.");
@@ -156,9 +156,9 @@ class TokenSecurityPropertiesTest {
     @DisplayName("Tokens should have unpredictable signatures")
     void tokensShouldHaveUnpredictableSignatures() {
         // Generate multiple tokens
-        String token1 = TokenGenerators.accessTokens().next();
-        String token2 = TokenGenerators.accessTokens().next();
-        String token3 = TokenGenerators.accessTokens().next();
+        String token1 = TestTokenGenerators.accessTokens().next().getRawToken();
+        String token2 = TestTokenGenerators.accessTokens().next().getRawToken();
+        String token3 = TestTokenGenerators.accessTokens().next().getRawToken();
 
         // Split the tokens into their parts
         String[] parts1 = token1.split("\\.");

@@ -15,6 +15,8 @@
  */
 package de.cuioss.jwt.validation;
 
+import de.cuioss.jwt.validation.domain.claim.ClaimName;
+import de.cuioss.jwt.validation.domain.claim.ClaimValue;
 import de.cuioss.jwt.validation.domain.token.AccessTokenContent;
 import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.pipeline.TokenSignatureValidator;
@@ -23,12 +25,10 @@ import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
 import de.cuioss.jwt.validation.test.JwtTokenTamperingUtil;
-import de.cuioss.jwt.validation.test.TestTokenProducer;
-import de.cuioss.jwt.validation.test.generator.AccessTokenGenerator;
-import de.cuioss.jwt.validation.test.generator.IDTokenGenerator;
-import de.cuioss.jwt.validation.test.generator.TokenGenerators;
+import de.cuioss.jwt.validation.test.generator.TestTokenGenerators;
+import de.cuioss.jwt.validation.test.TestTokenHolder;
+import de.cuioss.jwt.validation.test.junit.TestTokenSource;
 import de.cuioss.test.generator.junit.EnableGeneratorController;
-import de.cuioss.test.generator.junit.parameterized.TypeGeneratorSource;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,7 +41,12 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests compliance with the OAuth 2.0 JWT Best Current Practices.
@@ -61,7 +66,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("OAuth 2.0 JWT Best Practices Compliance Tests")
 class OAuth2JWTBestPracticesComplianceTest {
 
-    private static final String ISSUER = TestTokenProducer.ISSUER;
+    private static final String ISSUER = "Token-Test-testIssuer";
     private static final String AUDIENCE = "test-client";
     private static final String CLIENT_ID = "test-client";
 
@@ -93,7 +98,7 @@ class OAuth2JWTBestPracticesComplianceTest {
         @DisplayName("3.1: Validate audience claim")
         void shouldValidateAudienceClaim() {
             // Given
-            String token = TokenGenerators.accessTokens().next();
+            String token = TestTokenGenerators.accessTokens().next().getRawToken();
 
             // When
             AccessTokenContent result = tokenValidator.createAccessToken(token);
@@ -110,7 +115,7 @@ class OAuth2JWTBestPracticesComplianceTest {
         void shouldRejectTokenWithIncorrectAudience() {
             // Given
             // First verify that a token with correct audience passes validation
-            String correctToken = TokenGenerators.accessTokens().next();
+            String correctToken = TestTokenGenerators.accessTokens().next().getRawToken();
             assertNotNull(tokenValidator.createAccessToken(correctToken),
                     "Token with correct audience should be accepted");
 
@@ -139,7 +144,7 @@ class OAuth2JWTBestPracticesComplianceTest {
         @DisplayName("3.2: Validate issuer claim")
         void shouldValidateIssuerClaim() {
             // Given
-            String token = TokenGenerators.accessTokens().next();
+            String token = TestTokenGenerators.accessTokens().next().getRawToken();
 
             // When
             AccessTokenContent result = tokenValidator.createAccessToken(token);
@@ -186,7 +191,7 @@ class OAuth2JWTBestPracticesComplianceTest {
         @DisplayName("3.3: Validate validation signature")
         void shouldValidateTokenSignature() {
             // Given
-            String token = TokenGenerators.accessTokens().next();
+            String token = TestTokenGenerators.accessTokens().next().getRawToken();
 
             // When
             AccessTokenContent result = tokenValidator.createAccessToken(token);
@@ -197,9 +202,9 @@ class OAuth2JWTBestPracticesComplianceTest {
 
         @DisplayName("3.3b: Reject access-validation with invalid signature")
         @ParameterizedTest
-        @TypeGeneratorSource(value = AccessTokenGenerator.class, count = 50)
-        void shouldRejectAccessTokenWithInvalidSignature(String token) {
-
+        @TestTokenSource(value = TokenType.ACCESS_TOKEN, count = 50)
+        void shouldRejectAccessTokenWithInvalidSignature(TestTokenHolder tokenHolder) {
+            String token = tokenHolder.getRawToken();
             // Tamper with the signature using a specific strategy that modifies the signature
             String tamperedToken = JwtTokenTamperingUtil.applyTamperingStrategy(
                     token,
@@ -208,9 +213,10 @@ class OAuth2JWTBestPracticesComplianceTest {
 
             assertNotEquals(tamperedToken, token, "Token should be tampered");
 
+            TokenValidator validator= new TokenValidator(tokenHolder.getIssuerConfig());
             // When/Then
             TokenValidationException exception = assertThrows(TokenValidationException.class,
-                    () -> tokenValidator.createAccessToken(tamperedToken),
+                    () -> validator.createAccessToken(tamperedToken),
                     "Token with invalid signature should be rejected, offending validation: " + tamperedToken);
 
             // Verify the exception has the correct event type
@@ -220,8 +226,9 @@ class OAuth2JWTBestPracticesComplianceTest {
 
         @DisplayName("3.3b: Reject id-validation with invalid signature")
         @ParameterizedTest
-        @TypeGeneratorSource(value = IDTokenGenerator.class, count = 50)
-        void shouldRejectIDTokenWithInvalidSignature(String token) {
+        @TestTokenSource(value = TokenType.ID_TOKEN, count = 50)
+        void shouldRejectIDTokenWithInvalidSignature(TestTokenHolder tokenHolder) {
+            String token = tokenHolder.getRawToken();
 
             // Tamper with the signature using a specific strategy that modifies the signature
             String tamperedToken = JwtTokenTamperingUtil.applyTamperingStrategy(
@@ -230,10 +237,11 @@ class OAuth2JWTBestPracticesComplianceTest {
             );
 
             assertNotEquals(tamperedToken, token, "Token should be tampered");
+            TokenValidator validator= new TokenValidator(tokenHolder.getIssuerConfig());
 
             // When/Then
             TokenValidationException exception = assertThrows(TokenValidationException.class,
-                    () -> tokenValidator.createIdToken(tamperedToken),
+                    () -> validator.createIdToken(tamperedToken),
                     "Token with invalid signature should be rejected, offending validation: " + tamperedToken);
 
             // Verify the exception has the correct event type
@@ -250,7 +258,7 @@ class OAuth2JWTBestPracticesComplianceTest {
         @DisplayName("3.8: Validate validation expiration")
         void shouldValidateTokenExpiration() {
             // Given
-            String token = TokenGenerators.accessTokens().next();
+            String token = TestTokenGenerators.accessTokens().next().getRawToken();
 
             // When
             AccessTokenContent result = tokenValidator.createAccessToken(token);
@@ -268,7 +276,16 @@ class OAuth2JWTBestPracticesComplianceTest {
         void shouldRejectExpiredToken() {
             // Given
             Instant expiredTime = Instant.now().minus(1, ChronoUnit.HOURS);
-            String token = TestTokenProducer.validSignedJWTExpireAt(expiredTime);
+            java.time.OffsetDateTime expiredDateTime = java.time.OffsetDateTime.ofInstant(expiredTime, java.time.ZoneId.systemDefault());
+
+            // Create token using TestTokenHolder
+            TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
+
+            // Set expired expiration time
+            tokenHolder.withClaim(ClaimName.EXPIRATION.getName(), 
+                    ClaimValue.forDateTime(String.valueOf(expiredDateTime.toEpochSecond()), expiredDateTime));
+
+            String token = tokenHolder.getRawToken();
 
             // When/Then
             TokenValidationException exception = assertThrows(TokenValidationException.class,

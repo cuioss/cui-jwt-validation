@@ -18,10 +18,13 @@ package de.cuioss.jwt.validation.pipeline;
 import de.cuioss.jwt.validation.IssuerConfig;
 import de.cuioss.jwt.validation.JWTValidationLogMessages;
 import de.cuioss.jwt.validation.TokenType;
+import de.cuioss.jwt.validation.domain.claim.ClaimValue;
 import de.cuioss.jwt.validation.domain.token.TokenContent;
 import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
-import de.cuioss.jwt.validation.test.generator.TokenGenerators;
+import de.cuioss.jwt.validation.test.generator.ClaimControlParameter;
+import de.cuioss.jwt.validation.test.generator.TestTokenGenerators;
+import de.cuioss.jwt.validation.test.TestTokenHolder;
 import de.cuioss.test.generator.junit.EnableGeneratorController;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
@@ -174,11 +177,13 @@ class TokenClaimValidatorTest {
                     .build();
             var validator = createValidator(issuerConfig);
 
-            // Create a validation with all mandatory claims using the TokenGenerators factory
-            TokenContent tokenContent = TokenGenerators.validTokenContent().next();
+            // Create a validation with all mandatory claims using the TestTokenGenerators factory
+            TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
+            // Set the authorized party to match the expected client ID
+            tokenHolder.withClaim("azp", ClaimValue.forPlainString(EXPECTED_CLIENT_ID));
 
             // When validating the validation - should not throw an exception
-            TokenContent result = assertDoesNotThrow(() -> validator.validate(tokenContent),
+            TokenContent result = assertDoesNotThrow(() -> validator.validate(tokenHolder),
                     "Token should be valid with all mandatory claims");
 
             // Then the validation should pass
@@ -199,11 +204,12 @@ class TokenClaimValidatorTest {
                     .build();
             var validator = createValidator(issuerConfig);
 
-            // Create a validation missing mandatory claims using the TokenGenerators factory
-            TokenContent tokenContent = TokenGenerators.invalidTokenContent()
-                    .withMissingIssuer()
-                    .withMissingSubject()
-                    .next();
+            // Create a validation missing mandatory claims using the TestTokenHolder with ClaimControlParameter
+            TokenContent tokenContent = new TestTokenHolder(TokenType.ACCESS_TOKEN,
+                    ClaimControlParameter.builder()
+                            .missingIssuer(true)
+                            .missingSubject(true)
+                            .build());
 
             // When validating the validation - should throw an exception
             TokenValidationException exception = assertThrows(TokenValidationException.class,
@@ -238,8 +244,10 @@ class TokenClaimValidatorTest {
             var validator = createValidator(issuerConfig);
 
             // When validating a token with a matching audience - should not throw an exception
-            TokenContent tokenContent = TokenGenerators.validTokenContent().next();
-            TokenContent result = assertDoesNotThrow(() -> validator.validate(tokenContent),
+            TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
+            // Set the authorized party to match the expected client ID
+            tokenHolder.withClaim("azp", ClaimValue.forPlainString(EXPECTED_CLIENT_ID));
+            TokenContent result = assertDoesNotThrow(() -> validator.validate(tokenHolder),
                     "Token should be valid with matching audience");
 
             // Then the validation should pass
@@ -261,9 +269,10 @@ class TokenClaimValidatorTest {
             var validator = createValidator(issuerConfig);
 
             // When validating a token with a missing audience - should throw an exception
-            TokenContent tokenContent = TokenGenerators.invalidTokenContent(TokenType.ID_TOKEN)
-                    .withMissingAudience()
-                    .next();
+            TokenContent tokenContent = new TestTokenHolder(TokenType.ID_TOKEN,
+                    ClaimControlParameter.builder()
+                            .missingAudience(true)
+                            .build());
 
             // Then the validation should fail
             TokenValidationException exception = assertThrows(TokenValidationException.class,
@@ -294,12 +303,15 @@ class TokenClaimValidatorTest {
             var validator = createValidator(issuerConfig);
 
             // When validating a token with a missing audience - should not throw an exception for access tokens
-            TokenContent tokenContent = TokenGenerators.invalidTokenContent(TokenType.ACCESS_TOKEN)
-                    .withMissingAudience()
-                    .next();
+            TestTokenHolder tokenHolder = new TestTokenHolder(TokenType.ACCESS_TOKEN,
+                    ClaimControlParameter.builder()
+                            .missingAudience(true)
+                            .build());
+            // Set the authorized party to match the expected client ID
+            tokenHolder.withClaim("azp", ClaimValue.forPlainString(EXPECTED_CLIENT_ID));
 
             // Then the validation should pass (access tokens can have missing audience)
-            TokenContent result = assertDoesNotThrow(() -> validator.validate(tokenContent),
+            TokenContent result = assertDoesNotThrow(() -> validator.validate(tokenHolder),
                     "Token should be valid with missing audience for access-token");
 
             // Verify the result is not null
@@ -322,8 +334,10 @@ class TokenClaimValidatorTest {
             var validator = createValidator(issuerConfig);
 
             // When validating a token with a matching authorized party - should not throw an exception
-            TokenContent tokenContent = TokenGenerators.validTokenContent().next();
-            TokenContent result = assertDoesNotThrow(() -> validator.validate(tokenContent),
+            TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
+            // Set the authorized party to match the expected client ID
+            tokenHolder.withClaim("azp", ClaimValue.forPlainString(EXPECTED_CLIENT_ID));
+            TokenContent result = assertDoesNotThrow(() -> validator.validate(tokenHolder),
                     "Token should be valid with matching authorized party");
 
             // Then the validation should pass
@@ -346,9 +360,10 @@ class TokenClaimValidatorTest {
 
             // When validating a token with a missing authorized party
             // Create a token with a missing authorized party claim
-            TokenContent tokenContent = TokenGenerators.invalidTokenContent()
-                    .withMissingAuthorizedParty()
-                    .next();
+            TokenContent tokenContent = new TestTokenHolder(TokenType.ACCESS_TOKEN,
+                    ClaimControlParameter.builder()
+                            .missingAuthorizedParty(true)
+                            .build());
 
             // Then the validation should fail
             TokenValidationException exception = assertThrows(TokenValidationException.class,

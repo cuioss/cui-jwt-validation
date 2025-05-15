@@ -16,11 +16,13 @@
 package de.cuioss.jwt.validation.pipeline;
 
 import de.cuioss.jwt.validation.IssuerConfig;
+import de.cuioss.jwt.validation.TokenType;
+import de.cuioss.jwt.validation.domain.claim.ClaimValue;
 import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.security.AlgorithmPreferences;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
-import de.cuioss.jwt.validation.test.TestTokenProducer;
-import de.cuioss.jwt.validation.test.generator.InvalidDecodedJwtGenerator;
+import de.cuioss.jwt.validation.test.generator.ClaimControlParameter;
+import de.cuioss.jwt.validation.test.TestTokenHolder;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
@@ -30,7 +32,11 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Tests for {@link TokenHeaderValidator}.
@@ -39,8 +45,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Tests TokenHeaderValidator functionality")
 class TokenHeaderValidatorTest {
 
-    private static final String EXPECTED_ISSUER = TestTokenProducer.ISSUER;
-    private static final String WRONG_ISSUER = TestTokenProducer.WRONG_ISSUER;
+    private static final String EXPECTED_ISSUER = "Token-Test-testIssuer";
+    private static final String WRONG_ISSUER = "wrong-issuer";
     private static final SecurityEventCounter SECURITY_EVENT_COUNTER = new SecurityEventCounter();
     private static final NonValidatingJwtParser JWT_PARSER = NonValidatingJwtParser.builder()
             .securityEventCounter(SECURITY_EVENT_COUNTER)
@@ -107,7 +113,7 @@ class TokenHeaderValidatorTest {
             TokenHeaderValidator validator = createValidator(issuerConfig);
 
             // And a validation with a supported algorithm (RS256)
-            String token = TestTokenProducer.validSignedEmptyJWT();
+            String token = new TestTokenHolder(TokenType.ACCESS_TOKEN, ClaimControlParameter.defaultForTokenType(TokenType.ACCESS_TOKEN)).getRawToken();
             DecodedJwt decodedJwt = JWT_PARSER.decode(token);
 
             // When validating the validation, it should not throw an exception
@@ -130,7 +136,7 @@ class TokenHeaderValidatorTest {
             TokenHeaderValidator validator = createValidator(issuerConfig);
 
             // And a validation with an unsupported algorithm (RS256)
-            String token = TestTokenProducer.validSignedEmptyJWT();
+            String token = new TestTokenHolder(TokenType.ACCESS_TOKEN, ClaimControlParameter.defaultForTokenType(TokenType.ACCESS_TOKEN)).getRawToken();
             DecodedJwt decodedJwt = JWT_PARSER.decode(token);
             assertEquals("RS256", decodedJwt.getAlg().orElse(null), "Token should use RS256 algorithm");
 
@@ -198,7 +204,7 @@ class TokenHeaderValidatorTest {
             TokenHeaderValidator validator = createValidator(issuerConfig);
 
             // And a validation with the expected issuer
-            String token = TestTokenProducer.validSignedEmptyJWT();
+            String token = new TestTokenHolder(TokenType.ACCESS_TOKEN, ClaimControlParameter.defaultForTokenType(TokenType.ACCESS_TOKEN)).getRawToken();
             DecodedJwt decodedJwt = JWT_PARSER.decode(token);
             assertEquals(EXPECTED_ISSUER, decodedJwt.getIssuer().orElse(null), "Token should have expected issuer");
 
@@ -220,7 +226,9 @@ class TokenHeaderValidatorTest {
             TokenHeaderValidator validator = createValidator(issuerConfig);
 
             // And a validation with a wrong issuer
-            DecodedJwt decodedJwt = new InvalidDecodedJwtGenerator().withCustomIssuer(WRONG_ISSUER).next();
+            DecodedJwt decodedJwt = new TestTokenHolder(TokenType.ACCESS_TOKEN, ClaimControlParameter.defaultForTokenType(TokenType.ACCESS_TOKEN))
+                    .withClaim("iss", ClaimValue.forPlainString(WRONG_ISSUER))
+                    .asDecodedJwt();
 
             // When validating the validation, it should throw an exception
             var exception = assertThrows(TokenValidationException.class,
@@ -253,7 +261,10 @@ class TokenHeaderValidatorTest {
             TokenHeaderValidator validator = createValidator(issuerConfig);
 
             // And a validation with a missing issuer
-            DecodedJwt decodedJwt = new InvalidDecodedJwtGenerator().withMissingIssuer().next();
+            DecodedJwt decodedJwt = new TestTokenHolder(TokenType.ACCESS_TOKEN, ClaimControlParameter.builder()
+                    .missingIssuer(true)
+                    .build())
+                    .asDecodedJwt();
 
             // When validating the validation, it should throw an exception
             var exception = assertThrows(TokenValidationException.class,
@@ -285,7 +296,7 @@ class TokenHeaderValidatorTest {
             TokenHeaderValidator validator = createValidator(issuerConfig);
 
             // And a validation with a different issuer
-            String token = TestTokenProducer.validSignedEmptyJWT();
+            String token = new TestTokenHolder(TokenType.ACCESS_TOKEN, ClaimControlParameter.defaultForTokenType(TokenType.ACCESS_TOKEN)).getRawToken();
             DecodedJwt decodedJwt = JWT_PARSER.decode(token);
             assertEquals(EXPECTED_ISSUER, decodedJwt.getIssuer().orElse(null), "Token should have expected issuer");
 

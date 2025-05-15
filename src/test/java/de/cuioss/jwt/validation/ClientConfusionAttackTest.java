@@ -15,22 +15,21 @@
  */
 package de.cuioss.jwt.validation;
 
+import de.cuioss.jwt.validation.domain.claim.ClaimName;
+import de.cuioss.jwt.validation.domain.claim.ClaimValue;
 import de.cuioss.jwt.validation.domain.token.IdTokenContent;
 import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.pipeline.NonValidatingJwtParser;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
-import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
-import de.cuioss.jwt.validation.test.TestTokenProducer;
-import de.cuioss.jwt.validation.test.generator.IDTokenGenerator;
+import de.cuioss.jwt.validation.test.TestTokenHolder;
+import de.cuioss.jwt.validation.test.junit.TestTokenSource;
 import de.cuioss.tools.logging.CuiLogger;
-import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
 
-import java.time.Instant;
-import java.util.Date;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -40,6 +39,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class ClientConfusionAttackTest {
 
     private static final CuiLogger LOGGER = new CuiLogger(ClientConfusionAttackTest.class);
+
+    // Client ID constants
+    private static final String ALTERNATIVE_CLIENT_ID = "alternative-client";
 
     /**
      * The token validator used for testing.
@@ -58,11 +60,12 @@ class ClientConfusionAttackTest {
         LOGGER.debug("JWKS content: " + jwksContent);
     }
 
-    @Test
+    @ParameterizedTest
+    @TestTokenSource(value = TokenType.ID_TOKEN)
     @DisplayName("Token with valid azp claim should be accepted")
-    void verify_azp_validation() {
-        // Generate a token with the default client ID
-        String token = new IDTokenGenerator(false).next();
+    void verify_azp_validation(TestTokenHolder tokenHolder) {
+        // Get the token
+        String token = tokenHolder.getRawToken();
         LOGGER.debug("Token: " + token);
 
         // Print the token headers using NonValidatingJwtParser to debug
@@ -96,41 +99,30 @@ class ClientConfusionAttackTest {
             // Error handling is done by the test assertions
         }
 
-        // Create an IssuerConfig with the correct client ID
-        IssuerConfig issuerConfig = IssuerConfig.builder()
-                .issuer(TestTokenProducer.ISSUER)
-                .expectedAudience(IDTokenGenerator.DEFAULT_CLIENT_ID)
-                .expectedClientId(IDTokenGenerator.DEFAULT_CLIENT_ID)
-                .jwksContent(InMemoryJWKSFactory.createDefaultJwks())
-                .build();
-
-        LOGGER.debug("IssuerConfig: issuer=" + issuerConfig.getIssuer() +
-                ", expectedAudience=" + issuerConfig.getExpectedAudience() +
-                ", expectedClientId=" + issuerConfig.getExpectedClientId());
 
         // Create a token validator with the issuer config
-        tokenValidator = new TokenValidator(issuerConfig);
+        tokenValidator = new TokenValidator(tokenHolder.getIssuerConfig());
 
         // Verify the token is accepted
         IdTokenContent result = tokenValidator.createIdToken(token);
         assertNotNull(result, "Token with valid azp claim should be accepted");
     }
 
-    @Test
+    @ParameterizedTest
+    @TestTokenSource(value = TokenType.ID_TOKEN)
     @DisplayName("Token with invalid azp claim should be rejected")
-    void verify_azp_validation_failure() {
-        // Generate a token with the default client ID
-        String token = new IDTokenGenerator(false).next();
+    void verify_azp_validation_failure(TestTokenHolder tokenHolder) {
+        // Get the token
+        String token = tokenHolder.getRawToken();
 
-        // Create an IssuerConfig with an incorrect client ID
+        // Create an IssuerConfig with a different client ID than what's in the token
         IssuerConfig issuerConfig = IssuerConfig.builder()
-                .issuer(TestTokenProducer.ISSUER)
-                .expectedAudience(IDTokenGenerator.DEFAULT_CLIENT_ID)
-                .expectedClientId("wrong-client-id")
+                .issuer(tokenHolder.getIssuer())
+                .expectedClientId(ALTERNATIVE_CLIENT_ID) // Use a different client ID
                 .jwksContent(InMemoryJWKSFactory.createDefaultJwks())
                 .build();
 
-        // Create a token validator with the issuer config
+        // Create a token validator with the modified issuer config
         tokenValidator = new TokenValidator(issuerConfig);
 
         // Verify the token is rejected
@@ -140,39 +132,29 @@ class ClientConfusionAttackTest {
                 "Exception should have AZP_MISMATCH event type");
     }
 
-    @Test
+    @ParameterizedTest
+    @TestTokenSource(value = TokenType.ID_TOKEN)
     @DisplayName("Token from a different client should be rejected")
-    void verify_different_client_token_rejected() {
-        // Create a token with the correct audience but wrong azp
-        // We need to create this token manually since IDTokenGenerator sets both aud and azp to the same value
-        String token = Jwts.builder()
-                .issuer(TestTokenProducer.ISSUER)
-                .subject("test-subject")
-                .issuedAt(Date.from(Instant.now()))
-                .expiration(Date.from(Instant.now().plusSeconds(3600))) // 1 hour
-                .claim("email", "test@example.com")
-                .claim("name", "Test User")
-                .claim("preferred_username", "testuser")
-                .claim("typ", "ID")
-                // Set the audience claim to the expected audience (correct)
-                // Use audience() method to set the audience claim as an array
-                .audience().add(IDTokenGenerator.DEFAULT_CLIENT_ID).and()
-                // Set the azp claim to a different client ID (wrong)
-                .claim("azp", IDTokenGenerator.ALTERNATIVE_CLIENT_ID)
-                // Use the default key ID for signature validation to pass
-                .header().add("kid", "default-key-id").and()
-                // Sign with the default private key
-                .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
-                .compact();
+    void verify_different_client_token_rejected(TestTokenHolder tokenHolder) {
+        // Set the audience claim
+        tokenHolder.withAudience(List.of("test-client"));
 
+        // Set the azp claim to a different client ID (wrong)
+        tokenHolder.withAuthorizedParty(ALTERNATIVE_CLIENT_ID);
 
-        // Create an IssuerConfig with the default client ID
-        IssuerConfig issuerConfig = IssuerConfig.builder()
-                .issuer(TestTokenProducer.ISSUER)
-                .expectedAudience(IDTokenGenerator.DEFAULT_CLIENT_ID)
-                .expectedClientId(IDTokenGenerator.DEFAULT_CLIENT_ID)
-                .jwksContent(InMemoryJWKSFactory.createDefaultJwks())
-                .build();
+        // Add some standard ID token claims
+        tokenHolder.withClaim(ClaimName.EMAIL.getName(), ClaimValue.forPlainString("test@example.com"));
+        tokenHolder.withClaim(ClaimName.NAME.getName(), ClaimValue.forPlainString("Test User"));
+        tokenHolder.withClaim(ClaimName.PREFERRED_USERNAME.getName(), ClaimValue.forPlainString("testuser"));
+
+        String token = tokenHolder.getRawToken();
+
+        // Get IssuerConfig from the tokenHolder
+        IssuerConfig issuerConfig = tokenHolder.getIssuerConfig();
+
+        // Initialize security event counter
+        var securityEventCounter = new SecurityEventCounter();
+        issuerConfig.initSecurityEventCounter(securityEventCounter);
 
         // Create a token validator with the issuer config
         tokenValidator = new TokenValidator(issuerConfig);
@@ -190,11 +172,12 @@ class ClientConfusionAttackTest {
                 "Exception should have MISSING_CLAIM event type");
     }
 
-    @Test
+    @ParameterizedTest
+    @TestTokenSource(value = TokenType.ID_TOKEN)
     @DisplayName("Audience validation without azp validation should work")
-    void verify_audience_validation_without_azp() {
-        // Generate a token with the default client ID
-        String token = new IDTokenGenerator(false).next();
+    void verify_audience_validation_without_azp(TestTokenHolder tokenHolder) {
+        // Get the token
+        String token = tokenHolder.getRawToken();
         LOGGER.debug("Generated token: " + token);
 
         // Print the token headers using NonValidatingJwtParser to debug
@@ -230,8 +213,8 @@ class ClientConfusionAttackTest {
 
         // Create an IssuerConfig with the correct audience but no client ID
         IssuerConfig issuerConfig = IssuerConfig.builder()
-                .issuer(TestTokenProducer.ISSUER)
-                .expectedAudience(IDTokenGenerator.DEFAULT_CLIENT_ID)
+                .issuer(tokenHolder.getIssuer())
+                .expectedAudience(tokenHolder.getAuthorizedParty())
                 .jwksContent(InMemoryJWKSFactory.createDefaultJwks())
                 .build();
 
@@ -240,49 +223,38 @@ class ClientConfusionAttackTest {
                 ", expectedClientId=" + issuerConfig.getExpectedClientId());
 
         // Create a token validator with the issuer config
-        tokenValidator = new TokenValidator(issuerConfig);
+        tokenValidator = new TokenValidator(tokenHolder.getIssuerConfig());
 
         // Verify the token is accepted
         IdTokenContent result = tokenValidator.createIdToken(token);
         assertNotNull(result, "Token with valid audience should be accepted");
     }
 
-    @Test
+    @ParameterizedTest
+    @TestTokenSource(value = TokenType.ID_TOKEN)
     @DisplayName("AZP validation without audience validation should work")
-    void verify_azp_validation_without_audience() {
-        // Generate a token with the default client ID
-        String token = new IDTokenGenerator(false).next();
+    void verify_azp_validation_without_audience(TestTokenHolder tokenHolder) {
+        // Get the token
+        String token = tokenHolder.getRawToken();
 
-        // Create an IssuerConfig with the correct client ID but no audience
-        IssuerConfig issuerConfig = IssuerConfig.builder()
-                .issuer(TestTokenProducer.ISSUER)
-                .expectedClientId(IDTokenGenerator.DEFAULT_CLIENT_ID)
-                .jwksContent(InMemoryJWKSFactory.createDefaultJwks())
-                .build();
-
-        // Create a token validator with the issuer config
-        tokenValidator = new TokenValidator(issuerConfig);
+        // Create a token validator with the issuer config from tokenHolder
+        tokenValidator = new TokenValidator(tokenHolder.getIssuerConfig());
 
         // Verify the token is accepted
         IdTokenContent result = tokenValidator.createIdToken(token);
         assertNotNull(result, "Token with valid azp should be accepted");
     }
 
-    @Test
+    @ParameterizedTest
+    @TestTokenSource(value = TokenType.ID_TOKEN)
     @DisplayName("Token with missing azp claim should be rejected when validation is enabled")
-    void verify_missing_azp_rejected() {
-        // Generate a token with a specific client ID that has no azp claim
-        String token = new IDTokenGenerator(false, null).next();
+    void verify_missing_azp_rejected(TestTokenHolder tokenHolder) {
+        // Remove the azp claim
+        tokenHolder.withAuthorizedParty(null);
+        String token = tokenHolder.getRawToken();
 
-        // Create an IssuerConfig that requires azp validation
-        IssuerConfig issuerConfig = IssuerConfig.builder()
-                .issuer(TestTokenProducer.ISSUER)
-                .expectedClientId(IDTokenGenerator.DEFAULT_CLIENT_ID)
-                .jwksContent(InMemoryJWKSFactory.createDefaultJwks())
-                .build();
-
-        // Create a token validator with the issuer config
-        tokenValidator = new TokenValidator(issuerConfig);
+        // Create a token validator with the issuer config from tokenHolder
+        tokenValidator = new TokenValidator(tokenHolder.getIssuerConfig());
 
         // Verify the token is rejected
         var exception = assertThrows(TokenValidationException.class, () -> tokenValidator.createIdToken(token),

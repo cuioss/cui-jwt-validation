@@ -25,8 +25,8 @@ import de.cuioss.jwt.validation.jwks.key.JWKSKeyLoader;
 import de.cuioss.jwt.validation.jwks.key.KeyInfo;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.jwt.validation.test.generator.ClaimControlParameter;
-import de.cuioss.jwt.validation.test.generator.TokenContentImpl;
-import de.cuioss.jwt.validation.test.generator.TokenGenerators;
+import de.cuioss.jwt.validation.test.generator.TestTokenGenerators;
+import de.cuioss.jwt.validation.test.TestTokenHolder;
 import de.cuioss.test.generator.junit.EnableGeneratorController;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
@@ -53,7 +53,6 @@ class TokenClaimValidatorEdgeCaseTest {
     private static final String EXPECTED_AUDIENCE = "test-audience";
     private static final String EXPECTED_CLIENT_ID = "test-client-id";
 
-    // Using TokenGenerators factory for standardized generator initialization
     private final SecurityEventCounter securityEventCounter = new SecurityEventCounter();
 
     // Helper method to create a TokenClaimValidator with the shared SecurityEventCounter
@@ -203,7 +202,11 @@ class TokenClaimValidatorEdgeCaseTest {
 
             // Create a valid validation
             TokenContent validToken = createValidToken();
-            DecodedJwt decodedJwt = ((TokenContentImpl) validToken).toDecodedJwt();
+            // Use NonValidatingJwtParser to decode the raw token
+            DecodedJwt decodedJwt = NonValidatingJwtParser.builder()
+                    .securityEventCounter(securityEventCounter)
+                    .build()
+                    .decode(validToken.getRawToken());
 
             // When validating the signature, it should throw a TokenValidationException
             assertThrows(TokenValidationException.class, () -> signatureValidator.validateSignature(decodedJwt),
@@ -250,18 +253,21 @@ class TokenClaimValidatorEdgeCaseTest {
     }
 
     /**
-     * Creates a valid validation using the TokenGenerators factory.
+     * Creates a valid validation using the TestTokenGenerators factory.
      *
      * @return a valid TokenContent
      */
     private TokenContent createValidToken() {
-        return TokenGenerators.validTokenContent().next();
+        TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
+        // Set the authorized party to match the expected client ID
+        tokenHolder.withClaim("azp", ClaimValue.forPlainString(EXPECTED_CLIENT_ID));
+        return tokenHolder;
     }
 
     /**
      * Custom TokenContent implementation that allows overriding claims.
      */
-    private static class CustomTokenContent extends TokenContentImpl {
+    private static class CustomTokenContent extends TestTokenHolder {
         private final Map<String, ClaimValue> customClaims;
 
         public CustomTokenContent(TokenContent original, Map<String, ClaimValue> customClaims) {

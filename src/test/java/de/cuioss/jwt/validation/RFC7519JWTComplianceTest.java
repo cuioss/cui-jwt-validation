@@ -16,24 +16,23 @@
 package de.cuioss.jwt.validation;
 
 import de.cuioss.jwt.validation.domain.claim.ClaimName;
+import de.cuioss.jwt.validation.domain.claim.ClaimValue;
 import de.cuioss.jwt.validation.domain.token.AccessTokenContent;
 import de.cuioss.jwt.validation.exception.TokenValidationException;
-import de.cuioss.jwt.validation.security.AlgorithmPreferences;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
-import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
-import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
 import de.cuioss.jwt.validation.test.JwtTokenTamperingUtil;
-import de.cuioss.jwt.validation.test.TestTokenProducer;
-import de.cuioss.jwt.validation.test.generator.TokenGenerators;
-import io.jsonwebtoken.Jwts;
-import org.junit.jupiter.api.BeforeEach;
+import de.cuioss.jwt.validation.test.generator.TestTokenGenerators;
+import de.cuioss.jwt.validation.test.TestTokenHolder;
+import de.cuioss.jwt.validation.test.junit.TestTokenSource;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
 
 import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -54,42 +53,24 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("RFC 7519 JWT Compliance Tests")
 class RFC7519JWTComplianceTest {
 
-    private static final String ISSUER = TestTokenProducer.ISSUER;
-    private static final String AUDIENCE = "test-client";
+    private static final String ISSUER = "Token-Test-testIssuer";
     private static final String CLIENT_ID = "test-client";
 
-    private TokenValidator tokenValidator;
-
-    @BeforeEach
-    void setUp() {
-        // Get the default JWKS content
-        String jwksContent = InMemoryJWKSFactory.createDefaultJwks();
-
-        // Create issuer config
-        IssuerConfig issuerConfig = IssuerConfig.builder()
-                .issuer(ISSUER)
-                .expectedAudience(AUDIENCE)
-                .expectedClientId(CLIENT_ID)
-                .jwksContent(jwksContent)
-                .algorithmPreferences(new AlgorithmPreferences())
-                .build();
-
-        // Create validation factory
-        tokenValidator = new TokenValidator(issuerConfig);
-    }
+    // No longer need a tokenValidator field as we'll create it on demand using tokenHolder.getIssuerConfig()
 
     @Nested
     @DisplayName("Section 4.1: Registered Claim Names")
     class RegisteredClaimNamesTests {
 
-        @Test
+        @ParameterizedTest
+        @TestTokenSource(value = TokenType.ACCESS_TOKEN, count = 5)
         @DisplayName("4.1.1: 'iss' (Issuer) Claim")
-        void shouldHandleIssuerClaim() {
+        void shouldHandleIssuerClaim(TestTokenHolder tokenHolder) {
             // Given
-            String token = TokenGenerators.accessTokens().next();
+            String token = tokenHolder.getRawToken();
 
             // When
-            AccessTokenContent result = tokenValidator.createAccessToken(token);
+            AccessTokenContent result = new TokenValidator(tokenHolder.getIssuerConfig()).createAccessToken(token);
 
             // Then
             assertNotNull(result, "Token should be parsed successfully");
@@ -97,29 +78,30 @@ class RFC7519JWTComplianceTest {
                     "Issuer claim should match the expected value");
         }
 
-        @Test
+        @ParameterizedTest
+        @TestTokenSource(value = TokenType.ACCESS_TOKEN, count = 5)
         @DisplayName("4.1.2: 'sub' (Subject) Claim")
-        void shouldHandleSubjectClaim() {
+        void shouldHandleSubjectClaim(TestTokenHolder tokenHolder) {
             // Given
-            String token = TokenGenerators.accessTokens().next();
+            String token = tokenHolder.getRawToken();
 
             // When
-            AccessTokenContent result = tokenValidator.createAccessToken(token);
-
+            AccessTokenContent result = new TokenValidator(tokenHolder.getIssuerConfig()).createAccessToken(token);
             // Then
             assertNotNull(result, "Token should be parsed successfully");
             assertNotNull(result.getSubject(),
                     "Subject claim should be present");
         }
 
-        @Test
+        @ParameterizedTest
+        @TestTokenSource(value = TokenType.ACCESS_TOKEN, count = 5)
         @DisplayName("4.1.3: 'aud' (Audience) Claim")
-        void shouldHandleAudienceClaim() {
+        void shouldHandleAudienceClaim(TestTokenHolder tokenHolder) {
             // Given
-            String token = TokenGenerators.accessTokens().next();
+            String token = tokenHolder.getRawToken();
 
             // When
-            AccessTokenContent result = tokenValidator.createAccessToken(token);
+            AccessTokenContent result = new TokenValidator(tokenHolder.getIssuerConfig()).createAccessToken(token);
 
             // Then
             assertNotNull(result, "Token should be parsed successfully");
@@ -128,14 +110,15 @@ class RFC7519JWTComplianceTest {
                     "Audience claim should match the expected value");
         }
 
-        @Test
+        @ParameterizedTest
+        @TestTokenSource(value = TokenType.ACCESS_TOKEN, count = 5)
         @DisplayName("4.1.4: 'exp' (Expiration Time) Claim")
-        void shouldHandleExpirationTimeClaim() {
+        void shouldHandleExpirationTimeClaim(TestTokenHolder tokenHolder) {
             // Given
-            String token = TokenGenerators.accessTokens().next();
+            String token = tokenHolder.getRawToken();
 
             // When
-            AccessTokenContent result = tokenValidator.createAccessToken(token);
+            AccessTokenContent result = new TokenValidator(tokenHolder.getIssuerConfig()).createAccessToken(token);
 
             // Then
             assertNotNull(result, "Token should be parsed successfully");
@@ -150,21 +133,19 @@ class RFC7519JWTComplianceTest {
         void shouldHandleNotBeforeClaim() {
             // Given
             Instant notBefore = Instant.now().minus(5, ChronoUnit.MINUTES);
-            String token = Jwts.builder()
-                    .issuer(ISSUER)
-                    .subject("test-subject")
-                    .issuedAt(Date.from(Instant.now()))
-                    .expiration(Date.from(Instant.now().plus(1, ChronoUnit.HOURS)))
-                    .notBefore(Date.from(notBefore))
-                    .claim("scope", "openid profile email")
-                    .claim("azp", CLIENT_ID)
-                    .claim("aud", CLIENT_ID)
-                    .header().add("kid", "default-key-id").and()
-                    .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
-                    .compact();
+            OffsetDateTime notBeforeDateTime = OffsetDateTime.ofInstant(notBefore, ZoneId.systemDefault());
+
+            // Create token using TestTokenHolder
+            TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
+
+            // Add the notBefore claim
+            tokenHolder.withClaim(ClaimName.NOT_BEFORE.getName(),
+                    ClaimValue.forDateTime(String.valueOf(notBeforeDateTime.toEpochSecond()), notBeforeDateTime));
+
+            String token = tokenHolder.getRawToken();
 
             // When
-            AccessTokenContent result = tokenValidator.createAccessToken(token);
+            AccessTokenContent result = new TokenValidator(tokenHolder.getIssuerConfig()).createAccessToken(token);
 
             // Then
             assertNotNull(result, "Token should be parsed successfully");
@@ -176,10 +157,11 @@ class RFC7519JWTComplianceTest {
         @DisplayName("4.1.6: 'iat' (Issued At) Claim")
         void shouldHandleIssuedAtClaim() {
             // Given
-            String token = TokenGenerators.accessTokens().next();
+            TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
+            String token = tokenHolder.getRawToken();
 
             // When
-            AccessTokenContent result = tokenValidator.createAccessToken(token);
+            AccessTokenContent result = new TokenValidator(tokenHolder.getIssuerConfig()).createAccessToken(token);
 
             // Then
             assertNotNull(result, "Token should be parsed successfully");
@@ -192,21 +174,17 @@ class RFC7519JWTComplianceTest {
         void shouldHandleJwtIdClaim() {
             // Given
             String jwtId = "test-jwt-id";
-            String token = Jwts.builder()
-                    .issuer(ISSUER)
-                    .subject("test-subject")
-                    .issuedAt(Date.from(Instant.now()))
-                    .expiration(Date.from(Instant.now().plus(1, ChronoUnit.HOURS)))
-                    .id(jwtId)
-                    .claim("azp", CLIENT_ID)
-                    .claim("aud", CLIENT_ID)
-                    .claim("scope", "openid profile email")
-                    .header().add("kid", "default-key-id").and()
-                    .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
-                    .compact();
+
+            // Create token using TestTokenHolder
+            TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
+
+            // Set a specific JWT ID
+            tokenHolder.withClaim(ClaimName.TOKEN_ID.getName(), ClaimValue.forPlainString(jwtId));
+
+            String token = tokenHolder.getRawToken();
 
             // When
-            AccessTokenContent result = tokenValidator.createAccessToken(token);
+            AccessTokenContent result = new TokenValidator(tokenHolder.getIssuerConfig()).createAccessToken(token);
 
             // Then
             assertNotNull(result, "Token should be parsed successfully");
@@ -225,7 +203,7 @@ class RFC7519JWTComplianceTest {
         @DisplayName("3.1: JWT Format - Three-part structure")
         void shouldHandleThreePartStructure() {
             // Given
-            String token = TokenGenerators.accessTokens().next();
+            String token = TestTokenGenerators.accessTokens().next().getRawToken();
             String[] parts = token.split("\\.");
 
             // Then
@@ -237,7 +215,7 @@ class RFC7519JWTComplianceTest {
         @DisplayName("3.1: JWT Format - Base64URL encoding")
         void shouldHandleBase64UrlEncoding() {
             // Given
-            String token = TokenGenerators.accessTokens().next();
+            String token = TestTokenGenerators.accessTokens().next().getRawToken();
             String[] parts = token.split("\\.");
 
             // Then
@@ -253,10 +231,11 @@ class RFC7519JWTComplianceTest {
         @DisplayName("3.2: JWT Header - 'alg' and 'typ' claims")
         void shouldHandleHeaderClaims() {
             // Given
-            String token = TokenGenerators.accessTokens().next();
+            TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
+            String token = tokenHolder.getRawToken();
 
             // When
-            AccessTokenContent result = tokenValidator.createAccessToken(token);
+            AccessTokenContent result = new TokenValidator(tokenHolder.getIssuerConfig()).createAccessToken(token);
 
             // Then
             assertNotNull(result, "Token should be parsed successfully");
@@ -273,10 +252,11 @@ class RFC7519JWTComplianceTest {
         @DisplayName("7.2: Validate signature")
         void shouldValidateSignature() {
             // Given
-            String token = TokenGenerators.accessTokens().next();
+            TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
+            String token = tokenHolder.getRawToken();
 
             // When
-            AccessTokenContent result = tokenValidator.createAccessToken(token);
+            AccessTokenContent result = new TokenValidator(tokenHolder.getIssuerConfig()).createAccessToken(token);
 
             // Then
             assertNotNull(result, "Token with valid signature should be parsed successfully");
@@ -285,18 +265,9 @@ class RFC7519JWTComplianceTest {
         @Test
         @DisplayName("7.2: Reject validation with invalid signature")
         void shouldRejectInvalidSignature() {
-            // Create a valid token first
-            String validToken = Jwts.builder()
-                    .issuer(ISSUER)
-                    .subject("test-subject")
-                    .issuedAt(Date.from(Instant.now()))
-                    .expiration(Date.from(Instant.now().plus(1, ChronoUnit.HOURS)))
-                    .claim("scope", "openid profile email")
-                    .claim("azp", CLIENT_ID)
-                    .claim("aud", CLIENT_ID)
-                    .header().add("kid", "default-key-id").and()
-                    .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
-                    .compact();
+            // Create a valid token first using TestTokenHolder
+            TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
+            String validToken = tokenHolder.getRawToken();
 
             // Tamper with the signature using JwtTokenTamperingUtil
             String invalidToken = JwtTokenTamperingUtil.applyTamperingStrategy(
@@ -305,8 +276,9 @@ class RFC7519JWTComplianceTest {
             );
 
             // When/Then
+            TokenValidator validator = new TokenValidator(tokenHolder.getIssuerConfig());
             TokenValidationException exception = assertThrows(TokenValidationException.class,
-                    () -> tokenValidator.createAccessToken(invalidToken),
+                    () -> validator.createAccessToken(invalidToken),
                     "Token with invalid signature should be rejected");
 
             assertEquals(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED, exception.getEventType(),
@@ -318,11 +290,21 @@ class RFC7519JWTComplianceTest {
         void shouldValidateExpirationTime() {
             // Given
             Instant expiredTime = Instant.now().minus(1, ChronoUnit.HOURS);
-            String token = TestTokenProducer.validSignedJWTExpireAt(expiredTime);
+            OffsetDateTime expiredDateTime = OffsetDateTime.ofInstant(expiredTime, ZoneId.systemDefault());
+
+            // Create token using TestTokenHolder
+            TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
+
+            // Set expired expiration time
+            tokenHolder.withClaim(ClaimName.EXPIRATION.getName(), 
+                    ClaimValue.forDateTime(String.valueOf(expiredDateTime.toEpochSecond()), expiredDateTime));
+
+            String token = tokenHolder.getRawToken();
 
             // When/Then
+            TokenValidator validator = new TokenValidator(tokenHolder.getIssuerConfig());
             TokenValidationException exception = assertThrows(TokenValidationException.class,
-                    () -> tokenValidator.createAccessToken(token),
+                    () -> validator.createAccessToken(token),
                     "Expired token should be rejected");
 
             assertEquals(SecurityEventCounter.EventType.TOKEN_EXPIRED, exception.getEventType(),
@@ -334,11 +316,21 @@ class RFC7519JWTComplianceTest {
         void shouldValidateNotBeforeTime() {
             // Given
             Instant futureTime = Instant.now().plus(1, ChronoUnit.HOURS);
-            String token = TestTokenProducer.validSignedJWTWithNotBefore(futureTime);
+            OffsetDateTime futureDateTime = OffsetDateTime.ofInstant(futureTime, ZoneId.systemDefault());
+
+            // Create token using TestTokenHolder
+            TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
+
+            // Set future not-before time
+            tokenHolder.withClaim(ClaimName.NOT_BEFORE.getName(), 
+                    ClaimValue.forDateTime(String.valueOf(futureDateTime.toEpochSecond()), futureDateTime));
+
+            String token = tokenHolder.getRawToken();
 
             // When/Then
+            TokenValidator validator = new TokenValidator(tokenHolder.getIssuerConfig());
             TokenValidationException exception = assertThrows(TokenValidationException.class,
-                    () -> tokenValidator.createAccessToken(token),
+                    () -> validator.createAccessToken(token),
                     "Token not yet valid should be rejected");
 
             assertEquals(SecurityEventCounter.EventType.TOKEN_NBF_FUTURE, exception.getEventType(),
@@ -354,10 +346,11 @@ class RFC7519JWTComplianceTest {
         @DisplayName("5.1: JWT Claims Set - JSON object")
         void shouldHandleJsonClaimsSet() {
             // Given
-            String token = TokenGenerators.accessTokens().next();
+            TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
+            String token = tokenHolder.getRawToken();
 
             // When
-            AccessTokenContent result = tokenValidator.createAccessToken(token);
+            AccessTokenContent result = new TokenValidator(tokenHolder.getIssuerConfig()).createAccessToken(token);
 
             // Then
             assertNotNull(result, "Token should be parsed successfully");
@@ -376,21 +369,16 @@ class RFC7519JWTComplianceTest {
             String customClaimName = "custom_claim";
             String customClaimValue = "custom_value";
 
-            String token = Jwts.builder()
-                    .issuer(ISSUER)
-                    .subject("test-subject")
-                    .issuedAt(Date.from(Instant.now()))
-                    .expiration(Date.from(Instant.now().plus(1, ChronoUnit.HOURS)))
-                    .claim(customClaimName, customClaimValue)
-                    .claim("azp", CLIENT_ID)
-                    .claim("aud", CLIENT_ID)
-                    .claim("scope", "openid profile email")
-                    .header().add("kid", "default-key-id").and()
-                    .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
-                    .compact();
+            // Create token using TestTokenHolder
+            TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
+
+            // Add custom claim
+            tokenHolder.withClaim(customClaimName, ClaimValue.forPlainString(customClaimValue));
+
+            String token = tokenHolder.getRawToken();
 
             // When
-            AccessTokenContent result = tokenValidator.createAccessToken(token);
+            AccessTokenContent result = new TokenValidator(tokenHolder.getIssuerConfig()).createAccessToken(token);
 
             // Then
             assertNotNull(result, "Token should be parsed successfully");

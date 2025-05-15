@@ -23,8 +23,7 @@ import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.jwt.validation.test.JwtTokenTamperingUtil;
 import de.cuioss.jwt.validation.test.JwtTokenTamperingUtil.TamperingStrategy;
-import de.cuioss.jwt.validation.test.TestTokenProducer;
-import de.cuioss.jwt.validation.test.generator.TokenGenerators;
+import de.cuioss.jwt.validation.test.generator.TestTokenGenerators;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -59,7 +58,7 @@ class TokenValidationSecurityTest {
     void setUp() {
         // Create issuer config with JWKS content
         IssuerConfig issuerConfig = IssuerConfig.builder()
-                .issuer(TestTokenProducer.ISSUER)
+                .issuer("Token-Test-testIssuer")
                 .expectedAudience("test-client")
                 .jwksContent(InMemoryJWKSFactory.createDefaultJwks())
                 .build();
@@ -73,7 +72,7 @@ class TokenValidationSecurityTest {
     @DisplayName("Should reject tokens with tampered payloads")
     void shouldRejectTokensWithTamperedPayloads() {
         // Generate a valid token
-        String validToken = TokenGenerators.accessTokens().next();
+        String validToken = TestTokenGenerators.accessTokens().next().getRawToken();
 
         // Split the token into its parts
         String[] parts = validToken.split("\\.");
@@ -101,7 +100,7 @@ class TokenValidationSecurityTest {
     @DisplayName("Should reject tokens with tampered signatures")
     void shouldRejectTokensWithTamperedSignatures() {
         // Generate a valid token
-        String validToken = TokenGenerators.accessTokens().next();
+        String validToken = TestTokenGenerators.accessTokens().next().getRawToken();
 
         // Tamper with the signature
         String tamperedToken = JwtTokenTamperingUtil.applyTamperingStrategy(validToken, TamperingStrategy.MODIFY_SIGNATURE_RANDOM_CHAR);
@@ -115,7 +114,7 @@ class TokenValidationSecurityTest {
     @DisplayName("Should reject tokens with algorithm 'none'")
     void shouldRejectTokensWithAlgorithmNone() {
         // Generate a valid token
-        String validToken = TokenGenerators.accessTokens().next();
+        String validToken = TestTokenGenerators.accessTokens().next().getRawToken();
 
         // Tamper with the token by changing the algorithm to 'none'
         String tamperedToken = JwtTokenTamperingUtil.applyTamperingStrategy(validToken, TamperingStrategy.ALGORITHM_NONE);
@@ -129,7 +128,7 @@ class TokenValidationSecurityTest {
     @DisplayName("Should reject tokens with missing required claims")
     void shouldRejectTokensWithMissingRequiredClaims() {
         // Generate a valid token
-        String validToken = TokenGenerators.accessTokens().next();
+        String validToken = TestTokenGenerators.accessTokens().next().getRawToken();
 
         // Split the token into its parts
         String[] parts = validToken.split("\\.");
@@ -157,7 +156,7 @@ class TokenValidationSecurityTest {
     @DisplayName("Should accept valid tokens")
     void shouldAcceptValidTokens() {
         // Generate a valid token
-        String validToken = TokenGenerators.accessTokens().next();
+        String validToken = TestTokenGenerators.accessTokens().next().getRawToken();
 
         // Verify that the valid token is accepted
         AccessTokenContent tokenContent = tokenValidator.createAccessToken(validToken);
@@ -166,14 +165,14 @@ class TokenValidationSecurityTest {
         assertNotNull(tokenContent);
 
         // Verify that the token content has the expected issuer
-        assertEquals(TestTokenProducer.ISSUER, tokenContent.getIssuer());
+        assertEquals("Token-Test-testIssuer", tokenContent.getIssuer());
     }
 
     @Test
     @DisplayName("Should reject tokens with algorithm downgrade")
     void shouldRejectTokensWithAlgorithmDowngrade() {
         // Generate a valid token
-        String validToken = TokenGenerators.accessTokens().next();
+        String validToken = TestTokenGenerators.accessTokens().next().getRawToken();
 
         // Tamper with the token by downgrading the algorithm
         String tamperedToken = JwtTokenTamperingUtil.applyTamperingStrategy(validToken, TamperingStrategy.ALGORITHM_DOWNGRADE);
@@ -187,7 +186,7 @@ class TokenValidationSecurityTest {
     @DisplayName("Should reject tokens with invalid key ID")
     void shouldRejectTokensWithInvalidKeyId() {
         // Generate a valid token
-        String validToken = TokenGenerators.accessTokens().next();
+        String validToken = TestTokenGenerators.accessTokens().next().getRawToken();
 
         // Tamper with the token by changing the key ID
         String tamperedToken = JwtTokenTamperingUtil.applyTamperingStrategy(validToken, TamperingStrategy.INVALID_KID);
