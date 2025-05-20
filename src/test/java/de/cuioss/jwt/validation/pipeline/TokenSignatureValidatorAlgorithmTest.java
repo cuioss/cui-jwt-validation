@@ -35,7 +35,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
-import static de.cuioss.jwt.validation.test.TestTokenProducer.ISSUER;
+// Replaced static import with constant
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -44,6 +44,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @EnableTestLogger(rootLevel = TestLogLevel.DEBUG)
 @DisplayName("Tests TokenSignatureValidator with different algorithms")
 class TokenSignatureValidatorAlgorithmTest {
+    private static final String ISSUER = "Token-Test-testIssuer";
 
     private NonValidatingJwtParser jwtParser;
     private SecurityEventCounter securityEventCounter;

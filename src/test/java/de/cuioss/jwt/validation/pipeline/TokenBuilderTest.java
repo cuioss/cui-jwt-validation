@@ -21,7 +21,8 @@ import de.cuioss.jwt.validation.domain.claim.ClaimName;
 import de.cuioss.jwt.validation.domain.claim.ClaimValue;
 import de.cuioss.jwt.validation.domain.token.AccessTokenContent;
 import de.cuioss.jwt.validation.domain.token.IdTokenContent;
-import de.cuioss.jwt.validation.test.generator.DecodedJwtGenerator;
+import de.cuioss.jwt.validation.test.generator.ClaimControlParameter;
+import de.cuioss.jwt.validation.test.TestTokenHolder;
 import de.cuioss.test.generator.junit.EnableGeneratorController;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
@@ -64,7 +65,7 @@ class TokenBuilderTest {
         @DisplayName("createAccessToken should create AccessTokenContent from DecodedJwt")
         void createAccessTokenShouldCreateAccessTokenContent() {
             // Given a DecodedJwt with ACCESS_TOKEN type
-            DecodedJwt decodedJwt = new DecodedJwtGenerator(TokenType.ACCESS_TOKEN).next();
+            DecodedJwt decodedJwt = new TestTokenHolder(TokenType.ACCESS_TOKEN, ClaimControlParameter.builder().build()).asDecodedJwt();
 
             // When creating an AccessTokenContent
             Optional<AccessTokenContent> result = tokenBuilder.createAccessToken(decodedJwt);
@@ -109,7 +110,7 @@ class TokenBuilderTest {
         @DisplayName("createIdToken should create IdTokenContent from DecodedJwt")
         void createIdTokenShouldCreateIdTokenContent() {
             // Given a DecodedJwt with ID_TOKEN type
-            DecodedJwt decodedJwt = new DecodedJwtGenerator(TokenType.ID_TOKEN).next();
+            DecodedJwt decodedJwt = new TestTokenHolder(TokenType.ID_TOKEN, ClaimControlParameter.builder().build()).asDecodedJwt();
 
             // When creating an IdTokenContent
             Optional<IdTokenContent> result = tokenBuilder.createIdToken(decodedJwt);

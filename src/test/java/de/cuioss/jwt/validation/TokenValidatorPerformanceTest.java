@@ -17,10 +17,7 @@ package de.cuioss.jwt.validation;
 
 import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
-import de.cuioss.jwt.validation.test.TestTokenProducer;
-import de.cuioss.jwt.validation.test.generator.AccessTokenGenerator;
-import de.cuioss.jwt.validation.test.generator.IDTokenGenerator;
-import de.cuioss.jwt.validation.test.generator.RefreshTokenGenerator;
+import de.cuioss.jwt.validation.test.generator.TestTokenGenerators;
 import de.cuioss.jwt.validation.test.util.PerformanceStatistics;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import de.cuioss.tools.concurrent.ConcurrentTools;
@@ -60,7 +57,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class TokenValidatorPerformanceTest {
 
     private static final CuiLogger LOGGER = new CuiLogger(TokenValidatorPerformanceTest.class);
-    private static final String ISSUER = TestTokenProducer.ISSUER;
+    private static final String ISSUER = "Token-Test-testIssuer";
     private static final String AUDIENCE = "test-client";
     private static final String CLIENT_ID = "test-client";
 
@@ -68,11 +65,6 @@ class TokenValidatorPerformanceTest {
     private static final int DEFAULT_THREAD_COUNT = 100;
     private static final int DEFAULT_REQUESTS_PER_THREAD = 20;
     private static final int DEFAULT_PAUSE_MILLIS = 10; // 10 milliseconds
-
-    // Token generators
-    private final AccessTokenGenerator accessTokenGenerator = new AccessTokenGenerator(false);
-    private final IDTokenGenerator idTokenGenerator = new IDTokenGenerator(false);
-    private final RefreshTokenGenerator refreshTokenGenerator = new RefreshTokenGenerator(false);
 
     // Token factory
     private TokenValidator tokenValidator;
@@ -270,15 +262,15 @@ class TokenValidatorPerformanceTest {
         try {
             switch (tokenType) {
                 case ACCESS:
-                    String accessToken = accessTokenGenerator.next();
+                    String accessToken = TestTokenGenerators.accessTokens().next().getRawToken();
                     tokenValidator.createAccessToken(accessToken);
                     return true;
                 case ID:
-                    String idToken = idTokenGenerator.next();
+                    String idToken = TestTokenGenerators.idTokens().next().getRawToken();
                     tokenValidator.createIdToken(idToken);
                     return true;
                 case REFRESH:
-                    String refreshToken = refreshTokenGenerator.next();
+                    String refreshToken = TestTokenGenerators.refreshTokens().next().getRawToken();
                     tokenValidator.createRefreshToken(refreshToken);
                     return true;
                 default:

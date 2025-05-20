@@ -16,28 +16,27 @@
 package de.cuioss.jwt.validation;
 
 import de.cuioss.jwt.validation.domain.claim.ClaimName;
+import de.cuioss.jwt.validation.domain.claim.ClaimValue;
 import de.cuioss.jwt.validation.domain.token.IdTokenContent;
 import de.cuioss.jwt.validation.security.AlgorithmPreferences;
 import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
-import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
-import de.cuioss.jwt.validation.test.TestTokenProducer;
-import de.cuioss.jwt.validation.test.generator.IDTokenGenerator;
-import io.jsonwebtoken.Jwts;
+import de.cuioss.jwt.validation.test.generator.TestTokenGenerators;
+import de.cuioss.jwt.validation.test.TestTokenHolder;
+import de.cuioss.jwt.validation.test.junit.TestTokenSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests compliance with the OpenID Connect Core 1.0 specification.
- * 
  * This test class verifies that the library correctly implements the requirements
  * specified in OpenID Connect Core 1.0 for ID tokens.
  * 
@@ -46,12 +45,11 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("OpenID Connect Compliance Tests")
 class OpenIDConnectComplianceTest {
 
-    private static final String ISSUER = TestTokenProducer.ISSUER;
-    private static final String AUDIENCE = IDTokenGenerator.DEFAULT_CLIENT_ID;
-    private static final String CLIENT_ID = IDTokenGenerator.DEFAULT_CLIENT_ID;
+    private static final String ISSUER = "Token-Test-testIssuer";
+    private static final String AUDIENCE = "test-client";
+    private static final String CLIENT_ID = "test-client";
 
     private TokenValidator tokenValidator;
-    private IDTokenGenerator idTokenGenerator;
 
     @BeforeEach
     void setUp() {
@@ -69,9 +67,6 @@ class OpenIDConnectComplianceTest {
 
         // Create validation factory
         tokenValidator = new TokenValidator(issuerConfig);
-
-        // Create ID-Token generator
-        idTokenGenerator = new IDTokenGenerator(false);
     }
 
     @Nested
@@ -82,7 +77,7 @@ class OpenIDConnectComplianceTest {
         @DisplayName("2.2: Required Claims - 'iss' (Issuer) Claim")
         void shouldHandleIssuerClaim() {
             // Given
-            String token = idTokenGenerator.next();
+            String token = TestTokenGenerators.idTokens().next().getRawToken();
 
             // When
             IdTokenContent result = tokenValidator.createIdToken(token);
@@ -92,25 +87,20 @@ class OpenIDConnectComplianceTest {
                     "Issuer claim should match the expected value");
         }
 
-        @Test
+        @ParameterizedTest
+        @TestTokenSource(value = TokenType.ID_TOKEN, count = 5)
         @DisplayName("2.2: Required Claims - 'sub' (Subject) Claim")
-        void shouldHandleSubjectClaim() {
+        void shouldHandleSubjectClaim(TestTokenHolder tokenHolder) {
             // Given
             String subject = "test-subject";
-            String token = Jwts.builder()
-                    .issuer(ISSUER)
-                    .subject(subject)
-                    .issuedAt(Date.from(Instant.now()))
-                    .expiration(Date.from(Instant.now().plus(1, ChronoUnit.HOURS)))
-                    .claim("azp", CLIENT_ID)
-                    .claim("aud", CLIENT_ID)
-                    .claim("typ", "ID")
-                    .header().add("kid", "default-key-id").and()
-                    .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
-                    .compact();
+
+            // Set a specific subject
+            tokenHolder.withClaim(ClaimName.SUBJECT.getName(), ClaimValue.forPlainString(subject));
+
+            String token = tokenHolder.getRawToken();
 
             // When
-            IdTokenContent result = tokenValidator.createIdToken(token);
+            IdTokenContent result = new TokenValidator(tokenHolder.getIssuerConfig()).createIdToken(token);
 
             // Then
             assertEquals(subject, result.getSubject(),
@@ -121,7 +111,7 @@ class OpenIDConnectComplianceTest {
         @DisplayName("2.2: Required Claims - 'aud' (Audience) Claim")
         void shouldHandleAudienceClaim() {
             // Given
-            String token = idTokenGenerator.next();
+            String token = TestTokenGenerators.idTokens().next().getRawToken();
 
             // When
             IdTokenContent result = tokenValidator.createIdToken(token);
@@ -135,7 +125,7 @@ class OpenIDConnectComplianceTest {
         @DisplayName("2.2: Required Claims - 'exp' (Expiration Time) Claim")
         void shouldHandleExpirationTimeClaim() {
             // Given
-            String token = idTokenGenerator.next();
+            String token = TestTokenGenerators.idTokens().next().getRawToken();
 
             // When
             IdTokenContent result = tokenValidator.createIdToken(token);
@@ -151,7 +141,7 @@ class OpenIDConnectComplianceTest {
         @DisplayName("2.2: Required Claims - 'iat' (Issued At) Claim")
         void shouldHandleIssuedAtClaim() {
             // Given
-            String token = idTokenGenerator.next();
+            String token = TestTokenGenerators.idTokens().next().getRawToken();
 
             // When
             IdTokenContent result = tokenValidator.createIdToken(token);
@@ -161,52 +151,40 @@ class OpenIDConnectComplianceTest {
                     "Issued At claim should be present");
         }
 
-        @Test
+        @ParameterizedTest
+        @TestTokenSource(value = TokenType.ID_TOKEN, count = 5)
         @DisplayName("2.2: Optional Claims - 'auth_time' (Authentication Time) Claim")
-        void shouldHandleAuthTimeClaim() {
+        void shouldHandleAuthTimeClaim(TestTokenHolder tokenHolder) {
             // Given
             Instant authTime = Instant.now().minus(5, ChronoUnit.MINUTES);
-            String token = Jwts.builder()
-                    .issuer(ISSUER)
-                    .subject("test-subject")
-                    .issuedAt(Date.from(Instant.now()))
-                    .expiration(Date.from(Instant.now().plus(1, ChronoUnit.HOURS)))
-                    .claim("auth_time", authTime.getEpochSecond())
-                    .claim("azp", CLIENT_ID)
-                    .claim("aud", CLIENT_ID)
-                    .claim("typ", "ID")
-                    .header().add("kid", "default-key-id").and()
-                    .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
-                    .compact();
+
+            // Add auth_time claim
+            tokenHolder.withClaim("auth_time", ClaimValue.forPlainString(String.valueOf(authTime.getEpochSecond())));
+
+            String token = tokenHolder.getRawToken();
 
             // When
-            IdTokenContent result = tokenValidator.createIdToken(token);
+            IdTokenContent result = new TokenValidator(tokenHolder.getIssuerConfig()).createIdToken(token);
 
             // Then
             assertTrue(result.getClaims().containsKey("auth_time"),
                     "Authentication Time claim should be present");
         }
 
-        @Test
+        @ParameterizedTest
+        @TestTokenSource(value = TokenType.ID_TOKEN, count = 5)
         @DisplayName("2.2: Optional Claims - 'nonce' Claim")
-        void shouldHandleNonceClaim() {
+        void shouldHandleNonceClaim(TestTokenHolder tokenHolder) {
             // Given
             String nonce = "test-nonce";
-            String token = Jwts.builder()
-                    .issuer(ISSUER)
-                    .subject("test-subject")
-                    .issuedAt(Date.from(Instant.now()))
-                    .expiration(Date.from(Instant.now().plus(1, ChronoUnit.HOURS)))
-                    .claim("nonce", nonce)
-                    .claim("azp", CLIENT_ID)
-                    .claim("aud", CLIENT_ID)
-                    .claim("typ", "ID")
-                    .header().add("kid", "default-key-id").and()
-                    .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
-                    .compact();
+
+            // Add nonce claim
+            tokenHolder.withClaim("nonce", ClaimValue.forPlainString(nonce));
+
+            String token = tokenHolder.getRawToken();
 
             // When
-            IdTokenContent result = tokenValidator.createIdToken(token);
+            IdTokenContent result = new TokenValidator(tokenHolder.getIssuerConfig()).createIdToken(token);
 
             // Then
             assertTrue(result.getClaims().containsKey("nonce"),
@@ -219,7 +197,7 @@ class OpenIDConnectComplianceTest {
         @DisplayName("2.2: Optional Claims - 'azp' (Authorized Party) Claim")
         void shouldHandleAuthorizedPartyClaim() {
             // Given
-            String token = idTokenGenerator.next();
+            String token = TestTokenGenerators.idTokens().next().getRawToken();
 
             // When
             IdTokenContent result = tokenValidator.createIdToken(token);
@@ -236,78 +214,60 @@ class OpenIDConnectComplianceTest {
     @DisplayName("Section 5: Standard Claims")
     class StandardClaimsTests {
 
-        @Test
+        @ParameterizedTest
+        @TestTokenSource(value = TokenType.ID_TOKEN, count = 5)
         @DisplayName("5.1: Standard Claims - 'name' Claim")
-        void shouldHandleNameClaim() {
+        void shouldHandleNameClaim(TestTokenHolder tokenHolder) {
             // Given
             String name = "Test User";
-            String token = Jwts.builder()
-                    .issuer(ISSUER)
-                    .subject("test-subject")
-                    .issuedAt(Date.from(Instant.now()))
-                    .expiration(Date.from(Instant.now().plus(1, ChronoUnit.HOURS)))
-                    .claim("name", name)
-                    .claim("azp", CLIENT_ID)
-                    .claim("aud", CLIENT_ID)
-                    .claim("typ", "ID")
-                    .header().add("kid", "default-key-id").and()
-                    .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
-                    .compact();
+
+            // Add name claim
+            tokenHolder.withClaim(ClaimName.NAME.getName(), ClaimValue.forPlainString(name));
+
+            String token = tokenHolder.getRawToken();
 
             // When
-            IdTokenContent result = tokenValidator.createIdToken(token);
+            IdTokenContent result = new TokenValidator(tokenHolder.getIssuerConfig()).createIdToken(token);
 
             // Then
             assertEquals(name, result.getName().orElse(null),
                     "Name claim should match the expected value");
         }
 
-        @Test
+        @ParameterizedTest
+        @TestTokenSource(value = TokenType.ID_TOKEN, count = 5)
         @DisplayName("5.1: Standard Claims - 'email' Claim")
-        void shouldHandleEmailClaim() {
+        void shouldHandleEmailClaim(TestTokenHolder tokenHolder) {
             // Given
             String email = "test@example.com";
-            String token = Jwts.builder()
-                    .issuer(ISSUER)
-                    .subject("test-subject")
-                    .issuedAt(Date.from(Instant.now()))
-                    .expiration(Date.from(Instant.now().plus(1, ChronoUnit.HOURS)))
-                    .claim("email", email)
-                    .claim("azp", CLIENT_ID)
-                    .claim("aud", CLIENT_ID)
-                    .claim("typ", "ID")
-                    .header().add("kid", "default-key-id").and()
-                    .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
-                    .compact();
+
+            // Add email claim
+            tokenHolder.withClaim(ClaimName.EMAIL.getName(), ClaimValue.forPlainString(email));
+
+            String token = tokenHolder.getRawToken();
 
             // When
-            IdTokenContent result = tokenValidator.createIdToken(token);
+            IdTokenContent result = new TokenValidator(tokenHolder.getIssuerConfig()).createIdToken(token);
 
             // Then
             assertEquals(email, result.getEmail().orElse(null),
                     "Email claim should match the expected value");
         }
 
-        @Test
+        @ParameterizedTest
+        @TestTokenSource(value = TokenType.ID_TOKEN, count = 5)
         @DisplayName("5.1: Standard Claims - 'preferred_username' Claim")
-        void shouldHandlePreferredUsernameClaim() {
+        void shouldHandlePreferredUsernameClaim(TestTokenHolder tokenHolder) {
             // Given
             String preferredUsername = "testuser";
-            String token = Jwts.builder()
-                    .issuer(ISSUER)
-                    .subject("test-subject")
-                    .issuedAt(Date.from(Instant.now()))
-                    .expiration(Date.from(Instant.now().plus(1, ChronoUnit.HOURS)))
-                    .claim("preferred_username", preferredUsername)
-                    .claim("azp", CLIENT_ID)
-                    .claim("aud", CLIENT_ID)
-                    .claim("typ", "ID")
-                    .header().add("kid", "default-key-id").and()
-                    .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
-                    .compact();
+
+            // Add preferred_username claim
+            tokenHolder.withClaim(ClaimName.PREFERRED_USERNAME.getName(), ClaimValue.forPlainString(preferredUsername));
+
+            String token = tokenHolder.getRawToken();
 
             // When
-            IdTokenContent result = tokenValidator.createIdToken(token);
+            IdTokenContent result = new TokenValidator(tokenHolder.getIssuerConfig()).createIdToken(token);
 
             // Then
             assertTrue(result.getClaimOption(ClaimName.PREFERRED_USERNAME).isPresent(),

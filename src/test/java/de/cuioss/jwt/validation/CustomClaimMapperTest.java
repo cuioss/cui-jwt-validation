@@ -15,22 +15,21 @@
  */
 package de.cuioss.jwt.validation;
 
+import de.cuioss.jwt.validation.domain.claim.ClaimName;
 import de.cuioss.jwt.validation.domain.claim.ClaimValue;
 import de.cuioss.jwt.validation.domain.claim.ClaimValueType;
 import de.cuioss.jwt.validation.domain.claim.mapper.ClaimMapper;
 import de.cuioss.jwt.validation.domain.claim.mapper.JsonCollectionMapper;
 import de.cuioss.jwt.validation.domain.token.AccessTokenContent;
 import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
-import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
+import de.cuioss.jwt.validation.test.generator.ClaimControlParameter;
+import de.cuioss.jwt.validation.test.TestTokenHolder;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
-import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.time.Instant;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -69,20 +68,26 @@ class CustomClaimMapperTest {
         // Create validation factory
         tokenValidator = new TokenValidator(issuerConfig);
 
-        // Create a validation with a "role" claim containing an array of roles
-        tokenWithRoles = Jwts.builder()
-                .issuer(ISSUER)
-                .subject("test-subject")
-                .audience().add(AUDIENCE).and()
-                .claim("azp", CLIENT_ID)
-                .claim(ROLE_CLAIM, ROLES)
-                // Add required claims
-                .issuedAt(Date.from(Instant.now()))
-                .expiration(Date.from(Instant.now().plusSeconds(3600))) // 1 hour expiration
-                .claim("scope", "openid profile email") // Add scope claim
-                .header().add("kid", "default-key-id").and() // Add key ID to header
-                .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
-                .compact();
+        // Create a token with a "role" claim containing an array of roles using TestTokenHolder
+        var claimControl = ClaimControlParameter.builder().build();
+        var tokenHolder = new TestTokenHolder(TokenType.ACCESS_TOKEN, claimControl);
+
+        // Set the audience claim
+        tokenHolder.withClaim(ClaimName.AUDIENCE.getName(), ClaimValue.forList(AUDIENCE, List.of(AUDIENCE)));
+
+        // Set the issuer and authorized party claims
+        tokenHolder.withClaim(ClaimName.ISSUER.getName(), ClaimValue.forPlainString(ISSUER));
+        tokenHolder.withClaim(ClaimName.AUTHORIZED_PARTY.getName(), ClaimValue.forPlainString(CLIENT_ID));
+
+        // Add the role claim with an array of roles
+        tokenHolder.withClaim(ROLE_CLAIM, ClaimValue.forList(String.join(",", ROLES), ROLES));
+
+        // Add scope claim
+        tokenHolder.withClaim(ClaimName.SCOPE.getName(), ClaimValue.forList("openid profile email",
+                Arrays.asList("openid", "profile", "email")));
+
+        // Get the raw token
+        tokenWithRoles = tokenHolder.getRawToken();
     }
 
     @Test

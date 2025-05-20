@@ -17,9 +17,10 @@ package de.cuioss.jwt.validation.domain.token;
 
 import de.cuioss.jwt.validation.TokenType;
 import de.cuioss.jwt.validation.domain.claim.ClaimValue;
-import de.cuioss.jwt.validation.test.TestTokenProducer;
+import de.cuioss.jwt.validation.test.generator.TestTokenGenerators;
 import de.cuioss.jwt.validation.test.generator.ClaimValueGenerator;
 import de.cuioss.test.generator.Generators;
+import de.cuioss.test.generator.junit.EnableGeneratorController;
 import de.cuioss.test.valueobjects.junit5.contracts.ShouldHandleObjectContracts;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,10 +34,11 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Tests for {@link RefreshTokenContent}.
  */
+@EnableGeneratorController
 @DisplayName("Tests RefreshTokenContent functionality")
 class RefreshTokenContentTest implements ShouldHandleObjectContracts<RefreshTokenContent> {
 
-    private static final String SAMPLE_TOKEN = TestTokenProducer.validSignedEmptyJWT();
+    private static final String SAMPLE_TOKEN = TestTokenGenerators.refreshTokens().next().getRawToken();
 
     @Test
     @DisplayName("Should create RefreshTokenContent with valid validation")

@@ -15,18 +15,20 @@
  */
 package de.cuioss.jwt.validation;
 
+import de.cuioss.jwt.validation.domain.claim.ClaimName;
+import de.cuioss.jwt.validation.domain.claim.ClaimValue;
 import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.security.AlgorithmPreferences;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
-import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
 import de.cuioss.jwt.validation.test.JwtTokenTamperingUtil;
-import de.cuioss.jwt.validation.test.TestTokenProducer;
+import de.cuioss.jwt.validation.test.TestTokenHolder;
+import de.cuioss.jwt.validation.test.junit.TestTokenSource;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
-import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -47,7 +49,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Tests TokenValidator security event counting")
 class TokenValidatorSecurityEventTest {
 
-    private static final String ISSUER = TestTokenProducer.ISSUER;
+    private static final String ISSUER = "Token-Test-testIssuer";
     private static final String AUDIENCE = "test-client";
     private static final String CLIENT_ID = "test-client";
 
@@ -121,19 +123,18 @@ class TokenValidatorSecurityEventTest {
         assertEquals(initialCount + 1, tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.INVALID_JWT_FORMAT));
     }
 
-    @Test
+    @ParameterizedTest
+    @TestTokenSource(value = TokenType.ACCESS_TOKEN)
     @DisplayName("Should count missing claim events")
-    void shouldCountMissingClaimEvents() {
+    void shouldCountMissingClaimEvents(TestTokenHolder tokenHolder) {
         // Get initial count
         long initialCount = tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.MISSING_CLAIM);
 
-        // Create a validation without issuer
-        String token = Jwts.builder()
-                .subject("test-subject")
-                .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
-                .compact();
+        // Remove the issuer claim
+        tokenHolder.withoutClaim(ClaimName.ISSUER.getName());
+        String token = tokenHolder.getRawToken();
 
-        // Process validation without issuer - expect exception
+        // Process token without issuer - expect exception
         TokenValidationException exception = assertThrows(TokenValidationException.class,
                 () -> tokenValidator.createAccessToken(token),
                 "Token without issuer should throw TokenValidationException");
@@ -147,20 +148,18 @@ class TokenValidatorSecurityEventTest {
                 "Missing claim count should increase");
     }
 
-    @Test
+    @ParameterizedTest
+    @TestTokenSource(value = TokenType.ACCESS_TOKEN)
     @DisplayName("Should count no issuer config events")
-    void shouldCountNoIssuerConfigEvents() {
+    void shouldCountNoIssuerConfigEvents(TestTokenHolder tokenHolder) {
         // Get initial count
         long initialCount = tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.NO_ISSUER_CONFIG);
 
-        // Create a validation with unknown issuer
-        String token = Jwts.builder()
-                .issuer("https://unknown-issuer.com")
-                .subject("test-subject")
-                .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
-                .compact();
+        // Set an unknown issuer
+        tokenHolder.withClaim(ClaimName.ISSUER.getName(), ClaimValue.forPlainString("https://unknown-issuer.com"));
+        String token = tokenHolder.getRawToken();
 
-        // Process validation with unknown issuer - expect exception
+        // Process token with unknown issuer - expect exception
         TokenValidationException exception = assertThrows(TokenValidationException.class,
                 () -> tokenValidator.createAccessToken(token),
                 "Token with unknown issuer should throw TokenValidationException");
@@ -173,20 +172,21 @@ class TokenValidatorSecurityEventTest {
         assertEquals(initialCount + 1, tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.NO_ISSUER_CONFIG));
     }
 
-    @Test
+    @ParameterizedTest
+    @TestTokenSource(value = TokenType.ACCESS_TOKEN)
     @DisplayName("Should count signature validation failed events")
-    void shouldCountSignatureValidationFailedEvents() {
+    void shouldCountSignatureValidationFailedEvents(TestTokenHolder tokenHolder) {
         // Get initial count
         long initialCount = tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED);
 
-        // Create a validation with invalid signature using JwtTokenTamperingUtil
-        String validToken = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_SCOPES);
+        // Get the valid token and tamper with it
+        String validToken = tokenHolder.getRawToken();
         String invalidToken = JwtTokenTamperingUtil.applyTamperingStrategy(
                 validToken,
                 JwtTokenTamperingUtil.TamperingStrategy.MODIFY_SIGNATURE_LAST_CHAR
         );
 
-        // Process validation with invalid signature - expect exception
+        // Process token with invalid signature - expect exception
         TokenValidationException exception = assertThrows(TokenValidationException.class,
                 () -> tokenValidator.createAccessToken(invalidToken),
                 "Token with invalid signature should throw TokenValidationException");

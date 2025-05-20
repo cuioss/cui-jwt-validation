@@ -15,22 +15,24 @@
  */
 package de.cuioss.jwt.validation;
 
+import de.cuioss.jwt.validation.domain.claim.ClaimName;
+import de.cuioss.jwt.validation.domain.claim.ClaimValue;
 import de.cuioss.jwt.validation.domain.token.RefreshTokenContent;
 import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.security.AlgorithmPreferences;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
-import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
-import de.cuioss.jwt.validation.test.TestTokenProducer;
+import de.cuioss.jwt.validation.test.TestTokenHolder;
+import de.cuioss.jwt.validation.test.junit.TestTokenSource;
 import de.cuioss.test.generator.Generators;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
-import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -52,7 +54,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Tests TokenValidator functionality")
 class TokenValidatorTest {
 
-    private static final String ISSUER = TestTokenProducer.ISSUER;
+    private static final String ISSUER = "Token-Test-testIssuer";
     private static final String AUDIENCE = "test-client";
     private static final String CLIENT_ID = "test-client";
 
@@ -81,21 +83,26 @@ class TokenValidatorTest {
     @DisplayName("Token Creation Tests")
     class TokenCreationTests {
 
-        @Test
+        @ParameterizedTest
+        @TestTokenSource(value = TokenType.REFRESH_TOKEN, count = 3)
         @DisplayName("Should create Refresh-Token")
-        void shouldCreateRefreshToken() {
-            var token = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.REFRESH_TOKEN);
+        void shouldCreateRefreshToken(TestTokenHolder tokenHolder) {
+            // Given
+            var token = tokenHolder.getRawToken();
+
+            // When
             var parsedToken = tokenValidator.createRefreshToken(token);
 
+            // Then
             assertNotNull(parsedToken, "Token should not be null");
             assertNotNull(parsedToken.getRawToken(), "Token string should not be null");
-            assertEquals(token, parsedToken.getRawToken(), "Raw validation should match input");
+            assertEquals(token, parsedToken.getRawToken(), "Raw token should match input");
 
             // Verify claims are extracted
             assertNotNull(parsedToken.getClaims(), "Claims should not be null");
             assertFalse(parsedToken.getClaims().isEmpty(), "Claims should not be empty");
 
-            // The test validation should have standard claims
+            // The test token should have standard claims
             assertTrue(parsedToken.getClaims().containsKey("sub"), "Claims should contain subject");
             assertTrue(parsedToken.getClaims().containsKey("iss"), "Claims should contain issuer");
         }
@@ -116,26 +123,38 @@ class TokenValidatorTest {
             assertTrue(parsedToken.getClaims().isEmpty(), "Claims should be empty for non-JWT Token");
         }
 
-        @Test
+        @ParameterizedTest
+        @TestTokenSource(value = TokenType.ACCESS_TOKEN)
         @DisplayName("Should create access token")
-        void shouldCreateAccessToken() {
-            var token = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_SCOPES);
+        void shouldCreateAccessToken(TestTokenHolder tokenHolder) {
+            // Given
+            // Modify the token to have an invalid issuer to trigger validation failure
+            tokenHolder.withClaim("iss", ClaimValue.forPlainString("invalid-issuer"));
+            var token = tokenHolder.getRawToken();
 
-            // The validation should be validated by the pipeline
+            // The token should be validated by the pipeline
             // With our current setup, we expect it to fail validation
             // This is because we need more sophisticated setup for the full pipeline
+
+            // When/Then
             assertThrows(TokenValidationException.class, () -> tokenValidator.createAccessToken(token),
                     "Token should fail validation with current test setup");
         }
 
-        @Test
+        @ParameterizedTest
+        @TestTokenSource(value = TokenType.ID_TOKEN)
         @DisplayName("Should create ID-Token")
-        void shouldCreateIdToken() {
-            var token = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_ID_TOKEN);
+        void shouldCreateIdToken(TestTokenHolder tokenHolder) {
+            // Given
+            // Modify the token to have an invalid issuer to trigger validation failure
+            tokenHolder.withClaim("iss", ClaimValue.forPlainString("invalid-issuer"));
+            var token = tokenHolder.getRawToken();
 
-            // The validation should be validated by the pipeline
+            // The token should be validated by the pipeline
             // With our current setup, we expect it to fail validation
             // This is because we need more sophisticated setup for the full pipeline
+
+            // When/Then
             assertThrows(TokenValidationException.class, () -> tokenValidator.createIdToken(token),
                     "Token should fail validation with current test setup");
         }
@@ -167,23 +186,23 @@ class TokenValidatorTest {
                     "Exception should have TOKEN_SIZE_EXCEEDED event type");
         }
 
-        @Test
+        @ParameterizedTest
+        @TestTokenSource(value = TokenType.ACCESS_TOKEN)
         @DisplayName("Should respect custom payload size limits")
-        void shouldRespectCustomPayloadSizeLimits() {
+        void shouldRespectCustomPayloadSizeLimits(TestTokenHolder tokenHolder) {
+            // Given
             // Create TokenValidator with custom payload size limits
             ParserConfig customConfig = ParserConfig.builder()
                     .maxPayloadSize(100)
                     .build();
             var factory = new TokenValidator(customConfig, issuerConfig);
 
-            // Create a JWT with a large payload using io.jsonwebtoken
-            String token = Jwts.builder().issuer(TestTokenProducer.ISSUER).subject("test-subject")
-                    .claim("large-claim", "a".repeat(200))
-                    .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey(),
-                            Jwts.SIG.RS256)
-                    .compact();
+            // Add a large claim to the token
+            tokenHolder.withClaim("large-claim", ClaimValue.forPlainString("a".repeat(200)));
+            String token = tokenHolder.getRawToken();
 
-            // Verify it rejects a validation with a payload that exceeds the custom max size
+            // When/Then
+            // Verify it rejects a token with a payload that exceeds the custom max size
             var exception = assertThrows(TokenValidationException.class,
                     () -> factory.createAccessToken(token),
                     "Token with payload exceeding custom max size should be rejected");
@@ -230,16 +249,16 @@ class TokenValidatorTest {
                     "Exception should have INVALID_JWT_FORMAT event type");
         }
 
-        @Test
+        @ParameterizedTest
+        @TestTokenSource(value = TokenType.ACCESS_TOKEN)
         @DisplayName("Should handle unknown issuer")
-        void shouldHandleUnknownIssuer() {
-            // Create a validation with an unknown issuer
-            String token = Jwts.builder()
-                    .issuer("https://unknown-issuer.com")
-                    .subject("test-subject")
-                    .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
-                    .compact();
+        void shouldHandleUnknownIssuer(TestTokenHolder tokenHolder) {
+            // Given
+            // Set an unknown issuer
+            tokenHolder.withClaim(ClaimName.ISSUER.getName(), ClaimValue.forPlainString("https://unknown-issuer.com"));
+            String token = tokenHolder.getRawToken();
 
+            // When/Then
             var exception = assertThrows(TokenValidationException.class,
                     () -> tokenValidator.createAccessToken(token),
                     "Unknown issuer should throw TokenValidationException");
@@ -279,28 +298,32 @@ class TokenValidatorTest {
             LogAsserts.assertLogMessagePresent(TestLogLevel.WARN, JWTValidationLogMessages.WARN.FAILED_TO_DECODE_JWT.format());
         }
 
-        @Test
-        @DisplayName("Should log warning when validation validation fails")
-        void shouldLogWarningWhenTokenValidationFails() {
-            // Given a validation with an unknown issuer
-            String tokenWithUnknownIssuer = TestTokenProducer.validSignedJWTWithClaims(
-                    TestTokenProducer.SOME_SCOPES, "unknown-issuer");
+        @ParameterizedTest
+        @TestTokenSource(value = TokenType.ACCESS_TOKEN)
+        @DisplayName("Should log warning when token validation fails")
+        void shouldLogWarningWhenTokenValidationFails(TestTokenHolder tokenHolder) {
+            // Given a token with an unknown issuer
+            tokenHolder.withClaim(ClaimName.ISSUER.getName(), ClaimValue.forPlainString("unknown-issuer"));
+            String token = tokenHolder.getRawToken();
 
             // When creating an access token, it should throw an exception
             assertThrows(TokenValidationException.class,
-                    () -> tokenValidator.createAccessToken(tokenWithUnknownIssuer),
+                    () -> tokenValidator.createAccessToken(token),
                     "Token with unknown issuer should throw TokenValidationException");
 
             // And a warning should be logged
-            // The exact message might vary, but we should see a warning related to validation validation
-            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "missing required claim");
+            // The exact message might vary, but we should see a warning related to token validation
+            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "No configuration found for issuer");
         }
 
-        @Test
-        @DisplayName("Should log warning when validation is missing claims")
-        void shouldLogWarningWhenTokenIsMissingClaims() {
+        @ParameterizedTest
+        @TestTokenSource(value = TokenType.ACCESS_TOKEN)
+        @DisplayName("Should log warning when token is missing claims")
+        void shouldLogWarningWhenTokenIsMissingClaims(TestTokenHolder tokenHolder) {
             // Given a valid token string but missing required claims
-            String validToken = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_SCOPES);
+            // Remove a required claim (scope) to trigger validation failure
+            tokenHolder.withoutClaim("scope");
+            String validToken = tokenHolder.getRawToken();
 
             // When creating an access token, it should throw an exception
             var exception = assertThrows(TokenValidationException.class,
@@ -317,11 +340,14 @@ class TokenValidatorTest {
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "missing required claim");
         }
 
-        @Test
+        @ParameterizedTest
+        @TestTokenSource(value = TokenType.ID_TOKEN)
         @DisplayName("Should log warning when ID-Token is missing claims")
-        void shouldLogWarningWhenIdTokenIsMissingClaims() {
+        void shouldLogWarningWhenIdTokenIsMissingClaims(TestTokenHolder tokenHolder) {
             // Given a valid token string but missing required claims
-            String validToken = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_ID_TOKEN);
+            // Remove a required claim (aud) to trigger validation failure
+            tokenHolder.withoutClaim("aud");
+            String validToken = tokenHolder.getRawToken();
 
             // When creating an ID-Token, it should throw an exception
             var exception = assertThrows(TokenValidationException.class,
@@ -338,28 +364,30 @@ class TokenValidatorTest {
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "missing required claim");
         }
 
-        @Test
+        @ParameterizedTest
+        @TestTokenSource(value = TokenType.REFRESH_TOKEN)
         @DisplayName("Should create Refresh-Token successfully")
-        void shouldCreateRefreshTokenSuccessfully() {
-            // Given a valid token string
-            String validToken = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.REFRESH_TOKEN);
+        void shouldCreateRefreshTokenSuccessfully(TestTokenHolder tokenHolder) {
+            // Given a valid token
+            String token = tokenHolder.getRawToken();
 
             // When creating a Refresh-Token
-            RefreshTokenContent result = tokenValidator.createRefreshToken(validToken);
+            RefreshTokenContent result = tokenValidator.createRefreshToken(token);
 
-            // Then the validation should be created successfully
+            // Then the token should be created successfully
             assertNotNull(result, "Refresh token should be created successfully");
-            assertEquals(validToken, result.getRawToken(), "Raw token should match input");
+            assertEquals(token, result.getRawToken(), "Raw token should match input");
 
             // For refresh tokens, we don't need to check for specific log messages
             // as the test itself verifies the functionality works
         }
 
-        @Test
+        @ParameterizedTest
+        @TestTokenSource(value = TokenType.ACCESS_TOKEN)
         @DisplayName("Should log warning when key is not found")
-        void shouldLogWarningWhenKeyIsNotFound() {
-            // Create a validation with a key ID that doesn't exist in our JWKS
-            String tokenWithUnknownKeyId = TestTokenProducer.validSignedJWTWithClaims(TestTokenProducer.SOME_SCOPES);
+        void shouldLogWarningWhenKeyIsNotFound(TestTokenHolder tokenHolder) {
+            // Given a token
+            String token = tokenHolder.getRawToken();
 
             // Create a new issuer config with a JWKS that doesn't contain the key ID
             IssuerConfig newIssuerConfig = IssuerConfig.builder()
@@ -369,14 +397,15 @@ class TokenValidatorTest {
                     .jwksContent(InMemoryJWKSFactory.createEmptyJwks())
                     .build();
 
-            // Create a new validation factory with the new issuer config
+            // Create a new token validator with the new issuer config
             TokenValidator newTokenValidator = new TokenValidator(newIssuerConfig);
 
             // When creating an access token, it should throw an exception
             var exception = assertThrows(TokenValidationException.class,
-                    () -> newTokenValidator.createAccessToken(tokenWithUnknownKeyId),
+                    () -> newTokenValidator.createAccessToken(token),
                     "Token with unknown key ID should throw TokenValidationException");
 
+            // Then
             assertEquals(SecurityEventCounter.EventType.KEY_NOT_FOUND, exception.getEventType(),
                     "Exception should have KEY_NOT_FOUND event type");
 

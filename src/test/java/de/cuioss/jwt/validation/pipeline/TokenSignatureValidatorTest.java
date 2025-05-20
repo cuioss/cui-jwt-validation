@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.validation.pipeline;
 
+import de.cuioss.jwt.validation.TokenType;
 import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.jwks.JwksLoader;
 import de.cuioss.jwt.validation.jwks.JwksLoaderFactory;
@@ -22,20 +23,21 @@ import de.cuioss.jwt.validation.jwks.key.KeyInfo;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
+import de.cuioss.jwt.validation.test.generator.ClaimControlParameter;
+import de.cuioss.jwt.validation.test.TestTokenHolder;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
-import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Base64;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
-import static de.cuioss.jwt.validation.test.TestTokenProducer.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -73,7 +75,7 @@ class TokenSignatureValidatorTest {
     @DisplayName("Should validate validation with valid signature")
     void shouldValidateTokenWithValidSignature() {
         // Create a valid validation
-        String token = validSignedJWTWithClaims(SOME_SCOPES);
+        String token = createToken();
 
         // Parse the validation
         DecodedJwt decodedJwt = jwtParser.decode(token);
@@ -98,7 +100,7 @@ class TokenSignatureValidatorTest {
         long initialCount = securityEventCounter.getCount(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED);
 
         // Create a validation with a valid signature
-        String validToken = validSignedJWTWithClaims(SOME_SCOPES);
+        String validToken = createToken();
 
         // Tamper with the payload to invalidate the signature
         String[] parts = validToken.split("\\.");
@@ -148,7 +150,7 @@ class TokenSignatureValidatorTest {
         long initialCount = securityEventCounter.getCount(SecurityEventCounter.EventType.KEY_NOT_FOUND);
 
         // Create a valid validation
-        String token = validSignedJWTWithClaims(SOME_SCOPES);
+        String token = createToken();
 
         // Parse the validation
         DecodedJwt decodedJwt = jwtParser.decode(token);
@@ -260,7 +262,7 @@ class TokenSignatureValidatorTest {
         long initialCount = securityEventCounter.getCount(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM);
 
         // Create a valid validation
-        String token = validSignedJWTWithClaims(SOME_SCOPES);
+        String token = createToken();
 
         // Parse the validation
         DecodedJwt decodedJwt = jwtParser.decode(token);
@@ -313,45 +315,49 @@ class TokenSignatureValidatorTest {
     }
 
     /**
-     * Creates a validation without a kid in the header.
+     * Creates a token without a kid in the header.
      */
     private String createTokenWithoutKid() {
-        Instant now = Instant.now();
-        Instant expiration = now.plus(1, ChronoUnit.HOURS);
-
-        return Jwts.builder().subject("test-subject")
-                .issuer(ISSUER)
-                .issuedAt(Date.from(now))
-                .expiration(Date.from(expiration))
-                .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey(), Jwts.SIG.RS256)
-                .compact();
-    }
-
-    /**
-     * Creates a validation signed with RS256.
-     */
-    private String createToken() {
-        Instant now = Instant.now();
-        Instant expiration = now.plus(1, ChronoUnit.HOURS);
-
-        return Jwts.builder().subject("test-subject")
-                .issuer(ISSUER)
-                .issuedAt(Date.from(now))
-                .expiration(Date.from(expiration))
-                .header().add("kid", InMemoryJWKSFactory.DEFAULT_KEY_ID).and()
-                .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey(), Jwts.SIG.RS256)
-                .compact();
-    }
-
-    /**
-     * Creates a validation for testing algorithm confusion attacks.
-     * This simulates a validation that claims to use RS256 but with an invalid signature.
-     */
-    private String createAlgorithmConfusionToken() {
-        // Create a valid validation with RS256
+        // Create a valid token with RS256
         String validToken = createToken();
 
-        // Split the validation into its parts
+        // Split the token into its parts
+        String[] parts = validToken.split("\\.");
+
+        // Modify the header to remove the kid
+        String header = new String(Base64.getUrlDecoder().decode(parts[0]), StandardCharsets.UTF_8);
+        header = header.replaceAll("\"kid\":\"[^\"]*\",?", "");
+        // Fix JSON if needed (remove trailing comma)
+        header = header.replace(",}", "}");
+        String modifiedHeader = Base64.getUrlEncoder().withoutPadding().encodeToString(header.getBytes(StandardCharsets.UTF_8));
+
+        // Construct a token with the modified header but keep the original payload and signature
+        return modifiedHeader + "." + parts[1] + "." + parts[2];
+    }
+
+    /**
+     * Creates a token signed with RS256.
+     */
+    private String createToken() {
+        // Create a token using TestTokenHolder
+        var tokenHolder = new TestTokenHolder(TokenType.ACCESS_TOKEN, ClaimControlParameter.defaultForTokenType(TokenType.ACCESS_TOKEN));
+
+        // Ensure the key ID is set to the default key ID
+        tokenHolder.withKeyId(InMemoryJWKSFactory.DEFAULT_KEY_ID);
+
+        // Return the raw token
+        return tokenHolder.getRawToken();
+    }
+
+    /**
+     * Creates a token for testing algorithm confusion attacks.
+     * This simulates a token that claims to use RS256 but with an invalid signature.
+     */
+    private String createAlgorithmConfusionToken() {
+        // Create a valid token with RS256
+        String validToken = createToken();
+
+        // Split the token into its parts
         String[] parts = validToken.split("\\.");
 
         // Modify the header to keep RS256 but change something else
@@ -359,7 +365,7 @@ class TokenSignatureValidatorTest {
         header = header.replace("\"kid\":\"" + InMemoryJWKSFactory.DEFAULT_KEY_ID + "\"", "\"kid\":\"wrong-key-id\"");
         String modifiedHeader = Base64.getUrlEncoder().withoutPadding().encodeToString(header.getBytes(StandardCharsets.UTF_8));
 
-        // Construct a validation with the modified header but keep the original payload and signature
+        // Construct a token with the modified header but keep the original payload and signature
         // This simulates an algorithm confusion attack where the attacker tries to use a valid signature
         // with a modified header
         return modifiedHeader + "." + parts[1] + "." + parts[2];
