@@ -25,7 +25,7 @@ Current version: 1.0.0-SNAPSHOT
 Key features include:
 
 * Multi-issuer support for handling tokens from different identity providers
-* Automatic JWKS (JSON Web Key Set) key management and rotation
+* Automatic JWKS (JSON Web Key Set) key management and rotation, with JWKS URI configurable directly or via OpenID Connect (OIDC) Discovery.
 * Type-safe token parsing and validation
 * Scope-based authorization support
 * Protection against common JWT attacks
@@ -90,9 +90,10 @@ The library is designed around a pipeline architecture for token validation, wit
 * *TokenValidator*: The primary entry point for all token operations
 * *Token Validation Pipeline*: A series of validators for headers, signatures, and claims
 * *Multi-Issuer Support*: Configuration for multiple identity providers
-* *Key Management*: Handling of cryptographic keys for token validation
+* *Key Management*: Handling of cryptographic keys for token validation, including discovery of JWKS URI via OIDC.
 
 For detailed information about the architecture and components, see the link:doc/specification/technical-components.adoc[Technical Components] documentation.
+The library also supports configuration of JWKS URI via link:doc/specification/well-known.adoc[OpenID Connect Discovery], simplifying setup in compatible environments.
 
 == Getting Started
 
@@ -119,6 +120,8 @@ TokenValidator validator = new TokenValidator(issuerConfig);
 // Validate token
 // This will throw TokenValidationException if validation fails
 AccessTokenContent accessToken = validator.createAccessToken(tokenString);
+
+// For configuration using OIDC Discovery, see the Usage Guide.
 ----
 
 For more detailed examples and best practices, see the link:doc/Usage.adoc[Usage Guide].
@@ -130,6 +133,7 @@ The project includes comprehensive documentation to help you get started and und
 * link:doc/Usage.adoc[Usage Guide] - How to use the library with code examples
 * link:doc/Requirements.adoc[Requirements] - Functional and non-functional requirements
 * link:doc/specification/technical-components.adoc[Technical Components] - Detailed component specifications
+* link:doc/specification/well-known.adoc[OIDC Discovery Support] - Specification for OIDC .well-known endpoint interaction
 * link:doc/threat-model/Threat-Model.adoc[Threat Model] - Security analysis and mitigations
 * link:doc/LogMessages.adoc[Log Messages] - Logging and troubleshooting
 * link:doc/Build.adoc[Building and Development] - Information for contributors

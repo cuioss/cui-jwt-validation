@@ -18,10 +18,13 @@ package de.cuioss.jwt.validation.jwks.http;
 import de.cuioss.jwt.validation.security.SecureSSLContextProvider;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.Builder;
+import de.cuioss.jwt.validation.wellKnown.WellKnownHandler;
 import lombok.NonNull;
 
 import javax.net.ssl.SSLContext;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -30,7 +33,8 @@ import java.util.concurrent.ScheduledExecutorService;
  * <p>
  * This class encapsulates all configuration options for the HttpJwksLoader,
  * including JWKS endpoint URL, refresh interval, SSL context, cache size,
- * and adaptive caching parameters.
+ * and adaptive caching parameters. The JWKS endpoint URL can be configured
+ * directly or discovered via a {@link WellKnownHandler}.
  * <p>
  * It provides validation for all parameters and default values where appropriate.
  * <p>
@@ -38,6 +42,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/technical-components.adoc#_jwksloader">Technical Components Specification</a>
  *
  * @author Oliver Wolff
+ * @author Your Name (for well-known integration)
  * @since 1.0
  */
 @Builder
@@ -178,8 +183,8 @@ public class HttpJwksLoaderConfig {
      * Builder for creating HttpJwksLoaderConfig instances with validation.
      */
     public static class HttpJwksLoaderConfigBuilder {
-        private String jwksUrl;
-        private URI jwksUri;
+        private String jwksUrl; // Used if jwksUri is not set directly or via WellKnownHandler
+        private URI jwksUri;     // Can be set directly, by jwksUrl(), or by wellKnown()
         private int refreshIntervalSeconds;
         private SSLContext sslContext;
         private SecureSSLContextProvider secureSSLContextProvider;
@@ -190,13 +195,69 @@ public class HttpJwksLoaderConfig {
         private ScheduledExecutorService scheduledExecutorService;
 
         /**
-         * Sets the JWKS URL.
+         * Sets the JWKS URI directly.
+         * <p>
+         * Note: If this method is called, it will override any URI set by
+         * {@link #jwksUrl(String)} or {@link #wellKnown(WellKnownHandler)}.
+         * The last call among these methods determines the final JWKS URI.
+         * </p>
          *
-         * @param jwksUrl the URL of the JWKS endpoint
+         * @param jwksUri the URI of the JWKS endpoint. Must not be null.
+         * @return this builder instance
+         */
+        public HttpJwksLoaderConfigBuilder jwksUri(@NonNull URI jwksUri) {
+            this.jwksUri = jwksUri;
+            this.jwksUrl = null; // Clear jwksUrl to ensure jwksUri takes precedence
+            return this;
+        }
+
+        /**
+         * Sets the JWKS URL as a string, which will be converted to a URI.
+         * <p>
+         * Note: If this method is called, it will override any URI set by
+         * {@link #jwksUri(URI)} or {@link #wellKnown(WellKnownHandler)}.
+         * The last call among these methods determines the final JWKS URI.
+         * </p>
+         *
+         * @param jwksUrl the URL string of the JWKS endpoint. Must not be null.
          * @return this builder instance
          */
         public HttpJwksLoaderConfigBuilder jwksUrl(@NonNull String jwksUrl) {
             this.jwksUrl = jwksUrl;
+            this.jwksUri = null; // Clear jwksUri to allow jwksUrl to be processed
+            return this;
+        }
+
+        /**
+         * Configures the JWKS URI by extracting it from a {@link WellKnownHandler}.
+         * <p>
+         * This method will retrieve the {@code jwks_uri} from the provided
+         * {@code WellKnownHandler}. If the handler does not contain a {@code jwks_uri},
+         * an {@link IllegalArgumentException} will be thrown.
+         * </p>
+         * <p>
+         * Note: If this method is called, it will override any URI set by
+         * {@link #jwksUri(URI)} or {@link #jwksUrl(String)}.
+         * The last call among these methods determines the final JWKS URI.
+         * </p>
+         *
+         * @param wellKnownHandler The {@link WellKnownHandler} instance from which to
+         *                         extract the JWKS URI. Must not be null.
+         * @return this builder instance
+         * @throws IllegalArgumentException if {@code wellKnownHandler} is null or does not
+         *                                  contain a {@code jwks_uri}.
+         */
+        public HttpJwksLoaderConfigBuilder wellKnown(@NonNull WellKnownHandler wellKnownHandler) {
+            URL extractedJwksUrl = wellKnownHandler.getJwksUri()
+                .orElseThrow(() -> new IllegalArgumentException(
+                    "WellKnownHandler (issuer: " + wellKnownHandler.getIssuer().map(URL::toString).orElse("N/A")
+                        + ") must provide a jwks_uri."));
+            try {
+                this.jwksUri = extractedJwksUrl.toURI();
+                this.jwksUrl = null; // Clear jwksUrl to ensure this URI takes precedence
+            } catch (URISyntaxException e) {
+                throw new IllegalArgumentException("Invalid jwks_uri syntax from WellKnownHandler: " + extractedJwksUrl, e);
+            }
             return this;
         }
 
@@ -230,8 +291,13 @@ public class HttpJwksLoaderConfig {
          * @throws IllegalArgumentException if any parameter is invalid
          */
         public HttpJwksLoaderConfig build() {
-            validateJwksUrl();
-            createJwksUri();
+            // If jwksUri is already set (by jwksUri() or wellKnown()), jwksUrl is ignored.
+            // If jwksUri is null and jwksUrl is set, createJwksUri() will handle it.
+            // If both are null, validateJwksSource() will throw.
+            validateJwksSource();
+            if (this.jwksUri == null && this.jwksUrl != null) {
+                createJwksUriFromUrlString();
+            }
             validateParameters();
 
             SSLContext secureContext = createSecureSSLContext();
@@ -250,32 +316,35 @@ public class HttpJwksLoaderConfig {
         }
 
         /**
-         * Validates that the JWKS URL is provided.
-         * 
-         * @throws IllegalArgumentException if JWKS URL is not provided
+         * Validates that a source for the JWKS URI (either direct URI, URL string, or WellKnownHandler) is provided.
+         *
+         * @throws IllegalArgumentException if no JWKS source is configured.
          */
-        private void validateJwksUrl() {
-            if (jwksUrl == null && jwksUri == null) {
-                throw new IllegalArgumentException("JWKS URL must not be null or empty");
+        private void validateJwksSource() {
+            if (jwksUri == null && jwksUrl == null) {
+                throw new IllegalArgumentException("JWKS URI must be configured. Use jwksUri(), jwksUrl(), or wellKnown().");
             }
         }
 
         /**
-         * Creates a URI from the JWKS URL if not already set.
+         * Creates a URI from the JWKS URL string if jwksUri is not already set.
+         * This is called if jwksUrl() was used and jwksUri() or wellKnown() were not.
          */
-        private void createJwksUri() {
-            if (jwksUri == null) {
+        private void createJwksUriFromUrlString() {
+            if (jwksUri == null && jwksUrl != null) { // Should only be called if jwksUrl is the source
                 try {
-                    // Add scheme if missing to avoid URI with undefined scheme error
                     String urlToUse = jwksUrl;
-                    if (!urlToUse.contains("://")) {
-                        urlToUse = "http://" + urlToUse;
+                    if (!urlToUse.matches("^[a-zA-Z][a-zA-Z0-9+.-]*:.*")) {
+                        // Basic check if scheme is missing, prepend https as a sensible default for JWKS
+                        LOGGER.debug("JWKS URL '{}' seems to be missing a scheme, prepending 'https://'", jwksUrl);
+                        urlToUse = "https://" + urlToUse;
                     }
                     jwksUri = URI.create(urlToUse);
+                    LOGGER.debug("Created JWKS URI '{}' from URL string '{}'", jwksUri, jwksUrl);
                 } catch (IllegalArgumentException e) {
-                    // Create a dummy URI for invalid URLs to allow graceful handling
-                    jwksUri = URI.create("http://invalid-url");
-                    LOGGER.warn("Invalid JWKS URL: %s, using dummy URI", jwksUrl);
+                    // Log the error and rethrow, as a valid URI is critical.
+                    LOGGER.warn("Invalid JWKS URL string provided: {}", jwksUrl, e);
+                    throw new IllegalArgumentException("Invalid JWKS URL string: " + jwksUrl, e);
                 }
             }
         }

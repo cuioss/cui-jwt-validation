@@ -244,3 +244,132 @@ void shouldRejectTokenWithMissingClaims() {
     assertEquals(SecurityEventCounter.EventType.MISSING_CLAIM, exception.getEventType());
 }
 ----
+
+== Testing Code Using OIDC Discovery (`WellKnownHandler`)
+_See link:../specification/well-known.adoc[OIDC Discovery Specification Details]_
+
+When your application uses the `WellKnownHandler` to discover OIDC provider details, you'll want to test this integration without making actual network calls. The `de.cuioss.jwt.validation.wellknown.dispatcher.WellKnownDispatcher` utility class is provided for this purpose.
+
+=== Introducing `WellKnownDispatcher`
+
+`WellKnownDispatcher` uses WireMock (a library for stubbing and mocking HTTP services) to simulate an OpenID Provider's `/.well-known/openid-configuration` endpoint and its associated JWKS (JSON Web Key Set) endpoint. This allows you to control the responses that `WellKnownHandler` receives during tests, enabling you to simulate various scenarios including:
+
+* Successful discovery of OIDC configuration.
+* Missing or malformed OIDC configuration documents.
+* Network errors during discovery.
+* Inaccessible JWKS URIs.
+
+By using `WellKnownDispatcher`, your tests for components relying on `WellKnownHandler` become isolated, reliable, and fast.
+
+=== Using `WellKnownDispatcher` in JUnit 5 Tests
+
+Here's a typical setup for using `WellKnownDispatcher` in a JUnit 5 test class:
+
+[source,java]
+----
+import de.cuioss.jwt.validation.wellKnown.WellKnownHandler;
+import de.cuioss.jwt.validation.wellknown.dispatcher.WellKnownDispatcher;
+import de.cuioss.jwt.validation.jwks.http.HttpJwksLoaderConfig; // For example usage
+import org.junit.jupiter.api.*;
+
+// In your test class
+class MyServiceUsingWellKnownTest {
+
+    static WellKnownDispatcher dispatcher = new WellKnownDispatcher();
+
+    @BeforeAll
+    static void startServer() {
+        dispatcher.start(); // Starts the WireMock server on a dynamic port
+    }
+
+    @AfterAll
+    static void stopServer() {
+        dispatcher.stop(); // Stops the WireMock server
+    }
+
+    @BeforeEach
+    void resetDispatcher() {
+        dispatcher.reset(); // Clears all WireMock stubs from previous tests
+    }
+
+    @Test
+    void testSuccessfulOidcDiscoveryAndUsage() throws Exception {
+        String serverBaseUrl = dispatcher.getServerUrl(); // e.g., http://localhost:12345
+        String wellKnownPath = "/.well-known/openid-configuration";
+        String fullWellKnownUrl = serverBaseUrl + wellKnownPath;
+
+        String jwksPath = "/jwks.json"; // Relative path for the JWKS endpoint
+        String jwksUri = serverBaseUrl + jwksPath; // Full URI for JWKS
+
+        // 1. Prepare the OIDC discovery document JSON
+        String oidcConfigJson = String.format(
+            "{\"issuer\":\"%s\", \"jwks_uri\":\"%s\"}",
+            serverBaseUrl, // The mocked issuer URL is the base URL of our dispatcher
+            jwksUri        // The mocked JWKS URI
+        );
+
+        // 2. Stub the OIDC discovery endpoint response
+        // When WellKnownHandler requests fullWellKnownUrl, it will get oidcConfigJson
+        dispatcher.successfullyRespondTo(wellKnownPath, oidcConfigJson);
+
+        // 3. Stub the JWKS endpoint response (if WellKnownHandler or HttpJwksLoader will access it)
+        // WellKnownHandler itself performs an accessibility check for the jwks_uri.
+        dispatcher.respondWithJwks(jwksPath, "{\"keys\":[{\"kty\":\"RSA\",\"kid\":\"test-kid\",\"n\":\"...\",\"e\":\"AQAB\"}]}");
+
+        // 4. Create WellKnownHandler instance using the dispatcher's URL
+        WellKnownHandler handler = WellKnownHandler.fromWellKnownUrl(fullWellKnownUrl);
+
+        // Assertions for the handler (optional, but good for verification)
+        Assertions.assertEquals(serverBaseUrl, handler.getIssuer().map(java.net.URL::toString).orElse(null));
+        Assertions.assertEquals(jwksUri, handler.getJwksUri().map(java.net.URL::toString).orElse(null));
+
+        // 5. Example: Configure HttpJwksLoaderConfig using the handler
+        HttpJwksLoaderConfig jwksConfig = HttpJwksLoaderConfig.builder()
+            .wellKnown(handler)
+            // .sslContext(...) // If needed, though dispatcher is HTTP
+            .build();
+
+        // Assertions for the jwksConfig
+        Assertions.assertEquals(jwksUri, jwksConfig.getJwksUri().toString());
+
+        // ... your further test logic using the handler or jwksConfig ...
+        // For instance, setting up a TokenValidator:
+        // IssuerConfig issuerConfig = IssuerConfig.builder()
+        //     .issuer(handler.getIssuer().map(URL::toString).orElseThrow())
+        //     .httpJwksLoaderConfig(jwksConfig)
+        //     .addAudience("test-audience")
+        //     .build();
+        // TokenValidator validator = new TokenValidator(issuerConfig);
+        // ... then validate a token ...
+    }
+
+    @Test
+    void testOidcDiscoveryError() {
+        String serverBaseUrl = dispatcher.getServerUrl();
+        String wellKnownPath = "/.well-known/openid-configuration";
+        String fullWellKnownUrl = serverBaseUrl + wellKnownPath;
+
+        // Stub an error response (e.g., 404 Not Found)
+        dispatcher.respondWithError(wellKnownPath, 404);
+
+        // Verify that WellKnownHandler throws an exception
+        Assertions.assertThrows(Exception.class, () -> { // Replace Exception with specific WellKnownDiscoveryException
+            WellKnownHandler.fromWellKnownUrl(fullWellKnownUrl);
+        });
+    }
+}
+----
+
+=== Key `WellKnownDispatcher` Methods
+
+*   `start()`: Starts the WireMock server. Call this in `@BeforeAll`.
+*   `stop()`: Stops the WireMock server. Call this in `@AfterAll`.
+*   `reset()`: Resets all WireMock stubs. Call this in `@BeforeEach` to ensure test isolation.
+*   `getServerUrl()`: Gets the base URL of the running WireMock server (e.g., `http://localhost:PORT`). Use this to construct the `wellKnownUrl` for `WellKnownHandler`.
+*   `successfullyRespondTo(String path, String responseBody)`: Stubs a GET request to the given `path` (e.g., `/.well-known/openid-configuration`) to return HTTP 200 with the provided `responseBody` (JSON string).
+*   `respondWithJwks(String path, String jwksBody)`: A convenience method to stub a GET and HEAD request to the given `path` (typically the `jwks_uri` path) to return HTTP 200 with the JWKS JSON `jwksBody`. This is useful because `WellKnownHandler` performs an accessibility check (HEAD or GET) on the `jwks_uri`.
+*   `respondWithError(String path, int statusCode)`: Stubs a GET request to `path` to return the specified HTTP error `statusCode`.
+*   `respondWithConnectionError(String path)`: Simulates a connection error for requests to `path`.
+*   `respondWithMalformedBody(String path, String malformedJson)`: Stubs a GET request to return HTTP 200 but with a syntactically incorrect JSON body.
+
+By using these methods, you can effectively simulate various conditions of an OIDC provider's discovery endpoint and test how your application's `WellKnownHandler` integration behaves.
