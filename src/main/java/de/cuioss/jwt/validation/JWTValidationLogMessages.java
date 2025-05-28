@@ -138,6 +138,55 @@ public final class JWTValidationLogMessages {
                 .template("Successfully created Refresh-Token")
                 .build();
 
+        // WellKnownHandler debug messages
+        public static final LogRecord OPTIONAL_URL_FIELD_MISSING = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(515)
+                .template("Optional URL field '%s' is missing in discovery document from %s")
+                .build();
+
+        public static final LogRecord VALIDATING_ISSUER = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(516)
+                .template("Validating issuer: Document issuer='%s', WellKnown URL='%s'")
+                .build();
+
+        public static final LogRecord ISSUER_VALIDATION_SUCCESSFUL = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(517)
+                .template("Issuer validation successful for %s")
+                .build();
+
+        public static final LogRecord PERFORMING_ACCESSIBILITY_CHECK = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(518)
+                .template("Performing accessibility check for %s URL: %s")
+                .build();
+
+        public static final LogRecord USING_HEAD_METHOD = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(519)
+                .template("Using HEAD method for accessibility check")
+                .build();
+
+        public static final LogRecord ACCESSIBILITY_CHECK_SUCCESSFUL = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(520)
+                .template("Accessibility check for %s URL '%s' successful (HTTP %s)")
+                .build();
+
+        public static final LogRecord FETCHING_DISCOVERY_DOCUMENT = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(521)
+                .template("Fetching OpenID Connect discovery document from: %s")
+                .build();
+
+        public static final LogRecord DISCOVERY_DOCUMENT_FETCHED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(522)
+                .template("Successfully fetched discovery document: %s")
+                .build();
+
     }
 
     /**
@@ -163,6 +212,13 @@ public final class JWTValidationLogMessages {
                 .prefix(PREFIX)
                 .identifier(203)
                 .template("Failed to parse JWKS JSON: %s")
+                .build();
+
+        // WellKnownHandler error messages
+        public static final LogRecord ISSUER_VALIDATION_FAILED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(204)
+                .template("Issuer validation failed. Document issuer '%s' (normalized to base URL for .well-known: %s://%s%s%s) does not match the .well-known URL '%s'. Expected path for .well-known: '%s'. SchemeMatch=%s, HostMatch=%s, PortMatch=%s (IssuerPort=%s, WellKnownPort=%s), PathMatch=%s (WellKnownPath='%s')")
                 .build();
     }
 
@@ -204,6 +260,31 @@ public final class JWTValidationLogMessages {
                 .prefix(PREFIX)
                 .identifier(130)
                 .template("Falling back to last valid JWKS due to exception: %s")
+                .build();
+
+        // WellKnownHandler warning messages
+        public static final LogRecord ACCESSIBILITY_CHECK_HTTP_ERROR = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(144)
+                .template("Accessibility check for %s URL '%s' returned HTTP status %s. It might be inaccessible.")
+                .build();
+
+        public static final LogRecord ACCESSIBILITY_CHECK_IO_EXCEPTION = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(145)
+                .template("Accessibility check for %s URL '%s' failed with IOException: %s. It might be inaccessible.")
+                .build();
+
+        public static final LogRecord ACCESSIBILITY_CHECK_INTERRUPTED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(146)
+                .template("Accessibility check for %s URL '%s' was interrupted: %s. It might be inaccessible.")
+                .build();
+
+        public static final LogRecord ACCESSIBILITY_CHECK_EXCEPTION = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(147)
+                .template("Accessibility check for %s URL '%s' failed with exception: %s. It might be inaccessible.")
                 .build();
 
         public static final LogRecord TOKEN_SIZE_EXCEEDED = LogRecordModel.builder()

@@ -81,6 +81,10 @@ For more details about security events related to these log messages, see the Se
 |JWTValidation-141 |JWKS |Given contentKey '%s' does not resolve to a non base64 encoded String, actual content = %s |Logged when a content key does not resolve to a base64 encoded string
 |JWTValidation-142 |TOKEN |Algorithm %s is explicitly rejected for security reasons |Logged when an algorithm is explicitly rejected for security reasons
 |JWTValidation-143 |JWKS |Key rotation detected: JWKS content has changed |Logged when key rotation is detected in the JWKS content
+|JWTValidation-144 |WELLKNOWN |Accessibility check for %s URL '%s' returned HTTP status %s. It might be inaccessible. |Logged when an accessibility check for a URL returns a non-successful HTTP status code
+|JWTValidation-145 |WELLKNOWN |Accessibility check for %s URL '%s' failed with IOException: %s. It might be inaccessible. |Logged when an accessibility check for a URL fails with an IOException
+|JWTValidation-146 |WELLKNOWN |Accessibility check for %s URL '%s' was interrupted: %s. It might be inaccessible. |Logged when an accessibility check for a URL is interrupted
+|JWTValidation-147 |WELLKNOWN |Accessibility check for %s URL '%s' failed with exception: %s. It might be inaccessible. |Logged when an accessibility check for a URL fails with an exception
 |===
 
 == ERROR Level (200-299)
@@ -91,4 +95,5 @@ For more details about security events related to these log messages, see the Se
 |JWTValidation-201 |TOKEN |Failed to validate token signature: %s |Logged when a token signature validation fails
 |JWTValidation-202 |JWKS |JWKS content size exceeds maximum allowed size (upperLimit=%s, actual=%s) |Logged when the JWKS content size exceeds the maximum allowed size, showing both the configured upper limit and the actual content size
 |JWTValidation-203 |JWKS |Failed to parse JWKS JSON: %s |Logged when there is an error parsing the JWKS JSON
+|JWTValidation-204 |WELLKNOWN |Issuer validation failed. Document issuer '%s' (normalized to base URL for .well-known: %s://%s%s%s) does not match the .well-known URL '%s'. Expected path for .well-known: '%s'. SchemeMatch=%s, HostMatch=%s, PortMatch=%s (IssuerPort=%s, WellKnownPort=%s), PathMatch=%s (WellKnownPath='%s') |Logged when the issuer validation fails because the issuer in the discovery document does not match the well-known URL
 |===

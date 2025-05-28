@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.validation.well_known;
 
+import de.cuioss.jwt.validation.JWTValidationLogMessages;
 import de.cuioss.jwt.validation.test.dispatcher.WellKnownDispatcher;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
@@ -314,7 +315,7 @@ class WellKnownHandlerTest {
 
             // Verify logging
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.ERROR,
-                    "Issuer validation failed");
+                    JWTValidationLogMessages.ERROR.ISSUER_VALIDATION_FAILED.resolveIdentifierString());
         }
     }
 
@@ -392,7 +393,7 @@ class WellKnownHandlerTest {
             // Then
             // Verify that at least one log message is present
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN,
-                    "Accessibility check for jwks_uri URL");
+                    JWTValidationLogMessages.WARN.ACCESSIBILITY_CHECK_HTTP_ERROR.resolveIdentifierString());
         }
 
         @Test
@@ -414,7 +415,7 @@ class WellKnownHandlerTest {
 
             // Then verify logging
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.ERROR,
-                    "Issuer validation failed");
+                    JWTValidationLogMessages.ERROR.ISSUER_VALIDATION_FAILED.resolveIdentifierString());
         }
     }
 }

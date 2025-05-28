@@ -15,6 +15,9 @@
  */
 package de.cuioss.jwt.validation.well_known;
 
+import de.cuioss.jwt.validation.JWTValidationLogMessages.DEBUG;
+import de.cuioss.jwt.validation.JWTValidationLogMessages.ERROR;
+import de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
 import de.cuioss.jwt.validation.ParserConfig;
 import de.cuioss.jwt.validation.security.SecureSSLContextProvider;
 import de.cuioss.tools.logging.CuiLogger;
@@ -224,7 +227,7 @@ public final class WellKnownHandler {
                 if (isRequired) {
                     throw new WellKnownDiscoveryException("Required URL field '" + key + "' is missing in discovery document from " + wellKnownUrl);
                 }
-                LOGGER.debug("Optional URL field '{}' is missing in discovery document from {}", key, wellKnownUrl);
+                LOGGER.debug(DEBUG.OPTIONAL_URL_FIELD_MISSING.format(key, wellKnownUrl));
                 return;
             }
             try {
@@ -242,7 +245,7 @@ public final class WellKnownHandler {
          * @param wellKnownUrl The well-known URL
          */
         private void validateIssuer(String issuerFromDocument, URL wellKnownUrl) {
-            LOGGER.debug("Validating issuer: Document issuer='{}', WellKnown URL='{}'", issuerFromDocument, wellKnownUrl);
+            LOGGER.debug(DEBUG.VALIDATING_ISSUER.format(issuerFromDocument, wellKnownUrl));
             // The OpenID Connect Discovery 1.0 spec, section 4.3 states:
             // "The issuer value returned MUST be identical to the Issuer URL that was
             // used as the prefix to /.well-known/openid-configuration to retrieve the
@@ -280,11 +283,7 @@ public final class WellKnownHandler {
 
 
             if (!(schemeMatch && hostMatch && portMatch && pathMatch)) {
-                String errorMessage = String.format(
-                        "Issuer validation failed. Document issuer '%s' (normalized to base URL for .well-known: %s://%s%s%s) " +
-                                "does not match the .well-known URL '%s'. " +
-                                "Expected path for .well-known: '%s'. " +
-                                "SchemeMatch=%b, HostMatch=%b, PortMatch=%b (IssuerPort=%d, WellKnownPort=%d), PathMatch=%b (WellKnownPath='%s')",
+                String errorMessage = ERROR.ISSUER_VALIDATION_FAILED.format(
                         issuerFromDocument, issuerAsUrl.getProtocol(), issuerAsUrl.getHost(),
                         (issuerAsUrl.getPort() != -1 ? ":" + issuerAsUrl.getPort() : ""),
                         (issuerAsUrl.getPath() == null ? "" : issuerAsUrl.getPath()),
@@ -294,7 +293,7 @@ public final class WellKnownHandler {
                 LOGGER.error(errorMessage);
                 throw new WellKnownDiscoveryException(errorMessage);
             }
-            LOGGER.debug("Issuer validation successful for {}", issuerFromDocument);
+            LOGGER.debug(DEBUG.ISSUER_VALIDATION_SUCCESSFUL.format(issuerFromDocument));
         }
 
         /**
@@ -309,7 +308,7 @@ public final class WellKnownHandler {
                 return;
             }
             try {
-                LOGGER.debug("Performing accessibility check for {} URL: {}", keyName, url);
+                LOGGER.debug(DEBUG.PERFORMING_ACCESSIBILITY_CHECK.format(keyName, url));
 
                 HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
                         .connectTimeout(Duration.ofSeconds(TIMEOUT_SECONDS));
@@ -327,7 +326,7 @@ public final class WellKnownHandler {
 
                 // Use HEAD for accessibility checks
                 requestBuilder.method("HEAD", HttpRequest.BodyPublishers.noBody());
-                LOGGER.debug("Using HEAD method for accessibility check");
+                LOGGER.debug(DEBUG.USING_HEAD_METHOD.format());
 
                 HttpRequest request = requestBuilder.build();
 
@@ -335,21 +334,17 @@ public final class WellKnownHandler {
 
                 int responseCode = response.statusCode();
                 if (responseCode < 200 || responseCode >= 400) { // Check for non-successful responses
-                    LOGGER.warn("Accessibility check for {} URL '{}' returned HTTP status {}. It might be inaccessible.",
-                            keyName, url, responseCode);
+                    LOGGER.warn(WARN.ACCESSIBILITY_CHECK_HTTP_ERROR.format(keyName, url, responseCode));
                 } else {
-                    LOGGER.debug("Accessibility check for {} URL '{}' successful (HTTP {}).", keyName, url, responseCode);
+                    LOGGER.debug(DEBUG.ACCESSIBILITY_CHECK_SUCCESSFUL.format(keyName, url, responseCode));
                 }
             } catch (IOException e) {
-                LOGGER.warn("Accessibility check for {} URL '{}' failed with IOException: {}. It might be inaccessible.",
-                        keyName, url, e.getMessage(), e);
+                LOGGER.warn(e, WARN.ACCESSIBILITY_CHECK_IO_EXCEPTION.format(keyName, url, e.getMessage()));
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                LOGGER.warn("Accessibility check for {} URL '{}' was interrupted: {}. It might be inaccessible.",
-                        keyName, url, e.getMessage(), e);
+                LOGGER.warn(WARN.ACCESSIBILITY_CHECK_INTERRUPTED.format(keyName, url, e.getMessage()));
             } catch (Exception e) {
-                LOGGER.warn("Accessibility check for {} URL '{}' failed with exception: {}. It might be inaccessible.",
-                        keyName, url, e.getMessage(), e);
+                LOGGER.warn(e, WARN.ACCESSIBILITY_CHECK_EXCEPTION.format(keyName, url, e.getMessage()));
             }
         }
 
@@ -376,7 +371,7 @@ public final class WellKnownHandler {
                 }
             }
 
-            LOGGER.debug("Fetching OpenID Connect discovery document from: {}", wellKnownUrl);
+            LOGGER.debug(DEBUG.FETCHING_DISCOVERY_DOCUMENT.format(wellKnownUrl));
 
             JsonObject discoveryDocument;
             SSLContext secureContext = null;
@@ -419,7 +414,7 @@ public final class WellKnownHandler {
                 throw new WellKnownDiscoveryException("Error while fetching from " + wellKnownUrl, e);
             }
 
-            LOGGER.trace("Successfully fetched discovery document: {}", discoveryDocument);
+            LOGGER.trace(DEBUG.DISCOVERY_DOCUMENT_FETCHED.format(discoveryDocument));
 
             Map<String, URL> parsedEndpoints = new HashMap<>();
 
@@ -468,6 +463,7 @@ public final class WellKnownHandler {
 
     /**
      * @return An {@link Optional} containing the UserInfo Endpoint URI, or empty if not present.
+     * According to the OpenID Connect Discovery 1.0 specification, this endpoint is RECOMMENDED but not REQUIRED.
      */
     public Optional<URL> getUserinfoEndpoint() {
         return Optional.ofNullable(endpoints.get(USERINFO_ENDPOINT_KEY));
