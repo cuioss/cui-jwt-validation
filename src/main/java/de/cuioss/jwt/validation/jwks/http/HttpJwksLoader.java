@@ -84,6 +84,12 @@ public class HttpJwksLoader implements JwksLoader, AutoCloseable {
         this.cacheManager = new JwksCacheManager(config, this::loadJwksKeyLoader, securityEventCounter);
         this.backgroundRefreshManager = new BackgroundRefreshManager(config, cacheManager);
 
+        // Check if jwksUri is null (invalid URL)
+        if (config.getJwksUri() == null) {
+            LOGGER.warn("JWKS URI is null. This loader will return empty results for all key requests.");
+            return;
+        }
+
         // Initial JWKS content fetch to populate cache
         cacheManager.resolve();
 
@@ -100,6 +106,16 @@ public class HttpJwksLoader implements JwksLoader, AutoCloseable {
      */
     private JWKSKeyLoader loadJwksKeyLoader(String cacheKey) {
         LOGGER.debug("Loading JWKS for key: %s", cacheKey);
+
+        // Check if jwksUri is null (invalid URL)
+        if (config.getJwksUri() == null) {
+            LOGGER.warn("Cannot load JWKS: URI is null (invalid URL)");
+            securityEventCounter.increment(SecurityEventCounter.EventType.JWKS_FETCH_FAILED);
+            return JWKSKeyLoader.builder()
+                    .originalString("{}")
+                    .securityEventCounter(securityEventCounter)
+                    .build();
+        }
 
         // Get the current ETag from the cache manager
         String etag = cacheManager.getCurrentEtag();

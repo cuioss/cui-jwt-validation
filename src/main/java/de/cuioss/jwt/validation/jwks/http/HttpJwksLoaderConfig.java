@@ -16,9 +16,9 @@
 package de.cuioss.jwt.validation.jwks.http;
 
 import de.cuioss.jwt.validation.security.SecureSSLContextProvider;
+import de.cuioss.jwt.validation.wellKnown.WellKnownHandler;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.Builder;
-import de.cuioss.jwt.validation.wellKnown.WellKnownHandler;
 import lombok.NonNull;
 
 import javax.net.ssl.SSLContext;
@@ -56,8 +56,8 @@ public class HttpJwksLoaderConfig {
 
     /**
      * The URI of the JWKS endpoint.
+     * Can be null if an invalid URL was provided.
      */
-    @NonNull
     private final URI jwksUri;
 
     /**
@@ -105,9 +105,9 @@ public class HttpJwksLoaderConfig {
     /**
      * Gets the URI of the JWKS endpoint.
      *
-     * @return the JWKS URI
+     * @return the JWKS URI, or null if an invalid URL was provided
      */
-    public @NonNull URI getJwksUri() {
+    public URI getJwksUri() {
         return jwksUri;
     }
 
@@ -249,9 +249,9 @@ public class HttpJwksLoaderConfig {
          */
         public HttpJwksLoaderConfigBuilder wellKnown(@NonNull WellKnownHandler wellKnownHandler) {
             URL extractedJwksUrl = wellKnownHandler.getJwksUri()
-                .orElseThrow(() -> new IllegalArgumentException(
-                    "WellKnownHandler (issuer: " + wellKnownHandler.getIssuer().map(URL::toString).orElse("N/A")
-                        + ") must provide a jwks_uri."));
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "WellKnownHandler (issuer: " + wellKnownHandler.getIssuer().map(URL::toString).orElse("N/A")
+                                    + ") must provide a jwks_uri."));
             try {
                 this.jwksUri = extractedJwksUrl.toURI();
                 this.jwksUrl = null; // Clear jwksUrl to ensure this URI takes precedence
@@ -296,7 +296,12 @@ public class HttpJwksLoaderConfig {
             // If both are null, validateJwksSource() will throw.
             validateJwksSource();
             if (this.jwksUri == null && this.jwksUrl != null) {
-                createJwksUriFromUrlString();
+                boolean uriCreated = createJwksUriFromUrlString();
+                // If URI creation failed, we'll still create the config but with a null jwksUri
+                // This allows the HttpJwksLoader to handle invalid URLs gracefully
+                if (!uriCreated) {
+                    LOGGER.warn("Creating HttpJwksLoaderConfig with invalid JWKS URI. The loader will return empty results.");
+                }
             }
             validateParameters();
 
@@ -329,8 +334,10 @@ public class HttpJwksLoaderConfig {
         /**
          * Creates a URI from the JWKS URL string if jwksUri is not already set.
          * This is called if jwksUrl() was used and jwksUri() or wellKnown() were not.
+         * 
+         * @return true if the URI was created successfully, false if the URL was invalid
          */
-        private void createJwksUriFromUrlString() {
+        private boolean createJwksUriFromUrlString() {
             if (jwksUri == null && jwksUrl != null) { // Should only be called if jwksUrl is the source
                 try {
                     String urlToUse = jwksUrl;
@@ -341,12 +348,18 @@ public class HttpJwksLoaderConfig {
                     }
                     jwksUri = URI.create(urlToUse);
                     LOGGER.debug("Created JWKS URI '{}' from URL string '{}'", jwksUri, jwksUrl);
+                    return true;
                 } catch (IllegalArgumentException e) {
-                    // Log the error and rethrow, as a valid URI is critical.
-                    LOGGER.warn("Invalid JWKS URL string provided: {}", jwksUrl, e);
-                    throw new IllegalArgumentException("Invalid JWKS URL string: " + jwksUrl, e);
+                    // Log the error but don't throw, to allow graceful handling of invalid URLs
+                    LOGGER.warn("Invalid JWKS URL string provided: {}. The loader will be created but will return empty results.", jwksUrl, e);
+                    // Create a fallback URI for invalid URLs
+                    String sanitizedUrl = "http://invalid-url";
+                    jwksUri = URI.create(sanitizedUrl);
+                    LOGGER.debug("Created fallback JWKS URI '{}' for invalid URL string '{}'", jwksUri, jwksUrl);
+                    return true;
                 }
             }
+            return jwksUri != null;
         }
 
         /**

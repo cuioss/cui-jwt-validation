@@ -21,8 +21,8 @@ import de.cuioss.jwt.validation.domain.token.AccessTokenContent;
 import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.jwt.validation.test.JwtTokenTamperingUtil;
-import de.cuioss.jwt.validation.test.generator.TestTokenGenerators;
 import de.cuioss.jwt.validation.test.TestTokenHolder;
+import de.cuioss.jwt.validation.test.generator.TestTokenGenerators;
 import de.cuioss.jwt.validation.test.junit.TestTokenSource;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -296,7 +296,7 @@ class RFC7519JWTComplianceTest {
             TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
 
             // Set expired expiration time
-            tokenHolder.withClaim(ClaimName.EXPIRATION.getName(), 
+            tokenHolder.withClaim(ClaimName.EXPIRATION.getName(),
                     ClaimValue.forDateTime(String.valueOf(expiredDateTime.toEpochSecond()), expiredDateTime));
 
             String token = tokenHolder.getRawToken();
@@ -322,7 +322,7 @@ class RFC7519JWTComplianceTest {
             TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
 
             // Set future not-before time
-            tokenHolder.withClaim(ClaimName.NOT_BEFORE.getName(), 
+            tokenHolder.withClaim(ClaimName.NOT_BEFORE.getName(),
                     ClaimValue.forDateTime(String.valueOf(futureDateTime.toEpochSecond()), futureDateTime));
 
             String token = tokenHolder.getRawToken();

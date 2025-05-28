@@ -25,8 +25,8 @@ import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
 import de.cuioss.jwt.validation.test.JwtTokenTamperingUtil;
-import de.cuioss.jwt.validation.test.generator.TestTokenGenerators;
 import de.cuioss.jwt.validation.test.TestTokenHolder;
+import de.cuioss.jwt.validation.test.generator.TestTokenGenerators;
 import de.cuioss.jwt.validation.test.junit.TestTokenSource;
 import de.cuioss.test.generator.junit.EnableGeneratorController;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
@@ -38,15 +38,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 
 import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests compliance with the OAuth 2.0 JWT Best Current Practices.
@@ -213,7 +210,7 @@ class OAuth2JWTBestPracticesComplianceTest {
 
             assertNotEquals(tamperedToken, token, "Token should be tampered");
 
-            TokenValidator validator= new TokenValidator(tokenHolder.getIssuerConfig());
+            TokenValidator validator = new TokenValidator(tokenHolder.getIssuerConfig());
             // When/Then
             TokenValidationException exception = assertThrows(TokenValidationException.class,
                     () -> validator.createAccessToken(tamperedToken),
@@ -237,7 +234,7 @@ class OAuth2JWTBestPracticesComplianceTest {
             );
 
             assertNotEquals(tamperedToken, token, "Token should be tampered");
-            TokenValidator validator= new TokenValidator(tokenHolder.getIssuerConfig());
+            TokenValidator validator = new TokenValidator(tokenHolder.getIssuerConfig());
 
             // When/Then
             TokenValidationException exception = assertThrows(TokenValidationException.class,
@@ -276,13 +273,13 @@ class OAuth2JWTBestPracticesComplianceTest {
         void shouldRejectExpiredToken() {
             // Given
             Instant expiredTime = Instant.now().minus(1, ChronoUnit.HOURS);
-            java.time.OffsetDateTime expiredDateTime = java.time.OffsetDateTime.ofInstant(expiredTime, java.time.ZoneId.systemDefault());
+            OffsetDateTime expiredDateTime = OffsetDateTime.ofInstant(expiredTime, ZoneId.systemDefault());
 
             // Create token using TestTokenHolder
             TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
 
             // Set expired expiration time
-            tokenHolder.withClaim(ClaimName.EXPIRATION.getName(), 
+            tokenHolder.withClaim(ClaimName.EXPIRATION.getName(),
                     ClaimValue.forDateTime(String.valueOf(expiredDateTime.toEpochSecond()), expiredDateTime));
 
             String token = tokenHolder.getRawToken();
