@@ -15,9 +15,9 @@
  */
 package de.cuioss.jwt.validation.well_known;
 
+import de.cuioss.jwt.validation.ParserConfig;
 import de.cuioss.jwt.validation.security.SecureSSLContextProvider;
 import de.cuioss.tools.logging.CuiLogger;
-import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonReader;
 import jakarta.json.JsonString;
@@ -107,6 +107,7 @@ public final class WellKnownHandler {
         private String wellKnownUrlString;
         private SSLContext sslContext;
         private SecureSSLContextProvider secureSSLContextProvider;
+        private ParserConfig parserConfig;
 
         /**
          * Sets the well-known URL as a string.
@@ -161,6 +162,20 @@ public final class WellKnownHandler {
         }
 
         /**
+         * Sets the parser configuration for JSON parsing.
+         * <p>
+         * If not set, a default secure parser configuration will be used.
+         * </p>
+         *
+         * @param parserConfig The parser configuration to use.
+         * @return This builder instance.
+         */
+        public WellKnownHandlerBuilder parserConfig(ParserConfig parserConfig) {
+            this.parserConfig = parserConfig;
+            return this;
+        }
+
+        /**
          * Parses a JSON response string into a JsonObject.
          *
          * @param responseBody The JSON response string to parse
@@ -169,7 +184,9 @@ public final class WellKnownHandler {
          * @throws WellKnownDiscoveryException If parsing fails
          */
         private JsonObject parseJsonResponse(String responseBody, URL wellKnownUrl) {
-            try (JsonReader jsonReader = Json.createReader(new StringReader(responseBody))) {
+            // Use the provided ParserConfig or create a default one
+            ParserConfig config = parserConfig != null ? parserConfig : ParserConfig.builder().build();
+            try (JsonReader jsonReader = config.getJsonReaderFactory().createReader(new StringReader(responseBody))) {
                 return jsonReader.readObject();
             } catch (Exception e) {
                 throw new WellKnownDiscoveryException("Failed to parse JSON from " + wellKnownUrl, e);
