@@ -52,6 +52,8 @@ class BackgroundRefreshManager implements AutoCloseable {
 
     private final ScheduledExecutorService executorService;
 
+    private boolean closed = false;
+
     /**
      * Creates a new BackgroundRefreshManager with the specified configuration.
      *
@@ -104,10 +106,10 @@ class BackgroundRefreshManager implements AutoCloseable {
     /**
      * Checks if background refresh is enabled.
      *
-     * @return true if background refresh is enabled, false otherwise
+     * @return true if background refresh is enabled and not closed, false otherwise
      */
     boolean isEnabled() {
-        return executorService != null;
+        return executorService != null && !closed;
     }
 
     /**
@@ -116,6 +118,7 @@ class BackgroundRefreshManager implements AutoCloseable {
      */
     @Override
     public void close() {
+        closed = true;
         if (executorService != null) {
             executorService.shutdown();
             try {

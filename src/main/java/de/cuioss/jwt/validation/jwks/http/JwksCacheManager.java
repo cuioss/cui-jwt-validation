@@ -186,7 +186,7 @@ class JwksCacheManager {
             }
 
             // Track access for adaptive caching
-            accessCount.incrementAndGet();
+            int currentAccessCount = accessCount.incrementAndGet();
 
             // Get the current JWKSKeyLoader from cache, which will trigger a refresh if needed
             JWKSKeyLoader result = jwksCache.get(getCacheKey());
@@ -194,6 +194,14 @@ class JwksCacheManager {
             // Track hit for adaptive caching if we got a valid result
             if (result != null && result.isNotEmpty()) {
                 hitCount.incrementAndGet();
+            }
+
+            // Reset counters after adaptive window size is reached
+            // This is also done in expireAfterRead, but we need to do it here as well
+            // to ensure the counters are reset immediately after reaching the adaptive window size
+            if (currentAccessCount >= config.getAdaptiveWindowSize()) {
+                accessCount.set(0);
+                hitCount.set(0);
             }
 
             return result;
