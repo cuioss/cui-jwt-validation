@@ -351,11 +351,9 @@ public class HttpJwksLoaderConfig {
                 } catch (IllegalArgumentException e) {
                     // Log the error but don't throw, to allow graceful handling of invalid URLs
                     LOGGER.warn(e, WARN.INVALID_JWKS_URL_STRING.format(jwksUrl));
-                    // Create a fallback URI for invalid URLs
-                    String sanitizedUrl = "http://invalid-url";
-                    jwksUri = URI.create(sanitizedUrl);
-                    LOGGER.debug(DEBUG.JWKS_FALLBACK_URI_CREATED.format(jwksUri, jwksUrl));
-                    return true;
+                    // Set jwksUri to null to indicate an invalid URL
+                    jwksUri = null;
+                    return false;
                 }
             }
             return jwksUri != null;

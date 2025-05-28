@@ -83,12 +83,6 @@ public final class JWTValidationLogMessages {
                 .template("Created JWKS URI '%s' from URL string '%s'")
                 .build();
 
-        public static final LogRecord JWKS_FALLBACK_URI_CREATED = LogRecordModel.builder()
-                .prefix(PREFIX)
-                .identifier(525)
-                .template("Created fallback JWKS URI '%s' for invalid URL string '%s'")
-                .build();
-
         public static final LogRecord INITIALIZED_JWKS_LOADER = LogRecordModel.builder()
                 .prefix(PREFIX)
                 .identifier(504)
