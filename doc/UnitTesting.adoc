@@ -267,7 +267,7 @@ Here's a typical setup for using `WellKnownDispatcher` in a JUnit 5 test class:
 
 [source,java]
 ----
-import de.cuioss.jwt.validation.wellKnown.WellKnownHandler;
+import de.cuioss.jwt.validation.well_known.WellKnownHandler;
 import de.cuioss.jwt.validation.wellknown.dispatcher.WellKnownDispatcher;
 import de.cuioss.jwt.validation.jwks.http.HttpJwksLoaderConfig; // For example usage
 import org.junit.jupiter.api.*;

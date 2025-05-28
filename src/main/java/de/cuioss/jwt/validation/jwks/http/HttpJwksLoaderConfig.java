@@ -16,7 +16,7 @@
 package de.cuioss.jwt.validation.jwks.http;
 
 import de.cuioss.jwt.validation.security.SecureSSLContextProvider;
-import de.cuioss.jwt.validation.wellKnown.WellKnownHandler;
+import de.cuioss.jwt.validation.well_known.WellKnownHandler;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.Builder;
 import lombok.NonNull;
@@ -184,7 +184,7 @@ public class HttpJwksLoaderConfig {
      */
     public static class HttpJwksLoaderConfigBuilder {
         private String jwksUrl; // Used if jwksUri is not set directly or via WellKnownHandler
-        private URI jwksUri;     // Can be set directly, by jwksUrl(), or by wellKnown()
+        private URI jwksUri;     // Can be set directly, by jwksUrl(), or by well_known()
         private int refreshIntervalSeconds;
         private SSLContext sslContext;
         private SecureSSLContextProvider secureSSLContextProvider;
@@ -291,7 +291,7 @@ public class HttpJwksLoaderConfig {
          * @throws IllegalArgumentException if any parameter is invalid
          */
         public HttpJwksLoaderConfig build() {
-            // If jwksUri is already set (by jwksUri() or wellKnown()), jwksUrl is ignored.
+            // If jwksUri is already set (by jwksUri() or well_known()), jwksUrl is ignored.
             // If jwksUri is null and jwksUrl is set, createJwksUri() will handle it.
             // If both are null, validateJwksSource() will throw.
             validateJwksSource();
@@ -327,13 +327,13 @@ public class HttpJwksLoaderConfig {
          */
         private void validateJwksSource() {
             if (jwksUri == null && jwksUrl == null) {
-                throw new IllegalArgumentException("JWKS URI must be configured. Use jwksUri(), jwksUrl(), or wellKnown().");
+                throw new IllegalArgumentException("JWKS URI must be configured. Use jwksUri(), jwksUrl(), or well_known().");
             }
         }
 
         /**
          * Creates a URI from the JWKS URL string if jwksUri is not already set.
-         * This is called if jwksUrl() was used and jwksUri() or wellKnown() were not.
+         * This is called if jwksUrl() was used and jwksUri() or well_known() were not.
          * 
          * @return true if the URI was created successfully, false if the URL was invalid
          */

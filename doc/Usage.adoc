@@ -107,9 +107,8 @@ The `de.cuioss.jwt.validation.wellKnown.WellKnownHandler` class is responsible f
 
 [source,java]
 ----
-import de.cuioss.jwt.validation.wellKnown.WellKnownHandler;
-import de.cuioss.jwt.validation.wellKnown.WellKnownDiscoveryException;
-import java.net.URL; // For getIssuer example
+import de.cuioss.jwt.validation.well_known.WellKnownHandler;
+import de.cuioss.jwt.validation.well_known.WellKnownDiscoveryException;
 
 // ...
 

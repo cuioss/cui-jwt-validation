@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.cuioss.jwt.validation.wellKnown;
+package de.cuioss.jwt.validation.well_known;
 
 import de.cuioss.jwt.validation.security.SecureSSLContextProvider;
 import de.cuioss.tools.logging.CuiLogger;
@@ -32,6 +32,7 @@ import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -72,7 +73,7 @@ import java.util.Optional;
 @Builder(builderClassName = "WellKnownHandlerBuilder", access = AccessLevel.PRIVATE)
 public final class WellKnownHandler {
 
-    private static final CuiLogger log = new CuiLogger(WellKnownHandler.class);
+    private static final CuiLogger LOGGER = new CuiLogger(WellKnownHandler.class);
 
     private static final String ISSUER_KEY = "issuer";
     private static final String JWKS_URI_KEY = "jwks_uri";
@@ -81,6 +82,7 @@ public final class WellKnownHandler {
     private static final String USERINFO_ENDPOINT_KEY = "userinfo_endpoint";
 
     private static final int TIMEOUT_SECONDS = 5; // 5 seconds
+    public static final String WELL_KNOWN_OPENID_CONFIGURATION = "/.well-known/openid-configuration";
 
     private final Map<String, URL> endpoints;
 
@@ -96,25 +98,6 @@ public final class WellKnownHandler {
         return new WellKnownHandlerBuilder();
     }
 
-    /**
-     * Creates a new {@link WellKnownHandler} by fetching and parsing the
-     * OIDC discovery document from the given .well-known URL string.
-     * <p>
-     * This is a convenience method that delegates to the builder.
-     * </p>
-     *
-     * @param wellKnownUrlString The string representation of the .well-known/openid-configuration URL.
-     *                           Must not be null or empty.
-     * @return A new {@link WellKnownHandler} instance.
-     * @throws WellKnownDiscoveryException If any error occurs during discovery,
-     *                                     parsing, or validation (e.g., network issues,
-     *                                     malformed JSON, invalid issuer).
-     * @deprecated Use {@link #builder()} instead.
-     */
-    @Deprecated
-    public static WellKnownHandler fromWellKnownUrl(String wellKnownUrlString) {
-        return builder().wellKnownUrl(wellKnownUrlString).build();
-    }
 
     /**
      * Builder for creating {@link WellKnownHandler} instances.
@@ -178,6 +161,189 @@ public final class WellKnownHandler {
         }
 
         /**
+         * Parses a JSON response string into a JsonObject.
+         *
+         * @param responseBody The JSON response string to parse
+         * @param wellKnownUrl The well-known URL (used for error messages)
+         * @return The parsed JsonObject
+         * @throws WellKnownDiscoveryException If parsing fails
+         */
+        private JsonObject parseJsonResponse(String responseBody, URL wellKnownUrl) {
+            try (JsonReader jsonReader = Json.createReader(new StringReader(responseBody))) {
+                return jsonReader.readObject();
+            } catch (Exception e) {
+                throw new WellKnownDiscoveryException("Failed to parse JSON from " + wellKnownUrl, e);
+            }
+        }
+
+        /**
+         * Extracts a string value from a JsonObject.
+         *
+         * @param jsonObject The JsonObject to extract from
+         * @param key The key to extract
+         * @return An Optional containing the string value, or empty if not found
+         */
+        private Optional<String> getString(JsonObject jsonObject, String key) {
+            if (jsonObject.containsKey(key) && !jsonObject.isNull(key)) {
+                JsonString jsonString = jsonObject.getJsonString(key);
+                if (jsonString != null) {
+                    return Optional.of(jsonString.getString());
+                }
+            }
+            return Optional.empty();
+        }
+
+        /**
+         * Adds a URL to the map of endpoints.
+         *
+         * @param map The map to add to
+         * @param key The key for the URL
+         * @param urlString The URL string to add
+         * @param wellKnownUrl The well-known URL (used for error messages)
+         * @param isRequired Whether this URL is required
+         */
+        private void addUrlToMap(Map<String, URL> map, String key, String urlString, URL wellKnownUrl, boolean isRequired) {
+            if (urlString == null) {
+                if (isRequired) {
+                    throw new WellKnownDiscoveryException("Required URL field '" + key + "' is missing in discovery document from " + wellKnownUrl);
+                }
+                LOGGER.debug("Optional URL field '{}' is missing in discovery document from {}", key, wellKnownUrl);
+                return;
+            }
+            try {
+                map.put(key, URI.create(urlString).toURL());
+            } catch (MalformedURLException | IllegalArgumentException e) {
+                throw new WellKnownDiscoveryException(
+                        "Malformed URL for field '" + key + "': " + urlString + " from " + wellKnownUrl, e);
+            }
+        }
+
+        /**
+         * Validates that the issuer from the discovery document matches the well-known URL.
+         *
+         * @param issuerFromDocument The issuer from the discovery document
+         * @param wellKnownUrl The well-known URL
+         */
+        private void validateIssuer(String issuerFromDocument, URL wellKnownUrl) {
+            LOGGER.debug("Validating issuer: Document issuer='{}', WellKnown URL='{}'", issuerFromDocument, wellKnownUrl);
+            // The OpenID Connect Discovery 1.0 spec, section 4.3 states:
+            // "The issuer value returned MUST be identical to the Issuer URL that was
+            // used as the prefix to /.well-known/openid-configuration to retrieve the
+            // configuration information."
+            // A simple check is to see if the wellKnownUrl starts with the issuer string,
+            // and that the path component matches.
+            // For example, if issuer is "https://example.com", wellKnownUrl should be "https://example.com/.well-known/openid-configuration"
+            // If issuer is "https://example.com/path", wellKnownUrl should be "https://example.com/path/.well-known/openid-configuration"
+
+            URL issuerAsUrl;
+            try {
+                issuerAsUrl = URI.create(issuerFromDocument).toURL();
+            } catch (MalformedURLException | IllegalArgumentException e) {
+                throw new WellKnownDiscoveryException("Issuer URL from discovery document is malformed: " + issuerFromDocument, e);
+            }
+
+            String expectedWellKnownPath;
+            if (issuerAsUrl.getPath() == null || issuerAsUrl.getPath().isEmpty() || "/".equals(issuerAsUrl.getPath())) {
+                expectedWellKnownPath = WELL_KNOWN_OPENID_CONFIGURATION;
+            } else {
+                String issuerPath = issuerAsUrl.getPath();
+                if (issuerPath.endsWith("/")) {
+                    issuerPath = issuerPath.substring(0, issuerPath.length() - 1);
+                }
+                expectedWellKnownPath = issuerPath + WELL_KNOWN_OPENID_CONFIGURATION;
+            }
+
+
+            boolean schemeMatch = issuerAsUrl.getProtocol().equals(wellKnownUrl.getProtocol());
+            boolean hostMatch = issuerAsUrl.getHost().equalsIgnoreCase(wellKnownUrl.getHost());
+            int issuerPort = issuerAsUrl.getPort() == -1 ? issuerAsUrl.getDefaultPort() : issuerAsUrl.getPort();
+            int wellKnownPort = wellKnownUrl.getPort() == -1 ? wellKnownUrl.getDefaultPort() : wellKnownUrl.getPort();
+            boolean portMatch = issuerPort == wellKnownPort;
+            boolean pathMatch = wellKnownUrl.getPath().equals(expectedWellKnownPath);
+
+
+            if (!(schemeMatch && hostMatch && portMatch && pathMatch)) {
+                String errorMessage = String.format(
+                        "Issuer validation failed. Document issuer '%s' (normalized to base URL for .well-known: %s://%s%s%s) " +
+                                "does not match the .well-known URL '%s'. " +
+                                "Expected path for .well-known: '%s'. " +
+                                "SchemeMatch=%b, HostMatch=%b, PortMatch=%b (IssuerPort=%d, WellKnownPort=%d), PathMatch=%b (WellKnownPath='%s')",
+                        issuerFromDocument, issuerAsUrl.getProtocol(), issuerAsUrl.getHost(),
+                        (issuerAsUrl.getPort() != -1 ? ":" + issuerAsUrl.getPort() : ""),
+                        (issuerAsUrl.getPath() == null ? "" : issuerAsUrl.getPath()),
+                        wellKnownUrl.toString(),
+                        expectedWellKnownPath,
+                        schemeMatch, hostMatch, portMatch, issuerPort, wellKnownPort, pathMatch, wellKnownUrl.getPath());
+                LOGGER.error(errorMessage);
+                throw new WellKnownDiscoveryException(errorMessage);
+            }
+            LOGGER.debug("Issuer validation successful for {}", issuerFromDocument);
+        }
+
+        /**
+         * Checks if a URL is accessible.
+         *
+         * @param url The URL to check
+         * @param keyName The name of the key (for logging)
+         * @param sslContext The SSL context to use
+         */
+        private void checkAccessibility(URL url, String keyName, SSLContext sslContext) {
+            if (url == null) {
+                return;
+            }
+            try {
+                LOGGER.debug("Performing accessibility check for {} URL: {}", keyName, url);
+
+                HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
+                        .connectTimeout(Duration.ofSeconds(TIMEOUT_SECONDS));
+
+                // Use the provided SSL context if available
+                if (sslContext != null) {
+                    httpClientBuilder.sslContext(sslContext);
+                }
+
+                HttpClient httpClient = httpClientBuilder.build();
+
+                HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+                        .uri(url.toURI())
+                        .timeout(Duration.ofSeconds(TIMEOUT_SECONDS));
+
+                // Use GET instead of HEAD if the system property is set (for testing)
+                if (USE_GET_FOR_ACCESSIBILITY_CHECK) {
+                    requestBuilder.GET();
+                    LOGGER.debug("Using GET method for accessibility check (test mode)");
+                } else {
+                    requestBuilder.method("HEAD", HttpRequest.BodyPublishers.noBody());
+                    LOGGER.debug("Using HEAD method for accessibility check");
+                }
+
+                HttpRequest request = requestBuilder.build();
+
+                HttpResponse<Void> response = httpClient.send(request, HttpResponse.BodyHandlers.discarding());
+
+                int responseCode = response.statusCode();
+                if (responseCode < 200 || responseCode >= 400) { // Check for non-successful responses
+                    LOGGER.warn("Accessibility check for {} URL '{}' returned HTTP status {}. It might be inaccessible.",
+                            keyName, url, responseCode);
+                } else {
+                    LOGGER.debug("Accessibility check for {} URL '{}' successful (HTTP {}).", keyName, url, responseCode);
+                }
+            } catch (IOException e) {
+                LOGGER.warn("Accessibility check for {} URL '{}' failed with IOException: {}. It might be inaccessible.",
+                        keyName, url, e.getMessage(), e);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                LOGGER.warn("Accessibility check for {} URL '{}' was interrupted: {}. It might be inaccessible.",
+                        keyName, url, e.getMessage(), e);
+            } catch (Exception e) {
+                LOGGER.warn("Accessibility check for {} URL '{}' failed with exception: {}. It might be inaccessible.",
+                        keyName, url, e.getMessage(), e);
+            }
+        }
+
+        private static final boolean USE_GET_FOR_ACCESSIBILITY_CHECK = Boolean.getBoolean("de.cuioss.jwt.validation.useGetForAccessibilityCheck");
+
+        /**
          * Builds a new {@link WellKnownHandler} instance with the configured parameters.
          *
          * @return A new {@link WellKnownHandler} instance.
@@ -193,13 +359,13 @@ public final class WellKnownHandler {
                 }
 
                 try {
-                    wellKnownUrl = new URL(wellKnownUrlString);
-                } catch (MalformedURLException e) {
+                    wellKnownUrl = URI.create(wellKnownUrlString).toURL();
+                } catch (MalformedURLException | IllegalArgumentException e) {
                     throw new WellKnownDiscoveryException("Invalid .well-known URL: " + wellKnownUrlString, e);
                 }
             }
 
-            log.debug("Fetching OpenID Connect discovery document from: {}", wellKnownUrl);
+            LOGGER.debug("Fetching OpenID Connect discovery document from: {}", wellKnownUrl);
 
             JsonObject discoveryDocument;
             SSLContext secureContext = null;
@@ -231,11 +397,7 @@ public final class WellKnownHandler {
                 }
 
                 String responseBody = response.body();
-                try (JsonReader jsonReader = Json.createReader(new StringReader(responseBody))) {
-                    discoveryDocument = jsonReader.readObject();
-                } catch (Exception e) {
-                    throw new WellKnownDiscoveryException("Failed to parse JSON from " + wellKnownUrl, e);
-                }
+                discoveryDocument = parseJsonResponse(responseBody, wellKnownUrl);
 
             } catch (IOException e) {
                 throw new WellKnownDiscoveryException("IOException while fetching or reading from " + wellKnownUrl, e);
@@ -246,7 +408,7 @@ public final class WellKnownHandler {
                 throw new WellKnownDiscoveryException("Error while fetching from " + wellKnownUrl, e);
             }
 
-            log.trace("Successfully fetched discovery document: {}", discoveryDocument);
+            LOGGER.trace("Successfully fetched discovery document: {}", discoveryDocument);
 
             Map<String, URL> parsedEndpoints = new HashMap<>();
 
@@ -269,150 +431,6 @@ public final class WellKnownHandler {
 
             return new WellKnownHandler(parsedEndpoints, wellKnownUrl);
         }
-    }
-
-    private static Optional<String> getString(JsonObject jsonObject, String key) {
-        if (jsonObject.containsKey(key) && !jsonObject.isNull(key)) {
-            JsonString jsonString = jsonObject.getJsonString(key);
-            if (jsonString != null) {
-                return Optional.of(jsonString.getString());
-            }
-        }
-        return Optional.empty();
-    }
-
-    private static void addUrlToMap(Map<String, URL> map, String key, String urlString, URL wellKnownUrl, boolean isRequired) {
-        if (urlString == null) {
-            if (isRequired) {
-                throw new WellKnownDiscoveryException("Required URL field '" + key + "' is missing in discovery document from " + wellKnownUrl);
-            }
-            log.debug("Optional URL field '{}' is missing in discovery document from {}", key, wellKnownUrl);
-            return;
-        }
-        try {
-            map.put(key, new URL(urlString));
-        } catch (MalformedURLException e) {
-            throw new WellKnownDiscoveryException(
-                    "Malformed URL for field '" + key + "': " + urlString + " from " + wellKnownUrl, e);
-        }
-    }
-
-    private static void validateIssuer(String issuerFromDocument, URL wellKnownUrl) {
-        log.debug("Validating issuer: Document issuer='{}', WellKnown URL='{}'", issuerFromDocument, wellKnownUrl);
-        // The OpenID Connect Discovery 1.0 spec, section 4.3 states:
-        // "The issuer value returned MUST be identical to the Issuer URL that was
-        // used as the prefix to /.well-known/openid-configuration to retrieve the
-        // configuration information."
-        // A simple check is to see if the wellKnownUrl starts with the issuer string,
-        // and that the path component matches.
-        // For example, if issuer is "https://example.com", wellKnownUrl should be "https://example.com/.well-known/openid-configuration"
-        // If issuer is "https://example.com/path", wellKnownUrl should be "https://example.com/path/.well-known/openid-configuration"
-
-        URL issuerAsUrl;
-        try {
-            issuerAsUrl = new URL(issuerFromDocument);
-        } catch (MalformedURLException e) {
-            throw new WellKnownDiscoveryException("Issuer URL from discovery document is malformed: " + issuerFromDocument, e);
-        }
-
-        String expectedWellKnownPath;
-        if (issuerAsUrl.getPath() == null || issuerAsUrl.getPath().isEmpty() || "/".equals(issuerAsUrl.getPath())) {
-            expectedWellKnownPath = "/.well-known/openid-configuration";
-        } else {
-            String issuerPath = issuerAsUrl.getPath();
-            if (issuerPath.endsWith("/")) {
-                issuerPath = issuerPath.substring(0, issuerPath.length() - 1);
-            }
-            expectedWellKnownPath = issuerPath + "/.well-known/openid-configuration";
-        }
-
-
-        boolean schemeMatch = issuerAsUrl.getProtocol().equals(wellKnownUrl.getProtocol());
-        boolean hostMatch = issuerAsUrl.getHost().equalsIgnoreCase(wellKnownUrl.getHost());
-        int issuerPort = issuerAsUrl.getPort() == -1 ? issuerAsUrl.getDefaultPort() : issuerAsUrl.getPort();
-        int wellKnownPort = wellKnownUrl.getPort() == -1 ? wellKnownUrl.getDefaultPort() : wellKnownUrl.getPort();
-        boolean portMatch = issuerPort == wellKnownPort;
-        boolean pathMatch = wellKnownUrl.getPath().equals(expectedWellKnownPath);
-
-
-        if (!(schemeMatch && hostMatch && portMatch && pathMatch)) {
-            String errorMessage = String.format(
-                    "Issuer validation failed. Document issuer '%s' (normalized to base URL for .well-known: %s://%s%s%s) " +
-                            "does not match the .well-known URL '%s'. " +
-                            "Expected path for .well-known: '%s'. " +
-                            "SchemeMatch=%b, HostMatch=%b, PortMatch=%b (IssuerPort=%d, WellKnownPort=%d), PathMatch=%b (WellKnownPath='%s')",
-                    issuerFromDocument, issuerAsUrl.getProtocol(), issuerAsUrl.getHost(),
-                    (issuerAsUrl.getPort() != -1 ? ":" + issuerAsUrl.getPort() : ""),
-                    (issuerAsUrl.getPath() == null ? "" : issuerAsUrl.getPath()),
-                    wellKnownUrl.toString(),
-                    expectedWellKnownPath,
-                    schemeMatch, hostMatch, portMatch, issuerPort, wellKnownPort, pathMatch, wellKnownUrl.getPath());
-            log.error(errorMessage);
-            throw new WellKnownDiscoveryException(errorMessage);
-        }
-        log.debug("Issuer validation successful for {}", issuerFromDocument);
-    }
-
-
-    private static final boolean USE_GET_FOR_ACCESSIBILITY_CHECK = Boolean.getBoolean("de.cuioss.jwt.validation.useGetForAccessibilityCheck");
-
-    private static void checkAccessibility(URL url, String keyName, SSLContext sslContext) {
-        if (url == null) {
-            return;
-        }
-        try {
-            log.debug("Performing accessibility check for {} URL: {}", keyName, url);
-
-            HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
-                    .connectTimeout(Duration.ofSeconds(TIMEOUT_SECONDS));
-
-            // Use the provided SSL context if available
-            if (sslContext != null) {
-                httpClientBuilder.sslContext(sslContext);
-            }
-
-            HttpClient httpClient = httpClientBuilder.build();
-
-            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-                    .uri(url.toURI())
-                    .timeout(Duration.ofSeconds(TIMEOUT_SECONDS));
-
-            // Use GET instead of HEAD if the system property is set (for testing)
-            if (USE_GET_FOR_ACCESSIBILITY_CHECK) {
-                requestBuilder.GET();
-                log.debug("Using GET method for accessibility check (test mode)");
-            } else {
-                requestBuilder.method("HEAD", HttpRequest.BodyPublishers.noBody());
-                log.debug("Using HEAD method for accessibility check");
-            }
-
-            HttpRequest request = requestBuilder.build();
-
-            HttpResponse<Void> response = httpClient.send(request, HttpResponse.BodyHandlers.discarding());
-
-            int responseCode = response.statusCode();
-            if (responseCode < 200 || responseCode >= 400) { // Check for non-successful responses
-                log.warn("Accessibility check for {} URL '{}' returned HTTP status {}. It might be inaccessible.",
-                        keyName, url, responseCode);
-            } else {
-                log.debug("Accessibility check for {} URL '{}' successful (HTTP {}).", keyName, url, responseCode);
-            }
-        } catch (IOException e) {
-            log.warn("Accessibility check for {} URL '{}' failed with IOException: {}. It might be inaccessible.",
-                    keyName, url, e.getMessage(), e);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.warn("Accessibility check for {} URL '{}' was interrupted: {}. It might be inaccessible.",
-                    keyName, url, e.getMessage(), e);
-        } catch (Exception e) {
-            log.warn("Accessibility check for {} URL '{}' failed with exception: {}. It might be inaccessible.",
-                    keyName, url, e.getMessage(), e);
-        }
-    }
-
-    // Overload for backward compatibility
-    private static void checkAccessibility(URL url, String keyName) {
-        checkAccessibility(url, keyName, null);
     }
 
     /**
