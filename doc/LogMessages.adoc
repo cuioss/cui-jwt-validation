@@ -85,6 +85,8 @@ For more details about security events related to these log messages, see the Se
 |JWTValidation-145 |WELLKNOWN |Accessibility check for %s URL '%s' failed with IOException: %s. It might be inaccessible. |Logged when an accessibility check for a URL fails with an IOException
 |JWTValidation-146 |WELLKNOWN |Accessibility check for %s URL '%s' was interrupted: %s. It might be inaccessible. |Logged when an accessibility check for a URL is interrupted
 |JWTValidation-147 |WELLKNOWN |Accessibility check for %s URL '%s' failed with exception: %s. It might be inaccessible. |Logged when an accessibility check for a URL fails with an exception
+|JWTValidation-148 |JWKS |Creating HttpJwksLoaderConfig with invalid JWKS URI. The loader will return empty results. |Logged when an invalid JWKS URI is provided to HttpJwksLoaderConfig
+|JWTValidation-149 |JWKS |Invalid JWKS URL string provided: %s. The loader will be created but will return empty results. |Logged when an invalid JWKS URL string is provided to HttpJwksLoaderConfig
 |===
 
 == ERROR Level (200-299)

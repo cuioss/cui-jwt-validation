@@ -71,6 +71,24 @@ public final class JWTValidationLogMessages {
                 .template("No SSL context provided, created secure SSL context with %s")
                 .build();
 
+        public static final LogRecord JWKS_URL_MISSING_SCHEME = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(523)
+                .template("JWKS URL '%s' seems to be missing a scheme, prepending 'https://'")
+                .build();
+
+        public static final LogRecord JWKS_URI_CREATED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(524)
+                .template("Created JWKS URI '%s' from URL string '%s'")
+                .build();
+
+        public static final LogRecord JWKS_FALLBACK_URI_CREATED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(525)
+                .template("Created fallback JWKS URI '%s' for invalid URL string '%s'")
+                .build();
+
         public static final LogRecord INITIALIZED_JWKS_LOADER = LogRecordModel.builder()
                 .prefix(PREFIX)
                 .identifier(504)
@@ -471,6 +489,18 @@ public final class JWTValidationLogMessages {
                 .prefix(PREFIX)
                 .identifier(143)
                 .template("Key rotation detected: JWKS content has changed")
+                .build();
+
+        public static final LogRecord INVALID_JWKS_URI = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(148)
+                .template("Creating HttpJwksLoaderConfig with invalid JWKS URI. The loader will return empty results.")
+                .build();
+
+        public static final LogRecord INVALID_JWKS_URL_STRING = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(149)
+                .template("Invalid JWKS URL string provided: %s. The loader will be created but will return empty results.")
                 .build();
     }
 
