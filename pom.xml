@@ -6,7 +6,7 @@
     <parent>
         <groupId>de.cuioss</groupId>
         <artifactId>cui-java-parent</artifactId>
-        <version>1.0.1</version>
+        <version>1.0.2</version>
         <relativePath/>
     </parent>
     <artifactId>cui-jwt-validation</artifactId>
@@ -161,6 +161,12 @@
             <groupId>de.cuioss.test</groupId>
             <artifactId>cui-test-keycloak-integration</artifactId>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>junit</groupId>
+                    <artifactId>junit</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!-- Simple implementation that is actually a bridge to juli logging. Used for test-containers slf4j -->
         <dependency>

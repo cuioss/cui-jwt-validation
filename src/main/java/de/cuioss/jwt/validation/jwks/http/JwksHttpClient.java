@@ -153,6 +153,12 @@ public class JwksHttpClient {
      * @return the response containing JWKS content or not modified indication
      */
     public JwksHttpResponse fetchJwksContent(String previousEtag) {
+        // Check if the URI is null (invalid URL)
+        if (config.getJwksUri() == null) {
+            LOGGER.warn("Cannot fetch JWKS: URI is null (invalid URL)");
+            return JwksHttpResponse.empty();
+        }
+
         String uriString = config.getJwksUri().toString();
         LOGGER.debug(DEBUG.RESOLVING_KEY_LOADER.format(uriString));
 
@@ -190,11 +196,13 @@ public class JwksHttpClient {
             String jwksContent = response.body();
             String etag = response.headers().firstValue("ETag").orElse(null);
 
-            LOGGER.debug(DEBUG.FETCHED_JWKS.format(config.getJwksUri().toString()));
+            String uri = config.getJwksUri() != null ? config.getJwksUri().toString() : "null";
+            LOGGER.debug(DEBUG.FETCHED_JWKS.format(uri));
             return JwksHttpResponse.withContent(jwksContent, etag);
 
         } catch (IOException | InterruptedException e) {
-            LOGGER.warn(e, WARN.FAILED_TO_FETCH_JWKS.format(config.getJwksUri().toString()));
+            String uri = config.getJwksUri() != null ? config.getJwksUri().toString() : "null";
+            LOGGER.warn(e, WARN.FAILED_TO_FETCH_JWKS.format(uri));
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             }

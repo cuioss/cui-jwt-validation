@@ -23,6 +23,7 @@ This document provides the technical specification for the JWT Token Validation 
 This specification is organized into the following documents:
 
 * link:specification/technical-components.adoc[Technical Components] - Core implementation details for token parsing, validation, and management
+* link:specification/well-known.adoc[OIDC Discovery Support] - How the library supports OpenID Connect Discovery for fetching provider metadata.
 * link:specification/security.adoc[Security] - Security measures and implementation details
 * link:specification/token-decryption.adoc[Token Decryption] - Specifications for token decryption support (JWE)
 * link:specification/testing.adoc[Testing] - Unit, integration, and security testing approach
@@ -80,6 +81,14 @@ Handles the retrieval, caching, and rotation of cryptographic keys used for toke
 _See Requirement CUI-JWT-4.1: JWKS Endpoint Support in link:Requirements.adoc[Requirements]_
 
 Responsible for creating instances of `JwksLoader` that fetch and parse JSON Web Key Sets (JWKS) from remote endpoints.
+
+==== OIDC Discovery Support Components
+_See link:specification/well-known.adoc[OIDC Discovery Support Specification]_
+
+Components that facilitate the discovery of OpenID Provider (OP) configuration metadata, including the JWKS URI.
+
+*   `WellKnownHandler`: Fetches and parses the OIDC discovery document from a provider's `/.well-known/openid-configuration` endpoint. It validates the issuer and provides access to discovered metadata like the `jwks_uri` and `issuer` URL.
+*   `WellKnownDispatcher` (Test Utility): A test utility using WireMock to simulate an OIDC provider's discovery endpoint, allowing for isolated testing of `WellKnownHandler` and dependent components.
 
 ==== Token Content Classes
 _See Requirement CUI-JWT-1.2: Token Types in link:Requirements.adoc[Requirements]_

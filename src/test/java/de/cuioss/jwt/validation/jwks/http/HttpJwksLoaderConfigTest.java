@@ -98,7 +98,7 @@ class HttpJwksLoaderConfigTest {
                 .build();
 
         // Then
-        assertEquals(URI.create("http://" + urlWithoutScheme), config.getJwksUri());
+        assertEquals(URI.create("https://" + urlWithoutScheme), config.getJwksUri());
     }
 
     @Test
@@ -114,7 +114,7 @@ class HttpJwksLoaderConfigTest {
                 .build();
 
         // Then
-        assertEquals(URI.create("http://invalid-url"), config.getJwksUri());
+        assertNull(config.getJwksUri());
     }
 
     @Test

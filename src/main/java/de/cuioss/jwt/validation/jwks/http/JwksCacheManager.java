@@ -128,10 +128,14 @@ class JwksCacheManager {
     /**
      * Gets the cache key for the JWKS URI.
      * The key is based on the JWKS URI to support multiple issuers.
+     * If the JWKS URI is null (invalid URL), a special key is returned.
      *
      * @return the cache key
      */
     String getCacheKey() {
+        if (config.getJwksUri() == null) {
+            return CACHE_KEY_PREFIX + "invalid-url";
+        }
         return CACHE_KEY_PREFIX + config.getJwksUri();
     }
 
@@ -164,6 +168,15 @@ class JwksCacheManager {
     // owolff: Regarding the LoadingCache API, The API claims that the method may return null,
     // therefore the null check is not redundant
     JWKSKeyLoader resolve() {
+        // Check if jwksUri is null (invalid URL)
+        if (config.getJwksUri() == null) {
+            LOGGER.warn("Cannot resolve JWKSKeyLoader: JWKS URI is null (invalid URL)");
+            return JWKSKeyLoader.builder()
+                    .originalString(EMPTY_JWKS)
+                    .securityEventCounter(securityEventCounter)
+                    .build();
+        }
+
         LOGGER.debug(DEBUG.RESOLVING_KEY_LOADER.format(config.getJwksUri().toString()));
 
         try {
@@ -173,7 +186,7 @@ class JwksCacheManager {
             }
 
             // Track access for adaptive caching
-            accessCount.incrementAndGet();
+            int currentAccessCount = accessCount.incrementAndGet();
 
             // Get the current JWKSKeyLoader from cache, which will trigger a refresh if needed
             JWKSKeyLoader result = jwksCache.get(getCacheKey());
@@ -181,6 +194,14 @@ class JwksCacheManager {
             // Track hit for adaptive caching if we got a valid result
             if (result != null && result.isNotEmpty()) {
                 hitCount.incrementAndGet();
+            }
+
+            // Reset counters after adaptive window size is reached
+            // This is also done in expireAfterRead, but we need to do it here as well
+            // to ensure the counters are reset immediately after reaching the adaptive window size
+            if (currentAccessCount >= config.getAdaptiveWindowSize()) {
+                accessCount.set(0);
+                hitCount.set(0);
             }
 
             return result;
