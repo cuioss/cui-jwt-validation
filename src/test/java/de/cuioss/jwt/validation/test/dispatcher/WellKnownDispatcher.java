@@ -291,7 +291,28 @@ public class WellKnownDispatcher implements ModuleDispatcherElement {
 
     @Override
     public @NonNull Set<HttpMethodMapper> supportedMethods() {
-        return Set.of(HttpMethodMapper.GET);
+        return Set.of(HttpMethodMapper.GET, HttpMethodMapper.HEAD);
+    }
+
+    /**
+     * Handles HEAD requests to the well-known endpoint.
+     * Returns the same headers as GET but with no body.
+     *
+     * @param request the HTTP request
+     * @return the HTTP response
+     */
+    @Override
+    public Optional<MockResponse> handleHead(@NonNull RecordedRequest request) {
+        callCounter++;
+
+        // For HEAD requests, we return the same headers as GET but with no body
+        return switch (responseStrategy) {
+            case ERROR -> Optional.of(new MockResponse(SC_INTERNAL_SERVER_ERROR, Headers.of(), ""));
+            default -> Optional.of(new MockResponse(
+                    SC_OK,
+                    Headers.of("Content-Type", "application/json"),
+                    ""));
+        };
     }
 
     /**

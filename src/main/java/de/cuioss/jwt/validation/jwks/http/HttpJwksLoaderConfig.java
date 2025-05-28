@@ -248,10 +248,7 @@ public class HttpJwksLoaderConfig {
          *                                  contain a {@code jwks_uri}.
          */
         public HttpJwksLoaderConfigBuilder wellKnown(@NonNull WellKnownHandler wellKnownHandler) {
-            URL extractedJwksUrl = wellKnownHandler.getJwksUri()
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            "WellKnownHandler (issuer: " + wellKnownHandler.getIssuer().map(URL::toString).orElse("N/A")
-                                    + ") must provide a jwks_uri."));
+            URL extractedJwksUrl = wellKnownHandler.getJwksUri();
             try {
                 this.jwksUri = extractedJwksUrl.toURI();
                 this.jwksUrl = null; // Clear jwksUrl to ensure this URI takes precedence

@@ -223,9 +223,9 @@ public class TokenKeycloakITTest extends KeycloakITBase {
                     .wellKnownUrl(wellKnownUrlString)
                     .sslContext(keycloakSslContext)
                     .build();
-            assertTrue(wellKnownHandler.getJwksUri().isPresent(), "JWKS URI should be present in well-known config");
-            assertTrue(wellKnownHandler.getIssuer().isPresent(), "Issuer should be present in well-known config");
-            URL keycloakIssuerUrl = wellKnownHandler.getIssuer().get();
+            assertNotNull(wellKnownHandler.getJwksUri(), "JWKS URI should be present in well-known config");
+            assertNotNull(wellKnownHandler.getIssuer(), "Issuer should be present in well-known config");
+            URL keycloakIssuerUrl = wellKnownHandler.getIssuer();
 
             // 3. Configure HttpJwksLoaderConfig using WellKnownHandler
             HttpJwksLoaderConfig jwksConfig = HttpJwksLoaderConfig.builder()
@@ -273,7 +273,7 @@ public class TokenKeycloakITTest extends KeycloakITBase {
                     .wellKnownUrl(wellKnownUrlString)
                     .sslContext(keycloakSslContext)
                     .build();
-            assertTrue(wellKnownHandler.getIssuer().isPresent(), "Issuer should be present in well-known config");
+            assertNotNull(wellKnownHandler.getIssuer(), "Issuer should be present in well-known config");
 
             HttpJwksLoaderConfig jwksConfig = HttpJwksLoaderConfig.builder()
                     .wellKnown(wellKnownHandler)

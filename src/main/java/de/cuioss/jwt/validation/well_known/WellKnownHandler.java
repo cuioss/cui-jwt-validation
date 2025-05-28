@@ -325,14 +325,9 @@ public final class WellKnownHandler {
                         .uri(url.toURI())
                         .timeout(Duration.ofSeconds(TIMEOUT_SECONDS));
 
-                // Use GET instead of HEAD if the system property is set (for testing)
-                if (USE_GET_FOR_ACCESSIBILITY_CHECK) {
-                    requestBuilder.GET();
-                    LOGGER.debug("Using GET method for accessibility check (test mode)");
-                } else {
-                    requestBuilder.method("HEAD", HttpRequest.BodyPublishers.noBody());
-                    LOGGER.debug("Using HEAD method for accessibility check");
-                }
+                // Use HEAD for accessibility checks
+                requestBuilder.method("HEAD", HttpRequest.BodyPublishers.noBody());
+                LOGGER.debug("Using HEAD method for accessibility check");
 
                 HttpRequest request = requestBuilder.build();
 
@@ -358,7 +353,6 @@ public final class WellKnownHandler {
             }
         }
 
-        private static final boolean USE_GET_FOR_ACCESSIBILITY_CHECK = Boolean.getBoolean("de.cuioss.jwt.validation.useGetForAccessibilityCheck");
 
         /**
          * Builds a new {@link WellKnownHandler} instance with the configured parameters.
@@ -438,9 +432,10 @@ public final class WellKnownHandler {
             // JWKS URI (Required)
             addUrlToMap(parsedEndpoints, JWKS_URI_KEY, getString(discoveryDocument, JWKS_URI_KEY).orElse(null), wellKnownUrl, true);
 
+            // Required endpoints
+            addUrlToMap(parsedEndpoints, AUTHORIZATION_ENDPOINT_KEY, getString(discoveryDocument, AUTHORIZATION_ENDPOINT_KEY).orElse(null), wellKnownUrl, true);
+            addUrlToMap(parsedEndpoints, TOKEN_ENDPOINT_KEY, getString(discoveryDocument, TOKEN_ENDPOINT_KEY).orElse(null), wellKnownUrl, true);
             // Optional endpoints
-            addUrlToMap(parsedEndpoints, AUTHORIZATION_ENDPOINT_KEY, getString(discoveryDocument, AUTHORIZATION_ENDPOINT_KEY).orElse(null), wellKnownUrl, false);
-            addUrlToMap(parsedEndpoints, TOKEN_ENDPOINT_KEY, getString(discoveryDocument, TOKEN_ENDPOINT_KEY).orElse(null), wellKnownUrl, false);
             addUrlToMap(parsedEndpoints, USERINFO_ENDPOINT_KEY, getString(discoveryDocument, USERINFO_ENDPOINT_KEY).orElse(null), wellKnownUrl, false);
 
             // Accessibility check for jwks_uri (optional but recommended)
@@ -451,24 +446,24 @@ public final class WellKnownHandler {
     }
 
     /**
-     * @return An {@link Optional} containing the JWKS URI, or empty if not present.
+     * @return The JWKS URI.
      */
-    public Optional<URL> getJwksUri() {
-        return Optional.ofNullable(endpoints.get(JWKS_URI_KEY));
+    public URL getJwksUri() {
+        return endpoints.get(JWKS_URI_KEY);
     }
 
     /**
-     * @return An {@link Optional} containing the Authorization Endpoint URI, or empty if not present.
+     * @return The Authorization Endpoint URI.
      */
-    public Optional<URL> getAuthorizationEndpoint() {
-        return Optional.ofNullable(endpoints.get(AUTHORIZATION_ENDPOINT_KEY));
+    public URL getAuthorizationEndpoint() {
+        return endpoints.get(AUTHORIZATION_ENDPOINT_KEY);
     }
 
     /**
-     * @return An {@link Optional} containing the Token Endpoint URI, or empty if not present.
+     * @return The Token Endpoint URI.
      */
-    public Optional<URL> getTokenEndpoint() {
-        return Optional.ofNullable(endpoints.get(TOKEN_ENDPOINT_KEY));
+    public URL getTokenEndpoint() {
+        return endpoints.get(TOKEN_ENDPOINT_KEY);
     }
 
     /**
@@ -479,9 +474,9 @@ public final class WellKnownHandler {
     }
 
     /**
-     * @return An {@link Optional} containing the Issuer URI, or empty if not present (should always be present).
+     * @return The Issuer URI.
      */
-    public Optional<URL> getIssuer() {
-        return Optional.ofNullable(endpoints.get(ISSUER_KEY));
+    public URL getIssuer() {
+        return endpoints.get(ISSUER_KEY);
     }
 }

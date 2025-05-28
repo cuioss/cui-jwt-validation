@@ -24,9 +24,13 @@ import de.cuioss.test.mockwebserver.URIBuilder;
 import de.cuioss.test.mockwebserver.dispatcher.ModuleDispatcher;
 import de.cuioss.test.mockwebserver.dispatcher.ModuleDispatcherElement;
 import lombok.Getter;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -50,11 +54,6 @@ class WellKnownHandlerTest {
 
     private URL baseUrl;
 
-    @BeforeAll
-    static void setUpBeforeAll() {
-        // Set system property to use GET instead of HEAD for accessibility checks
-        System.setProperty("de.cuioss.jwt.validation.useGetForAccessibilityCheck", "true");
-    }
 
     /**
      * Returns the WellKnownDispatcher for the ModuleDispatcher annotation.
@@ -69,7 +68,7 @@ class WellKnownHandlerTest {
     @BeforeEach
     void setUp(URIBuilder uriBuilder) throws MalformedURLException {
         // Get the base URL from the mock server
-        baseUrl = new URL(uriBuilder.buildAsString());
+        baseUrl = URI.create(uriBuilder.buildAsString()).toURL();
 
         // Reset the dispatcher to its default state
         wellKnownDispatcher.returnDefault();
@@ -97,9 +96,9 @@ class WellKnownHandlerTest {
         @DisplayName("Should successfully fetch and parse discovery document")
         void shouldFetchAndParseDiscoveryDocument(URIBuilder uriBuilder) throws MalformedURLException {
             // Given
-            URL wellKnownUrl = new URL(uriBuilder
+            URL wellKnownUrl = URI.create(uriBuilder
                     .addPathSegment("/.well-known/openid-configuration")
-                    .buildAsString());
+                    .buildAsString()).toURL();
 
             // When
             WellKnownHandler handler = WellKnownHandler.builder()
@@ -111,24 +110,20 @@ class WellKnownHandlerTest {
             assertEquals(wellKnownUrl, handler.getWellKnownUrl(), "Well-known URL should match");
 
             // Verify endpoints
-            assertTrue(handler.getJwksUri().isPresent(), "JWKS URI should be present");
             assertEquals(baseUrl.toString() + "/oidc/jwks.json",
-                    handler.getJwksUri().get().toString(),
+                    handler.getJwksUri().toString(),
                     "JWKS URI should match");
 
-            assertTrue(handler.getIssuer().isPresent(), "Issuer should be present");
             assertEquals(baseUrl.toString(),
-                    handler.getIssuer().get().toString(),
+                    handler.getIssuer().toString(),
                     "Issuer should match");
 
-            assertTrue(handler.getAuthorizationEndpoint().isPresent(), "Authorization endpoint should be present");
             assertEquals(baseUrl.toString() + "/protocol/openid-connect/auth",
-                    handler.getAuthorizationEndpoint().get().toString(),
+                    handler.getAuthorizationEndpoint().toString(),
                     "Authorization endpoint should match");
 
-            assertTrue(handler.getTokenEndpoint().isPresent(), "Token endpoint should be present");
             assertEquals(baseUrl.toString() + "/protocol/openid-connect/token",
-                    handler.getTokenEndpoint().get().toString(),
+                    handler.getTokenEndpoint().toString(),
                     "Token endpoint should match");
 
             assertTrue(handler.getUserinfoEndpoint().isPresent(), "Userinfo endpoint should be present");
@@ -162,27 +157,27 @@ class WellKnownHandlerTest {
         @DisplayName("Should throw exception for null or empty URL")
         void shouldThrowExceptionForNullOrEmptyUrl() {
             // Test with null URL
+            var builder = WellKnownHandler.builder().wellKnownUrl((String) null);
             WellKnownDiscoveryException nullException = assertThrows(
-                    WellKnownDiscoveryException.class,
-                    () -> WellKnownHandler.builder().wellKnownUrl((String) null).build(),
+                    WellKnownDiscoveryException.class, builder::build,
                     "Should throw exception for null URL"
             );
             assertTrue(nullException.getMessage().contains("Well-known URL string must not be null or empty"),
                     "Exception message should mention that URL must not be null or empty");
 
             // Test with empty URL
+            builder = WellKnownHandler.builder().wellKnownUrl("");
             WellKnownDiscoveryException emptyException = assertThrows(
-                    WellKnownDiscoveryException.class,
-                    () -> WellKnownHandler.builder().wellKnownUrl("").build(),
+                    WellKnownDiscoveryException.class, builder::build,
                     "Should throw exception for empty URL"
             );
             assertTrue(emptyException.getMessage().contains("Well-known URL string must not be null or empty"),
                     "Exception message should mention that URL must not be null or empty");
 
             // Test with blank URL
+            builder = WellKnownHandler.builder().wellKnownUrl("   ");
             WellKnownDiscoveryException blankException = assertThrows(
-                    WellKnownDiscoveryException.class,
-                    () -> WellKnownHandler.builder().wellKnownUrl("   ").build(),
+                    WellKnownDiscoveryException.class, builder::build,
                     "Should throw exception for blank URL"
             );
             assertTrue(blankException.getMessage().contains("Well-known URL string must not be null or empty"),
@@ -192,9 +187,9 @@ class WellKnownHandlerTest {
         @Test
         @DisplayName("Should throw exception for malformed URL")
         void shouldThrowExceptionForMalformedUrl() {
+            var builder = WellKnownHandler.builder().wellKnownUrl("not-a-url");
             WellKnownDiscoveryException exception = assertThrows(
-                    WellKnownDiscoveryException.class,
-                    () -> WellKnownHandler.builder().wellKnownUrl("not-a-url").build(),
+                    WellKnownDiscoveryException.class, builder::build,
                     "Should throw exception for malformed URL"
             );
             assertTrue(exception.getMessage().contains("Invalid .well-known URL"),
@@ -206,21 +201,21 @@ class WellKnownHandlerTest {
         void shouldThrowExceptionWhenServerReturnsError(URIBuilder uriBuilder) throws MalformedURLException {
             // Given
             wellKnownDispatcher.returnError();
-            URL wellKnownUrl = new URL(uriBuilder
+            URL wellKnownUrl = URI.create(uriBuilder
                     .addPathSegment("/.well-known/openid-configuration")
-                    .buildAsString());
+                    .buildAsString()).toURL();
 
-            // When/Then
-            WellKnownDiscoveryException exception = assertThrows(
-                    WellKnownDiscoveryException.class,
-                    () -> WellKnownHandler.builder().wellKnownUrl(wellKnownUrl).build(),
+            var builder = WellKnownHandler.builder().wellKnownUrl(wellKnownUrl);
+
+
+            // When/Then - Verify that the expected exception is thrown
+            assertThrows(
+                    WellKnownDiscoveryException.class, builder::build,
                     "Should throw exception when server returns error"
             );
+            wellKnownDispatcher.assertCallsAnswered(1);
             // The actual error message might vary depending on the HTTP client
             // Just verify that an exception is thrown
-
-            // Verify the dispatcher was called
-            wellKnownDispatcher.assertCallsAnswered(1);
         }
 
         @Test
@@ -228,21 +223,22 @@ class WellKnownHandlerTest {
         void shouldThrowExceptionForInvalidJsonResponse(URIBuilder uriBuilder) throws MalformedURLException {
             // Given
             wellKnownDispatcher.returnInvalidJson();
-            URL wellKnownUrl = new URL(uriBuilder
+            URL wellKnownUrl = URI.create(uriBuilder
                     .addPathSegment("/.well-known/openid-configuration")
-                    .buildAsString());
+                    .buildAsString()).toURL();
 
-            // When/Then
-            WellKnownDiscoveryException exception = assertThrows(
-                    WellKnownDiscoveryException.class,
-                    () -> WellKnownHandler.builder().wellKnownUrl(wellKnownUrl).build(),
+            var builder = WellKnownHandler.builder().wellKnownUrl(wellKnownUrl);
+
+
+            // When/Then - Verify that the expected exception is thrown
+            assertThrows(
+                    WellKnownDiscoveryException.class, builder::build,
                     "Should throw exception for invalid JSON response"
             );
+            wellKnownDispatcher.assertCallsAnswered(1);
+
             // The actual error message might vary depending on the JSON parser
             // Just verify that an exception is thrown
-
-            // Verify the dispatcher was called
-            wellKnownDispatcher.assertCallsAnswered(1);
         }
 
         @Test
@@ -250,21 +246,23 @@ class WellKnownHandlerTest {
         void shouldThrowExceptionWhenIssuerIsMissing(URIBuilder uriBuilder) throws MalformedURLException {
             // Given
             wellKnownDispatcher.returnMissingIssuer();
-            URL wellKnownUrl = new URL(uriBuilder
+            URL wellKnownUrl = URI.create(uriBuilder
                     .addPathSegment("/.well-known/openid-configuration")
-                    .buildAsString());
+                    .buildAsString()).toURL();
 
-            // When/Then
-            WellKnownDiscoveryException exception = assertThrows(
-                    WellKnownDiscoveryException.class,
-                    () -> WellKnownHandler.builder().wellKnownUrl(wellKnownUrl).build(),
+            var builder = WellKnownHandler.builder().wellKnownUrl(wellKnownUrl);
+
+            // When/Then - Verify that the expected exception is thrown
+            var exception = assertThrows(
+                    WellKnownDiscoveryException.class, builder::build,
                     "Should throw exception when issuer is missing"
             );
+            // The dispatcher is called during the build process
+            wellKnownDispatcher.assertCallsAnswered(1);
+
+            // Verify exception message
             assertTrue(exception.getMessage().contains("Required field 'issuer' not found"),
                     "Exception message should mention missing issuer field");
-
-            // Verify the dispatcher was called
-            wellKnownDispatcher.assertCallsAnswered(1);
         }
 
         @Test
@@ -272,21 +270,23 @@ class WellKnownHandlerTest {
         void shouldThrowExceptionWhenJwksUriIsMissing(URIBuilder uriBuilder) throws MalformedURLException {
             // Given
             wellKnownDispatcher.returnMissingJwksUri();
-            URL wellKnownUrl = new URL(uriBuilder
+            URL wellKnownUrl = URI.create(uriBuilder
                     .addPathSegment("/.well-known/openid-configuration")
-                    .buildAsString());
+                    .buildAsString()).toURL();
 
-            // When/Then
-            WellKnownDiscoveryException exception = assertThrows(
-                    WellKnownDiscoveryException.class,
-                    () -> WellKnownHandler.builder().wellKnownUrl(wellKnownUrl).build(),
+            var builder = WellKnownHandler.builder().wellKnownUrl(wellKnownUrl);
+
+            // When/Then - Verify that the expected exception is thrown
+            var exception = assertThrows(
+                    WellKnownDiscoveryException.class, builder::build,
                     "Should throw exception when jwks_uri is missing"
             );
+            // The dispatcher is called during the build process
+            wellKnownDispatcher.assertCallsAnswered(1);
+
+            // Verify exception message
             assertTrue(exception.getMessage().contains("Required URL field 'jwks_uri' is missing"),
                     "Exception message should mention missing jwks_uri field");
-
-            // Verify the dispatcher was called
-            wellKnownDispatcher.assertCallsAnswered(1);
         }
 
         @Test
@@ -294,21 +294,23 @@ class WellKnownHandlerTest {
         void shouldThrowExceptionWhenIssuerValidationFails(URIBuilder uriBuilder) throws MalformedURLException {
             // Given
             wellKnownDispatcher.returnInvalidIssuer();
-            URL wellKnownUrl = new URL(uriBuilder
+            URL wellKnownUrl = URI.create(uriBuilder
                     .addPathSegment("/.well-known/openid-configuration")
-                    .buildAsString());
+                    .buildAsString()).toURL();
 
-            // When/Then
-            WellKnownDiscoveryException exception = assertThrows(
-                    WellKnownDiscoveryException.class,
-                    () -> WellKnownHandler.builder().wellKnownUrl(wellKnownUrl).build(),
+            var builder = WellKnownHandler.builder().wellKnownUrl(wellKnownUrl);
+
+            // When/Then - Verify that the expected exception is thrown
+            var exception = assertThrows(
+                    WellKnownDiscoveryException.class, builder::build,
                     "Should throw exception when issuer validation fails"
             );
+            // The dispatcher is called during the build process
+            wellKnownDispatcher.assertCallsAnswered(1);
+
+            // Verify exception message
             assertTrue(exception.getMessage().contains("Issuer validation failed"),
                     "Exception message should mention issuer validation failure");
-
-            // Verify the dispatcher was called
-            wellKnownDispatcher.assertCallsAnswered(1);
 
             // Verify logging
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.ERROR,
@@ -332,27 +334,32 @@ class WellKnownHandlerTest {
         }
 
         @Test
-        @DisplayName("Should return empty Optional for missing optional endpoints")
-        void shouldReturnEmptyOptionalForMissingOptionalEndpoints(URIBuilder uriBuilder) throws MalformedURLException {
-            // Configure the dispatcher to return a document with only required fields
+        @DisplayName("Should throw exceptions during build for missing required endpoints")
+        void shouldThrowExceptionDuringBuildForMissingRequiredEndpoints(URIBuilder uriBuilder) throws MalformedURLException {
+            // Given
+            // Configure the dispatcher to return a document with only issuer and jwks_uri
             wellKnownDispatcher.returnOnlyRequiredFields();
-
-            // When
-            URL wellKnownUrl = new URL(uriBuilder
+            URL wellKnownUrl = URI.create(uriBuilder
                     .addPathSegment("/.well-known/openid-configuration")
-                    .buildAsString());
-            WellKnownHandler handler = WellKnownHandler.builder()
-                    .wellKnownUrl(wellKnownUrl)
-                    .build();
+                    .buildAsString()).toURL();
 
-            // Then
-            assertFalse(handler.getAuthorizationEndpoint().isPresent(), "Authorization endpoint should not be present");
-            assertFalse(handler.getTokenEndpoint().isPresent(), "Token endpoint should not be present");
-            assertFalse(handler.getUserinfoEndpoint().isPresent(), "Userinfo endpoint should not be present");
+            // When/Then - Verify that the expected exception is thrown
+            // The build should throw an exception because authorization_endpoint and token_endpoint are required
+            // but missing in the document
+            var builder = WellKnownHandler.builder()
+                    .wellKnownUrl(wellKnownUrl);
+            var exception = assertThrows(
+                    WellKnownDiscoveryException.class,
+                    builder::build,
+                    "Should throw exception during build when required endpoints are missing"
+            );
 
-            // Required endpoints should still be present
-            assertTrue(handler.getJwksUri().isPresent(), "JWKS URI should be present");
-            assertTrue(handler.getIssuer().isPresent(), "Issuer should be present");
+            // Verify the exception message mentions the missing required field
+            assertTrue(
+                    exception.getMessage().contains("Required URL field 'authorization_endpoint' is missing") ||
+                            exception.getMessage().contains("Required URL field 'token_endpoint' is missing"),
+                    "Exception message should mention missing required field"
+            );
         }
     }
 
@@ -375,9 +382,9 @@ class WellKnownHandlerTest {
         @DisplayName("Should log messages for successful operations")
         void shouldLogDebugMessagesForSuccessfulOperations(URIBuilder uriBuilder) throws MalformedURLException {
             // Given
-            URL wellKnownUrl = new URL(uriBuilder
+            URL wellKnownUrl = URI.create(uriBuilder
                     .addPathSegment("/.well-known/openid-configuration")
-                    .buildAsString());
+                    .buildAsString()).toURL();
 
             // When
             WellKnownHandler.builder().wellKnownUrl(wellKnownUrl).build();
@@ -393,19 +400,19 @@ class WellKnownHandlerTest {
         void shouldLogErrorMessagesForFailedOperations(URIBuilder uriBuilder) throws MalformedURLException {
             // Given
             wellKnownDispatcher.returnInvalidIssuer();
-            URL wellKnownUrl = new URL(uriBuilder
+            URL wellKnownUrl = URI.create(uriBuilder
                     .addPathSegment("/.well-known/openid-configuration")
-                    .buildAsString());
+                    .buildAsString()).toURL();
 
-            // When
-            try {
-                WellKnownHandler.builder().wellKnownUrl(wellKnownUrl).build();
-                fail("Should have thrown WellKnownDiscoveryException");
-            } catch (WellKnownDiscoveryException e) {
-                // Expected exception
-            }
+            // When/Then - Verify that the expected exception is thrown
+            var builder = WellKnownHandler.builder().wellKnownUrl(wellKnownUrl);
+            assertThrows(
+                    WellKnownDiscoveryException.class,
+                    builder::build,
+                    "Should throw exception when issuer validation fails"
+            );
 
-            // Then
+            // Then verify logging
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.ERROR,
                     "Issuer validation failed");
         }
