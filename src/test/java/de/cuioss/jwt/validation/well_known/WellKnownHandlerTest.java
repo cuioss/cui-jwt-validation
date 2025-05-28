@@ -16,6 +16,8 @@
 package de.cuioss.jwt.validation.well_known;
 
 import de.cuioss.jwt.validation.JWTValidationLogMessages;
+import de.cuioss.jwt.validation.ParserConfig;
+import de.cuioss.jwt.validation.security.SecureSSLContextProvider;
 import de.cuioss.jwt.validation.test.dispatcher.WellKnownDispatcher;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
@@ -30,9 +32,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import javax.net.ssl.SSLContext;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.security.SecureRandom;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -416,6 +420,158 @@ class WellKnownHandlerTest {
             // Then verify logging
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.ERROR,
                     JWTValidationLogMessages.ERROR.ISSUER_VALIDATION_FAILED.resolveIdentifierString());
+        }
+    }
+
+    @Nested
+    @DisplayName("Builder Tests")
+    @ModuleDispatcher
+    class BuilderTests {
+
+        /**
+         * Returns the WellKnownDispatcher for the ModuleDispatcher annotation.
+         * This method is called by the ModuleDispatcher framework.
+         *
+         * @return the WellKnownDispatcher
+         */
+        public ModuleDispatcherElement getModuleDispatcher() {
+            return wellKnownDispatcher;
+        }
+
+        @Test
+        @DisplayName("Should use custom TLS versions configuration")
+        void shouldUseCustomTlsVersionsConfiguration(URIBuilder uriBuilder) throws MalformedURLException {
+            // Given
+            URL wellKnownUrl = URI.create(uriBuilder
+                    .addPathSegment("/.well-known/openid-configuration")
+                    .buildAsString()).toURL();
+
+            // Create a custom SecureSSLContextProvider with TLS 1.3 as minimum
+            SecureSSLContextProvider secureSSLContextProvider = new SecureSSLContextProvider(SecureSSLContextProvider.TLS_V1_3);
+
+            // When
+            WellKnownHandler handler = WellKnownHandler.builder()
+                    .wellKnownUrl(wellKnownUrl)
+                    .tlsVersions(secureSSLContextProvider)
+                    .build();
+
+            // Then
+            assertNotNull(handler, "Handler should not be null");
+            assertEquals(wellKnownUrl, handler.getWellKnownUrl(), "Well-known URL should match");
+
+            // Verify the dispatcher was called
+            wellKnownDispatcher.assertCallsAnswered(1);
+
+            // Verify that the handler was created successfully
+            assertNotNull(handler.getJwksUri(), "JWKS URI should not be null");
+            assertNotNull(handler.getIssuer(), "Issuer should not be null");
+            assertNotNull(handler.getAuthorizationEndpoint(), "Authorization endpoint should not be null");
+            assertNotNull(handler.getTokenEndpoint(), "Token endpoint should not be null");
+        }
+
+        @Test
+        @DisplayName("Should use custom parser configuration")
+        void shouldUseCustomParserConfiguration(URIBuilder uriBuilder) throws MalformedURLException {
+            // Given
+            URL wellKnownUrl = URI.create(uriBuilder
+                    .addPathSegment("/.well-known/openid-configuration")
+                    .buildAsString()).toURL();
+
+            // Create a custom ParserConfig with non-default values
+            ParserConfig parserConfig = ParserConfig.builder()
+                    .maxStringSize(2048)
+                    .maxArraySize(32)
+                    .maxDepth(5)
+                    .build();
+
+            // When
+            WellKnownHandler handler = WellKnownHandler.builder()
+                    .wellKnownUrl(wellKnownUrl)
+                    .parserConfig(parserConfig)
+                    .build();
+
+            // Then
+            assertNotNull(handler, "Handler should not be null");
+            assertEquals(wellKnownUrl, handler.getWellKnownUrl(), "Well-known URL should match");
+
+            // Verify the dispatcher was called
+            wellKnownDispatcher.assertCallsAnswered(1);
+        }
+
+        @Test
+        @DisplayName("Should use custom SSL context")
+        void shouldUseCustomSslContext(URIBuilder uriBuilder) throws Exception {
+            // Given
+            URL wellKnownUrl = URI.create(uriBuilder
+                    .addPathSegment("/.well-known/openid-configuration")
+                    .buildAsString()).toURL();
+
+            // Create a custom SSLContext with proper initialization
+            SSLContext sslContext = SSLContext.getInstance(SecureSSLContextProvider.TLS_V1_2);
+            sslContext.init(null, null, new SecureRandom());
+
+            // When
+            WellKnownHandler handler = WellKnownHandler.builder()
+                    .wellKnownUrl(wellKnownUrl)
+                    .sslContext(sslContext)
+                    .build();
+
+            // Then
+            assertNotNull(handler, "Handler should not be null");
+            assertEquals(wellKnownUrl, handler.getWellKnownUrl(), "Well-known URL should match");
+
+            // Verify the dispatcher was called
+            wellKnownDispatcher.assertCallsAnswered(1);
+
+            // Verify that the handler was created successfully
+            assertNotNull(handler.getJwksUri(), "JWKS URI should not be null");
+            assertNotNull(handler.getIssuer(), "Issuer should not be null");
+            assertNotNull(handler.getAuthorizationEndpoint(), "Authorization endpoint should not be null");
+            assertNotNull(handler.getTokenEndpoint(), "Token endpoint should not be null");
+        }
+
+        @Test
+        @DisplayName("Should use all builder methods together")
+        void shouldUseAllBuilderMethodsTogether(URIBuilder uriBuilder) throws Exception {
+            // Given
+            URL wellKnownUrl = URI.create(uriBuilder
+                    .addPathSegment("/.well-known/openid-configuration")
+                    .buildAsString()).toURL();
+
+            // Create a custom SecureSSLContextProvider
+            SecureSSLContextProvider secureSSLContextProvider = new SecureSSLContextProvider(SecureSSLContextProvider.TLS_V1_3);
+
+            // Create a custom SSLContext with proper initialization
+            SSLContext sslContext = SSLContext.getInstance(SecureSSLContextProvider.TLS_V1_2);
+            sslContext.init(null, null, new SecureRandom());
+
+            // Create a custom ParserConfig
+            ParserConfig parserConfig = ParserConfig.builder()
+                    .maxStringSize(2048)
+                    .maxArraySize(32)
+                    .maxDepth(5)
+                    .build();
+
+            // When
+            WellKnownHandler handler = WellKnownHandler.builder()
+                    .wellKnownUrl(wellKnownUrl)
+                    .tlsVersions(secureSSLContextProvider)
+                    .sslContext(sslContext)
+                    .parserConfig(parserConfig)
+                    .build();
+
+            // Then
+            assertNotNull(handler, "Handler should not be null");
+            assertEquals(wellKnownUrl, handler.getWellKnownUrl(), "Well-known URL should match");
+
+            // Verify the dispatcher was called
+            wellKnownDispatcher.assertCallsAnswered(1);
+
+            // Verify that the handler was created successfully
+            assertNotNull(handler.getJwksUri(), "JWKS URI should not be null");
+            assertNotNull(handler.getIssuer(), "Issuer should not be null");
+            assertNotNull(handler.getAuthorizationEndpoint(), "Authorization endpoint should not be null");
+            assertNotNull(handler.getTokenEndpoint(), "Token endpoint should not be null");
         }
     }
 }
