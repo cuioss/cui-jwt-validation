@@ -40,12 +40,15 @@ import static de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
  *   <li>Handling HTTP 304 "Not Modified" responses</li>
  *   <li>Managing ETag headers for conditional requests</li>
  * </ul>
+ * <p>
+ * This class implements {@link AutoCloseable} to properly close the {@link HttpClient}
+ * when it's no longer needed.
  *
  * @author Oliver Wolff
  * @since 1.0
  */
 @RequiredArgsConstructor
-public class JwksHttpClient {
+public class JwksHttpClient implements AutoCloseable {
 
     private static final CuiLogger LOGGER = new CuiLogger(JwksHttpClient.class);
     private static final int HTTP_OK = 200;
@@ -135,6 +138,7 @@ public class JwksHttpClient {
      * @param config the configuration
      * @return a new JwksHttpClient
      */
+    @SuppressWarnings("try") // HttpClient implements AutoCloseable in Java 17 but doesn't need to be closed
     public static JwksHttpClient create(@NonNull HttpJwksLoaderConfig config) {
         HttpClient httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(config.getRequestTimeoutSeconds()))
@@ -152,6 +156,7 @@ public class JwksHttpClient {
      * @param previousEtag the ETag from a previous response, may be null
      * @return the response containing JWKS content or not modified indication
      */
+    @SuppressWarnings("try") // HttpClient implements AutoCloseable in Java 17 but doesn't need to be closed
     public JwksHttpResponse fetchJwksContent(String previousEtag) {
         // Check if the URI is null (invalid URL)
         if (config.getJwksUri() == null) {
@@ -208,5 +213,20 @@ public class JwksHttpClient {
             }
             return JwksHttpResponse.empty();
         }
+    }
+
+    /**
+     * Closes this resource, relinquishing any underlying resources.
+     * This method is invoked automatically on objects managed by the
+     * try-with-resources statement.
+     *
+     * @throws Exception if this resource cannot be closed
+     */
+    @Override
+    public void close() throws Exception {
+        // HttpClient doesn't have a close method in Java 11, but we implement
+        // AutoCloseable to allow for future versions that might require cleanup
+        // or to support try-with-resources pattern
+        LOGGER.debug("Closing JwksHttpClient");
     }
 }

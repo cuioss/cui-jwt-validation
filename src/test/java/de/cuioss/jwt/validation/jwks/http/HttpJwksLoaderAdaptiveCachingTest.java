@@ -104,7 +104,7 @@ class HttpJwksLoaderAdaptiveCachingTest {
         assertEquals(1, accessCount.get(), "Access count should be incremented");
         assertEquals(1, hitCount.get(), "Hit count should be incremented for successful key retrieval");
 
-        // Subsequent accesses should increment both counts
+        // Later accesses should increment both counts
         for (int i = 0; i < 3; i++) {
             keyInfo = httpJwksLoader.getKeyInfo(TEST_KID);
             assertTrue(keyInfo.isPresent(), "Key info should be present");
@@ -128,7 +128,7 @@ class HttpJwksLoaderAdaptiveCachingTest {
         // Get access to the jwksCache field to manually invalidate the cache
         Field jwksCacheField = JwksCacheManager.class.getDeclaredField("jwksCache");
         jwksCacheField.setAccessible(true);
-        LoadingCache<String, JWKSKeyLoader> jwksCache =
+        @SuppressWarnings("unchecked") LoadingCache<String, JWKSKeyLoader> jwksCache =
                 (LoadingCache<String, JWKSKeyLoader>) jwksCacheField.get(cacheManager);
 
         // First access to populate the cache

@@ -1,0 +1,41 @@
+= Refactoring Plan
+:toc:
+:toclevels: 3
+:toc-title: Table of Contents
+:sectnums:
+
+This document outlines the planned refactoring tasks for the cui-jwt-validation project.
+
+== Code Structure and Design Tasks
+
+=== C1. Create HttpHandler Common Wrapper
+[x] *Priority:* High
+
+*Description:* Create a new HttpHandler class under package de.cuioss.tools.http that provides a common wrapper around HttpClient. The class should be structured in a way that it can be easily extracted to a separate module in the future. It will provide a builder for collecting attributes such as URL, SSLContext, SecureSSLContextProvider, and request timeout. The class will also provide methods for "pinging" URLs and returning status codes, as well as access to core attributes.
+
+*Rationale:* Currently, HTTP client functionality is duplicated across multiple classes (WellKnownHandler and HttpJwksLoaderConfig). Creating a common wrapper will reduce code duplication, improve maintainability, and make the codebase more modular.
+
+==== Implementation Details
+
+The HttpHandler class will:
+
+1. Be placed in the package de.cuioss.tools.http
+2. Provide a builder pattern for configuration with the following attributes:
+   * URL url
+   * String urlString
+   * SSLContext sslContext
+   * SecureSSLContextProvider secureSSLContextProvider
+   * int requestTimeoutSeconds
+3. Handle parameters in a similar way to WellKnownHandler.WellKnownHandlerBuilder and HttpJwksLoaderConfig
+4. Provide a pre-configured HttpRequest.Builder for usage
+5. Include methods for "pinging" the contained URL and returning the status code, with variants for HEAD and GET methods
+6. Provide access to core attributes like URL, SSLContext, and requestTimeoutSeconds
+7. Include comprehensive unit tests
+
+==== Future Integration
+
+After implementation, the following classes should be refactored to use the new HttpHandler:
+* de.cuioss.jwt.validation.well_known.WellKnownHandler
+* de.cuioss.jwt.validation.jwks.http.HttpJwksLoaderConfig
+
+This will be done in a separate task to ensure backward compatibility and proper testing.

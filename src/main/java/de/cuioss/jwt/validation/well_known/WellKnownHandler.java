@@ -303,6 +303,7 @@ public final class WellKnownHandler {
          * @param keyName The name of the key (for logging)
          * @param sslContext The SSL context to use
          */
+        @SuppressWarnings("try") // HttpClient implements AutoCloseable in Java 17 but doesn't need to be closed
         private void checkAccessibility(URL url, String keyName, SSLContext sslContext) {
             if (url == null) {
                 return;
@@ -357,6 +358,7 @@ public final class WellKnownHandler {
          *                                     parsing, or validation (e.g., network issues,
          *                                     malformed JSON, invalid issuer).
          */
+        @SuppressWarnings("try") // HttpClient implements AutoCloseable in Java 17 but doesn't need to be closed
         public WellKnownHandler build() {
             // Validate and resolve the well-known URL
             if (wellKnownUrl == null) {
