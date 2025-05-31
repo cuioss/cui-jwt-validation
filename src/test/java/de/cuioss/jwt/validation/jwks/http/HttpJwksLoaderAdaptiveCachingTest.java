@@ -128,7 +128,8 @@ class HttpJwksLoaderAdaptiveCachingTest {
         // Get access to the jwksCache field to manually invalidate the cache
         Field jwksCacheField = JwksCacheManager.class.getDeclaredField("jwksCache");
         jwksCacheField.setAccessible(true);
-        @SuppressWarnings("unchecked") LoadingCache<String, JWKSKeyLoader> jwksCache =
+        @SuppressWarnings("unchecked")
+        LoadingCache<String, JWKSKeyLoader> jwksCache =
                 (LoadingCache<String, JWKSKeyLoader>) jwksCacheField.get(cacheManager);
 
         // First access to populate the cache

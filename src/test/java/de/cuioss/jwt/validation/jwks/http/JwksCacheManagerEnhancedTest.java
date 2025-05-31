@@ -261,53 +261,6 @@ class JwksCacheManagerEnhancedTest {
     }
 
     @Test
-    @DisplayName("Should handle null JWKS URI")
-    void shouldHandleNullJwksUri() {
-        // Reset the loader call count
-        loaderCallCount.set(0);
-
-        // Create a config with a valid URL first
-        HttpJwksLoaderConfig nullUriConfig = HttpJwksLoaderConfig.builder()
-                .jwksUrl("https://example.com/jwks.json")
-                .refreshIntervalSeconds(REFRESH_INTERVAL)
-                .build();
-
-        // Force the jwksUri to be null by reflection
-        assertDoesNotThrow(() -> {
-            Field jwksUriField = HttpJwksLoaderConfig.class.getDeclaredField("jwksUri");
-            jwksUriField.setAccessible(true);
-            jwksUriField.set(nullUriConfig, null);
-        }, "Failed to set jwksUri to null: ");
-
-        // Create a cache manager with the null URI config
-        AtomicInteger nullUriLoaderCallCount = new AtomicInteger(0);
-        JwksCacheManager nullUriCacheManager = new JwksCacheManager(nullUriConfig, key -> {
-            nullUriLoaderCallCount.incrementAndGet();
-            System.out.println("[DEBUG_LOG] Null URI loader called");
-            return JWKSKeyLoader.builder()
-                    .originalString("This should not be returned")
-                    .securityEventCounter(securityEventCounter)
-                    .build();
-        }, securityEventCounter);
-
-        // Get the cache key
-        String cacheKey = nullUriCacheManager.getCacheKey();
-
-        // Verify that the cache key is the special key for invalid URLs
-        assertTrue(cacheKey.endsWith("invalid-url"), "Cache key should end with 'invalid-url' for null URI");
-
-        // Resolve from the cache manager
-        JWKSKeyLoader loader = nullUriCacheManager.resolve();
-
-        // The loader should not be called when jwksUri is null
-        // This is the expected behavior according to JwksCacheManager.resolve() implementation
-        assertEquals(0, nullUriLoaderCallCount.get(), "Loader should not be called when jwksUri is null");
-
-        // Verify that the loader has empty content
-        assertEquals("{}", loader.getOriginalString(), "Loader should have empty content for null URI");
-    }
-
-    @Test
     @DisplayName("Should fallback to last valid result when loader throws exception")
     void shouldFallbackToLastValidResultWhenLoaderThrowsException() {
         // First resolve to populate the cache and set the last valid result

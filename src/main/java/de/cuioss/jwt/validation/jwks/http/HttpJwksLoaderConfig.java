@@ -15,19 +15,18 @@
  */
 package de.cuioss.jwt.validation.jwks.http;
 
-import de.cuioss.jwt.validation.JWTValidationLogMessages.DEBUG;
 import de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
 import de.cuioss.jwt.validation.security.SecureSSLContextProvider;
 import de.cuioss.jwt.validation.well_known.WellKnownHandler;
+import de.cuioss.tools.base.Preconditions;
 import de.cuioss.tools.http.HttpHandler;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NonNull;
 
 import javax.net.ssl.SSLContext;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -58,159 +57,112 @@ public class HttpJwksLoaderConfig {
     private static final int DEFAULT_ADAPTIVE_WINDOW_SIZE = 10;
 
     /**
-     * The URI of the JWKS endpoint.
-     * Can be null if an invalid URL was provided.
-     */
-    private final URI jwksUri;
-
-    /**
      * The interval in seconds at which to refresh the keys.
      * If set to 0, no time-based caching will be used.
      */
+    @Getter
     private final int refreshIntervalSeconds;
-
-    /**
-     * The SSLContext for secure connections.
-     */
-    @NonNull
-    private final SSLContext sslContext;
 
     /**
      * The HttpHandler used for HTTP requests.
      */
     @NonNull
+    @Getter
     private final HttpHandler httpHandler;
 
     /**
      * The maximum number of entries in the cache.
      * This is useful in multi-issuer environments to prevent memory issues.
      */
+    @Getter
     private final int maxCacheSize;
 
     /**
      * The number of accesses to consider for adaptive caching.
      * This controls how many accesses are considered when adjusting cache expiration.
      */
+    @Getter
     private final int adaptiveWindowSize;
-
-    /**
-     * The timeout in seconds for HTTP requests.
-     */
-    private final int requestTimeoutSeconds;
 
     /**
      * The percentage of the refresh interval at which to perform background refresh.
      * For example, if refreshIntervalSeconds is 60 and backgroundRefreshPercentage is 80,
      * background refresh will occur at 48 seconds (80% of 60).
      */
+    @Getter
     private final int backgroundRefreshPercentage;
 
     /**
      * The ScheduledExecutorService for background refresh tasks.
      * If null, a new one will be created.
      */
+    @Getter
     private final ScheduledExecutorService scheduledExecutorService;
-
-    /**
-     * Gets the URI of the JWKS endpoint.
-     *
-     * @return the JWKS URI, or null if an invalid URL was provided
-     */
-    public URI getJwksUri() {
-        return jwksUri;
-    }
-
-    /**
-     * Gets the refresh interval in seconds.
-     *
-     * @return the refresh interval in seconds
-     */
-    public int getRefreshIntervalSeconds() {
-        return refreshIntervalSeconds;
-    }
-
-    /**
-     * Gets the SSLContext for secure connections.
-     *
-     * @return the SSLContext
-     */
-    public @NonNull SSLContext getSslContext() {
-        return sslContext;
-    }
-
-    /**
-     * Gets the maximum number of entries in the cache.
-     *
-     * @return the maximum cache size
-     */
-    public int getMaxCacheSize() {
-        return maxCacheSize;
-    }
-
-    /**
-     * Gets the number of accesses to consider for adaptive caching.
-     *
-     * @return the adaptive window size
-     */
-    public int getAdaptiveWindowSize() {
-        return adaptiveWindowSize;
-    }
-
-    /**
-     * Gets the timeout in seconds for HTTP requests.
-     *
-     * @return the request timeout in seconds
-     */
-    public int getRequestTimeoutSeconds() {
-        return requestTimeoutSeconds;
-    }
-
-    /**
-     * Gets the percentage of the refresh interval at which to perform background refresh.
-     *
-     * @return the background refresh percentage
-     */
-    public int getBackgroundRefreshPercentage() {
-        return backgroundRefreshPercentage;
-    }
-
-    /**
-     * Gets the HttpHandler used for HTTP requests.
-     *
-     * @return the HttpHandler
-     */
-    public @NonNull HttpHandler getHttpHandler() {
-        return httpHandler;
-    }
-
-    /**
-     * Gets the ScheduledExecutorService for background refresh tasks.
-     * If the ScheduledExecutorService is null and the refresh interval is positive,
-     * a new one will be created.
-     *
-     * @return the ScheduledExecutorService, or a new one if null
-     */
-    public ScheduledExecutorService getScheduledExecutorService() {
-        if (scheduledExecutorService == null && refreshIntervalSeconds > 0) {
-            return Executors.newScheduledThreadPool(1);
-        }
-        return scheduledExecutorService;
-    }
 
     /**
      * Builder for creating HttpJwksLoaderConfig instances with validation.
      */
     public static class HttpJwksLoaderConfigBuilder {
-        private String jwksUrl; // Used if jwksUri is not set directly or via WellKnownHandler
-        private URI jwksUri;     // Can be set directly, by jwksUrl(), or by well_known()
-        private int refreshIntervalSeconds;
-        private SSLContext sslContext;
-        private SecureSSLContextProvider secureSSLContextProvider;
-        private Integer maxCacheSize;
-        private Integer adaptiveWindowSize;
-        private Integer requestTimeoutSeconds;
-        private Integer backgroundRefreshPercentage;
+        private Integer maxCacheSize = DEFAULT_MAX_CACHE_SIZE;
+        private Integer adaptiveWindowSize = DEFAULT_ADAPTIVE_WINDOW_SIZE;
+        private Integer backgroundRefreshPercentage = DEFAULT_BACKGROUND_REFRESH_PERCENTAGE;
         private ScheduledExecutorService scheduledExecutorService;
+        private final HttpHandler.HttpHandlerBuilder httpHandlerBuilder;
+
+        /**
+         * Constructor initializing the HttpHandlerBuilder.
+         */
+        public HttpJwksLoaderConfigBuilder() {
+            this.httpHandlerBuilder = HttpHandler.builder();
+        }
+
+        /**
+         * Sets the maximum cache size.
+         * <p>
+         * This is useful in multi-issuer environments to prevent memory issues.
+         * </p>
+         *
+         * @param maxCacheSize the maximum number of entries in the cache
+         * @return this builder instance
+         * @throws IllegalArgumentException if maxCacheSize is negative
+         */
+        public HttpJwksLoaderConfigBuilder maxCacheSize(int maxCacheSize) {
+            Preconditions.checkArgument(maxCacheSize > 0, "maxCacheSize must be positive");
+            this.maxCacheSize = maxCacheSize;
+            return this;
+        }
+
+        /**
+         * The number of accesses to consider for adaptive caching.
+         * This controls how many accesses are considered when adjusting cache expiration.
+         *
+         * @param adaptiveWindowSize the percentage of the refresh interval
+         * @return this builder instance
+         * @throws IllegalArgumentException if adaptiveWindowSize is not positive
+         */
+        public HttpJwksLoaderConfigBuilder adaptiveWindowSize(int adaptiveWindowSize) {
+            Preconditions.checkArgument(adaptiveWindowSize > 0, "adaptiveWindowSize must be positive");
+            this.adaptiveWindowSize = adaptiveWindowSize;
+            return this;
+        }
+
+        /**
+         * Sets the percentage of the refresh interval at which to perform background refresh.
+         * <p>
+         * For example, if refreshIntervalSeconds is 60 and backgroundRefreshPercentage is 80,
+         * background refresh will occur at 48 seconds (80% of 60).
+         * </p>
+         *
+         * @param backgroundRefreshPercentage the percentage of the refresh interval
+         * @return this builder instance
+         * @throws IllegalArgumentException if backgroundRefreshPercentage is not between 1 and 100
+         */
+        public HttpJwksLoaderConfigBuilder backgroundRefreshPercentage(int backgroundRefreshPercentage) {
+            Preconditions.checkArgument(backgroundRefreshPercentage > 0 && backgroundRefreshPercentage <= 100,
+                    "backgroundRefreshPercentage must be between 1 and 100");
+            this.backgroundRefreshPercentage = backgroundRefreshPercentage;
+            return this;
+        }
 
         /**
          * Sets the JWKS URI directly.
@@ -224,8 +176,7 @@ public class HttpJwksLoaderConfig {
          * @return this builder instance
          */
         public HttpJwksLoaderConfigBuilder jwksUri(@NonNull URI jwksUri) {
-            this.jwksUri = jwksUri;
-            this.jwksUrl = null; // Clear jwksUrl to ensure jwksUri takes precedence
+            httpHandlerBuilder.uri(jwksUri);
             return this;
         }
 
@@ -241,8 +192,7 @@ public class HttpJwksLoaderConfig {
          * @return this builder instance
          */
         public HttpJwksLoaderConfigBuilder jwksUrl(@NonNull String jwksUrl) {
-            this.jwksUrl = jwksUrl;
-            this.jwksUri = null; // Clear jwksUri to allow jwksUrl to be processed
+            httpHandlerBuilder.url(jwksUrl);
             return this;
         }
 
@@ -262,13 +212,11 @@ public class HttpJwksLoaderConfig {
          * @param wellKnownHandler The {@link WellKnownHandler} instance from which to
          *                         extract the JWKS URI. Must not be null.
          * @return this builder instance
-         * @throws IllegalArgumentException if {@code wellKnownHandler} is null or does not
-         *                                  contain a {@code jwks_uri}.
+         * @throws IllegalArgumentException if {@code wellKnownHandler} is null
          */
         public HttpJwksLoaderConfigBuilder wellKnown(@NonNull WellKnownHandler wellKnownHandler) {
             HttpHandler extractedJwksHandler = wellKnownHandler.getJwksUri();
-            this.jwksUri = extractedJwksHandler.getUri();
-            this.jwksUrl = null; // Clear jwksUrl to ensure this URI takes precedence
+            httpHandlerBuilder.uri(extractedJwksHandler.getUri()).sslContext(extractedJwksHandler.getSslContext());
             return this;
         }
 
@@ -279,7 +227,23 @@ public class HttpJwksLoaderConfig {
          * @return this builder instance
          */
         public HttpJwksLoaderConfigBuilder tlsVersions(SecureSSLContextProvider secureSSLContextProvider) {
-            this.secureSSLContextProvider = secureSSLContextProvider;
+            httpHandlerBuilder.tlsVersions(secureSSLContextProvider);
+            return this;
+        }
+
+        /**
+         * Sets the refresh interval in seconds.
+         * <p>
+         * If set to 0, no time-based caching will be used.
+         * </p>
+         *
+         * @param refreshIntervalSeconds the refresh interval in seconds
+         * @return this builder instance
+         * @throws IllegalArgumentException if a refresh interval is negative
+         */
+        public HttpJwksLoaderConfigBuilder refreshIntervalSeconds(int refreshIntervalSeconds) {
+            Preconditions.checkArgument(refreshIntervalSeconds > -1, "refreshIntervalSeconds must be zero or positive");
+            this.refreshIntervalSeconds = refreshIntervalSeconds;
             return this;
         }
 
@@ -295,6 +259,36 @@ public class HttpJwksLoaderConfig {
         }
 
         /**
+         * Sets the SSL context to use for HTTPS connections.
+         * <p>
+         * If not set, a default secure SSL context will be created.
+         * </p>
+         *
+         * @param sslContext The SSL context to use.
+         * @return This builder instance.
+         */
+        public HttpJwksLoaderConfigBuilder sslContext(SSLContext sslContext) {
+            httpHandlerBuilder.sslContext(sslContext);
+            return this;
+        }
+
+        /**
+         * Sets the timeout in seconds for HTTP requests.
+         * <p>
+         * If not set, a default timeout of 10 seconds will be used.
+         * </p>
+         *
+         * @param requestTimeoutSeconds The request timeout in seconds.
+         *                              Must be positive.
+         * @return This builder instance.
+         */
+        public HttpJwksLoaderConfigBuilder requestTimeoutSeconds(int requestTimeoutSeconds) {
+            Preconditions.checkArgument(requestTimeoutSeconds > 0, "requestTimeoutSeconds must be positive");
+            httpHandlerBuilder.requestTimeoutSeconds(requestTimeoutSeconds);
+            return this;
+        }
+
+        /**
          * Builds a new HttpJwksLoaderConfig instance with the configured parameters.
          * Validates all parameters and applies default values where appropriate.
          *
@@ -302,195 +296,27 @@ public class HttpJwksLoaderConfig {
          * @throws IllegalArgumentException if any parameter is invalid
          */
         public HttpJwksLoaderConfig build() {
-            // If jwksUri is already set (by jwksUri() or well_known()), jwksUrl is ignored.
-            // If jwksUri is null and jwksUrl is set, createJwksUri() will handle it.
-            // If both are null, validateJwksSource() will throw.
-            validateJwksSource();
-            if (this.jwksUri == null && this.jwksUrl != null) {
-                boolean uriCreated = createJwksUriFromUrlString();
-                // If URI creation failed, we'll still create the config but with a null jwksUri
-                // This allows the HttpJwksLoader to handle invalid URLs gracefully
-                if (!uriCreated) {
-                    LOGGER.warn(WARN.INVALID_JWKS_URI::format);
-                }
-            }
-            validateParameters();
-
-            SSLContext secureContext = createSecureSSLContext();
-
-            int[] actualValues = applyDefaultValues();
-
-            // Create HttpHandler for the JWKS URI
-            HttpHandler jwksHttpHandler = null;
-            if (jwksUri != null) {
-                jwksHttpHandler = HttpHandler.builder()
-                        .uri(jwksUri)
-                        .sslContext(secureContext)
-                        .requestTimeoutSeconds(actualValues[2]) // requestTimeoutSeconds
-                        .build();
-            } else {
-                // If jwksUri is null, create a dummy HttpHandler that will fail gracefully
+            // Build the HttpHandler for the well-known URL
+            HttpHandler jwksHttpHandler;
+            try {
+                jwksHttpHandler = httpHandlerBuilder.build();
+            } catch (IllegalArgumentException | IllegalStateException e) {
                 LOGGER.warn(WARN.INVALID_JWKS_URI::format);
-                jwksHttpHandler = HttpHandler.builder()
-                        .uri("https://invalid.uri")
-                        .sslContext(secureContext)
-                        .requestTimeoutSeconds(actualValues[2]) // requestTimeoutSeconds
-                        .build();
+                throw new IllegalArgumentException("Invalid URL", e);
+            }
+            if (scheduledExecutorService == null && refreshIntervalSeconds > 0) {
+                scheduledExecutorService = Executors.newScheduledThreadPool(1);
             }
 
             return new HttpJwksLoaderConfig(
-                    jwksUri,
                     refreshIntervalSeconds,
-                    secureContext,
                     jwksHttpHandler,
-                    actualValues[0], // maxCacheSize
-                    actualValues[1], // adaptiveWindowSize
-                    actualValues[2], // requestTimeoutSeconds
-                    actualValues[3], // backgroundRefreshPercentage
+                    maxCacheSize,
+                    adaptiveWindowSize,
+                    backgroundRefreshPercentage,
                     scheduledExecutorService);
         }
 
-        /**
-         * Validates that a source for the JWKS URI (either direct URI, URL string, or WellKnownHandler) is provided.
-         *
-         * @throws IllegalArgumentException if no JWKS source is configured.
-         */
-        private void validateJwksSource() {
-            if (jwksUri == null && jwksUrl == null) {
-                throw new IllegalArgumentException("JWKS URI must be configured. Use jwksUri(), jwksUrl(), or well_known().");
-            }
-        }
 
-        /**
-         * Creates a URI from the JWKS URL string if jwksUri is not already set.
-         * This is called if jwksUrl() was used and jwksUri() or well_known() were not.
-         * 
-         * @return true if the URI was created successfully, false if the URL was invalid
-         */
-        private boolean createJwksUriFromUrlString() {
-            if (jwksUri == null && jwksUrl != null) { // Should only be called if jwksUrl is the source
-                try {
-                    String urlToUse = jwksUrl;
-                    if (!urlToUse.matches("^[a-zA-Z][a-zA-Z0-9+.-]*:.*")) {
-                        // Basic check if scheme is missing, prepend https as a sensible default for JWKS
-                        LOGGER.debug(DEBUG.JWKS_URL_MISSING_SCHEME.format(jwksUrl));
-                        urlToUse = "https://" + urlToUse;
-                    }
-                    jwksUri = URI.create(urlToUse);
-                    LOGGER.debug(DEBUG.JWKS_URI_CREATED.format(jwksUri, jwksUrl));
-                    return true;
-                } catch (IllegalArgumentException e) {
-                    // Log the error but don't throw, to allow graceful handling of invalid URLs
-                    LOGGER.warn(e, WARN.INVALID_JWKS_URL_STRING.format(jwksUrl));
-                    // Set jwksUri to null to indicate an invalid URL
-                    jwksUri = null;
-                    return false;
-                }
-            }
-            return jwksUri != null;
-        }
-
-        /**
-         * Validates all parameters.
-         * 
-         * @throws IllegalArgumentException if any parameter is invalid
-         */
-        private void validateParameters() {
-            validateRefreshInterval();
-            validateMaxCacheSize();
-            validateAdaptiveWindowSize();
-            validateRequestTimeout();
-            validateBackgroundRefreshPercentage();
-        }
-
-        /**
-         * Validates the refresh interval.
-         * 
-         * @throws IllegalArgumentException if refresh interval is negative
-         */
-        private void validateRefreshInterval() {
-            if (refreshIntervalSeconds < 0) {
-                throw new IllegalArgumentException("Refresh interval must not be negative");
-            }
-        }
-
-        /**
-         * Validates the max cache size.
-         * 
-         * @throws IllegalArgumentException if max cache size is not positive
-         */
-        private void validateMaxCacheSize() {
-            if (maxCacheSize != null && maxCacheSize <= 0) {
-                throw new IllegalArgumentException("Max cache size must be positive");
-            }
-        }
-
-        /**
-         * Validates the adaptive window size.
-         * 
-         * @throws IllegalArgumentException if adaptive window size is not positive
-         */
-        private void validateAdaptiveWindowSize() {
-            if (adaptiveWindowSize != null && adaptiveWindowSize <= 0) {
-                throw new IllegalArgumentException("Adaptive window size must be positive");
-            }
-        }
-
-        /**
-         * Validates the request timeout.
-         * 
-         * @throws IllegalArgumentException if request timeout is not positive
-         */
-        private void validateRequestTimeout() {
-            if (requestTimeoutSeconds != null && requestTimeoutSeconds <= 0) {
-                throw new IllegalArgumentException("Request timeout must be positive");
-            }
-        }
-
-        /**
-         * Validates the background refresh percentage.
-         * 
-         * @throws IllegalArgumentException if background refresh percentage is not between 1 and 100
-         */
-        private void validateBackgroundRefreshPercentage() {
-            if (backgroundRefreshPercentage != null && (backgroundRefreshPercentage <= 0 || backgroundRefreshPercentage > 100)) {
-                throw new IllegalArgumentException("Background refresh percentage must be between 1 and 100");
-            }
-        }
-
-        /**
-         * Creates a secure SSL context.
-         * 
-         * @return a secure SSL context
-         */
-        private SSLContext createSecureSSLContext() {
-            // Create default SecureSSLContextProvider instance if none is provided
-            SecureSSLContextProvider actualSecureSSLContextProvider = secureSSLContextProvider != null ?
-                    secureSSLContextProvider : new SecureSSLContextProvider();
-
-            // Get or create a secure SSLContext using the SecureSSLContextProvider configuration
-            return actualSecureSSLContextProvider.getOrCreateSecureSSLContext(sslContext);
-        }
-
-        /**
-         * Applies default values to parameters if not specified.
-         * 
-         * @return an array of actual values in the order: maxCacheSize, adaptiveWindowSize, requestTimeoutSeconds, backgroundRefreshPercentage
-         */
-        private int[] applyDefaultValues() {
-            int actualMaxCacheSize = maxCacheSize != null ? maxCacheSize : DEFAULT_MAX_CACHE_SIZE;
-            int actualAdaptiveWindowSize = adaptiveWindowSize != null ? adaptiveWindowSize : DEFAULT_ADAPTIVE_WINDOW_SIZE;
-            int actualRequestTimeoutSeconds = requestTimeoutSeconds != null ?
-                    requestTimeoutSeconds : DEFAULT_REQUEST_TIMEOUT_SECONDS;
-            int actualBackgroundRefreshPercentage = backgroundRefreshPercentage != null ?
-                    backgroundRefreshPercentage : DEFAULT_BACKGROUND_REFRESH_PERCENTAGE;
-
-            return new int[]{
-                    actualMaxCacheSize,
-                    actualAdaptiveWindowSize,
-                    actualRequestTimeoutSeconds,
-                    actualBackgroundRefreshPercentage
-            };
-        }
     }
 }

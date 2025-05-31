@@ -235,9 +235,9 @@ public final class WellKnownHandler {
          * @param urlString The URL string to add
          * @param wellKnownUrl The well-known URL (used for error messages)
          * @param isRequired Whether this URL is required
-         * @param sslContext The SSL context to use for HTTPS connections
+         * @param baseHandler The base HttpHandler to use for configuration
          */
-        private void addHttpHandlerToMap(Map<String, HttpHandler> map, String key, String urlString, URL wellKnownUrl, boolean isRequired, SSLContext sslContext) {
+        private void addHttpHandlerToMap(Map<String, HttpHandler> map, String key, String urlString, URL wellKnownUrl, boolean isRequired, HttpHandler baseHandler) {
             if (urlString == null) {
                 if (isRequired) {
                     throw new WellKnownDiscoveryException("Required URL field '" + key + "' is missing in discovery document from " + wellKnownUrl);
@@ -246,10 +246,9 @@ public final class WellKnownHandler {
                 return;
             }
             try {
-                HttpHandler handler = HttpHandler.builder()
+                // Use asBuilder() to efficiently reuse the configuration from the base handler
+                HttpHandler handler = baseHandler.asBuilder()
                         .uri(urlString)
-                        .sslContext(sslContext)
-                        .requestTimeoutSeconds(TIMEOUT_SECONDS)
                         .build();
                 map.put(key, handler);
             } catch (IllegalArgumentException e) {
@@ -352,16 +351,8 @@ public final class WellKnownHandler {
                         .build();
 
                 // Send the request and get the response
-                HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
-                        .connectTimeout(Duration.ofSeconds(wellKnownHttpHandler.getRequestTimeoutSeconds()));
-
-                // Only set SSL context if it's not null
-                SSLContext sslContext = wellKnownHttpHandler.getSslContext();
-                if (sslContext != null) {
-                    httpClientBuilder.sslContext(sslContext);
-                }
-
-                HttpClient httpClient = httpClientBuilder.build();
+                // Use the createHttpClient method from HttpHandler which already configures timeout and SSL context
+                HttpClient httpClient = wellKnownHttpHandler.createHttpClient();
                 HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
                 // Parse the response body
@@ -383,16 +374,16 @@ public final class WellKnownHandler {
             String issuerString = getString(discoveryDocument, ISSUER_KEY)
                     .orElseThrow(() -> new WellKnownDiscoveryException("Required field 'issuer' not found in discovery document from " + resolvedUrl));
             validateIssuer(issuerString, resolvedUrl);
-            addHttpHandlerToMap(parsedEndpoints, ISSUER_KEY, issuerString, resolvedUrl, true, wellKnownHttpHandler.getSslContext());
+            addHttpHandlerToMap(parsedEndpoints, ISSUER_KEY, issuerString, resolvedUrl, true, wellKnownHttpHandler);
 
             // JWKS URI (Required)
-            addHttpHandlerToMap(parsedEndpoints, JWKS_URI_KEY, getString(discoveryDocument, JWKS_URI_KEY).orElse(null), resolvedUrl, true, wellKnownHttpHandler.getSslContext());
+            addHttpHandlerToMap(parsedEndpoints, JWKS_URI_KEY, getString(discoveryDocument, JWKS_URI_KEY).orElse(null), resolvedUrl, true, wellKnownHttpHandler);
 
             // Required endpoints
-            addHttpHandlerToMap(parsedEndpoints, AUTHORIZATION_ENDPOINT_KEY, getString(discoveryDocument, AUTHORIZATION_ENDPOINT_KEY).orElse(null), resolvedUrl, true, wellKnownHttpHandler.getSslContext());
-            addHttpHandlerToMap(parsedEndpoints, TOKEN_ENDPOINT_KEY, getString(discoveryDocument, TOKEN_ENDPOINT_KEY).orElse(null), resolvedUrl, true, wellKnownHttpHandler.getSslContext());
+            addHttpHandlerToMap(parsedEndpoints, AUTHORIZATION_ENDPOINT_KEY, getString(discoveryDocument, AUTHORIZATION_ENDPOINT_KEY).orElse(null), resolvedUrl, true, wellKnownHttpHandler);
+            addHttpHandlerToMap(parsedEndpoints, TOKEN_ENDPOINT_KEY, getString(discoveryDocument, TOKEN_ENDPOINT_KEY).orElse(null), resolvedUrl, true, wellKnownHttpHandler);
             // Optional endpoints
-            addHttpHandlerToMap(parsedEndpoints, USERINFO_ENDPOINT_KEY, getString(discoveryDocument, USERINFO_ENDPOINT_KEY).orElse(null), resolvedUrl, false, wellKnownHttpHandler.getSslContext());
+            addHttpHandlerToMap(parsedEndpoints, USERINFO_ENDPOINT_KEY, getString(discoveryDocument, USERINFO_ENDPOINT_KEY).orElse(null), resolvedUrl, false, wellKnownHttpHandler);
 
             // Accessibility check for jwks_uri (optional but recommended)
             if (parsedEndpoints.get(JWKS_URI_KEY) != null) {

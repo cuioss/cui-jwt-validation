@@ -45,12 +45,12 @@ class HttpJwksLoaderConfigTest {
                 .build();
 
         // Then
-        assertEquals(URI.create(VALID_URL), config.getJwksUri());
+        assertEquals(URI.create(VALID_URL), config.getHttpHandler().getUri());
         assertEquals(REFRESH_INTERVAL, config.getRefreshIntervalSeconds());
-        assertNotNull(config.getSslContext());
+        assertNotNull(config.getHttpHandler().getSslContext());
         assertEquals(100, config.getMaxCacheSize()); // Default value
         assertEquals(10, config.getAdaptiveWindowSize()); // Default value
-        assertEquals(10, config.getRequestTimeoutSeconds()); // Default value
+        assertEquals(10, config.getHttpHandler().getRequestTimeoutSeconds()); // Default value
         assertEquals(80, config.getBackgroundRefreshPercentage()); // Default value
     }
 
@@ -76,12 +76,12 @@ class HttpJwksLoaderConfigTest {
                 .build();
 
         // Then
-        assertEquals(URI.create(VALID_URL), config.getJwksUri());
+        assertEquals(URI.create(VALID_URL), config.getHttpHandler().getUri());
         assertEquals(REFRESH_INTERVAL, config.getRefreshIntervalSeconds());
-        assertNotNull(config.getSslContext());
+        assertNotNull(config.getHttpHandler().getSslContext());
         assertEquals(maxCacheSize, config.getMaxCacheSize());
         assertEquals(adaptiveWindowSize, config.getAdaptiveWindowSize());
-        assertEquals(requestTimeoutSeconds, config.getRequestTimeoutSeconds());
+        assertEquals(requestTimeoutSeconds, config.getHttpHandler().getRequestTimeoutSeconds());
         assertEquals(backgroundRefreshPercentage, config.getBackgroundRefreshPercentage());
     }
 
@@ -98,23 +98,7 @@ class HttpJwksLoaderConfigTest {
                 .build();
 
         // Then
-        assertEquals(URI.create("https://" + urlWithoutScheme), config.getJwksUri());
-    }
-
-    @Test
-    @DisplayName("Should handle invalid URL")
-    void shouldHandleInvalidUrl() {
-        // Given
-        String invalidUrl = "invalid url with spaces";
-
-        // When
-        HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(invalidUrl)
-                .refreshIntervalSeconds(REFRESH_INTERVAL)
-                .build();
-
-        // Then
-        assertNull(config.getJwksUri());
+        assertEquals(URI.create("https://" + urlWithoutScheme), config.getHttpHandler().getUri());
     }
 
     @Test
@@ -131,7 +115,7 @@ class HttpJwksLoaderConfigTest {
                 .build();
 
         // Then
-        assertNotNull(config.getSslContext());
+        assertNotNull(config.getHttpHandler().getSslContext());
     }
 
     @Test

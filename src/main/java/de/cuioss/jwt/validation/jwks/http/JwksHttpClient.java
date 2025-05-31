@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.time.Duration;
 import java.util.Optional;
 
 import static de.cuioss.jwt.validation.JWTValidationLogMessages.DEBUG;
@@ -140,12 +139,9 @@ public class JwksHttpClient implements AutoCloseable {
      */
     @SuppressWarnings("try") // HttpClient implements AutoCloseable in Java 17 but doesn't need to be closed
     public static JwksHttpClient create(@NonNull HttpJwksLoaderConfig config) {
-        HttpClient httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(config.getRequestTimeoutSeconds()))
-                .sslContext(config.getSslContext())
-                .build();
+        HttpClient httpClient = config.getHttpHandler().createHttpClient();
 
-        LOGGER.debug(DEBUG.USING_SSL_CONTEXT.format(config.getSslContext().getProtocol()));
+        LOGGER.debug(DEBUG.USING_SSL_CONTEXT.format(config.getHttpHandler().getSslContext()));
 
         return new JwksHttpClient(config, httpClient);
     }
@@ -158,13 +154,16 @@ public class JwksHttpClient implements AutoCloseable {
      */
     @SuppressWarnings("try") // HttpClient implements AutoCloseable in Java 17 but doesn't need to be closed
     public JwksHttpResponse fetchJwksContent(String previousEtag) {
-        // Check if the URI is null (invalid URL)
-        if (config.getJwksUri() == null) {
+        // Get the HttpHandler from the config
+        var httpHandler = config.getHttpHandler();
+
+        // Check if the HttpHandler has a valid URI
+        if (httpHandler.getUri() == null) {
             LOGGER.warn("Cannot fetch JWKS: URI is null (invalid URL)");
             return JwksHttpResponse.empty();
         }
 
-        String uriString = config.getJwksUri().toString();
+        String uriString = httpHandler.getUri().toString();
         LOGGER.debug(DEBUG.RESOLVING_KEY_LOADER.format(uriString));
 
         // Check if the URI is the dummy URI for invalid URLs
@@ -174,9 +173,7 @@ public class JwksHttpClient implements AutoCloseable {
         }
 
         // Build the request with conditional GET if we have an ETag
-        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-                .uri(config.getJwksUri())
-                .timeout(Duration.ofSeconds(config.getRequestTimeoutSeconds()))
+        HttpRequest.Builder requestBuilder = httpHandler.requestBuilder()
                 .header("Accept", "application/json");
 
         if (previousEtag != null && !previousEtag.isEmpty()) {
@@ -201,12 +198,12 @@ public class JwksHttpClient implements AutoCloseable {
             String jwksContent = response.body();
             String etag = response.headers().firstValue("ETag").orElse(null);
 
-            String uri = config.getJwksUri() != null ? config.getJwksUri().toString() : "null";
+            String uri = httpHandler.getUri() != null ? httpHandler.getUri().toString() : "null";
             LOGGER.debug(DEBUG.FETCHED_JWKS.format(uri));
             return JwksHttpResponse.withContent(jwksContent, etag);
 
         } catch (IOException | InterruptedException e) {
-            String uri = config.getJwksUri() != null ? config.getJwksUri().toString() : "null";
+            String uri = httpHandler.getUri() != null ? httpHandler.getUri().toString() : "null";
             LOGGER.warn(e, WARN.FAILED_TO_FETCH_JWKS.format(uri));
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();

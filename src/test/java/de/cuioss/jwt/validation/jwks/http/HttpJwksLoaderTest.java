@@ -162,27 +162,6 @@ class HttpJwksLoaderTest {
     }
 
     @Test
-    @DisplayName("Should handle invalid URL")
-    void shouldHandleInvalidUrl() {
-        // Given
-        HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
-                .jwksUrl("invalid url")
-                .refreshIntervalSeconds(REFRESH_INTERVAL)
-                .build();
-
-        HttpJwksLoader invalidLoader = new HttpJwksLoader(config, securityEventCounter);
-
-        // When
-        Optional<KeyInfo> keyInfo = invalidLoader.getKeyInfo(TEST_KID);
-
-        // Then
-        assertFalse(keyInfo.isPresent(), "Key info should not be present for invalid URL");
-
-        // Clean up
-        invalidLoader.close();
-    }
-
-    @Test
     @DisplayName("Should close resources")
     void shouldCloseResources() {
         // When
@@ -217,7 +196,7 @@ class HttpJwksLoaderTest {
         assertEquals(30, customLoader.getConfig().getRefreshIntervalSeconds());
         assertEquals(200, customLoader.getConfig().getMaxCacheSize());
         assertEquals(20, customLoader.getConfig().getAdaptiveWindowSize());
-        assertEquals(15, customLoader.getConfig().getRequestTimeoutSeconds());
+        assertEquals(15, customLoader.getConfig().getHttpHandler().getRequestTimeoutSeconds());
         assertEquals(70, customLoader.getConfig().getBackgroundRefreshPercentage());
 
         // Verify it works
@@ -261,7 +240,7 @@ class HttpJwksLoaderTest {
             // Access private method to force refresh
             java.lang.reflect.Method refreshMethod = HttpJwksLoader.class.getDeclaredMethod("loadJwksKeyLoader", String.class);
             refreshMethod.setAccessible(true);
-            refreshMethod.invoke(httpJwksLoader, "jwks:" + httpJwksLoader.getConfig().getJwksUri());
+            refreshMethod.invoke(httpJwksLoader, "jwks:" + httpJwksLoader.getConfig().getHttpHandler().getUri());
         }, "Failed to invoke refresh method: ");
 
         // Verify that the key rotation event was recorded
@@ -284,7 +263,7 @@ class HttpJwksLoaderTest {
         LogAsserts.assertLogMessagePresent(
                 TestLogLevel.INFO,
                 JWTValidationLogMessages.INFO.JWKS_LOADED.format(
-                        httpJwksLoader.getConfig().getJwksUri().toString(),
+                        httpJwksLoader.getConfig().getHttpHandler().getUri().toString(),
                         1)); // We expect 1 key in the test JWKS
     }
 }

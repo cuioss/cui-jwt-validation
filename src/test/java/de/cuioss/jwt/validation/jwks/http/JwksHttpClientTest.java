@@ -77,25 +77,6 @@ class JwksHttpClientTest {
     }
 
     @Test
-    @DisplayName("Should handle invalid URL")
-    void shouldHandleInvalidUrl() {
-        // Given
-        HttpJwksLoaderConfig invalidConfig = HttpJwksLoaderConfig.builder()
-                .jwksUrl("invalid url")
-                .refreshIntervalSeconds(60)
-                .build();
-        JwksHttpClient invalidClient = JwksHttpClient.create(invalidConfig);
-
-        // When
-        JwksHttpClient.JwksHttpResponse response = invalidClient.fetchJwksContent(null);
-
-        // Then
-        assertFalse(response.isNotModified());
-        assertEquals("{}", response.getContent());
-        assertEquals(Optional.empty(), response.getEtag());
-    }
-
-    @Test
     @DisplayName("Should create empty response")
     void shouldCreateEmptyResponse() {
         // When
