@@ -244,12 +244,12 @@ public class TokenKeycloakITTest extends KeycloakITBase {
 
             // 5. Obtain a token from Keycloak
             String rawToken = requestToken(parameterForScopedToken(SCOPES), TokenTypes.ACCESS);
-            LOGGER.info("[DEBUG_LOG] Raw token: {}", rawToken);
+            LOGGER.debug(() -> "Raw token: " + rawToken);
 
             // 6. Validate the token
-            LOGGER.info("[DEBUG_LOG] About to validate token with validator: {}", validator);
+            LOGGER.debug(() -> "About to validate token with validator: " + validator);
             var accessToken = validator.createAccessToken(rawToken);
-            LOGGER.info("[DEBUG_LOG] Token validated successfully");
+            LOGGER.debug(() -> "Token validated successfully");
 
             // 7. Assertions
             assertNotNull(accessToken, "Validated token should not be null");
@@ -257,7 +257,7 @@ public class TokenKeycloakITTest extends KeycloakITBase {
             assertEquals(keycloakIssuerUrl.toString(), accessToken.getIssuer(), "Issuer should match discovery"); // getIssuer() returns String
 
             // Log the actual audience for debugging
-            LOGGER.info("[DEBUG_LOG] Actual audience in token: {}", accessToken.getAudience().orElse(List.of()));
+            LOGGER.debug(() -> "Actual audience in token: " + accessToken.getAudience().orElse(List.of()));
 
             // Check if the audience is present (not empty)
             assertTrue(accessToken.getAudience().map(list -> !list.isEmpty()).orElse(false), "Audience should be present");

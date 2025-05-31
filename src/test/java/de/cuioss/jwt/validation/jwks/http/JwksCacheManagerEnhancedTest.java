@@ -22,6 +22,7 @@ import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import de.cuioss.tools.concurrent.ConcurrentTools;
+import de.cuioss.tools.logging.CuiLogger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -45,6 +46,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Enhanced tests for JwksCacheManager")
 class JwksCacheManagerEnhancedTest {
 
+    private static final CuiLogger LOGGER = new CuiLogger(JwksCacheManagerEnhancedTest.class);
     private static final String JWKS_CONTENT = InMemoryJWKSFactory.createDefaultJwks();
     private static final String JWKS_URI = "https://example.com/.well-known/jwks.json";
     private static final String DIFFERENT_JWKS_CONTENT = InMemoryKeyMaterialHandler.createJwks(
@@ -138,7 +140,7 @@ class JwksCacheManagerEnhancedTest {
         AtomicInteger adaptiveLoaderCallCount = new AtomicInteger(0);
         Function<String, JWKSKeyLoader> adaptiveCacheLoader = key -> {
             adaptiveLoaderCallCount.incrementAndGet();
-            System.out.println("[DEBUG_LOG] Loader called, count: " + adaptiveLoaderCallCount.get());
+            LOGGER.debug(() -> "Loader called, count: " + adaptiveLoaderCallCount.get());
             return JWKSKeyLoader.builder()
                     .originalString(currentJwksContent)
                     .etag("\"test-etag\"")
@@ -177,8 +179,8 @@ class JwksCacheManagerEnhancedTest {
         int initialCallCount = adaptiveLoaderCallCount.get();
         assertEquals(1, initialCallCount, "Initial loader call count should be 1");
 
-        System.out.println("[DEBUG_LOG] Initial loader call count: " + initialCallCount);
-        System.out.println("[DEBUG_LOG] Access count: " + accessCount.get() + ", Hit count: " + hitCount.get());
+        LOGGER.debug(() -> "Initial loader call count: " + initialCallCount);
+        LOGGER.debug(() -> "Access count: " + accessCount.get() + ", Hit count: " + hitCount.get());
 
         // Access the cache multiple times to trigger adaptive caching
         for (int i = 0; i < ADAPTIVE_WINDOW_SIZE; i++) {
@@ -186,7 +188,7 @@ class JwksCacheManagerEnhancedTest {
             assertNotNull(loader);
         }
 
-        System.out.println("[DEBUG_LOG] After multiple accesses - Access count: " + accessCount.get() + ", Hit count: " + hitCount.get());
+        LOGGER.debug(() -> "After multiple accesses - Access count: " + accessCount.get() + ", Hit count: " + hitCount.get());
 
         // Manually force the cache to expire the entry
         LoadingCache<String, JWKSKeyLoader> jwksCache =
@@ -204,7 +206,7 @@ class JwksCacheManagerEnhancedTest {
         assertTrue(adaptiveLoaderCallCount.get() > initialCallCount,
                 "Loader should be called again after cache invalidation");
 
-        System.out.println("[DEBUG_LOG] Final loader call count: " + adaptiveLoaderCallCount.get());
+        LOGGER.debug(() -> "Final loader call count: " + adaptiveLoaderCallCount.get());
     }
 
     @Test
