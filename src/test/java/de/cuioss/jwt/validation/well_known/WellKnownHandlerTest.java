@@ -116,24 +116,24 @@ class WellKnownHandlerTest {
 
             // Verify endpoints
             assertEquals(baseUrl.toString() + "/oidc/jwks.json",
-                    handler.getJwksUri().toString(),
+                    handler.getJwksUri().getUrl().toString(),
                     "JWKS URI should match");
 
             assertEquals(baseUrl.toString(),
-                    handler.getIssuer().toString(),
+                    handler.getIssuer().getUrl().toString(),
                     "Issuer should match");
 
             assertEquals(baseUrl.toString() + "/protocol/openid-connect/auth",
-                    handler.getAuthorizationEndpoint().toString(),
+                    handler.getAuthorizationEndpoint().getUrl().toString(),
                     "Authorization endpoint should match");
 
             assertEquals(baseUrl.toString() + "/protocol/openid-connect/token",
-                    handler.getTokenEndpoint().toString(),
+                    handler.getTokenEndpoint().getUrl().toString(),
                     "Token endpoint should match");
 
             assertTrue(handler.getUserinfoEndpoint().isPresent(), "Userinfo endpoint should be present");
             assertEquals(baseUrl.toString() + "/protocol/openid-connect/userinfo",
-                    handler.getUserinfoEndpoint().get().toString(),
+                    handler.getUserinfoEndpoint().get().getUrl().toString(),
                     "Userinfo endpoint should match");
 
             // Verify the dispatcher was called
@@ -159,46 +159,52 @@ class WellKnownHandlerTest {
         }
 
         @Test
-        @DisplayName("Should throw exception for null or empty URL")
+        @DisplayName("Should throw exception for null or empty URL during build")
         void shouldThrowExceptionForNullOrEmptyUrl() {
             // Test with null URL
             var builder = WellKnownHandler.builder().wellKnownUrl((String) null);
             WellKnownDiscoveryException nullException = assertThrows(
                     WellKnownDiscoveryException.class, builder::build,
-                    "Should throw exception for null URL"
+                    "Should throw exception for null URL during build"
             );
-            assertTrue(nullException.getMessage().contains("Well-known URL string must not be null or empty"),
-                    "Exception message should mention that URL must not be null or empty");
+            assertTrue(nullException.getCause() instanceof IllegalArgumentException,
+                    "Cause should be IllegalArgumentException");
+            assertTrue(nullException.getCause().getMessage().contains("URI must not be null or empty"),
+                    "Exception cause message should mention that URI must not be null or empty");
 
             // Test with empty URL
             builder = WellKnownHandler.builder().wellKnownUrl("");
             WellKnownDiscoveryException emptyException = assertThrows(
                     WellKnownDiscoveryException.class, builder::build,
-                    "Should throw exception for empty URL"
+                    "Should throw exception for empty URL during build"
             );
-            assertTrue(emptyException.getMessage().contains("Well-known URL string must not be null or empty"),
-                    "Exception message should mention that URL must not be null or empty");
+            assertTrue(emptyException.getCause() instanceof IllegalArgumentException,
+                    "Cause should be IllegalArgumentException");
+            assertTrue(emptyException.getCause().getMessage().contains("URI must not be null or empty"),
+                    "Exception cause message should mention that URI must not be null or empty");
 
             // Test with blank URL
             builder = WellKnownHandler.builder().wellKnownUrl("   ");
             WellKnownDiscoveryException blankException = assertThrows(
                     WellKnownDiscoveryException.class, builder::build,
-                    "Should throw exception for blank URL"
+                    "Should throw exception for blank URL during build"
             );
-            assertTrue(blankException.getMessage().contains("Well-known URL string must not be null or empty"),
-                    "Exception message should mention that URL must not be null or empty");
+            assertTrue(blankException.getCause() instanceof IllegalArgumentException,
+                    "Cause should be IllegalArgumentException");
+            assertTrue(blankException.getCause().getMessage().contains("URI must not be null or empty"),
+                    "Exception cause message should mention that URI must not be null or empty");
         }
 
         @Test
-        @DisplayName("Should throw exception for malformed URL")
+        @DisplayName("Should throw exception for malformed URL during build")
         void shouldThrowExceptionForMalformedUrl() {
             var builder = WellKnownHandler.builder().wellKnownUrl("not-a-url");
             WellKnownDiscoveryException exception = assertThrows(
                     WellKnownDiscoveryException.class, builder::build,
-                    "Should throw exception for malformed URL"
+                    "Should throw exception for malformed URL during build"
             );
-            assertTrue(exception.getMessage().contains("Invalid .well-known URL"),
-                    "Exception message should mention invalid URL");
+            assertTrue(exception.getMessage().contains("while fetching or reading from"),
+                    "Exception message should mention fetching or reading error");
         }
 
         @Test

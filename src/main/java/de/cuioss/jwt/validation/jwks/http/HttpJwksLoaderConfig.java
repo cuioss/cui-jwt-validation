@@ -19,6 +19,7 @@ import de.cuioss.jwt.validation.JWTValidationLogMessages.DEBUG;
 import de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
 import de.cuioss.jwt.validation.security.SecureSSLContextProvider;
 import de.cuioss.jwt.validation.well_known.WellKnownHandler;
+import de.cuioss.tools.http.HttpHandler;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.Builder;
 import lombok.NonNull;
@@ -73,6 +74,12 @@ public class HttpJwksLoaderConfig {
      */
     @NonNull
     private final SSLContext sslContext;
+
+    /**
+     * The HttpHandler used for HTTP requests.
+     */
+    @NonNull
+    private final HttpHandler httpHandler;
 
     /**
      * The maximum number of entries in the cache.
@@ -168,6 +175,15 @@ public class HttpJwksLoaderConfig {
     }
 
     /**
+     * Gets the HttpHandler used for HTTP requests.
+     *
+     * @return the HttpHandler
+     */
+    public @NonNull HttpHandler getHttpHandler() {
+        return httpHandler;
+    }
+
+    /**
      * Gets the ScheduledExecutorService for background refresh tasks.
      * If the ScheduledExecutorService is null and the refresh interval is positive,
      * a new one will be created.
@@ -250,13 +266,9 @@ public class HttpJwksLoaderConfig {
          *                                  contain a {@code jwks_uri}.
          */
         public HttpJwksLoaderConfigBuilder wellKnown(@NonNull WellKnownHandler wellKnownHandler) {
-            URL extractedJwksUrl = wellKnownHandler.getJwksUri();
-            try {
-                this.jwksUri = extractedJwksUrl.toURI();
-                this.jwksUrl = null; // Clear jwksUrl to ensure this URI takes precedence
-            } catch (URISyntaxException e) {
-                throw new IllegalArgumentException("Invalid jwks_uri syntax from WellKnownHandler: " + extractedJwksUrl, e);
-            }
+            HttpHandler extractedJwksHandler = wellKnownHandler.getJwksUri();
+            this.jwksUri = extractedJwksHandler.getUri();
+            this.jwksUrl = null; // Clear jwksUrl to ensure this URI takes precedence
             return this;
         }
 
@@ -308,10 +320,29 @@ public class HttpJwksLoaderConfig {
 
             int[] actualValues = applyDefaultValues();
 
+            // Create HttpHandler for the JWKS URI
+            HttpHandler jwksHttpHandler = null;
+            if (jwksUri != null) {
+                jwksHttpHandler = HttpHandler.builder()
+                        .uri(jwksUri)
+                        .sslContext(secureContext)
+                        .requestTimeoutSeconds(actualValues[2]) // requestTimeoutSeconds
+                        .build();
+            } else {
+                // If jwksUri is null, create a dummy HttpHandler that will fail gracefully
+                LOGGER.warn(WARN.INVALID_JWKS_URI::format);
+                jwksHttpHandler = HttpHandler.builder()
+                        .uri("https://invalid.uri")
+                        .sslContext(secureContext)
+                        .requestTimeoutSeconds(actualValues[2]) // requestTimeoutSeconds
+                        .build();
+            }
+
             return new HttpJwksLoaderConfig(
                     jwksUri,
                     refreshIntervalSeconds,
                     secureContext,
+                    jwksHttpHandler,
                     actualValues[0], // maxCacheSize
                     actualValues[1], // adaptiveWindowSize
                     actualValues[2], // requestTimeoutSeconds

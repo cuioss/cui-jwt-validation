@@ -64,10 +64,10 @@ import java.time.Duration;
  * </pre>
  * </p>
  */
-@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 @EqualsAndHashCode
 @ToString
 @Builder(builderClassName = "HttpHandlerBuilder", access = AccessLevel.PRIVATE)
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public final class HttpHandler {
 
     private static final CuiLogger LOGGER = new CuiLogger(HttpHandler.class);
@@ -78,6 +78,12 @@ public final class HttpHandler {
      */
     @Getter
     private final URI uri;
+
+    /**
+     * The URL representation of the URI.
+     */
+    @Getter
+    private final URL url;
 
     /**
      * The SSL context to be used for HTTPS connections.
@@ -91,20 +97,6 @@ public final class HttpHandler {
     @Getter
     private final int requestTimeoutSeconds;
 
-
-    /**
-     * Returns the URL representation of the URI.
-     * 
-     * @return The URL representation of the URI
-     * @throws IllegalStateException if the URI cannot be converted to a URL
-     */
-    public URL getUrl() {
-        try {
-            return uri.toURL();
-        } catch (MalformedURLException e) {
-            throw new IllegalStateException("Failed to convert URI to URL: " + uri, e);
-        }
-    }
 
     /**
      * Returns a new builder for creating a {@link HttpHandler} instance.
@@ -125,6 +117,21 @@ public final class HttpHandler {
         return HttpRequest.newBuilder()
                 .uri(uri)
                 .timeout(Duration.ofSeconds(requestTimeoutSeconds));
+    }
+
+    /**
+     * Creates a pre-configured {@link HttpHandlerBuilder} with the same configuration as this handler.
+     * The builder is configured with the timeout from this handler.
+     * 
+     * <p>This method allows creating a new builder based on the current handler's configuration,
+     * which can be used to create a new handler with modified attributes.</p>
+     *
+     * @return A pre-configured {@link HttpHandlerBuilder} with the same timeout as this handler
+     */
+    public HttpHandlerBuilder asBuilder() {
+        return builder()
+                .requestTimeoutSeconds(requestTimeoutSeconds)
+                .sslContext(sslContext);
     }
 
     /**
@@ -179,11 +186,12 @@ public final class HttpHandler {
 
     /**
      * Creates an {@link HttpClient} with the configured SSL context and timeout.
+     * This method can be used to get a pre-configured HttpClient for making HTTP requests.
      *
-     * @return A configured {@link HttpClient}
+     * @return A configured {@link HttpClient} with the SSL context and timeout
      * @throws IllegalStateException if the URI uses HTTPS but no SSL context is available
      */
-    private HttpClient createHttpClient() {
+    public HttpClient createHttpClient() {
         HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(requestTimeoutSeconds));
 
@@ -331,10 +339,10 @@ public final class HttpHandler {
                 throw new IllegalArgumentException("Request timeout must be positive");
             }
 
-            // Validate that the URI can be converted to a URL
+            // Convert the URI to a URL
+            URL verifiedUrl;
             try {
-                //noinspection ResultOfMethodCallIgnored
-                uri.toURL();
+                verifiedUrl = uri.toURL();
             } catch (MalformedURLException e) {
                 throw new IllegalStateException("Failed to convert URI to URL: " + uri, e);
             }
@@ -347,7 +355,7 @@ public final class HttpHandler {
                 secureContext = actualSecureSSLContextProvider.getOrCreateSecureSSLContext(sslContext);
             }
 
-            return new HttpHandler(uri, secureContext, actualRequestTimeoutSeconds);
+            return new HttpHandler(uri, verifiedUrl, secureContext, actualRequestTimeoutSeconds);
         }
 
         /**

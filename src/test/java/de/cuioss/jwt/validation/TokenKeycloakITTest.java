@@ -225,7 +225,7 @@ public class TokenKeycloakITTest extends KeycloakITBase {
                     .build();
             assertNotNull(wellKnownHandler.getJwksUri(), "JWKS URI should be present in well-known config");
             assertNotNull(wellKnownHandler.getIssuer(), "Issuer should be present in well-known config");
-            URL keycloakIssuerUrl = wellKnownHandler.getIssuer();
+            URL keycloakIssuerUrl = wellKnownHandler.getIssuer().getUrl();
 
             // 3. Configure HttpJwksLoaderConfig using WellKnownHandler
             HttpJwksLoaderConfig jwksConfig = HttpJwksLoaderConfig.builder()

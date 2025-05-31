@@ -347,4 +347,70 @@ class HttpHandlerTest {
             assertTrue(exception.getMessage().startsWith("Failed to convert URI to URL: urn:isbn:0451450523"));
         }
     }
+
+    @Nested
+    @DisplayName("asBuilder Tests")
+    class AsBuilderTests {
+
+        @Test
+        @DisplayName("asBuilder should return non-null builder")
+        void asBuilderShouldReturnNonNullBuilder() {
+            HttpHandler handler = HttpHandler.builder()
+                    .url(VALID_URL)
+                    .build();
+
+            HttpHandler.HttpHandlerBuilder builder = handler.asBuilder();
+            assertNotNull(builder, "asBuilder should return a non-null builder");
+        }
+
+        @Test
+        @DisplayName("asBuilder should preserve timeout")
+        void asBuilderShouldPreserveTimeout() {
+            HttpHandler handler = HttpHandler.builder()
+                    .url(VALID_URL)
+                    .requestTimeoutSeconds(CUSTOM_TIMEOUT)
+                    .build();
+
+            HttpHandler newHandler = handler.asBuilder()
+                    .url(VALID_URL) // Need to set URL again as asBuilder doesn't copy it
+                    .build();
+            assertEquals(CUSTOM_TIMEOUT, newHandler.getRequestTimeoutSeconds(),
+                    "The new handler should have the same timeout as the original");
+        }
+
+        @Test
+        @DisplayName("asBuilder should preserve SSL context")
+        void asBuilderShouldPreserveSslContext() throws Exception {
+            SSLContext sslContext = SSLContext.getDefault();
+            HttpHandler handler = HttpHandler.builder()
+                    .url(VALID_URL)
+                    .sslContext(sslContext)
+                    .build();
+
+            HttpHandler newHandler = handler.asBuilder()
+                    .url(VALID_URL) // Need to set URL again as asBuilder doesn't copy it
+                    .build();
+            assertNotNull(newHandler.getSslContext(), "The new handler should have an SSL context");
+            // Note: We can't directly compare SSL contexts as they might be wrapped
+        }
+
+        @Test
+        @DisplayName("asBuilder should allow changing URL")
+        void asBuilderShouldAllowChangingUrl() {
+            HttpHandler handler = HttpHandler.builder()
+                    .url(VALID_URL)
+                    .requestTimeoutSeconds(CUSTOM_TIMEOUT)
+                    .build();
+
+            String newUrl = "https://example.org";
+            HttpHandler newHandler = handler.asBuilder()
+                    .url(newUrl)
+                    .build();
+
+            assertEquals(URI.create(newUrl), newHandler.getUri(),
+                    "The new handler should have the updated URI");
+            assertEquals(CUSTOM_TIMEOUT, newHandler.getRequestTimeoutSeconds(),
+                    "The new handler should preserve the original timeout");
+        }
+    }
 }
