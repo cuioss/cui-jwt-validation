@@ -15,7 +15,6 @@
  */
 package de.cuioss.tools.http;
 
-import de.cuioss.jwt.validation.security.SecureSSLContextProvider;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
 import lombok.AccessLevel;

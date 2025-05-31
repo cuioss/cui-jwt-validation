@@ -15,7 +15,6 @@
  */
 package de.cuioss.tools.http;
 
-import de.cuioss.jwt.validation.security.SecureSSLContextProvider;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

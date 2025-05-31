@@ -15,8 +15,8 @@
  */
 package de.cuioss.jwt.validation.jwks.http;
 
-import de.cuioss.jwt.validation.security.SecureSSLContextProvider;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
+import de.cuioss.tools.http.SecureSSLContextProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

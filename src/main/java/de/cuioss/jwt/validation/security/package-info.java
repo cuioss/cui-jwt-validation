@@ -25,8 +25,7 @@
  * <ul>
  *   <li>{@link de.cuioss.jwt.validation.security.AlgorithmPreferences} - Manages algorithm preferences for JWT Token signatures</li>
  *   <li>{@link de.cuioss.jwt.validation.security.BouncyCastleProviderSingleton} - Provides consistent cryptographic services</li>
- *   <li>{@link de.cuioss.jwt.validation.security.SecureSSLContextProvider} - Provides secure SSL contexts for HTTPS connections</li>
- *   <li>{@link de.cuioss.jwt.validation.security.SecurityEventCounter} - Tracks security-relevant events for monitoring</li>
+ *    <li>{@link de.cuioss.jwt.validation.security.SecurityEventCounter} - Tracks security-relevant events for monitoring</li>
  * </ul>
  * <p>
  * The classes in this package implement security best practices, including:
@@ -34,7 +33,6 @@
  *   <li>Cryptographic agility - supporting multiple algorithms with preference ordering</li>
  *   <li>Secure defaults - using strong algorithms by default</li>
  *   <li>Explicit rejection of insecure algorithms</li>
- *   <li>Secure TLS configuration for HTTPS connections</li>
  *   <li>Security event monitoring and metrics</li>
  * </ul>
  * <p>
@@ -52,10 +50,10 @@
  * <p>
  * For more details on the security aspects, see the
  * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/security.adoc">Security Specification</a>
- * 
+ *
  * @author Oliver Wolff
- * @since 1.0
  * @see de.cuioss.jwt.validation.pipeline.TokenSignatureValidator
  * @see de.cuioss.jwt.validation.jwks.http.HttpJwksLoader
+ * @since 1.0
  */
 package de.cuioss.jwt.validation.security;
