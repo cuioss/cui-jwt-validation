@@ -48,7 +48,7 @@ class JwksCacheManagerTest {
     @BeforeEach
     void setUp() {
         config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(JWKS_URI)
+                .url(JWKS_URI)
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .build();
 

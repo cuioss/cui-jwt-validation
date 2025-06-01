@@ -133,10 +133,10 @@ class JwksCacheManager {
      * @return the cache key
      */
     String getCacheKey() {
-        if (config.getJwksUri() == null) {
+        if (config.getHttpHandler().getUri() == null) {
             return CACHE_KEY_PREFIX + "invalid-url";
         }
-        return CACHE_KEY_PREFIX + config.getJwksUri();
+        return CACHE_KEY_PREFIX + config.getHttpHandler().getUri();
     }
 
     /**
@@ -168,8 +168,8 @@ class JwksCacheManager {
     // owolff: Regarding the LoadingCache API, The API claims that the method may return null,
     // therefore the null check is not redundant
     JWKSKeyLoader resolve() {
-        // Check if jwksUri is null (invalid URL)
-        if (config.getJwksUri() == null) {
+        // Check if HttpHandler has a valid URI
+        if (config.getHttpHandler().getUri() == null) {
             LOGGER.warn("Cannot resolve JWKSKeyLoader: JWKS URI is null (invalid URL)");
             return JWKSKeyLoader.builder()
                     .originalString(EMPTY_JWKS)
@@ -177,7 +177,7 @@ class JwksCacheManager {
                     .build();
         }
 
-        LOGGER.debug(DEBUG.RESOLVING_KEY_LOADER.format(config.getJwksUri().toString()));
+        LOGGER.debug(DEBUG.RESOLVING_KEY_LOADER.format(config.getHttpHandler().getUri().toString()));
 
         try {
             // If refreshIntervalSeconds is 0, bypass the cache and load directly

@@ -90,13 +90,13 @@ class BackgroundRefreshManager implements AutoCloseable {
                 MINIMUM_REFRESH_SECONDS,
                 config.getRefreshIntervalSeconds() * config.getBackgroundRefreshPercentage() / 100);
 
-        LOGGER.debug("Scheduling background refresh task to run every %d seconds", refreshTimeSeconds);
+        LOGGER.debug("Scheduling background refresh task to run every %s seconds", refreshTimeSeconds);
 
         executorService.scheduleAtFixedRate(() -> {
             try {
                 // Preemptively refresh the cache
                 cacheManager.refresh();
-                LOGGER.debug(DEBUG.REFRESHING_KEYS.format(config.getJwksUri().toString()));
+                LOGGER.debug(DEBUG.REFRESHING_KEYS.format(config.getHttpHandler().getUri().toString()));
             } catch (RuntimeException e) {
                 LOGGER.warn(e, WARN.JWKS_REFRESH_ERROR.format(e.getMessage()));
             }

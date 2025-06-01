@@ -15,14 +15,16 @@
  */
 package de.cuioss.jwt.validation.jwks.http;
 
-import de.cuioss.jwt.validation.security.SecureSSLContextProvider;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
+import de.cuioss.tools.http.SecureSSLContextProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import javax.net.ssl.SSLContext;
 import java.net.URI;
 import java.security.NoSuchAlgorithmException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -40,17 +42,17 @@ class HttpJwksLoaderConfigTest {
     void shouldCreateConfigWithDefaultValues() {
         // Given
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(VALID_URL)
+                .url(VALID_URL)
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .build();
 
         // Then
-        assertEquals(URI.create(VALID_URL), config.getJwksUri());
+        assertEquals(URI.create(VALID_URL), config.getHttpHandler().getUri());
         assertEquals(REFRESH_INTERVAL, config.getRefreshIntervalSeconds());
-        assertNotNull(config.getSslContext());
+        assertNotNull(config.getHttpHandler().getSslContext());
         assertEquals(100, config.getMaxCacheSize()); // Default value
         assertEquals(10, config.getAdaptiveWindowSize()); // Default value
-        assertEquals(10, config.getRequestTimeoutSeconds()); // Default value
+        assertEquals(10, config.getHttpHandler().getRequestTimeoutSeconds()); // Default value
         assertEquals(80, config.getBackgroundRefreshPercentage()); // Default value
     }
 
@@ -66,7 +68,7 @@ class HttpJwksLoaderConfigTest {
 
         // When
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(VALID_URL)
+                .url(VALID_URL)
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .sslContext(sslContext)
                 .maxCacheSize(maxCacheSize)
@@ -76,12 +78,12 @@ class HttpJwksLoaderConfigTest {
                 .build();
 
         // Then
-        assertEquals(URI.create(VALID_URL), config.getJwksUri());
+        assertEquals(URI.create(VALID_URL), config.getHttpHandler().getUri());
         assertEquals(REFRESH_INTERVAL, config.getRefreshIntervalSeconds());
-        assertNotNull(config.getSslContext());
+        assertNotNull(config.getHttpHandler().getSslContext());
         assertEquals(maxCacheSize, config.getMaxCacheSize());
         assertEquals(adaptiveWindowSize, config.getAdaptiveWindowSize());
-        assertEquals(requestTimeoutSeconds, config.getRequestTimeoutSeconds());
+        assertEquals(requestTimeoutSeconds, config.getHttpHandler().getRequestTimeoutSeconds());
         assertEquals(backgroundRefreshPercentage, config.getBackgroundRefreshPercentage());
     }
 
@@ -93,28 +95,12 @@ class HttpJwksLoaderConfigTest {
 
         // When
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(urlWithoutScheme)
+                .url(urlWithoutScheme)
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .build();
 
         // Then
-        assertEquals(URI.create("https://" + urlWithoutScheme), config.getJwksUri());
-    }
-
-    @Test
-    @DisplayName("Should handle invalid URL")
-    void shouldHandleInvalidUrl() {
-        // Given
-        String invalidUrl = "invalid url with spaces";
-
-        // When
-        HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(invalidUrl)
-                .refreshIntervalSeconds(REFRESH_INTERVAL)
-                .build();
-
-        // Then
-        assertNull(config.getJwksUri());
+        assertEquals(URI.create("https://" + urlWithoutScheme), config.getHttpHandler().getUri());
     }
 
     @Test
@@ -125,13 +111,13 @@ class HttpJwksLoaderConfigTest {
 
         // When
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(VALID_URL)
+                .url(VALID_URL)
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .tlsVersions(secureProvider)
                 .build();
 
         // Then
-        assertNotNull(config.getSslContext());
+        assertNotNull(config.getHttpHandler().getSslContext());
     }
 
     @Test
@@ -142,7 +128,7 @@ class HttpJwksLoaderConfigTest {
 
         // When/Then
         assertThrows(IllegalArgumentException.class, () -> HttpJwksLoaderConfig.builder()
-                .jwksUrl(VALID_URL)
+                .url(VALID_URL)
                 .refreshIntervalSeconds(negativeRefreshInterval)
                 .build());
     }
@@ -155,7 +141,7 @@ class HttpJwksLoaderConfigTest {
 
         // When/Then
         assertThrows(IllegalArgumentException.class, () -> HttpJwksLoaderConfig.builder()
-                .jwksUrl(VALID_URL)
+                .url(VALID_URL)
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .maxCacheSize(negativeMaxCacheSize)
                 .build());
@@ -169,7 +155,7 @@ class HttpJwksLoaderConfigTest {
 
         // When/Then
         assertThrows(IllegalArgumentException.class, () -> HttpJwksLoaderConfig.builder()
-                .jwksUrl(VALID_URL)
+                .url(VALID_URL)
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .adaptiveWindowSize(negativeAdaptiveWindowSize)
                 .build());
@@ -183,7 +169,7 @@ class HttpJwksLoaderConfigTest {
 
         // When/Then
         assertThrows(IllegalArgumentException.class, () -> HttpJwksLoaderConfig.builder()
-                .jwksUrl(VALID_URL)
+                .url(VALID_URL)
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .requestTimeoutSeconds(negativeRequestTimeout)
                 .build());
@@ -197,7 +183,7 @@ class HttpJwksLoaderConfigTest {
 
         // When/Then
         assertThrows(IllegalArgumentException.class, () -> HttpJwksLoaderConfig.builder()
-                .jwksUrl(VALID_URL)
+                .url(VALID_URL)
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .backgroundRefreshPercentage(negativePercentage)
                 .build());
@@ -211,7 +197,7 @@ class HttpJwksLoaderConfigTest {
 
         // When/Then
         assertThrows(IllegalArgumentException.class, () -> HttpJwksLoaderConfig.builder()
-                .jwksUrl(VALID_URL)
+                .url(VALID_URL)
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .backgroundRefreshPercentage(zeroPercentage)
                 .build());
@@ -225,7 +211,7 @@ class HttpJwksLoaderConfigTest {
 
         // When/Then
         assertThrows(IllegalArgumentException.class, () -> HttpJwksLoaderConfig.builder()
-                .jwksUrl(VALID_URL)
+                .url(VALID_URL)
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .backgroundRefreshPercentage(tooHighPercentage)
                 .build());
@@ -238,5 +224,54 @@ class HttpJwksLoaderConfigTest {
         assertThrows(IllegalArgumentException.class, () -> HttpJwksLoaderConfig.builder()
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .build());
+    }
+
+    @Test
+    @DisplayName("Should use custom ScheduledExecutorService")
+    void shouldUseCustomScheduledExecutorService() {
+        // Given
+        ScheduledExecutorService customExecutorService = Executors.newScheduledThreadPool(2);
+
+        // When
+        HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
+                .url(VALID_URL)
+                .refreshIntervalSeconds(REFRESH_INTERVAL)
+                .scheduledExecutorService(customExecutorService)
+                .build();
+
+        // Then
+        assertSame(customExecutorService, config.getScheduledExecutorService(),
+                "Custom executor service should be used");
+
+        // Clean up
+        customExecutorService.shutdown();
+    }
+
+    @Test
+    @DisplayName("Should create default ScheduledExecutorService when refresh interval is positive")
+    void shouldCreateDefaultScheduledExecutorServiceWhenRefreshIntervalPositive() {
+        // When
+        HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
+                .url(VALID_URL)
+                .refreshIntervalSeconds(REFRESH_INTERVAL) // Positive refresh interval
+                .build();
+
+        // Then
+        assertNotNull(config.getScheduledExecutorService(),
+                "Default executor service should be created for positive refresh interval");
+    }
+
+    @Test
+    @DisplayName("Should not create ScheduledExecutorService when refresh interval is zero")
+    void shouldNotCreateScheduledExecutorServiceWhenRefreshIntervalZero() {
+        // When
+        HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
+                .url(VALID_URL)
+                .refreshIntervalSeconds(0) // Zero refresh interval
+                .build();
+
+        // Then
+        assertNull(config.getScheduledExecutorService(),
+                "No executor service should be created for zero refresh interval");
     }
 }

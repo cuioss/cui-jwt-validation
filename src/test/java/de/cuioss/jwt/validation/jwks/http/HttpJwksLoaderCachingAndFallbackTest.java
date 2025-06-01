@@ -63,7 +63,7 @@ class HttpJwksLoaderCachingAndFallbackTest {
         SecurityEventCounter securityEventCounter = new SecurityEventCounter();
 
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(jwksEndpoint)
+                .url(jwksEndpoint)
                 .refreshIntervalSeconds(REFRESH_INTERVAL_SECONDS)
                 .build();
 

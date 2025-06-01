@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.validation.jwks.http;
 
+import de.cuioss.tools.http.HttpStatusFamily;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.Getter;
 import lombok.NonNull;
@@ -24,7 +25,6 @@ import java.io.IOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.time.Duration;
 import java.util.Optional;
 
 import static de.cuioss.jwt.validation.JWTValidationLogMessages.DEBUG;
@@ -40,16 +40,17 @@ import static de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
  *   <li>Handling HTTP 304 "Not Modified" responses</li>
  *   <li>Managing ETag headers for conditional requests</li>
  * </ul>
+ * <p>
+ * This class implements {@link AutoCloseable} to properly close the {@link HttpClient}
+ * when it's no longer needed.
  *
  * @author Oliver Wolff
  * @since 1.0
  */
 @RequiredArgsConstructor
-public class JwksHttpClient {
+public class JwksHttpClient implements AutoCloseable {
 
     private static final CuiLogger LOGGER = new CuiLogger(JwksHttpClient.class);
-    private static final int HTTP_OK = 200;
-    private static final int HTTP_NOT_MODIFIED = 304;
     private static final String EMPTY_JWKS = "{}";
 
     @NonNull
@@ -85,7 +86,7 @@ public class JwksHttpClient {
          * Creates a response with content and optional ETag.
          *
          * @param content the JWKS content
-         * @param etag the ETag header value, may be null
+         * @param etag    the ETag header value, may be null
          * @return a response with content
          */
         public static JwksHttpResponse withContent(String content, String etag) {
@@ -135,43 +136,30 @@ public class JwksHttpClient {
      * @param config the configuration
      * @return a new JwksHttpClient
      */
+    @SuppressWarnings("try") // HttpClient implements AutoCloseable in Java 17 but doesn't need to be closed
     public static JwksHttpClient create(@NonNull HttpJwksLoaderConfig config) {
-        HttpClient httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(config.getRequestTimeoutSeconds()))
-                .sslContext(config.getSslContext())
-                .build();
-
-        LOGGER.debug(DEBUG.USING_SSL_CONTEXT.format(config.getSslContext().getProtocol()));
-
+        HttpClient httpClient = config.getHttpHandler().createHttpClient();
+        LOGGER.debug("Configuring JwksHttpClient for %s", config.getHttpHandler().getUrl().toString());
         return new JwksHttpClient(config, httpClient);
     }
 
     /**
      * Fetches JWKS content from the configured endpoint.
      *
-     * @param previousEtag the ETag from a previous response, may be null
+     * @param previousEtag the ETag from a previous response may be null
      * @return the response containing JWKS content or not modified indication
      */
+    @SuppressWarnings("try") // HttpClient implements AutoCloseable in Java 17 but doesn't need to be closed
     public JwksHttpResponse fetchJwksContent(String previousEtag) {
-        // Check if the URI is null (invalid URL)
-        if (config.getJwksUri() == null) {
-            LOGGER.warn("Cannot fetch JWKS: URI is null (invalid URL)");
-            return JwksHttpResponse.empty();
-        }
+        // Get the HttpHandler from the config
+        var httpHandler = config.getHttpHandler();
 
-        String uriString = config.getJwksUri().toString();
+        // According to HttpHandler contract, URI is never null after build
+        String uriString = httpHandler.getUri().toString();
         LOGGER.debug(DEBUG.RESOLVING_KEY_LOADER.format(uriString));
 
-        // Check if the URI is the dummy URI for invalid URLs
-        if ("http://invalid-url".equals(uriString)) {
-            LOGGER.warn(WARN.FAILED_TO_FETCH_JWKS.format(uriString));
-            return JwksHttpResponse.empty();
-        }
-
         // Build the request with conditional GET if we have an ETag
-        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-                .uri(config.getJwksUri())
-                .timeout(Duration.ofSeconds(config.getRequestTimeoutSeconds()))
+        HttpRequest.Builder requestBuilder = httpHandler.requestBuilder()
                 .header("Accept", "application/json");
 
         if (previousEtag != null && !previousEtag.isEmpty()) {
@@ -184,11 +172,16 @@ public class JwksHttpClient {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
             // Handle different response status codes
-            if (response.statusCode() == HTTP_NOT_MODIFIED) {
+            int statusCode = response.statusCode();
+            if (statusCode == 304) { // HTTP 304 Not Modified
                 LOGGER.debug(DEBUG.RECEIVED_304_NOT_MODIFIED::format);
                 return JwksHttpResponse.notModified();
-            } else if (response.statusCode() != HTTP_OK) {
-                LOGGER.warn(WARN.JWKS_FETCH_FAILED.format(response.statusCode()));
+            }
+
+            // Check response status using HttpStatusFamily
+            HttpStatusFamily statusFamily = HttpStatusFamily.fromStatusCode(statusCode);
+            if (statusFamily != HttpStatusFamily.SUCCESS) {
+                LOGGER.warn(WARN.JWKS_FETCH_FAILED.format(statusCode));
                 return JwksHttpResponse.empty();
             }
 
@@ -196,17 +189,30 @@ public class JwksHttpClient {
             String jwksContent = response.body();
             String etag = response.headers().firstValue("ETag").orElse(null);
 
-            String uri = config.getJwksUri() != null ? config.getJwksUri().toString() : "null";
-            LOGGER.debug(DEBUG.FETCHED_JWKS.format(uri));
+            LOGGER.debug(DEBUG.FETCHED_JWKS.format(uriString));
             return JwksHttpResponse.withContent(jwksContent, etag);
 
         } catch (IOException | InterruptedException e) {
-            String uri = config.getJwksUri() != null ? config.getJwksUri().toString() : "null";
-            LOGGER.warn(e, WARN.FAILED_TO_FETCH_JWKS.format(uri));
+            LOGGER.warn(e, WARN.FAILED_TO_FETCH_JWKS.format(uriString));
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             }
             return JwksHttpResponse.empty();
         }
+    }
+
+    /**
+     * Closes this resource, relinquishing any underlying resources.
+     * This method is invoked automatically on objects managed by the
+     * try-with-resources statement.
+     *
+     * @throws Exception if this resource cannot be closed
+     */
+    @Override
+    public void close() throws Exception {
+        // HttpClient doesn't have a close method in Java 11, but we implement
+        // AutoCloseable to allow for future versions that might require cleanup
+        // or to support try-with-resources pattern
+        LOGGER.debug("Closing JwksHttpClient");
     }
 }

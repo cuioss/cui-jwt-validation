@@ -48,7 +48,7 @@ class JwksHttpClientTest {
         moduleDispatcher.setCallCounter(0);
 
         config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(jwksEndpoint)
+                .url(jwksEndpoint)
                 .refreshIntervalSeconds(60)
                 .build();
 
@@ -74,25 +74,6 @@ class JwksHttpClientTest {
         assertNotNull(response.getContent());
         assertTrue(response.getContent().contains("keys"));
         assertEquals(1, moduleDispatcher.getCallCounter());
-    }
-
-    @Test
-    @DisplayName("Should handle invalid URL")
-    void shouldHandleInvalidUrl() {
-        // Given
-        HttpJwksLoaderConfig invalidConfig = HttpJwksLoaderConfig.builder()
-                .jwksUrl("invalid url")
-                .refreshIntervalSeconds(60)
-                .build();
-        JwksHttpClient invalidClient = JwksHttpClient.create(invalidConfig);
-
-        // When
-        JwksHttpClient.JwksHttpResponse response = invalidClient.fetchJwksContent(null);
-
-        // Then
-        assertFalse(response.isNotModified());
-        assertEquals("{}", response.getContent());
-        assertEquals(Optional.empty(), response.getEtag());
     }
 
     @Test

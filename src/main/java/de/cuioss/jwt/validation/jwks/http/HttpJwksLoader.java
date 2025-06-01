@@ -84,8 +84,8 @@ public class HttpJwksLoader implements JwksLoader, AutoCloseable {
         this.cacheManager = new JwksCacheManager(config, this::loadJwksKeyLoader, securityEventCounter);
         this.backgroundRefreshManager = new BackgroundRefreshManager(config, cacheManager);
 
-        // Check if jwksUri is null (invalid URL)
-        if (config.getJwksUri() == null) {
+        // Check if HttpHandler has a valid URI
+        if (config.getHttpHandler().getUri() == null) {
             LOGGER.warn("JWKS URI is null. This loader will return empty results for all key requests.");
             return;
         }
@@ -94,7 +94,7 @@ public class HttpJwksLoader implements JwksLoader, AutoCloseable {
         cacheManager.resolve();
 
         LOGGER.debug(DEBUG.INITIALIZED_JWKS_LOADER.format(
-                config.getJwksUri().toString(), config.getRefreshIntervalSeconds()));
+                config.getHttpHandler().getUri().toString(), config.getRefreshIntervalSeconds()));
     }
 
     /**
@@ -107,8 +107,8 @@ public class HttpJwksLoader implements JwksLoader, AutoCloseable {
     private JWKSKeyLoader loadJwksKeyLoader(String cacheKey) {
         LOGGER.debug("Loading JWKS for key: %s", cacheKey);
 
-        // Check if jwksUri is null (invalid URL)
-        if (config.getJwksUri() == null) {
+        // Check if HttpHandler has a valid URI
+        if (config.getHttpHandler().getUri() == null) {
             LOGGER.warn("Cannot load JWKS: URI is null (invalid URL)");
             securityEventCounter.increment(SecurityEventCounter.EventType.JWKS_FETCH_FAILED);
             return JWKSKeyLoader.builder()
@@ -141,7 +141,7 @@ public class HttpJwksLoader implements JwksLoader, AutoCloseable {
 
             // Log successful loading and parsing of JWKS
             LOGGER.info(JWTValidationLogMessages.INFO.JWKS_LOADED.format(
-                    config.getJwksUri().toString(),
+                    config.getHttpHandler().getUri().toString(),
                     result.keyLoader().keySet().size()));
 
             return result.keyLoader();

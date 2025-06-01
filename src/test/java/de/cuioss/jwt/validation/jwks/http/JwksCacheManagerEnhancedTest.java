@@ -22,6 +22,7 @@ import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import de.cuioss.tools.concurrent.ConcurrentTools;
+import de.cuioss.tools.logging.CuiLogger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -45,6 +46,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Enhanced tests for JwksCacheManager")
 class JwksCacheManagerEnhancedTest {
 
+    private static final CuiLogger LOGGER = new CuiLogger(JwksCacheManagerEnhancedTest.class);
     private static final String JWKS_CONTENT = InMemoryJWKSFactory.createDefaultJwks();
     private static final String JWKS_URI = "https://example.com/.well-known/jwks.json";
     private static final String DIFFERENT_JWKS_CONTENT = InMemoryKeyMaterialHandler.createJwks(
@@ -61,7 +63,7 @@ class JwksCacheManagerEnhancedTest {
     @BeforeEach
     void setUp() {
         config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(JWKS_URI)
+                .url(JWKS_URI)
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .adaptiveWindowSize(ADAPTIVE_WINDOW_SIZE)
                 .build();
@@ -91,7 +93,6 @@ class JwksCacheManagerEnhancedTest {
         // Create a new cache manager with a fresh loader call count
         AtomicInteger rotationLoaderCallCount = new AtomicInteger(0);
         String initialContent = JWKS_CONTENT;
-        String rotatedContent = DIFFERENT_JWKS_CONTENT;
 
         // Create a cache manager with the initial content
         JwksCacheManager rotationCacheManager = new JwksCacheManager(config, key -> {
@@ -116,7 +117,7 @@ class JwksCacheManagerEnhancedTest {
         rotationCacheManager.updateCache(initialContent, "\"test-etag\"");
 
         // Now update the cache with the new content that has different keys
-        JwksCacheManager.KeyRotationResult result = rotationCacheManager.updateCache(rotatedContent, "\"new-etag\"");
+        JwksCacheManager.KeyRotationResult result = rotationCacheManager.updateCache(DIFFERENT_JWKS_CONTENT, "\"new-etag\"");
 
         // Verify that key rotation was detected
         assertTrue(result.keyRotationDetected(), "Key rotation should be detected");
@@ -138,7 +139,7 @@ class JwksCacheManagerEnhancedTest {
         AtomicInteger adaptiveLoaderCallCount = new AtomicInteger(0);
         Function<String, JWKSKeyLoader> adaptiveCacheLoader = key -> {
             adaptiveLoaderCallCount.incrementAndGet();
-            System.out.println("[DEBUG_LOG] Loader called, count: " + adaptiveLoaderCallCount.get());
+            LOGGER.debug(() -> "Loader called, count: " + adaptiveLoaderCallCount.get());
             return JWKSKeyLoader.builder()
                     .originalString(currentJwksContent)
                     .etag("\"test-etag\"")
@@ -148,7 +149,7 @@ class JwksCacheManagerEnhancedTest {
 
         // Create a config with a longer refresh interval to make the test more reliable
         HttpJwksLoaderConfig testConfig = HttpJwksLoaderConfig.builder()
-                .jwksUrl(JWKS_URI)
+                .url(JWKS_URI)
                 .refreshIntervalSeconds(1) // Reduced for faster tests
                 .adaptiveWindowSize(ADAPTIVE_WINDOW_SIZE)
                 .build();
@@ -177,8 +178,8 @@ class JwksCacheManagerEnhancedTest {
         int initialCallCount = adaptiveLoaderCallCount.get();
         assertEquals(1, initialCallCount, "Initial loader call count should be 1");
 
-        System.out.println("[DEBUG_LOG] Initial loader call count: " + initialCallCount);
-        System.out.println("[DEBUG_LOG] Access count: " + accessCount.get() + ", Hit count: " + hitCount.get());
+        LOGGER.debug(() -> "Initial loader call count: " + initialCallCount);
+        LOGGER.debug(() -> "Access count: " + accessCount.get() + ", Hit count: " + hitCount.get());
 
         // Access the cache multiple times to trigger adaptive caching
         for (int i = 0; i < ADAPTIVE_WINDOW_SIZE; i++) {
@@ -186,9 +187,10 @@ class JwksCacheManagerEnhancedTest {
             assertNotNull(loader);
         }
 
-        System.out.println("[DEBUG_LOG] After multiple accesses - Access count: " + accessCount.get() + ", Hit count: " + hitCount.get());
+        LOGGER.debug(() -> "After multiple accesses - Access count: " + accessCount.get() + ", Hit count: " + hitCount.get());
 
         // Manually force the cache to expire the entry
+        @SuppressWarnings("unchecked")
         LoadingCache<String, JWKSKeyLoader> jwksCache =
                 (LoadingCache<String, JWKSKeyLoader>) jwksCacheField.get(adaptiveCacheManager);
         jwksCache.invalidate(adaptiveCacheManager.getCacheKey());
@@ -204,7 +206,7 @@ class JwksCacheManagerEnhancedTest {
         assertTrue(adaptiveLoaderCallCount.get() > initialCallCount,
                 "Loader should be called again after cache invalidation");
 
-        System.out.println("[DEBUG_LOG] Final loader call count: " + adaptiveLoaderCallCount.get());
+        LOGGER.debug(() -> "Final loader call count: " + adaptiveLoaderCallCount.get());
     }
 
     @Test
@@ -212,13 +214,13 @@ class JwksCacheManagerEnhancedTest {
     void shouldUseDifferentCacheKeysForDifferentUris() {
         // First config with one URI
         HttpJwksLoaderConfig config1 = HttpJwksLoaderConfig.builder()
-                .jwksUrl("https://example1.com/.well-known/jwks.json")
+                .url("https://example1.com/.well-known/jwks.json")
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .build();
 
         // Second config with a different URI
         HttpJwksLoaderConfig config2 = HttpJwksLoaderConfig.builder()
-                .jwksUrl("https://example2.com/.well-known/jwks.json")
+                .url("https://example2.com/.well-known/jwks.json")
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .build();
 
@@ -258,53 +260,6 @@ class JwksCacheManagerEnhancedTest {
         // Verify that the loaders have different content
         assertNotEquals(loader1.getOriginalString(), loader2.getOriginalString(),
                 "Loaders should have different content");
-    }
-
-    @Test
-    @DisplayName("Should handle null JWKS URI")
-    void shouldHandleNullJwksUri() {
-        // Reset the loader call count
-        loaderCallCount.set(0);
-
-        // Create a config with a valid URL first
-        HttpJwksLoaderConfig nullUriConfig = HttpJwksLoaderConfig.builder()
-                .jwksUrl("https://example.com/jwks.json")
-                .refreshIntervalSeconds(REFRESH_INTERVAL)
-                .build();
-
-        // Force the jwksUri to be null by reflection
-        assertDoesNotThrow(() -> {
-            Field jwksUriField = HttpJwksLoaderConfig.class.getDeclaredField("jwksUri");
-            jwksUriField.setAccessible(true);
-            jwksUriField.set(nullUriConfig, null);
-        }, "Failed to set jwksUri to null: ");
-
-        // Create a cache manager with the null URI config
-        AtomicInteger nullUriLoaderCallCount = new AtomicInteger(0);
-        JwksCacheManager nullUriCacheManager = new JwksCacheManager(nullUriConfig, key -> {
-            nullUriLoaderCallCount.incrementAndGet();
-            System.out.println("[DEBUG_LOG] Null URI loader called");
-            return JWKSKeyLoader.builder()
-                    .originalString("This should not be returned")
-                    .securityEventCounter(securityEventCounter)
-                    .build();
-        }, securityEventCounter);
-
-        // Get the cache key
-        String cacheKey = nullUriCacheManager.getCacheKey();
-
-        // Verify that the cache key is the special key for invalid URLs
-        assertTrue(cacheKey.endsWith("invalid-url"), "Cache key should end with 'invalid-url' for null URI");
-
-        // Resolve from the cache manager
-        JWKSKeyLoader loader = nullUriCacheManager.resolve();
-
-        // The loader should not be called when jwksUri is null
-        // This is the expected behavior according to JwksCacheManager.resolve() implementation
-        assertEquals(0, nullUriLoaderCallCount.get(), "Loader should not be called when jwksUri is null");
-
-        // Verify that the loader has empty content
-        assertEquals("{}", loader.getOriginalString(), "Loader should have empty content for null URI");
     }
 
     @Test

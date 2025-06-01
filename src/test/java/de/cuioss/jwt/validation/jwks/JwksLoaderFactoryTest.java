@@ -63,7 +63,7 @@ class JwksLoaderFactoryTest {
     void shouldCreateHttpLoader() {
         // Given
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
-                .jwksUrl("https://example.com/.well-known/jwks.json")
+                .url("https://example.com/.well-known/jwks.json")
                 .refreshIntervalSeconds(60)
                 .build();
 

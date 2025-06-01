@@ -62,7 +62,7 @@ import java.util.Optional;
  * <pre>
  * // Configure HTTP-based JWKS loading
  * HttpJwksLoaderConfig httpConfig = HttpJwksLoaderConfig.builder()
- *     .jwksUrl("https://example.com/.well-known/jwks.json")
+ *     .url("https://example.com/.well-known/jwks.json")
  *     .refreshIntervalSeconds(60)
  *     .build();
  *
