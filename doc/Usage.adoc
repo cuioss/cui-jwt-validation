@@ -115,7 +115,7 @@ import de.cuioss.jwt.validation.well_known.WellKnownDiscoveryException;
 try {
     String wellKnownUrl = "https://your-idp.com/realms/my-realm/.well-known/openid-configuration";
     WellKnownHandler wellKnownHandler = WellKnownHandler.builder()
-            .wellKnownUrl(wellKnownUrl)
+            .url(wellKnownUrl)
             .build();
 
     // The handler now contains the discovered metadata, e.g.:

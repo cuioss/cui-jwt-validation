@@ -60,7 +60,7 @@ class HttpJwksLoaderTest {
         securityEventCounter = new SecurityEventCounter();
 
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(jwksEndpoint)
+                .url(jwksEndpoint)
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .build();
 
@@ -181,7 +181,7 @@ class HttpJwksLoaderTest {
 
         // When
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(jwksEndpoint)
+                .url(jwksEndpoint)
                 .refreshIntervalSeconds(30)
                 .maxCacheSize(200)
                 .adaptiveWindowSize(20)

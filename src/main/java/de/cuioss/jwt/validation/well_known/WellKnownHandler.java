@@ -66,7 +66,7 @@ import java.util.Optional;
  * Use the builder to create instances of this class:
  * <pre>
  * WellKnownHandler handler = WellKnownHandler.builder()
- *     .wellKnownUrl("https://example.com/.well-known/openid-configuration")
+ *     .url("https://example.com/.well-known/openid-configuration")
  *     .build();
  * </pre>
  * </p>
@@ -131,7 +131,7 @@ public final class WellKnownHandler {
          * @return This builder instance.
          * @throws IllegalArgumentException if the URL string is null, empty, or malformed (during build)
          */
-        public WellKnownHandlerBuilder wellKnownUrl(String wellKnownUrlString) {
+        public WellKnownHandlerBuilder url(String wellKnownUrlString) {
             httpHandlerBuilder.url(wellKnownUrlString);
             return this;
         }
@@ -147,7 +147,7 @@ public final class WellKnownHandler {
          * @return This builder instance.
          * @throws IllegalArgumentException if the URL is null (during build)
          */
-        public WellKnownHandlerBuilder wellKnownUrl(URL wellKnownUrl) {
+        public WellKnownHandlerBuilder url(URL wellKnownUrl) {
             httpHandlerBuilder.url(wellKnownUrl);
             return this;
         }
@@ -268,10 +268,10 @@ public final class WellKnownHandler {
             // "The issuer value returned MUST be identical to the Issuer URL that was
             // used as the prefix to /.well-known/openid-configuration to retrieve the
             // configuration information."
-            // A simple check is to see if the wellKnownUrl starts with the issuer string,
+            // A simple check is to see if the url starts with the issuer string,
             // and that the path component matches.
-            // For example, if issuer is "https://example.com", wellKnownUrl should be "https://example.com/.well-known/openid-configuration"
-            // If issuer is "https://example.com/path", wellKnownUrl should be "https://example.com/path/.well-known/openid-configuration"
+            // For example, if issuer is "https://example.com", url should be "https://example.com/.well-known/openid-configuration"
+            // If issuer is "https://example.com/path", url should be "https://example.com/path/.well-known/openid-configuration"
 
             URL issuerAsUrl;
             try {
@@ -280,16 +280,7 @@ public final class WellKnownHandler {
                 throw new WellKnownDiscoveryException("Issuer URL from discovery document is malformed: " + issuerFromDocument, e);
             }
 
-            String expectedWellKnownPath;
-            if (issuerAsUrl.getPath() == null || issuerAsUrl.getPath().isEmpty() || "/".equals(issuerAsUrl.getPath())) {
-                expectedWellKnownPath = WELL_KNOWN_OPENID_CONFIGURATION;
-            } else {
-                String issuerPath = issuerAsUrl.getPath();
-                if (issuerPath.endsWith("/")) {
-                    issuerPath = issuerPath.substring(0, issuerPath.length() - 1);
-                }
-                expectedWellKnownPath = issuerPath + WELL_KNOWN_OPENID_CONFIGURATION;
-            }
+            String expectedWellKnownPath = determineWellKnownPath(issuerAsUrl);
 
 
             boolean schemeMatch = issuerAsUrl.getProtocol().equals(wellKnownUrl.getProtocol());
@@ -312,6 +303,20 @@ public final class WellKnownHandler {
                 throw new WellKnownDiscoveryException(errorMessage);
             }
             LOGGER.debug(DEBUG.ISSUER_VALIDATION_SUCCESSFUL.format(issuerFromDocument));
+        }
+
+        private String determineWellKnownPath(URL issuerAsUrl) {
+            String expectedWellKnownPath;
+            if (issuerAsUrl.getPath() == null || issuerAsUrl.getPath().isEmpty() || "/".equals(issuerAsUrl.getPath())) {
+                expectedWellKnownPath = WELL_KNOWN_OPENID_CONFIGURATION;
+            } else {
+                String issuerPath = issuerAsUrl.getPath();
+                if (issuerPath.endsWith("/")) {
+                    issuerPath = issuerPath.substring(0, issuerPath.length() - 1);
+                }
+                expectedWellKnownPath = issuerPath + WELL_KNOWN_OPENID_CONFIGURATION;
+            }
+            return expectedWellKnownPath;
         }
 
 

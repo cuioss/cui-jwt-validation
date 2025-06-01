@@ -40,7 +40,7 @@ class HttpJwksLoaderConfigTest {
     void shouldCreateConfigWithDefaultValues() {
         // Given
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(VALID_URL)
+                .url(VALID_URL)
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .build();
 
@@ -66,7 +66,7 @@ class HttpJwksLoaderConfigTest {
 
         // When
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(VALID_URL)
+                .url(VALID_URL)
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .sslContext(sslContext)
                 .maxCacheSize(maxCacheSize)
@@ -93,7 +93,7 @@ class HttpJwksLoaderConfigTest {
 
         // When
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(urlWithoutScheme)
+                .url(urlWithoutScheme)
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .build();
 
@@ -109,7 +109,7 @@ class HttpJwksLoaderConfigTest {
 
         // When
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(VALID_URL)
+                .url(VALID_URL)
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .tlsVersions(secureProvider)
                 .build();
@@ -126,7 +126,7 @@ class HttpJwksLoaderConfigTest {
 
         // When/Then
         assertThrows(IllegalArgumentException.class, () -> HttpJwksLoaderConfig.builder()
-                .jwksUrl(VALID_URL)
+                .url(VALID_URL)
                 .refreshIntervalSeconds(negativeRefreshInterval)
                 .build());
     }
@@ -139,7 +139,7 @@ class HttpJwksLoaderConfigTest {
 
         // When/Then
         assertThrows(IllegalArgumentException.class, () -> HttpJwksLoaderConfig.builder()
-                .jwksUrl(VALID_URL)
+                .url(VALID_URL)
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .maxCacheSize(negativeMaxCacheSize)
                 .build());
@@ -153,7 +153,7 @@ class HttpJwksLoaderConfigTest {
 
         // When/Then
         assertThrows(IllegalArgumentException.class, () -> HttpJwksLoaderConfig.builder()
-                .jwksUrl(VALID_URL)
+                .url(VALID_URL)
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .adaptiveWindowSize(negativeAdaptiveWindowSize)
                 .build());
@@ -167,7 +167,7 @@ class HttpJwksLoaderConfigTest {
 
         // When/Then
         assertThrows(IllegalArgumentException.class, () -> HttpJwksLoaderConfig.builder()
-                .jwksUrl(VALID_URL)
+                .url(VALID_URL)
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .requestTimeoutSeconds(negativeRequestTimeout)
                 .build());
@@ -181,7 +181,7 @@ class HttpJwksLoaderConfigTest {
 
         // When/Then
         assertThrows(IllegalArgumentException.class, () -> HttpJwksLoaderConfig.builder()
-                .jwksUrl(VALID_URL)
+                .url(VALID_URL)
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .backgroundRefreshPercentage(negativePercentage)
                 .build());
@@ -195,7 +195,7 @@ class HttpJwksLoaderConfigTest {
 
         // When/Then
         assertThrows(IllegalArgumentException.class, () -> HttpJwksLoaderConfig.builder()
-                .jwksUrl(VALID_URL)
+                .url(VALID_URL)
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .backgroundRefreshPercentage(zeroPercentage)
                 .build());
@@ -209,7 +209,7 @@ class HttpJwksLoaderConfigTest {
 
         // When/Then
         assertThrows(IllegalArgumentException.class, () -> HttpJwksLoaderConfig.builder()
-                .jwksUrl(VALID_URL)
+                .url(VALID_URL)
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .backgroundRefreshPercentage(tooHighPercentage)
                 .build());

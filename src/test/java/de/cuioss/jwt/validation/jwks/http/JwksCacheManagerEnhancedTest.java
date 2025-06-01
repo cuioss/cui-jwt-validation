@@ -63,7 +63,7 @@ class JwksCacheManagerEnhancedTest {
     @BeforeEach
     void setUp() {
         config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(JWKS_URI)
+                .url(JWKS_URI)
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .adaptiveWindowSize(ADAPTIVE_WINDOW_SIZE)
                 .build();
@@ -150,7 +150,7 @@ class JwksCacheManagerEnhancedTest {
 
         // Create a config with a longer refresh interval to make the test more reliable
         HttpJwksLoaderConfig testConfig = HttpJwksLoaderConfig.builder()
-                .jwksUrl(JWKS_URI)
+                .url(JWKS_URI)
                 .refreshIntervalSeconds(1) // Reduced for faster tests
                 .adaptiveWindowSize(ADAPTIVE_WINDOW_SIZE)
                 .build();
@@ -214,13 +214,13 @@ class JwksCacheManagerEnhancedTest {
     void shouldUseDifferentCacheKeysForDifferentUris() {
         // First config with one URI
         HttpJwksLoaderConfig config1 = HttpJwksLoaderConfig.builder()
-                .jwksUrl("https://example1.com/.well-known/jwks.json")
+                .url("https://example1.com/.well-known/jwks.json")
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .build();
 
         // Second config with a different URI
         HttpJwksLoaderConfig config2 = HttpJwksLoaderConfig.builder()
-                .jwksUrl("https://example2.com/.well-known/jwks.json")
+                .url("https://example2.com/.well-known/jwks.json")
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .build();
 

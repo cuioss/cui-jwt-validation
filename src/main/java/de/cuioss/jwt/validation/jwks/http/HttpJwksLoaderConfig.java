@@ -168,14 +168,14 @@ public class HttpJwksLoaderConfig {
          * Sets the JWKS URI directly.
          * <p>
          * Note: If this method is called, it will override any URI set by
-         * {@link #jwksUrl(String)} or {@link #wellKnown(WellKnownHandler)}.
+         * {@link #url(String)} or {@link #wellKnown(WellKnownHandler)}.
          * The last call among these methods determines the final JWKS URI.
          * </p>
          *
          * @param jwksUri the URI of the JWKS endpoint. Must not be null.
          * @return this builder instance
          */
-        public HttpJwksLoaderConfigBuilder jwksUri(@NonNull URI jwksUri) {
+        public HttpJwksLoaderConfigBuilder uri(@NonNull URI jwksUri) {
             httpHandlerBuilder.uri(jwksUri);
             return this;
         }
@@ -184,14 +184,14 @@ public class HttpJwksLoaderConfig {
          * Sets the JWKS URL as a string, which will be converted to a URI.
          * <p>
          * Note: If this method is called, it will override any URI set by
-         * {@link #jwksUri(URI)} or {@link #wellKnown(WellKnownHandler)}.
+         * {@link #uri(URI)} or {@link #wellKnown(WellKnownHandler)}.
          * The last call among these methods determines the final JWKS URI.
          * </p>
          *
          * @param jwksUrl the URL string of the JWKS endpoint. Must not be null.
          * @return this builder instance
          */
-        public HttpJwksLoaderConfigBuilder jwksUrl(@NonNull String jwksUrl) {
+        public HttpJwksLoaderConfigBuilder url(@NonNull String jwksUrl) {
             httpHandlerBuilder.url(jwksUrl);
             return this;
         }
@@ -205,7 +205,7 @@ public class HttpJwksLoaderConfig {
          * </p>
          * <p>
          * Note: If this method is called, it will override any URI set by
-         * {@link #jwksUri(URI)} or {@link #jwksUrl(String)}.
+         * {@link #uri(URI)} or {@link #url(String)}.
          * The last call among these methods determines the final JWKS URI.
          * </p>
          *

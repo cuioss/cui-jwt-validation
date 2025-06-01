@@ -48,7 +48,7 @@ class JwksHttpClientTest {
         moduleDispatcher.setCallCounter(0);
 
         config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(jwksEndpoint)
+                .url(jwksEndpoint)
                 .refreshIntervalSeconds(60)
                 .build();
 

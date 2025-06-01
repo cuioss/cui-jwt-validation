@@ -39,7 +39,7 @@ class BackgroundRefreshManagerTest {
     void shouldCreateManagerWithConfig() {
         // Given
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(JWKS_URI)
+                .url(JWKS_URI)
                 .refreshIntervalSeconds(60)
                 .build();
 
@@ -61,7 +61,7 @@ class BackgroundRefreshManagerTest {
     void shouldDisableBackgroundRefreshForZeroRefreshInterval() {
         // Given
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(JWKS_URI)
+                .url(JWKS_URI)
                 .refreshIntervalSeconds(0)
                 .build();
 
@@ -83,7 +83,7 @@ class BackgroundRefreshManagerTest {
     void shouldSkipSchedulingForVeryShortRefreshIntervals() {
         // Given
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(JWKS_URI)
+                .url(JWKS_URI)
                 .refreshIntervalSeconds(1) // Very short interval
                 .build();
 
@@ -105,7 +105,7 @@ class BackgroundRefreshManagerTest {
     void shouldCloseExecutorService() {
         // Given
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(JWKS_URI)
+                .url(JWKS_URI)
                 .refreshIntervalSeconds(60)
                 .build();
 
@@ -125,7 +125,7 @@ class BackgroundRefreshManagerTest {
     void shouldHandleCloseWhenAlreadyClosed() {
         // Given
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(JWKS_URI)
+                .url(JWKS_URI)
                 .refreshIntervalSeconds(60)
                 .build();
 
@@ -146,7 +146,7 @@ class BackgroundRefreshManagerTest {
     void shouldHandleCloseWhenExecutorServiceIsNull() {
         // Given
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(JWKS_URI)
+                .url(JWKS_URI)
                 .refreshIntervalSeconds(0) // Zero refresh interval means no executor service
                 .build();
 

@@ -126,7 +126,7 @@ public class TokenKeycloakITTest extends KeycloakITBase {
 
         // Create a JwksLoader with the secure SSLContext that uses Keycloak's keystore
         HttpJwksLoaderConfig httpJwksConfig = HttpJwksLoaderConfig.builder()
-                .jwksUrl(getJWKSUrl()) // Direct JWKS URL from Keycloak container
+                .url(getJWKSUrl()) // Direct JWKS URL from Keycloak container
                 .refreshIntervalSeconds(100)
                 .sslContext(keycloakSslContext) // Use the secure SSL context with Keycloak's keystore
                 .build();
@@ -220,7 +220,7 @@ public class TokenKeycloakITTest extends KeycloakITBase {
             // Use the keycloakSslContext to ensure proper SSL certificate validation
             // when connecting to the Keycloak server
             WellKnownHandler wellKnownHandler = WellKnownHandler.builder()
-                    .wellKnownUrl(wellKnownUrlString)
+                    .url(wellKnownUrlString)
                     .sslContext(keycloakSslContext)
                     .build();
             assertNotNull(wellKnownHandler.getJwksUri(), "JWKS URI should be present in well-known config");
@@ -270,7 +270,7 @@ public class TokenKeycloakITTest extends KeycloakITBase {
         void shouldFailValidationWithIncorrectExpectedIssuerViaWellKnown() {
             String wellKnownUrlString = TokenKeycloakITTest.this.authServerUrlString + "/realms/" + TestRealm.REALM_NAME + "/.well-known/openid-configuration";
             WellKnownHandler wellKnownHandler = WellKnownHandler.builder()
-                    .wellKnownUrl(wellKnownUrlString)
+                    .url(wellKnownUrlString)
                     .sslContext(keycloakSslContext)
                     .build();
             assertNotNull(wellKnownHandler.getIssuer(), "Issuer should be present in well-known config");

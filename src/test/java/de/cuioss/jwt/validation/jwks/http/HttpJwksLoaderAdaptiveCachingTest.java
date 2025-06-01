@@ -64,7 +64,7 @@ class HttpJwksLoaderAdaptiveCachingTest {
         SecurityEventCounter securityEventCounter = new SecurityEventCounter();
 
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(jwksEndpoint)
+                .url(jwksEndpoint)
                 .refreshIntervalSeconds(REFRESH_INTERVAL_SECONDS)
                 .adaptiveWindowSize(ADAPTIVE_WINDOW_SIZE)
                 .build();

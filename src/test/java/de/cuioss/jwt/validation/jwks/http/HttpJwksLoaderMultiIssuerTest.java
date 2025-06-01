@@ -74,13 +74,13 @@ class HttpJwksLoaderMultiIssuerTest {
 
         // Create loaders for each issuer
         HttpJwksLoaderConfig config1 = HttpJwksLoaderConfig.builder()
-                .jwksUrl(issuer1Endpoint)
+                .url(issuer1Endpoint)
                 .refreshIntervalSeconds(REFRESH_INTERVAL_SECONDS)
                 .maxCacheSize(MAX_CACHE_SIZE)
                 .build();
 
         HttpJwksLoaderConfig config2 = HttpJwksLoaderConfig.builder()
-                .jwksUrl(issuer2Endpoint)
+                .url(issuer2Endpoint)
                 .refreshIntervalSeconds(REFRESH_INTERVAL_SECONDS)
                 .maxCacheSize(MAX_CACHE_SIZE)
                 .build();
@@ -117,7 +117,7 @@ class HttpJwksLoaderMultiIssuerTest {
 
         // Create a loader with a very small max cache size
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(issuer1Endpoint)
+                .url(issuer1Endpoint)
                 .refreshIntervalSeconds(REFRESH_INTERVAL_SECONDS)
                 .maxCacheSize(1) // Only cache one issuer
                 .build();
@@ -131,7 +131,7 @@ class HttpJwksLoaderMultiIssuerTest {
 
         // Then - update the config to use issuer 2
         HttpJwksLoaderConfig newConfig = HttpJwksLoaderConfig.builder()
-                .jwksUrl(issuer2Endpoint)
+                .url(issuer2Endpoint)
                 .refreshIntervalSeconds(REFRESH_INTERVAL_SECONDS)
                 .maxCacheSize(1) // Only cache one issuer
                 .build();
@@ -156,12 +156,12 @@ class HttpJwksLoaderMultiIssuerTest {
 
         // Create loaders with different refresh intervals
         HttpJwksLoaderConfig config1 = HttpJwksLoaderConfig.builder()
-                .jwksUrl(jwksEndpoint)
+                .url(jwksEndpoint)
                 .refreshIntervalSeconds(30) // 30 seconds
                 .build();
 
         HttpJwksLoaderConfig config2 = HttpJwksLoaderConfig.builder()
-                .jwksUrl(jwksEndpoint)
+                .url(jwksEndpoint)
                 .refreshIntervalSeconds(60) // 60 seconds
                 .build();
 
@@ -204,12 +204,12 @@ class HttpJwksLoaderMultiIssuerTest {
 
         // Create configs for each issuer
         HttpJwksLoaderConfig config1 = HttpJwksLoaderConfig.builder()
-                .jwksUrl(issuer1Endpoint)
+                .url(issuer1Endpoint)
                 .refreshIntervalSeconds(REFRESH_INTERVAL_SECONDS)
                 .build();
 
         HttpJwksLoaderConfig config2 = HttpJwksLoaderConfig.builder()
-                .jwksUrl(issuer2Endpoint)
+                .url(issuer2Endpoint)
                 .refreshIntervalSeconds(REFRESH_INTERVAL_SECONDS)
                 .build();
 

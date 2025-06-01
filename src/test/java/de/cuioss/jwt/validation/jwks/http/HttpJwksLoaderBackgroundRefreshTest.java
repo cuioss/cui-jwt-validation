@@ -67,7 +67,7 @@ class HttpJwksLoaderBackgroundRefreshTest {
         securityEventCounter = new SecurityEventCounter();
 
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(jwksEndpoint)
+                .url(jwksEndpoint)
                 .refreshIntervalSeconds(REFRESH_INTERVAL_SECONDS)
                 .backgroundRefreshPercentage(BACKGROUND_REFRESH_PERCENTAGE)
                 .build();
@@ -97,7 +97,7 @@ class HttpJwksLoaderBackgroundRefreshTest {
         String jwksEndpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
 
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(jwksEndpoint)
+                .url(jwksEndpoint)
                 .refreshIntervalSeconds(0) // Zero refresh interval
                 .backgroundRefreshPercentage(BACKGROUND_REFRESH_PERCENTAGE)
                 .build();
@@ -173,7 +173,7 @@ class HttpJwksLoaderBackgroundRefreshTest {
 
         // Create a loader with a different background refresh percentage
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(jwksEndpoint)
+                .url(jwksEndpoint)
                 .refreshIntervalSeconds(REFRESH_INTERVAL_SECONDS)
                 .backgroundRefreshPercentage(75) // 75% of refresh interval
                 .build();

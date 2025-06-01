@@ -55,7 +55,7 @@ import java.util.Set;
  * // Create an HTTP-based JWKS loader with 60-second refresh interval
  * String jwksEndpoint = "https://example.com/.well-known/jwks.json";
  * HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
- *     .jwksUrl(jwksEndpoint)
+ *     .url(jwksEndpoint)
  *     .refreshIntervalSeconds(60)
  *     .build();
  * SecurityEventCounter securityEventCounter = new SecurityEventCounter();

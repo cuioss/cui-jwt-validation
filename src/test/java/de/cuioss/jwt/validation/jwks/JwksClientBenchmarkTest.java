@@ -61,7 +61,7 @@ class JwksClientBenchmarkTest {
     void benchmarkKeyRetrieval(URIBuilder uriBuilder) {
         var jwksEndpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
         var config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(jwksEndpoint)
+                .url(jwksEndpoint)
                 .refreshIntervalSeconds(REFRESH_INTERVAL_SECONDS)
                 .build();
         var securityEventCounter = new SecurityEventCounter();

@@ -107,7 +107,7 @@ class WellKnownHandlerTest {
 
             // When
             WellKnownHandler handler = WellKnownHandler.builder()
-                    .wellKnownUrl(wellKnownUrl)
+                    .url(wellKnownUrl)
                     .build();
 
             // Then
@@ -162,7 +162,7 @@ class WellKnownHandlerTest {
         @DisplayName("Should throw exception for null or empty URL during build")
         void shouldThrowExceptionForNullOrEmptyUrl() {
             // Test with null URL
-            var builder = WellKnownHandler.builder().wellKnownUrl((String) null);
+            var builder = WellKnownHandler.builder().url((String) null);
             WellKnownDiscoveryException nullException = assertThrows(
                     WellKnownDiscoveryException.class, builder::build,
                     "Should throw exception for null URL during build"
@@ -173,7 +173,7 @@ class WellKnownHandlerTest {
                     "Exception cause message should mention that URI must not be null or empty");
 
             // Test with empty URL
-            builder = WellKnownHandler.builder().wellKnownUrl("");
+            builder = WellKnownHandler.builder().url("");
             WellKnownDiscoveryException emptyException = assertThrows(
                     WellKnownDiscoveryException.class, builder::build,
                     "Should throw exception for empty URL during build"
@@ -184,7 +184,7 @@ class WellKnownHandlerTest {
                     "Exception cause message should mention that URI must not be null or empty");
 
             // Test with blank URL
-            builder = WellKnownHandler.builder().wellKnownUrl("   ");
+            builder = WellKnownHandler.builder().url("   ");
             WellKnownDiscoveryException blankException = assertThrows(
                     WellKnownDiscoveryException.class, builder::build,
                     "Should throw exception for blank URL during build"
@@ -198,7 +198,7 @@ class WellKnownHandlerTest {
         @Test
         @DisplayName("Should throw exception for malformed URL during build")
         void shouldThrowExceptionForMalformedUrl() {
-            var builder = WellKnownHandler.builder().wellKnownUrl("not-a-url");
+            var builder = WellKnownHandler.builder().url("not-a-url");
             WellKnownDiscoveryException exception = assertThrows(
                     WellKnownDiscoveryException.class, builder::build,
                     "Should throw exception for malformed URL during build"
@@ -216,7 +216,7 @@ class WellKnownHandlerTest {
                     .addPathSegment("/.well-known/openid-configuration")
                     .buildAsString()).toURL();
 
-            var builder = WellKnownHandler.builder().wellKnownUrl(wellKnownUrl);
+            var builder = WellKnownHandler.builder().url(wellKnownUrl);
 
 
             // When/Then - Verify that the expected exception is thrown
@@ -238,7 +238,7 @@ class WellKnownHandlerTest {
                     .addPathSegment("/.well-known/openid-configuration")
                     .buildAsString()).toURL();
 
-            var builder = WellKnownHandler.builder().wellKnownUrl(wellKnownUrl);
+            var builder = WellKnownHandler.builder().url(wellKnownUrl);
 
 
             // When/Then - Verify that the expected exception is thrown
@@ -261,7 +261,7 @@ class WellKnownHandlerTest {
                     .addPathSegment("/.well-known/openid-configuration")
                     .buildAsString()).toURL();
 
-            var builder = WellKnownHandler.builder().wellKnownUrl(wellKnownUrl);
+            var builder = WellKnownHandler.builder().url(wellKnownUrl);
 
             // When/Then - Verify that the expected exception is thrown
             var exception = assertThrows(
@@ -285,7 +285,7 @@ class WellKnownHandlerTest {
                     .addPathSegment("/.well-known/openid-configuration")
                     .buildAsString()).toURL();
 
-            var builder = WellKnownHandler.builder().wellKnownUrl(wellKnownUrl);
+            var builder = WellKnownHandler.builder().url(wellKnownUrl);
 
             // When/Then - Verify that the expected exception is thrown
             var exception = assertThrows(
@@ -309,7 +309,7 @@ class WellKnownHandlerTest {
                     .addPathSegment("/.well-known/openid-configuration")
                     .buildAsString()).toURL();
 
-            var builder = WellKnownHandler.builder().wellKnownUrl(wellKnownUrl);
+            var builder = WellKnownHandler.builder().url(wellKnownUrl);
 
             // When/Then - Verify that the expected exception is thrown
             var exception = assertThrows(
@@ -358,7 +358,7 @@ class WellKnownHandlerTest {
             // The build should throw an exception because authorization_endpoint and token_endpoint are required
             // but missing in the document
             var builder = WellKnownHandler.builder()
-                    .wellKnownUrl(wellKnownUrl);
+                    .url(wellKnownUrl);
             var exception = assertThrows(
                     WellKnownDiscoveryException.class,
                     builder::build,
@@ -398,7 +398,7 @@ class WellKnownHandlerTest {
                     .buildAsString()).toURL();
 
             // When
-            WellKnownHandler.builder().wellKnownUrl(wellKnownUrl).build();
+            WellKnownHandler.builder().url(wellKnownUrl).build();
 
             // Then
             // Verify that at least one log message is present
@@ -416,7 +416,7 @@ class WellKnownHandlerTest {
                     .buildAsString()).toURL();
 
             // When/Then - Verify that the expected exception is thrown
-            var builder = WellKnownHandler.builder().wellKnownUrl(wellKnownUrl);
+            var builder = WellKnownHandler.builder().url(wellKnownUrl);
             assertThrows(
                     WellKnownDiscoveryException.class,
                     builder::build,
@@ -457,7 +457,7 @@ class WellKnownHandlerTest {
 
             // When
             WellKnownHandler handler = WellKnownHandler.builder()
-                    .wellKnownUrl(wellKnownUrl)
+                    .url(wellKnownUrl)
                     .tlsVersions(secureSSLContextProvider)
                     .build();
 
@@ -492,7 +492,7 @@ class WellKnownHandlerTest {
 
             // When
             WellKnownHandler handler = WellKnownHandler.builder()
-                    .wellKnownUrl(wellKnownUrl)
+                    .url(wellKnownUrl)
                     .parserConfig(parserConfig)
                     .build();
 
@@ -518,7 +518,7 @@ class WellKnownHandlerTest {
 
             // When
             WellKnownHandler handler = WellKnownHandler.builder()
-                    .wellKnownUrl(wellKnownUrl)
+                    .url(wellKnownUrl)
                     .sslContext(sslContext)
                     .build();
 
@@ -560,7 +560,7 @@ class WellKnownHandlerTest {
 
             // When
             WellKnownHandler handler = WellKnownHandler.builder()
-                    .wellKnownUrl(wellKnownUrl)
+                    .url(wellKnownUrl)
                     .tlsVersions(secureSSLContextProvider)
                     .sslContext(sslContext)
                     .parserConfig(parserConfig)

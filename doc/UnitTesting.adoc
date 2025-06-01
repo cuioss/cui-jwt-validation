@@ -318,7 +318,7 @@ class MyServiceUsingWellKnownTest {
 
         // 4. Create WellKnownHandler instance using the dispatcher's URL
         WellKnownHandler handler = WellKnownHandler.builder()
-            .wellKnownUrl(fullWellKnownUrl)
+            .url(fullWellKnownUrl)
             .build();
 
         // Assertions for the handler (optional, but good for verification)
@@ -357,7 +357,7 @@ class MyServiceUsingWellKnownTest {
         // Verify that WellKnownHandler throws an exception
         Assertions.assertThrows(Exception.class, () -> { // Replace Exception with specific WellKnownDiscoveryException
             WellKnownHandler.builder()
-                .wellKnownUrl(fullWellKnownUrl)
+                .url(fullWellKnownUrl)
                 .build();
         });
     }

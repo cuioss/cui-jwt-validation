@@ -53,7 +53,7 @@ class JwksHttpClientEnhancedTest {
         moduleDispatcher.setCallCounter(0);
 
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
-                .jwksUrl(jwksEndpoint)
+                .url(jwksEndpoint)
                 .refreshIntervalSeconds(60)
                 .build();
 
