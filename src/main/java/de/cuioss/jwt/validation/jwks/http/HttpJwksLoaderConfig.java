@@ -21,9 +21,12 @@ import de.cuioss.tools.base.Preconditions;
 import de.cuioss.tools.http.HttpHandler;
 import de.cuioss.tools.http.SecureSSLContextProvider;
 import de.cuioss.tools.logging.CuiLogger;
-import lombok.Builder;
+import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 import javax.net.ssl.SSLContext;
 import java.net.URI;
@@ -47,14 +50,16 @@ import java.util.concurrent.ScheduledExecutorService;
  * @author Your Name (for well-known integration)
  * @since 1.0
  */
-@Builder
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+@ToString
+@EqualsAndHashCode
 public class HttpJwksLoaderConfig {
 
     private static final CuiLogger LOGGER = new CuiLogger(HttpJwksLoaderConfig.class);
-    private static final int DEFAULT_REQUEST_TIMEOUT_SECONDS = 10;
     private static final int DEFAULT_MAX_CACHE_SIZE = 100;
     private static final int DEFAULT_BACKGROUND_REFRESH_PERCENTAGE = 80;
     private static final int DEFAULT_ADAPTIVE_WINDOW_SIZE = 10;
+    public static final int DEFAULT_REFRESH_INTERVAL_IN_SECONDS = 60 * 60 * 10;
 
     /**
      * The interval in seconds at which to refresh the keys.
@@ -100,12 +105,26 @@ public class HttpJwksLoaderConfig {
     private final ScheduledExecutorService scheduledExecutorService;
 
     /**
+     * Creates a new builder for HttpJwksLoaderConfig.
+     * <p>
+     * This method provides a convenient way to create a new instance of
+     * HttpJwksLoaderConfigBuilder, allowing for fluent configuration of the
+     * HttpJwksLoaderConfig parameters.
+     *
+     * @return a new HttpJwksLoaderConfigBuilder instance
+     */
+    public static HttpJwksLoaderConfigBuilder builder() {
+        return new HttpJwksLoaderConfigBuilder();
+    }
+
+    /**
      * Builder for creating HttpJwksLoaderConfig instances with validation.
      */
     public static class HttpJwksLoaderConfigBuilder {
         private Integer maxCacheSize = DEFAULT_MAX_CACHE_SIZE;
         private Integer adaptiveWindowSize = DEFAULT_ADAPTIVE_WINDOW_SIZE;
         private Integer backgroundRefreshPercentage = DEFAULT_BACKGROUND_REFRESH_PERCENTAGE;
+        private Integer refreshIntervalSeconds = DEFAULT_REFRESH_INTERVAL_IN_SECONDS;
         private ScheduledExecutorService scheduledExecutorService;
         private final HttpHandler.HttpHandlerBuilder httpHandlerBuilder;
 

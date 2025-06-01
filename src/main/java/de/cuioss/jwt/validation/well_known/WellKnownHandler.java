@@ -19,15 +19,14 @@ import de.cuioss.jwt.validation.JWTValidationLogMessages.DEBUG;
 import de.cuioss.jwt.validation.JWTValidationLogMessages.ERROR;
 import de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
 import de.cuioss.jwt.validation.ParserConfig;
-import de.cuioss.tools.http.SecureSSLContextProvider;
 import de.cuioss.tools.http.HttpHandler;
 import de.cuioss.tools.http.HttpStatusFamily;
+import de.cuioss.tools.http.SecureSSLContextProvider;
 import de.cuioss.tools.logging.CuiLogger;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonReader;
 import jakarta.json.JsonString;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -74,7 +73,6 @@ import java.util.Optional;
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 @EqualsAndHashCode
 @ToString
-@Builder(builderClassName = "WellKnownHandlerBuilder", access = AccessLevel.PRIVATE)
 public final class WellKnownHandler {
 
     private static final CuiLogger LOGGER = new CuiLogger(WellKnownHandler.class);
