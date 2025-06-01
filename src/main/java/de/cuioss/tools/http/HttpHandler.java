@@ -123,7 +123,7 @@ public final class HttpHandler {
      * The builder is configured with the timeout and sslContext from this handler.
      * 
      * <p>This method allows creating a new builder based on the current handler's configuration,
-     * which can be used to create a new handler with modified url.</p>
+     * which can be used to create a new handler with modified URL.</p>
      *
      * @return A pre-configured {@link HttpHandlerBuilder} with the same timeout as this handler
      */
@@ -225,6 +225,9 @@ public final class HttpHandler {
          * @param uriString The string representation of the URI.
          *                  Must not be null or empty.
          * @return This builder instance.
+         * @throws IllegalArgumentException if the URI string is null, empty, or malformed
+         *                                  (thrown during the {@link #build()} method execution,
+         *                                  not by this setter method)
          */
         public HttpHandlerBuilder uri(String uriString) {
             this.urlString = uriString;
@@ -256,6 +259,9 @@ public final class HttpHandler {
          * @param urlString The string representation of the URL.
          *                  Must not be null or empty.
          * @return This builder instance.
+         * @throws IllegalArgumentException if the URL string is null, empty, or malformed
+         *                                  (thrown during the {@link #build()} method execution,
+         *                                  not by this setter method)
          */
         public HttpHandlerBuilder url(String urlString) {
             this.urlString = urlString;

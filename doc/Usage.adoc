@@ -130,7 +130,7 @@ try {
     System.err.println("OIDC Discovery failed: " + e.getMessage());
 }
 ----
-The `WellKnownHandler.builder().wellKnownUrl().build()` pattern will fetch the document, parse it, and validate key aspects like the issuer consistency. It may throw a `WellKnownDiscoveryException` if the process fails.
+The `WellKnownHandler.builder().url().build()` pattern will fetch the document, parse it, and validate key aspects like the issuer consistency. It may throw a `WellKnownDiscoveryException` if the process fails.
 
 === Configuring `HttpJwksLoaderConfig`
 Once you have a `WellKnownHandler` instance, you can use it to configure the `HttpJwksLoaderConfig`:
@@ -175,7 +175,7 @@ TokenValidator validator = new TokenValidator(issuerConfig);
 ----
 
 === Considerations
-* **Initial Latency**: The call to `WellKnownHandler.builder().wellKnownUrl().build()` involves a network request to fetch the discovery document. This adds a one-time latency during initialization.
+* **Initial Latency**: The call to `WellKnownHandler.builder().url().build()` involves a network request to fetch the discovery document. This adds a one-time latency during initialization.
 * **Error Handling**: Robust error handling for `WellKnownDiscoveryException` is important during application startup or when initializing the handler.
 * **SSL/TLS**: Ensure the JVM running the application trusts the SSL certificate of the OIDC provider if its well-known endpoint is served over HTTPS. For fetching the JWKS via `HttpJwksLoader`, you can provide a custom `SSLContext` in `HttpJwksLoaderConfig`.
 
