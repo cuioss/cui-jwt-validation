@@ -93,7 +93,6 @@ class JwksCacheManagerEnhancedTest {
         // Create a new cache manager with a fresh loader call count
         AtomicInteger rotationLoaderCallCount = new AtomicInteger(0);
         String initialContent = JWKS_CONTENT;
-        String rotatedContent = DIFFERENT_JWKS_CONTENT;
 
         // Create a cache manager with the initial content
         JwksCacheManager rotationCacheManager = new JwksCacheManager(config, key -> {
@@ -118,7 +117,7 @@ class JwksCacheManagerEnhancedTest {
         rotationCacheManager.updateCache(initialContent, "\"test-etag\"");
 
         // Now update the cache with the new content that has different keys
-        JwksCacheManager.KeyRotationResult result = rotationCacheManager.updateCache(rotatedContent, "\"new-etag\"");
+        JwksCacheManager.KeyRotationResult result = rotationCacheManager.updateCache(DIFFERENT_JWKS_CONTENT, "\"new-etag\"");
 
         // Verify that key rotation was detected
         assertTrue(result.keyRotationDetected(), "Key rotation should be detected");

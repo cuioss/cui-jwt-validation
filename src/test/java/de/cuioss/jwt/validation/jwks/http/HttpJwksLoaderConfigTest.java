@@ -23,6 +23,8 @@ import org.junit.jupiter.api.Test;
 import javax.net.ssl.SSLContext;
 import java.net.URI;
 import java.security.NoSuchAlgorithmException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -222,5 +224,54 @@ class HttpJwksLoaderConfigTest {
         assertThrows(IllegalArgumentException.class, () -> HttpJwksLoaderConfig.builder()
                 .refreshIntervalSeconds(REFRESH_INTERVAL)
                 .build());
+    }
+
+    @Test
+    @DisplayName("Should use custom ScheduledExecutorService")
+    void shouldUseCustomScheduledExecutorService() {
+        // Given
+        ScheduledExecutorService customExecutorService = Executors.newScheduledThreadPool(2);
+
+        // When
+        HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
+                .url(VALID_URL)
+                .refreshIntervalSeconds(REFRESH_INTERVAL)
+                .scheduledExecutorService(customExecutorService)
+                .build();
+
+        // Then
+        assertSame(customExecutorService, config.getScheduledExecutorService(),
+                "Custom executor service should be used");
+
+        // Clean up
+        customExecutorService.shutdown();
+    }
+
+    @Test
+    @DisplayName("Should create default ScheduledExecutorService when refresh interval is positive")
+    void shouldCreateDefaultScheduledExecutorServiceWhenRefreshIntervalPositive() {
+        // When
+        HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
+                .url(VALID_URL)
+                .refreshIntervalSeconds(REFRESH_INTERVAL) // Positive refresh interval
+                .build();
+
+        // Then
+        assertNotNull(config.getScheduledExecutorService(),
+                "Default executor service should be created for positive refresh interval");
+    }
+
+    @Test
+    @DisplayName("Should not create ScheduledExecutorService when refresh interval is zero")
+    void shouldNotCreateScheduledExecutorServiceWhenRefreshIntervalZero() {
+        // When
+        HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
+                .url(VALID_URL)
+                .refreshIntervalSeconds(0) // Zero refresh interval
+                .build();
+
+        // Then
+        assertNull(config.getScheduledExecutorService(),
+                "No executor service should be created for zero refresh interval");
     }
 }

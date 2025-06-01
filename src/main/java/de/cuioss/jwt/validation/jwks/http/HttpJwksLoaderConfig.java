@@ -16,10 +16,10 @@
 package de.cuioss.jwt.validation.jwks.http;
 
 import de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
-import de.cuioss.tools.http.SecureSSLContextProvider;
 import de.cuioss.jwt.validation.well_known.WellKnownHandler;
 import de.cuioss.tools.base.Preconditions;
 import de.cuioss.tools.http.HttpHandler;
+import de.cuioss.tools.http.SecureSSLContextProvider;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.Builder;
 import lombok.Getter;
@@ -316,7 +316,5 @@ public class HttpJwksLoaderConfig {
                     backgroundRefreshPercentage,
                     scheduledExecutorService);
         }
-
-
     }
 }
