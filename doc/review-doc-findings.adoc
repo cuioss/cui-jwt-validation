@@ -1,231 +1,329 @@
-= Review Doc Findings
-:toc:
+= Document Review Findings
+:toc: left
 :toclevels: 3
 :toc-title: Table of Contents
 :sectnums:
+:source-highlighter: highlight.js
 
-This document records findings from the documentation review and suggests actionable tasks to address them.
+== Reviewed Documents
 
-== DOC - Documentation Improvements
+* `doc/Build.adoc`
+* `doc/LogMessages.adoc`
+* `doc/UnitTesting.adoc`
+* `doc/Usage.adoc`
+* `doc/threat-model/Threat-Model.adoc`
+* `doc/threat-model/threat-coverage-analysis.adoc`
+* `doc/Specification.adoc`
+* `doc/specification/jwks-size-recommendations.adoc`
+* `doc/specification/security.adoc`
+* `doc/specification/technical-components.adoc`
+* `doc/specification/testing.adoc`
+* `doc/specification/token-decryption.adoc`
+* `doc/specification/token-size-validation.adoc`
+* `doc/specification/well-known.adoc`
+* `doc/Requirements.adoc`
+*List of reviewed documents will be added here.*
 
-// Findings will be added here following the format:
-// === DOC[Number]. [Task Title]
-// [ ] *Priority:* [High/Medium/Low]
-//
-// *Description:* [Detailed description of the finding]
-//
-// *Rationale:* [Explanation of why this finding is important to address]
+== Findings
 
-=== DOC1. Review Requirements.adoc References
-[ ] *Priority:* Medium
+*Findings will be added here as they are identified.*
 
-*Description:* Several RFCs and external documents are referenced in `doc/Requirements.adoc`. These links should be verified to ensure they point to the latest and most relevant versions of the documents. For example, `draft-ietf-oauth-jwt-bcp-09` is referenced; check if it has been finalized or superseded.
-
-*Rationale:* Outdated references can lead to implementing against obsolete standards, potentially introducing security vulnerabilities or compatibility issues. Keeping references current is crucial for a security-focused library.
-
-=== DOC2. Clarify "Future Version" for JWE Requirement
-[ ] *Priority:* Low
-
-*Description:* Requirement `CUI-JWT-1.4: Token Decryption (Optional - Future Version)` states JWE support is for a "future version". This is vague. If there's a roadmap or planned version for this, it should be mentioned. If not, it should be clarified that it's a potential future enhancement without a specific timeline.
-
-*Rationale:* Clear communication about feature availability manages expectations and helps users and contributors understand the library's current capabilities and future direction. The `general-standard.adoc` states "Only document existing code elements - no speculative or planned features" unless clearly marked. While it is marked, adding more clarity would be beneficial.
-
-=== DOC3. Verify Terminology Consistency in Requirements.adoc
-[ ] *Priority:* Medium
-
-*Description:* Review `doc/Requirements.adoc` for consistent use of terminology as per the project's glossary (if one exists) and general industry standards (e.g., RFCs). Pay attention to terms like "Token Types", "Signature Algorithms", etc.
-
-*Rationale:* Consistent terminology improves readability and understanding, reducing ambiguity, which is vital for security requirements. This aligns with the `general-standard.adoc` principle of using consistent terminology.
-
-=== DOC4. Image in Requirements.adoc
-[ ] *Priority:* Low
-
-*Description:* The document `doc/Requirements.adoc` includes an image `image::plantuml/token-structure.png[JWT Token Structure]` under section `CUI-JWT-1.1`. The `general-standard.adoc` does not explicitly mention standards for images. However, ensure the image is generated from a source file (like a .puml file) that is version controlled, and that the image is clear and up-to-date.
-
-*Rationale:* Images should be maintainable and accurate. If the source `token-structure.puml` exists and is up-to-date, this is good. If the image is static and its source is unclear, it could become outdated.
-
-=== DOC5. Requirements Numbering Gap
-[ ] *Priority:* Low
-
-*Description:* In `doc/Requirements.adoc`, the functional requirements jump from `CUI-JWT-8.5` to `CUI-JWT-12`. Requirements `CUI-JWT-9`, `CUI-JWT-10`, `CUI-JWT-11` seem to be missing or were renumbered. This should be investigated and corrected if it's an error, or explained if intentional. The non-functional requirements start with `CUI-JWT-9` again. This dual use of numbers should be rectified.
-
-*Rationale:* Consistent and sequential numbering is important for clarity, traceability, and referencing requirements. Gaps or duplicate numbering can cause confusion.
-
-=== DOC6. Verify Links in Specification.adoc
+=== DOC1. Review `doc/Requirements.adoc`
 [ ] *Priority:* High
 
-*Description:* `doc/Specification.adoc` contains numerous internal links to sub-specification documents (e.g., `specification/technical-components.adoc`, `specification/security.adoc`) and to `Requirements.adoc`. All these links must be verified to ensure they are not broken and point to the intended targets. For example, check if `link:specification/token-decryption.adoc[Token Decryption]` correctly reflects its status (future implementation).
+*Description:* Review `doc/Requirements.adoc` for correctness, completeness, readability, lack of duplicate information, compliance with project documentation standards, and security aspects.
 
-*Rationale:* Broken or incorrect links severely hinder navigation and understanding of the documentation, making it difficult for users and developers to find information. This is critical for compliance with `general-standard.adoc` ("All references must be verified to exist").
+*Rationale:* Ensures the foundational requirements document is accurate, clear, and aligns with project goals and security best practices.
 
-=== DOC7. Consistency of "Token Decryption" Specification
-[ ] *Priority:* Medium
+*Findings:*
+* *Overall:* The document is comprehensive, well-structured, and detailed. It extensively references relevant RFCs and security standards. The requirements are broken down into functional and non-functional categories with specific, actionable items.
+* *Correctness:*
+    * All referenced RFCs and standards appear to be appropriate. For instance, `draft-ietf-oauth-jwt-bcp-09` is referenced, which is good as it's a Best Current Practices document. It would be beneficial to verify if it's still the latest draft or if it has been finalized.
+    * CUI-JWT-1.3: The link to "key confusion attacks" (https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/) points to a 2015 article. While the concept is still valid, it might be worth checking if there's a more recent or canonical reference for this.
+    * CUI-JWT-1.3: "RS1, RS256-512 with keys shorter than 2048 bits - Not compliant with NIST SP 800-131A (2019)". This seems to mix algorithm names. "RS1" is not a standard JWA algorithm. It should likely refer to RSA algorithms in general with keys shorter than 2048 bits. "RS256-512" is also not a standard JWA algorithm name; it probably means RS256, RS384, RS512.
+    * CUI-JWT-12.1: The OWASP JWT Cheat Sheets are referenced with "(2023)". It's good to ensure these are the absolute latest links/versions.
+* *Completeness:*
+    * CUI-JWT-1.4: "Token Decryption (Optional - Future Version)" is mentioned. If this is a definite future item, its requirements could be further elaborated or moved to a separate section for future capabilities.
+    * The document refers to `plantuml/token-structure.png`. It should be verified that all diagrams referenced are up-to-date and correctly represent the concepts.
+* *Readability:*
+    * The document is generally readable. The use of AsciiDoc features like TOC and numbered sections is good.
+    * Some requirements have very long titles (e.g., CUI-JWT-1). Shorter, more focused titles might improve scannability.
+* *Lack of Duplicate Information:*
+    * No major duplications were immediately obvious, but a closer read during specific section reviews might reveal minor overlaps.
+* *Compliance with Project Documentation Standards:*
+    * The document uses AsciiDoc, has a TOC, and seems well-structured, which aligns with the general expectations from `doc/library/standards/documentation/README.adoc`. A deeper check against `general-standard.adoc` (once reviewed) would be needed for full compliance verification.
+* *Security Focus:*
+    * Strong security focus is evident throughout the document, with specific requirements for algorithm support, key management, secure communication, and OWASP guideline adherence. This is excellent.
+    * CUI-JWT-8.2 "Safe Parsing": Mentions "JSON parsing attacks, Injection attacks, Deserialization vulnerabilities". While good, being more specific about the types of JSON parsing attacks or deserialization vulnerabilities relevant to JWTs could be beneficial (e.g., billion laughs for XML, but what's the JSON equivalent concern?).
 
-*Description:* `doc/Specification.adoc` links to `specification/token-decryption.adoc` and mentions it as "future implementation" in the "Implementation Details" section. This is consistent with `Requirements.adoc#CUI-JWT-1.4`. The content of `specification/token-decryption.adoc` itself needs to be reviewed (in a later step) to ensure it clearly states its future status and avoids presenting speculative features as current.
+*Actionable Tasks:*
+1.  *Verify RFC/Standard Versions:* For `draft-ietf-oauth-jwt-bcp-09`, check if it has been finalized or if a newer version exists. Update link if necessary.
+2.  *Update Key Confusion Attack Reference:* Find a more recent or canonical reference for key confusion attacks if available.
+3.  *Clarify Algorithm Names in CUI-JWT-1.3:* Correct the wording regarding "RS1" and "RS256-512" to accurately reflect JWA algorithm names and key length requirements.
+4.  *Verify OWASP Cheat Sheet Links/Versions:* Ensure the links to OWASP JWT Cheat Sheets are the latest.
+5.  *Review Referenced Diagrams:* Check that `plantuml/token-structure.png` (and any other diagrams implicitly or explicitly referenced) are accurate and up-to-date.
+6.  *Consider Shortening Long Titles:* For requirements like CUI-JWT-1, explore if titles can be made more concise.
+7.  *Elaborate on "Safe Parsing" Threats:* If possible, add more specific examples or types of JSON parsing/deserialization threats relevant to JWTs in CUI-JWT-8.2.
 
-*Rationale:* Ensures that documentation about future features is clearly demarcated and does not mislead readers about current library capabilities, aligning with `general-standard.adoc`.
-
-=== DOC8. Specification.adoc Component Overview Diagram
-[ ] *Priority:* Low
-
-*Description:* `doc/Specification.adoc` includes an image `image::plantuml/component-overview.png[Component Overview]`. Verify that this image is generated from a version-controlled PlantUML source file (presumably `doc/plantuml/component-overview.puml`) and that the diagram accurately reflects the current architecture described in `specification/technical-components.adoc`.
-
-*Rationale:* Architectural diagrams must be accurate and maintainable. Using a source file allows for easier updates and version control, ensuring the diagram doesn't become outdated.
-
-=== DOC9. Specification.adoc Completeness of Component Descriptions
-[ ] *Priority:* Medium
-
-*Description:* The "Component Descriptions" section in `doc/Specification.adoc` provides a brief overview of components like `TokenValidator`, `ParserConfig`, etc., and links to `specification/technical-components.adoc` for details. This is good. The review of `specification/technical-components.adoc` (later step) will need to confirm that all components mentioned here are indeed detailed there and that no major components are missing from this overview.
-
-*Rationale:* The main specification document should provide a complete high-level overview, and its references to detailed documents must be accurate and comprehensive.
-
-=== DOC10. Cross-References to Requirements in Specification.adoc
-[ ] *Priority:* Medium
-
-*Description:* `doc/Specification.adoc` includes references like "_See Requirement link:Requirements.adoc#CUI-JWT-1[CUI-JWT-1: Token Parsing and Validation]_". These cross-references should be checked for accuracy: do they point to the most relevant requirement, and are the requirement IDs correct?
-
-*Rationale:* Accurate cross-referencing between specification and requirements is crucial for traceability and understanding how the technical design fulfills the mandated needs.
-
-=== DOC11. Review Navigation Links in jwks-size-recommendations.adoc
-[ ] *Priority:* Low
-
-*Description:* The document `doc/specification/jwks-size-recommendations.adoc` includes an extensive "Document Navigation" section. While helpful, these links need verification for correctness and relevance. Some links like "Token Decryption" point to future features and should be consistent in their presentation. Also, ensure this navigation structure is consistent with other sub-specification documents.
-
-*Rationale:* Accurate navigation links are essential for user experience. Consistency in navigation across related documents improves overall documentation usability.
-
-=== DOC12. Verify Requirement Links in jwks-size-recommendations.adoc
-[ ] *Priority:* Medium
-
-*Description:* The document `doc/specification/jwks-size-recommendations.adoc` references `link:../Requirements.adoc#CUI-JWT-8.1[CUI-JWT-8.1: Token Size Limits]` and `link:../Requirements.adoc#CUI-JWT-8.2[CUI-JWT-8.2: Safe Parsing]`. These links and the relevance of these specific requirements to JWKS content size (as opposed to JWT token size) should be verified. Requirement CUI-JWT-8.1 is about *token* size limits. While related, the link's relevance to *JWKS* size should be very clear or a more specific requirement should be referenced/created.
-
-*Rationale:* Ensuring that references to requirements are accurate and highly relevant is key for traceability and justifying design decisions. Misleading links can cause confusion.
-
-=== DOC13. Data Source for IdP JWKS Sizes
-[ ] *Priority:* Medium
-
-*Description:* The section "Major Identity Providers" in `doc/specification/jwks-size-recommendations.adoc` lists typical JWKS sizes for providers like Auth0, Okta, etc. It would be beneficial to state the date or method of this analysis (e.g., "Analysis performed in Q4 2023 by checking public .well-known configurations").
-
-*Rationale:* Data about external services can become outdated. Indicating the freshness or source of this data helps readers assess its current relevance, aligning with the principle of providing accurate and verifiable information.
-
-=== DOC14. Verify Links to Code and Tests in security.adoc
+=== DOC2. Review `doc/Specification.adoc` and its sub-documents
 [ ] *Priority:* High
 
-*Description:* `doc/specification/security.adoc` contains numerous links to `.java` source files and test files (e.g., `link:../../src/main/java/de/cuioss/jwt/validation/pipeline/TokenSignatureValidator.java[TokenSignatureValidator]`). Each of these links must be meticulously verified to ensure they point to the correct file and that the linked code/test is indeed the primary implementation or verification for the described security measure. Also, check for broken links.
+*Description:* Review `doc/Specification.adoc` and its sub-documents (`jwks-size-recommendations.adoc`, `security.adoc`, `technical-components.adoc`, `testing.adoc`, `token-decryption.adoc`, `token-size-validation.adoc`, `well-known.adoc`) for correctness, completeness, readability, lack of duplicate information, compliance with project documentation standards, and security aspects.
 
-*Rationale:* Accurate links to code are essential for developers to understand the implementation details of security measures. Broken or incorrect links can lead to misunderstandings and make it difficult to audit or maintain the code. This is a critical aspect of the "All references must be verified to exist" principle from `general-standard.adoc`.
+*Rationale:* Ensures the technical specification documents are accurate, consistent, comprehensive, and align with requirements and security best practices.
 
-=== DOC15. Consistency of Supported/Rejected Algorithms in security.adoc
+*Findings:*
+
+**Overall:** The specification documents are generally very detailed, well-structured, and provide good traceability to the requirements. The use of "Status: IMPLEMENTED/NOT IMPLEMENTED" is helpful. Links to source code are a strong point.
+
+**`doc/Specification.adoc` (Main Document):**
+*   *Correctness:*
+    *   The "Overview" section correctly states it refers to Requirement CUI-JWT-1.
+    *   The "Document Structure" lists sub-documents; this list is accurate.
+    *   The "Architecture" section references `plantuml/component-overview.png`.
+*   *Completeness:*
+    *   Seems to provide a good high-level overview and directs to sub-documents for details.
+*   *Readability:* Clear and well-organized.
+*   *Links:* Internal links to sub-documents seem correct. The link to `plantuml/component-overview.png` needs to be verified.
+
+**`doc/specification/jwks-size-recommendations.adoc`:**
+*   *Correctness:*
+    *   References requirements CUI-JWT-8.1 and CUI-JWT-8.2.
+    *   The analysis of JWKS content size based on key types (RSA, EC) seems reasonable.
+    *   The industry standards section (Auth0, Okta, etc.) provides good context, but the data might need periodic verification for freshness.
+    *   Recommendations for upper bounds (64KB default, 16KB conservative, 256KB permissive) are well-justified.
+*   *Completeness:* The document is very thorough on this specific topic.
+*   *Readability:* Clear and well-argued.
+*   *Security Focus:* Directly addresses DoS concerns by recommending size limits.
+
+**`doc/specification/security.adoc`:**
+*   *Correctness:*
+    *   Extensive references to requirements (CUI-JWT-8, CUI-JWT-1.3, CUI-JWT-8.1, etc.).
+    *   "Supported Algorithms" and "Rejected Algorithms" lists are present and seem to align with `Requirements.adoc`. The RSASSA-PSS algorithms (PS256, PS384, PS512) are listed as supported here, which is good.
+    *   Specifies Bouncy Castle version 1.80. This should be verified against the actual project dependencies.
+    *   The section "Additional OAuth/JWT Security Considerations" references a blog post from "Doyensec, 2025". This date is in the future, likely a typo for an earlier year or a placeholder. The link itself (https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html) should be checked for validity and correct date.
+    *   Many "Status: IMPLEMENTED" claims with links to source code and tests. These links are crucial for verification.
+    *   "Client Confusion Attack Prevention" mentions `expectedClientId()` for `azp` validation. This is good.
+    *   "Scope Upgrade Attack Prevention" states validation is at the application level. This is an important clarification.
+*   *Completeness:* Very comprehensive. Covers a wide range of security topics.
+*   *Readability:* Well-structured with clear headings.
+*   *Security Focus:* This document is central to security and appears strong.
+*   *Links:* Numerous links to code and tests. These need to be spot-checked.
+
+**`doc/specification/technical-components.adoc`:**
+*   *Correctness:*
+    *   Details components like `TokenValidator`, `IssuerConfig`, `JwksLoader`, etc.
+    *   References to requirements are generally present.
+    *   Describes "Exception-based Validation" using `TokenValidationException` and `EventCategory` which is a good design.
+    *   Diagrams referenced: `plantuml/multi-issuer-support.png`, `plantuml/key-management.png`, `plantuml/token-types.png`.
+    *   "Dependency Management" section mentions Dependabot configuration in `.github/dependabot.yml`. This should be verified.
+*   *Completeness:* Appears to cover the main technical components well.
+*   *Readability:* Clear, but dense with technical information.
+*   *Links:* Many links to source code.
+
+**`doc/specification/testing.adoc`:**
+*   *Correctness:*
+    *   References CUI Testing Standards (external links to GitHub). These links should be checked.
+    *   States "at least 80% line coverage" and critical paths 100%.
+    *   Mentions specific testing tools like JUnit 5, CUI testing utilities, SonarCloud.
+    *   Lists numerous test classes and their purposes.
+    *   "Fuzz Testing Implementation" mentions `AccessTokenGenerator`, etc., and using `@TypeGeneratorSource`. This is a good practice.
+    *   "JWT Token Tampering Testing" details `JwtTokenTamperingUtil` and its strategies. This is excellent for security testing.
+*   *Completeness:* Very thorough testing strategy.
+*   *Readability:* Well-organized.
+*   *Links:* Many links to test code and some external links.
+
+**`doc/specification/token-decryption.adoc`:**
+*   *Correctness:*
+    *   Clearly states "Status: NOT IMPLEMENTED".
+    *   Correctly identifies JWE structure (5 parts).
+    *   Outlines necessary parser modifications, data model extensions, key management extensions, and security considerations if JWE were to be implemented.
+*   *Completeness:* Provides a good blueprint for future JWE implementation.
+*   *Readability:* Clear.
+
+**`doc/specification/token-size-validation.adoc`:**
+*   *Correctness:*
+    *   States "Status: IMPLEMENTED".
+    *   References requirement CUI-JWT-8.1.
+    *   Mentions `NonValidatingJwtParser` defaults of 8KB for token and payload.
+    *   Provides usage examples for `ParserConfig`.
+*   *Completeness:* Focused and complete for this specific feature.
+*   *Readability:* Clear.
+
+**`doc/specification/well-known.adoc`:**
+*   *Correctness:*
+    *   Explains OIDC discovery via `/.well-known/openid-configuration`.
+    *   Lists key metadata fields like `issuer`, `jwks_uri`, etc. These are standard OIDC fields.
+    *   References the OpenID Connect Discovery 1.0 specification.
+*   *Completeness:* Good overview of the OIDC well-known endpoint functionality.
+*   *Readability:* Clear.
+*   *Links:* Link to OpenID Connect Discovery 1.0 spec should be verified.
+
+**General Issues / Areas for Verification:**
+*   **Diagram Accuracy:** All PlantUML diagrams referenced (`component-overview.png`, `multi-issuer-support.png`, `key-management.png`, `token-types.png`) need to be checked against the current codebase and architecture to ensure they are accurate and up-to-date.
+*   **Source Code Links:** Numerous links point to Java classes and test classes (e.g., `../../src/main/java/...`). A selection of these should be spot-checked to ensure they point to the correct files and that the described functionality/status aligns with the code.
+*   **Bouncy Castle Version:** `security.adoc` states version 1.80. This must be cross-checked with the project's `pom.xml` or other dependency management files.
+*   **Doyensec Blog Post Date:** The "2025" date in `security.adoc` for the Doyensec blog post is a typo and needs correction. The link itself needs to be verified.
+*   **External Links:** Links to RFCs, OWASP, NIST, OpenID Foundation, CUI standards on GitHub need to be checked for validity and to ensure they point to the most current relevant versions/pages.
+*   **"Status: IMPLEMENTED" Verification:** While many sections link to code, a holistic view is needed to confirm if the documented implementation status truly reflects the capabilities described. This is a larger effort potentially outside a pure documentation review but is critical for accuracy.
+*   **Consistency of Terminology:** Ensure terms like "Token Validation Pipeline", "IssuerConfig", "JwksLoader" are used consistently across all documents.
+*   **Duplication:** There's some inherent duplication (e.g., navigation links at the top of each sub-document). This is minor and aids navigation. The core content seems well-partitioned.
+
+*Actionable Tasks:*
+1.  *Verify PlantUML Diagrams:* Check `component-overview.png`, `multi-issuer-support.png`, `key-management.png`, `token-types.png` for accuracy against the current system architecture. Update if necessary.
+2.  *Spot-Check Source Code Links:* Randomly verify a sample of `../../src/...` links in `security.adoc`, `technical-components.adoc`, and `testing.adoc` to ensure they are correct and the code reflects the documented status/functionality.
+3.  *Verify Bouncy Castle Version:* Check `pom.xml` (or equivalent) for the Bouncy Castle version and update `security.adoc` if it's different from 1.80.
+4.  *Correct Doyensec Blog Post Reference:* In `security.adoc`, find the correct publication year for the Doyensec blog post and update the text. Verify the URL (https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html) or find the correct one.
+5.  *Verify External Links:* Check all external links in all reviewed specification documents (RFCs, OWASP, NIST, OpenID, CUI GitHub standards) for validity and currency. Update as needed.
+6.  *Verify Dependabot Configuration:* Check for the existence and content of `.github/dependabot.yml` as mentioned in `technical-components.adoc`.
+7.  *Review "Status: IMPLEMENTED":* For a few key features marked as implemented (e.g., specific security measures, core components), briefly cross-reference with linked code to ensure the description matches reality. This is a deeper check.
+8.  *Freshness of JWKS Size Data:* In `jwks-size-recommendations.adoc`, consider adding a note or a last checked date for the JWKS sizes of providers like Auth0, Okta, as this data can change.
+
+=== DOC3. Review `doc/threat-model/Threat-Model.adoc` and `doc/threat-model/threat-coverage-analysis.adoc`
 [ ] *Priority:* High
 
-*Description:* The "Supported Algorithms" and "Rejected Algorithms" lists in `doc/specification/security.adoc` under "Signature Validation" must be cross-verified with the lists and rationale provided in `doc/Requirements.adoc#CUI-JWT-1.3`. Ensure perfect consistency in algorithm names and the reasons for rejection.
+*Description:* Review the threat model documents for consistency, completeness, accuracy of coverage claims, traceability, clarity of diagrams, validity of links, actionability of recommendations, and overall security focus.
 
-*Rationale:* Inconsistencies in supported cryptographic algorithms between requirements and specification can lead to incorrect implementations or misunderstandings of the library's security posture.
+*Rationale:* Ensures the threat model documentation is accurate, comprehensive, and effectively guides security efforts.
 
-=== DOC16. Status of "Scope Upgrade Attack Prevention" in security.adoc
+*Findings:*
+
+**Overall:** The threat model documents are very structured and provide a good overview of potential threats, mitigations, and coverage. The `threat-coverage-analysis.adoc` is particularly detailed. The linkage between the two documents and back to requirements/specifications is strong.
+
+**`doc/threat-model/Threat-Model.adoc`:**
+*   *Correctness:*
+    *   References CUI-JWT-8, Specification, and Security Specification, which is appropriate.
+    *   The STRIDE categories (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege) are standard and well-used.
+    *   Lists specific threats under each STRIDE category (S1-S5, T1-T5, etc.). These IDs are used in `threat-coverage-analysis.adoc`.
+    *   The "Coverage Analysis" tables (Overall and by STRIDE category) provide a summary. The accuracy of these summaries depends on the details in `threat-coverage-analysis.adoc`.
+    *   The Doyensec blog post reference with the "2025" date is present here as well and needs correction. Link: https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html
+*   *Completeness:*
+    *   Provides a good high-level overview of the threat landscape.
+    *   Directs to `threat-coverage-analysis.adoc` for details, which is appropriate.
+*   *Readability:* Well-organized and clear.
+*   *Diagrams:* References `plantuml/threat-model-dataflow.png`. This diagram needs to be verified for accuracy and clarity.
+*   *Links:* Links to `threat-coverage-analysis.adoc` and specification documents need to be correct. External links in the "References" section need checking.
+
+**`doc/threat-model/threat-coverage-analysis.adoc`:**
+*   *Correctness:*
+    *   This document is the core of the threat analysis.
+    *   For each threat ID from `Threat-Model.adoc` (e.g., S1, T1), it details "Coverage in Specifications" and "Coverage in Tests", often with direct links to code or requirement sections. This is excellent.
+    *   Lists "Current Mitigations" with their implementation and test coverage.
+    *   Lists "Recommendations" with implementation status and notes.
+    *   The "Summary of Findings" section identifies "Well-Covered Threats" and "Areas for Improvement," which is very useful.
+*   *Completeness:* Appears to be very comprehensive in analyzing each listed threat.
+*   *Readability:* The tabular format makes it easy to read and assess coverage for specific items.
+*   *Accuracy of Coverage Claims:* The claims made in the "Coverage in Specifications" and "Coverage in Tests" columns (including the links) are critical and need to be spot-checked for accuracy. For example, if it says "Implemented in X.java" and "Tested in Y.java", these links should be valid and the code should reflect the mitigation.
+*   *Actionability of Recommendations:* Recommendations like "Implement token blacklisting," "Add rate limiting," etc., are generally clear.
+*   *Security Focus:* Highly focused on security, providing a detailed breakdown of threats and mitigations.
+
+**General Issues / Areas for Verification:**
+*   **Consistency of Threat IDs:** Ensure all threat IDs (S1, T1, R1, I1, D1, E1, etc.) mentioned in `Threat-Model.adoc` are covered in `threat-coverage-analysis.adoc`. (A quick scan suggests this is the case).
+*   **Accuracy of Coverage Summary Tables:** The summary tables in `Threat-Model.adoc` (e.g., "Threats | 34 | Covered in Specifications 34 (100%) | Covered in Tests 32 (94%) | Not Covered 2 (6%)") must accurately reflect the detailed analysis in `threat-coverage-analysis.adoc`. This requires careful cross-checking of counts.
+    *   For example, Threat Model states 34 threats. `threat-coverage-analysis.adoc` lists S1-S5 (5), T1-T5 (5), R1-R5 (5), I1-I6 (6), D1-D6 (6), E1-E9 (9). Total = 5+5+5+6+6+9 = 36 threats. This is a discrepancy. The threat IDs in `Threat-Model.adoc` also sum to 36. The table needs correction.
+*   **Links to Code/Specifications:** The numerous links in `threat-coverage-analysis.adoc` to `.java` files, requirement sections, and specification sections are vital. A sample of these must be checked.
+*   **Doyensec Blog Post Date:** Correct the "2025" date and verify the link in `Threat-Model.adoc`.
+*   **External Links:** Check other external links in `Threat-Model.adoc` (OWASP, NIST, RFCs).
+*   **`plantuml/threat-model-dataflow.png`:** Verify this diagram's accuracy and relevance.
+*   **"Not directly addressed in the codebase / Application-level concern":** `threat-coverage-analysis.adoc` uses this for some items (e.g., R5: Tampering with log data). This is a valid classification, but it should be used consistently and appropriately.
+
+*Actionable Tasks:*
+1.  *Verify `plantuml/threat-model-dataflow.png`:* Check the diagram for accuracy and clarity.
+2.  *Correct Doyensec Blog Post Reference:* In `Threat-Model.adoc`, fix the year and verify the URL.
+3.  *Verify External Links in `Threat-Model.adoc`:* Check OWASP, NIST, RFC links.
+4.  *Reconcile Threat Counts:*
+    *   Count threats listed in `Threat-Model.adoc` under each STRIDE category and sum them up. (S=5, T=5, R=5, I=6, D=6, E=9. Total = 36).
+    *   Update the "Overall Coverage" table in `Threat-Model.adoc` to reflect 36 total threats.
+    *   Verify that `threat-coverage-analysis.adoc` covers all 36 threats.
+    *   Recalculate percentages in all coverage tables in `Threat-Model.adoc` based on the corrected total number of threats (36) and the detailed findings in `threat-coverage-analysis.adoc`. This will require careful counting of items marked as covered in specs/tests in `threat-coverage-analysis.adoc`.
+5.  *Spot-Check Links in `threat-coverage-analysis.adoc`:* Verify a sample of links to source code files, specification sections, and requirement sections to ensure they are correct and support the coverage claims.
+6.  *Review "Not Covered" Threats/Mitigations:* Pay special attention to items listed as "Not Covered" in `Threat-Model.adoc` and ensure this aligns with the details in `threat-coverage-analysis.adoc` (e.g., recommendations not implemented).
+
+=== DOC4. Review `doc/Build.adoc`, `doc/LogMessages.adoc`, `doc/UnitTesting.adoc`, and `doc/Usage.adoc`
 [ ] *Priority:* Medium
 
-*Description:* In `doc/specification/security.adoc`, the "Scope Upgrade Attack Prevention" section states "Status: IMPLEMENTED". However, it also says, "Scope validation is implemented at the application level, not as part of the token validation process" and "The final check whether the scopes are correct are to be in the client library." This seems to imply the core library doesn't fully prevent it, but rather provides tools for the application to do so. The "IMPLEMENTED" status might be misleading if the library itself doesn't enforce this. Clarify the library's direct role vs. application responsibility.
+*Description:* Review the build, log messages, unit testing utilities, and usage guide documents for correctness, completeness, readability, up-to-dateness, consistency, and validity of links.
 
-*Rationale:* The implementation status must accurately reflect the library's capabilities. If the prevention is largely an application concern using library-provided tools, this should be stated more clearly to avoid misrepresenting the library's security guarantees.
+*Rationale:* Ensures that these supporting documents are accurate, helpful, and consistent with the rest of the project documentation and current practices.
 
-=== DOC17. Code Example Source in security.adoc
-[ ] *Priority:* Medium
+*Findings:*
 
-*Description:* The `doc/specification/security.adoc` document includes a Java code example for configuring `IssuerConfig` for "Client Confusion Attack Prevention". According to `doc/library/standards/documentation/general-standard.adoc`, "Code examples must come from actual unit tests". Verify if this example is from a unit test or can be easily verified. If not, consider linking to a test that demonstrates this configuration.
+**`doc/Build.adoc`:**
+*   *Correctness:*
+    *   Instructions for updating Maven Wrapper (`./mvnw wrapper:wrapper`) are standard.
+    *   Reproducible Builds section correctly lists pinned versions, Maven Wrapper, Java version (17), `project.build.outputTimestamp`, and pinned GitHub Actions. These details are good for build consistency.
+    *   Java version `17` and Maven `3.9.6` are mentioned. This should be consistent with the project's `pom.xml` and wrapper properties.
+    *   Instructions for verifying reproducibility using `diffoscope` are clear.
+    *   PlantUML section: `!pragma layout smetana` is correctly recommended for Graphviz independence.
+    *   Script `./generate-plantuml.sh` and Maven profile `build-plantuml` are mentioned for image generation.
+    *   Automated reproducibility verification in GitHub Actions (`.github/workflows/maven.yml`, job `reproducible-build`) is mentioned.
+*   *Completeness:* Covers key aspects of building and development environment setup well.
+*   *Readability:* Clear and well-structured.
+*   *Up-to-dateness:*
+    *   Maven version `3.9.6` should be verified against `.mvn/wrapper/maven-wrapper.properties`.
+    *   Java version `17` should be verified against the root `pom.xml`.
+    *   The existence and content of `./generate-plantuml.sh` should be verified.
+    *   The GitHub Actions workflow path and job name should be verified.
+*   *Links:* No external links to check, mostly internal references or commands.
 
-*Rationale:* Code examples sourced from unit tests are more likely to be correct, maintained, and executable, providing higher quality documentation.
+**`doc/LogMessages.adoc`:**
+*   *Correctness:*
+    *   Format `JWTValidation-[identifier]: [message]` is defined.
+    *   ID ranges for INFO (001-099), WARN (100-199), ERROR (200-299) are clear. States only INFO and above are documented.
+    *   Lists specific log messages with ID, Component, Message, and Description.
+    *   References `SecurityEventCounter` from `technical-components.adoc`.
+*   *Completeness:* Provides a good list of important log messages. It's not uncommon for DEBUG/TRACE to be excluded from such lists due to volume.
+*   *Readability:* The tabular format is very clear.
+*   *Up-to-dateness:* The log messages listed should ideally be verified against the actual log messages in `JWTValidationLogMessages.java` (or equivalent source file) to ensure they are current and descriptions match. This is a deeper check.
+*   *Consistency:* Log IDs and components should be consistent with their usage in the code.
 
-=== DOC18. "Additional OAuth/JWT Security Considerations" Source Date
-[ ] *Priority:* Low
+**`doc/UnitTesting.adoc`:**
+*   *Correctness:*
+    *   Describes the test artifact with classifier `test`. Maven dependency snippet is provided.
+    *   Key utilities like `TestTokenHolder`, `ClaimControlParameter`, `TestTokenGenerators`, and `@TestTokenSource` are explained with code examples.
+    *   `WellKnownDispatcher` for testing OIDC discovery is detailed with a comprehensive example.
+*   *Completeness:* Provides a good overview of the main testing utilities available to users of the library.
+*   *Readability:* Clear explanations and code examples.
+*   *Up-to-dateness:*
+    *   Class names and methods (`TestTokenHolder`, `withClaim`, `getIssuerConfig`, `ClaimControlParameter.defaultForTokenType`, `@TestTokenSource`, `WellKnownDispatcher`, `successfullyRespondTo`) should be verified against the actual test utility source code.
+    *   The Maven version `${version}` placeholder is standard.
+*   *Links:* Link to `../specification/well-known.adoc` is present.
 
-*Description:* The section "Additional OAuth/JWT Security Considerations" in `doc/specification/security.adoc` references `https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html[OAuth Common Vulnerabilities (Doyensec, 2025)]`. The year "2025" seems to be a typo and should be verified. Assuming it's a real article, check if it's the most current or relevant source for these considerations.
+**`doc/Usage.adoc`:**
+*   *Correctness:*
+    *   `TokenValidator` is correctly identified as the main entry point.
+    *   Examples for single and multi-issuer setup are provided.
+    *   Configuration via OIDC Discovery using `WellKnownHandler` is shown, including configuring `HttpJwksLoaderConfig` and `TokenValidator`.
+    *   Custom claim mappers, including `JsonCollectionMapper` and `StringSplitterMapper`, are explained.
+    *   Security settings via `ParserConfig` (maxTokenSize, etc.) are detailed.
+    *   Best practices (General, Security, Exception Handling, Performance) are listed.
+    *   The exception handling example correctly uses `TokenValidationException` and `EventType`/`EventCategory`.
+*   *Completeness:* Covers a good range of common usage scenarios and best practices.
+*   *Readability:* Well-structured with clear code examples.
+*   *Up-to-dateness:*
+    *   Class names, builder patterns (`IssuerConfig.builder()`, `HttpJwksLoaderConfig.builder()`, `ParserConfig.builder()`, `WellKnownHandler.builder()`) and method names should be current with the library's API.
+    *   Default values mentioned (e.g., for `ParserConfig`) should match the actual defaults in the code.
+*   *Links:* Links to `specification/technical-components.adoc` and `specification/well-known.adoc` are present.
 
-*Rationale:* Referencing up-to-date and accurate external resources is important, especially for rapidly evolving security topics. A typo in the year is a minor but noticeable issue.
+**General Issues / Areas for Verification:**
+*   **Code Examples:** All code examples in `UnitTesting.adoc` and `Usage.adoc` should be checked to ensure they are syntactically correct and reflect the current API of the library. This is crucial for these documents.
+*   **Consistency with Other Documents:** Ensure that features described (e.g., OIDC discovery, claim mapping) are consistent with their detailed specifications in other documents.
+*   **Verification of Paths/File Names:**
+    *   `Build.adoc`: `.github/workflows/maven.yml` and `./generate-plantuml.sh`.
+    *   `Build.adoc`: Maven version in `.mvn/wrapper/maven-wrapper.properties` and Java version in `pom.xml`.
+*   **Log Message Synchronization:** For `LogMessages.adoc`, a spot-check against `JWTValidationLogMessages.java` (or its equivalent) would be beneficial to ensure the documented messages (especially IDs and templates) haven't drifted from the code.
 
-=== DOC19. Completeness of Security Testing Specifications Table
-[ ] *Priority:* Medium
-
-*Description:* In `doc/specification/security.adoc`, under "Security Testing Specifications" > "Client Confusion Attack Testing", the table lists test cases. One test case, "verify_audience_validation_failure", is marked as "Not implemented yet" in the "Implementation" column. This status should be verified. If it's indeed not implemented, the overall "Status: IMPLEMENTED" for "Client Confusion Attack Prevention" might need qualification.
-
-*Rationale:* The documentation should accurately reflect the current state of implementation, including test coverage for security features. Discrepancies can be misleading.
-
-=== DOC20. Verify Links and Content in technical-components.adoc
-[ ] *Priority:* High
-
-*Description:* `doc/specification/technical-components.adoc` is a cornerstone document with numerous links to source code (`.java` files), test files, other specification documents, and requirements. Each link must be meticulously verified for correctness (points to the right place, not broken) and relevance (the linked content accurately reflects the description). The textual description of each component (e.g., `TokenValidator`, `JwksLoader`, `SecurityEventCounter`) must be checked against its actual implementation in the linked source code for accuracy and completeness. Confirm "Status: IMPLEMENTED" for all sections.
-
-*Rationale:* This document bridges the gap between high-level design and actual code. Accuracy here is paramount for developers to understand the system. Incorrect or outdated information can lead to significant misunderstandings, wasted effort, and bugs. This directly supports multiple principles in `general-standard.adoc`, including "All references must be verified to exist" and "Only document existing code elements".
-
-=== DOC21. PlantUML Diagrams in technical-components.adoc
-[ ] *Priority:* Medium
-
-*Description:* `doc/specification/technical-components.adoc` includes several PlantUML diagrams: `multi-issuer-support.png`, `key-management.png`, and `token-types.png`. For each diagram:
-    1. Verify the image link is correct (e.g., `image::../../doc/plantuml/multi-issuer-support.png[...]`). Note the `../../doc` path, which seems to try to exit `doc/specification/` and re-enter `doc/`. This might be incorrect; typical relative paths would be `../plantuml/...puml`.
-    2. Confirm that a corresponding `.puml` source file exists in `doc/plantuml/`.
-    3. Assess if the diagram accurately represents the described components and their interactions as detailed in this document and potentially in the linked source code.
-
-*Rationale:* Diagrams are powerful tools for understanding architecture, but only if they are accurate and sourced from maintainable, version-controlled files. Incorrect paths or outdated diagrams reduce their value and can be misleading.
-
-=== DOC22. RefreshTokenContent Caution in technical-components.adoc
-[ ] *Priority:* Medium
-
-*Description:* Under "Token Architecture and Types" in `doc/specification/technical-components.adoc`, the description for `RefreshTokenContent` includes: "*Caution:* The signature of the refresh token is not verified, so the claims should be treated as untrusted." This is an important security note.
-    1. Verify this behavior (non-verification of refresh token signature) is intentional and documented in requirements or security policies if applicable.
-    2. Ensure this caution is prominent and perhaps also mentioned in `security.adoc` if it has security implications that users must be aware of.
-
-*Rationale:* Security-relevant details, especially caveats about trust, must be clearly and prominently communicated. If refresh token claims are populated but untrusted, developers must understand this to avoid potential vulnerabilities.
-
-=== DOC23. Dependency Management Section in technical-components.adoc
-[ ] *Priority:* Low
-
-*Description:* The "Dependency Management" section in `doc/specification/technical-components.adoc` describes the use of GitHub Dependabot. It links to `Requirements.adoc#CUI-JWT-8`. Requirement CUI-JWT-8 is "Security". While dependency management is crucial for security, it's a process/tooling aspect. Consider if this section belongs more appropriately in `Build.adoc` or a general development practices document, rather than in `technical-components.adoc` which focuses on the library's software components. Alternatively, ensure the link to CUI-JWT-8 is justified by explaining how this specific requirement mandates automated dependency checking.
-
-*Rationale:* Ensuring information is in the most logical location improves document organization and discoverability. Technical components usually refer to the software's building blocks, not development processes.
-
-=== DOC24. Consistency of Component Coverage with Specification.adoc
-[ ] *Priority:* Medium
-
-*Description:* Cross-reference the list of components detailed in `doc/specification/technical-components.adoc` with the components listed in the overview section of `doc/Specification.adoc` ("Component Descriptions"). Ensure:
-    1. All components mentioned in the main specification's overview have a detailed section here.
-    2. All major components detailed here are at least mentioned in the main specification's overview.
-    3. The brief descriptions in `Specification.adoc` are consistent with the detailed descriptions in `technical-components.adoc`.
-
-*Rationale:* Consistency between the overview specification and the detailed technical component specification is important for a coherent understanding of the system architecture.
-
-=== DOC25. Verify Links and Status in testing.adoc
-[ ] *Priority:* High
-
-*Description:* `doc/specification/testing.adoc` is rich with links to test classes (`*Test.java`, `*IT.java`), utility classes (`JwtTokenTamperingUtil.java`, generator classes), requirement documents, and external CUI testing standards. Each link must be verified for correctness (points to the right target, not broken) and relevance. The "Status: IMPLEMENTED" claim for each testing category (Unit, Integration, Security, Performance, Logging, Vulnerability Scanning, Fuzz, Compliance) must be validated by checking the linked test code and ensuring comprehensive coverage as described. For instance, under "Unit Testing", a list of "Test Cases" is provided (e.g., "Token Parsing Tests", "Key Management Tests"); verify these are indeed covered by the linked test classes.
-
-*Rationale:* Accurate documentation of testing is vital for quality assurance, maintainability, and demonstrating compliance with requirements. Broken links or incorrect status claims undermine confidence in the testing strategy. This directly relates to "All references must be verified to exist" and "Only document existing code elements (or features)" from `general-standard.adoc`.
-
-=== DOC26. External CUI Testing Standards Links
-[ ] *Priority:* Medium
-
-*Description:* `doc/specification/testing.adoc` references CUI Testing Standards via GitHub links (e.g., `https://github.com/cuioss/cui-llm-rules/blob/main/standards/testing/core-standards.adoc`).
-    1. Verify these links are active and point to the correct documents.
-    2. Assess if the summaries provided in `testing.adoc` accurately reflect the content of these external standards.
-    3. Consider whether it's preferable to have copies of these standards within this project's `doc/library/standards/testing/` directory for version consistency and offline access, rather than relying solely on external URLs that might change or become unavailable.
-
-*Rationale:* While linking to external standards is common, ensuring their accessibility and the accuracy of their summaries is important. For foundational standards, embedding or vendoring them can increase the self-contained nature of the project documentation.
-
-=== DOC27. Clarity of "Vulnerability Scanning" Implementation
-[ ] *Priority:* Medium
-
-*Description:* In `doc/specification/testing.adoc`, the "Vulnerability Scanning" section states "Status: IMPLEMENTED" and refers to GitHub Dependabot. It then links to `security.adoc` for "detailed information about dependency management and vulnerability scanning". However, `security.adoc`'s "Dependency Management" section (as per DOC23 finding on `technical-components.adoc` which seems to have this section instead) primarily describes Dependabot for *dependency updates*. Clarify if Dependabot is used for *active vulnerability scanning* of the project's own code or if it's mainly for third-party library vulnerabilities. The "Fuzz Testing Implementation" is also under this section, which feels misplaced if "Vulnerability Scanning" is only about dependencies.
-
-*Rationale:* The scope and nature of "Vulnerability Scanning" need to be precise. Fuzz testing is a code testing technique, not typically categorized under dependency scanning. Clear distinctions improve understanding of the actual security measures in place.
-
-=== DOC28. Code Examples in testing.adoc
-[ ] *Priority:* Low
-
-*Description:* `doc/specification/testing.adoc` includes Java code snippets for parameterized tests using `@TypeGeneratorSource` and for `JwtTokenTamperingUtil`. As per `general-standard.adoc` ("Code examples must come from actual unit tests"), verify these snippets are concise, illustrative, and directly reflect patterns used in the actual linked test files. Avoid large, duplicated code blocks if a link to the source test can convey the same information.
-
-*Rationale:* Code examples should be accurate and maintainable. Linking to tests is often better than embedding large snippets. The examples here seem reasonable but should be checked for conciseness and relevance to the actual test code.
-
-=== DOC29. Test Class Naming Convention and Requirement Referencing
-[ ] *Priority:* Low
-
-*Description:* The "Compliance Testing" section in `doc/specification/testing.adoc` describes a "Test Class Naming Convention" (`<Standard><Feature>ComplianceTest`) and "Requirement Referencing" practices within tests. Verify if the linked compliance test classes (e.g., `RFC7519JWTComplianceTest.java`) actually follow this naming convention and if the described requirement referencing (class/method level JavaDocs, assertion messages) is consistently applied in practice.
-
-*Rationale:* Documented conventions are only useful if followed. Verifying adherence helps ensure the documentation accurately reflects practice, aiding maintainability and traceability.
+*Actionable Tasks:*
+1.  *Verify Build Details (`Build.adoc`):*
+    *   Confirm Maven version in `.mvn/wrapper/maven-wrapper.properties` matches "3.9.6".
+    *   Confirm Java version in root `pom.xml` matches "17".
+    *   Check for the existence and basic functionality of `./generate-plantuml.sh`.
+    *   Verify the path `.github/workflows/maven.yml` and the job name `reproducible-build`.
+2.  *Spot-Check Log Messages (`LogMessages.adoc`):* Compare a few sample log messages (ID, template) from the document with the corresponding entries in the codebase (e.g., `JWTValidationLogMessages.java`) to check for synchronization.
+3.  *Verify Test Utility APIs (`UnitTesting.adoc`):*
+    *   Spot-check key class and method names (e.g., `TestTokenHolder`, `@TestTokenSource`, `WellKnownDispatcher` methods) against the test artifact's source code.
+    *   Ensure the Maven dependency snippet is accurate for including test utilities.
+4.  *Verify Usage Examples (`Usage.adoc`):*
+    *   Review code examples for creating `TokenValidator`, `IssuerConfig`, `HttpJwksLoaderConfig`, `ParserConfig`, using `WellKnownHandler`, and custom claim mappers. Ensure they align with the current library API.
+    *   Check the exception handling example for correctness.
+5.  *Check Internal Links:* Verify links between these documents and to the specification documents.
