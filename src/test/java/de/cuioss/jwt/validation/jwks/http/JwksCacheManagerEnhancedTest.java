@@ -190,6 +190,7 @@ class JwksCacheManagerEnhancedTest {
         LOGGER.debug(() -> "After multiple accesses - Access count: " + accessCount.get() + ", Hit count: " + hitCount.get());
 
         // Manually force the cache to expire the entry
+        @SuppressWarnings("unchecked")
         LoadingCache<String, JWKSKeyLoader> jwksCache =
                 (LoadingCache<String, JWKSKeyLoader>) jwksCacheField.get(adaptiveCacheManager);
         jwksCache.invalidate(adaptiveCacheManager.getCacheKey());
