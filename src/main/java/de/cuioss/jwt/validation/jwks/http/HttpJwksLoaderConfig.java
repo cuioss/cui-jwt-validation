@@ -59,11 +59,16 @@ public class HttpJwksLoaderConfig {
     private static final int DEFAULT_MAX_CACHE_SIZE = 100;
     private static final int DEFAULT_BACKGROUND_REFRESH_PERCENTAGE = 80;
     private static final int DEFAULT_ADAPTIVE_WINDOW_SIZE = 10;
-    public static final int DEFAULT_REFRESH_INTERVAL_IN_SECONDS = 60 * 60 * 10;
+
+    /**
+     * A Default of 10 minutes (600 seconds).
+     */
+    private static final int DEFAULT_REFRESH_INTERVAL_IN_SECONDS = 60 * 10;
 
     /**
      * The interval in seconds at which to refresh the keys.
      * If set to 0, no time-based caching will be used.
+     * It defaults to 10 minutes (600 seconds).
      */
     @Getter
     private final int refreshIntervalSeconds;
@@ -253,7 +258,7 @@ public class HttpJwksLoaderConfig {
         /**
          * Sets the refresh interval in seconds.
          * <p>
-         * If set to 0, no time-based caching will be used.
+         * If set to 0, no time-based caching will be used. It defaults to 10 minutes (600 seconds).
          * </p>
          *
          * @param refreshIntervalSeconds the refresh interval in seconds

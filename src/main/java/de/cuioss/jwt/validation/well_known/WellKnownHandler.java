@@ -357,6 +357,13 @@ public final class WellKnownHandler {
                 HttpClient httpClient = wellKnownHttpHandler.createHttpClient();
                 HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
+                // Check the response status using HttpStatusFamily
+                HttpStatusFamily statusFamily = HttpStatusFamily.fromStatusCode(response.statusCode());
+                if (statusFamily != HttpStatusFamily.SUCCESS) {
+                    throw new WellKnownDiscoveryException("Failed to fetch discovery document from " + resolvedUrl +
+                            ". HTTP status: " + response.statusCode() + " (" + statusFamily + ")");
+                }
+
                 // Parse the response body
                 discoveryDocument = parseJsonResponse(response.body(), resolvedUrl);
             } catch (IOException e) {

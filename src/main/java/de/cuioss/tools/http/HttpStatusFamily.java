@@ -37,7 +37,7 @@ import lombok.RequiredArgsConstructor;
 public enum HttpStatusFamily {
 
     /**
-     * 1xx: Informational - Request received, continuing process.
+     * 1xx: Informational - Request received, a continuing process.
      */
     INFORMATIONAL(100, 199, "Informational"),
 
@@ -47,7 +47,7 @@ public enum HttpStatusFamily {
     SUCCESS(200, 299, "Success"),
 
     /**
-     * 3xx: Redirection - Further action needs to be taken in order to complete the request.
+     * 3xx: Redirection - Further action needs to be taken to complete the request.
      */
     REDIRECTION(300, 399, "Redirection"),
 
