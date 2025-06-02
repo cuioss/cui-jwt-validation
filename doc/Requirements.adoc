@@ -73,7 +73,7 @@ The following algorithms shall NOT be supported due to security concerns:
 
 * HS256, HS384, HS512 (HMAC with SHA-2) - Vulnerable to https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/[key confusion attacks] (2015) when used in combination with RSA public keys
 * "none" algorithm - Explicitly forbidden by https://datatracker.ietf.org/doc/html/draft-ietf-oauth-jwt-bcp-09#section-3.1[OAuth 2.0 JWT BCP Section 3.1] and https://cwe.mitre.org/data/definitions/347.html[CWE-347: Improper Verification of Cryptographic Signature]
-* RS1, RS256-512 with keys shorter than 2048 bits - Not compliant with https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-131Ar2.pdf[NIST SP 800-131A] (2019)
+* RSA based algorithms (like RS256, RS384, RS512) with keys shorter than 2048 bits - Not compliant with https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-131Ar2.pdf[NIST SP 800-131A] (2019)
 * All RSASSA-PKCS1-v1_5 algorithms - Considered legacy by https://www.rfc-editor.org/rfc/rfc8017.html#section-8.2[RFC 8017] (2016) in favor of RSASSA-PSS
 
 Additional security considerations:
@@ -253,6 +253,7 @@ Implement safe parsing practices to prevent security vulnerabilities such as:
 * JSON parsing attacks
 * Injection attacks
 * Deserialization vulnerabilities
+For example, vulnerabilities could include issues like entity expansion in XML parsers (if applicable to the JSON parser's underlying mechanisms or if XML is also processed), or object injection if deserializing into complex type hierarchies without proper validation.
 
 Refer to https://owasp.org/www-project-top-ten/[OWASP Top 10] (2021) for common vulnerabilities, particularly A8:2021-Software and Data Integrity Failures.
 

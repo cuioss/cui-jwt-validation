@@ -131,7 +131,7 @@ The following aspects are covered in detail in the specification documents:
 [cols="1,1,2,1,1", options="header"]
 |===
 |Category |Total Items |Covered in Specifications |Covered in Tests |Not Covered
-|Threats |34 |34 (100%) |32 (94%) |2 (6%)
+|Threats |36 |Covered in Specifications 36 (100%) |Covered in Tests 34 (94%) |Not Covered 2 (6%)
 |Current Mitigations |28 |28 (100%) |26 (93%) |2 (7%)
 |Recommendations |36 |22 (61%) |20 (56%) |14 (39%)
 |===
