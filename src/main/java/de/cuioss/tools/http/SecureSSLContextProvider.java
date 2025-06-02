@@ -25,9 +25,6 @@ import javax.net.ssl.TrustManagerFactory;
 import java.security.*;
 import java.util.Set;
 
-import static de.cuioss.jwt.validation.JWTValidationLogMessages.DEBUG;
-import static de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
-
 /**
  * Provider for secure SSL contexts used in HTTPS communications.
  * <p>
@@ -202,24 +199,24 @@ public class SecureSSLContextProvider {
             if (sslContext != null) {
                 // Validate the provided SSL context
                 String protocol = sslContext.getProtocol();
-                LOGGER.debug(DEBUG.SSL_CONTEXT_PROTOCOL.format(protocol));
+                LOGGER.debug(DEBUG_SSL_CONTEXT_PROTOCOL, protocol);
 
                 // Check if the protocol is secure according to the configured TLS versions
                 if (isSecureTlsVersion(protocol)) {
                     // The provided context was secure and is being used
-                    LOGGER.debug(DEBUG.USING_SSL_CONTEXT.format(protocol));
+                    LOGGER.debug(DEBUG_USING_SSL_CONTEXT, protocol);
                     return sslContext;
                 }
 
                 // If not secure, create a new secure context
-                LOGGER.warn(WARN.INSECURE_SSL_PROTOCOL.format(protocol));
+                LOGGER.warn(WARN_INSECURE_SSL_PROTOCOL, protocol);
                 SSLContext secureContext = createSecureSSLContext();
-                LOGGER.debug(DEBUG.CREATED_SECURE_CONTEXT.format(minimumTlsVersion));
+                LOGGER.debug(DEBUG_CREATED_SECURE_CONTEXT, minimumTlsVersion);
                 return secureContext;
             } else {
                 // If no context provided, create a new secure one
                 SSLContext secureContext = createSecureSSLContext();
-                LOGGER.debug(DEBUG.NO_SSL_CONTEXT.format(minimumTlsVersion));
+                LOGGER.debug(DEBUG_NO_SSL_CONTEXT, minimumTlsVersion);
                 return secureContext;
             }
         } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
@@ -232,4 +229,10 @@ public class SecureSSLContextProvider {
             }
         }
     }
+
+    private static final String DEBUG_SSL_CONTEXT_PROTOCOL = "Provided SSL context uses protocol: %s";
+    private static final String DEBUG_USING_SSL_CONTEXT = "Using provided SSL context with protocol: %s";
+    private static final String WARN_INSECURE_SSL_PROTOCOL = "Provided SSL context uses insecure protocol: %s. Creating a secure context instead.";
+    private static final String DEBUG_CREATED_SECURE_CONTEXT = "Created secure SSL context with %s";
+    private static final String DEBUG_NO_SSL_CONTEXT = "No SSL context provided, created secure SSL context with %s";
 }

@@ -47,30 +47,6 @@ public final class JWTValidationLogMessages {
      */
     @UtilityClass
     public static final class DEBUG {
-        public static final LogRecord SSL_CONTEXT_PROTOCOL = LogRecordModel.builder()
-                .prefix(PREFIX)
-                .identifier(500)
-                .template("Provided SSL context uses protocol: %s")
-                .build();
-
-        public static final LogRecord USING_SSL_CONTEXT = LogRecordModel.builder()
-                .prefix(PREFIX)
-                .identifier(501)
-                .template("Using provided SSL context with protocol: %s")
-                .build();
-
-        public static final LogRecord CREATED_SECURE_CONTEXT = LogRecordModel.builder()
-                .prefix(PREFIX)
-                .identifier(502)
-                .template("Created secure SSL context with %s")
-                .build();
-
-        public static final LogRecord NO_SSL_CONTEXT = LogRecordModel.builder()
-                .prefix(PREFIX)
-                .identifier(503)
-                .template("No SSL context provided, created secure SSL context with %s")
-                .build();
-
         public static final LogRecord JWKS_URL_MISSING_SCHEME = LogRecordModel.builder()
                 .prefix(PREFIX)
                 .identifier(523)
@@ -434,12 +410,6 @@ public final class JWTValidationLogMessages {
                 .prefix(PREFIX)
                 .identifier(134)
                 .template("Token has expired")
-                .build();
-
-        public static final LogRecord INSECURE_SSL_PROTOCOL = LogRecordModel.builder()
-                .prefix(PREFIX)
-                .identifier(135)
-                .template("Provided SSL context uses insecure protocol: %s. Creating a secure context instead.")
                 .build();
 
 

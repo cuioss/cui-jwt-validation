@@ -73,7 +73,6 @@ For more details about security events related to these log messages, see the Se
 |JWTValidation-129 |JWKS |New JWKS response has no valid keys, falling back to previous valid keys |Logged when the new JWKS response has no valid keys
 |JWTValidation-130 |JWKS |Falling back to last valid JWKS due to exception: %s |Logged when falling back to the last valid JWKS due to an exception
 |JWTValidation-134 |TOKEN |Token has expired |Logged when a token has expired
-|JWTValidation-135 |SSL |Provided SSL context uses insecure protocol: %s. Creating a secure context instead. |Logged when an insecure SSL protocol is detected
 |JWTValidation-137 |TOKEN |Token authorized party '%s' does not match expected client ID '%s' |Logged when the azp claim in the token does not match the expected client ID
 |JWTValidation-138 |TOKEN |Missing recommended element: %s |Logged when a recommended element is missing from the token
 |JWTValidation-139 |TOKEN |Token audience %s does not match any of the expected audiences %s |Logged when the audience in the token does not match any of the expected audiences
