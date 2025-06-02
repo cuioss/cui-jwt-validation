@@ -87,6 +87,7 @@ Based on analysis of the JWKS content generation in the project:
 The OAuth 2.0 JWT BCP document (draft-ietf-oauth-jwt-bcp-09) recommends a maximum token size of 8KB for JWT tokens. While this recommendation is specifically for JWT tokens, it provides a reference point for JSON-based security data.
 
 === Major Identity Providers
+The typical sizes mentioned below are based on observations and may change. (Data last checked: 2025-06-02)
 
 ==== Auth0
 * Typical JWKS size: 1-5 KB

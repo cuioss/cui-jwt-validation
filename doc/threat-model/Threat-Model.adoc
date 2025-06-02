@@ -217,6 +217,6 @@ The areas for improvement identified in the link:threat-coverage-analysis.adoc[T
 * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-52r2.pdf[NIST SP 800-52 Rev. 2] (2019)
 * https://datatracker.ietf.org/doc/html/rfc7519[RFC 7519 - JSON Web Token (JWT)]
 * https://datatracker.ietf.org/doc/html/rfc7518[RFC 7518 - JSON Web Algorithms (JWA)]
-* https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html[OAuth Common Vulnerabilities] (Doyensec, [YYYY - TODO: Verify Year and Link])
+* https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html[OAuth Common Vulnerabilities] (Doyensec, 2025)
 * https://datatracker.ietf.org/doc/html/rfc6749[RFC 6749 - The OAuth 2.0 Authorization Framework]
 * https://openid.net/specs/openid-connect-core-1_0.html[OpenID Connect Core 1.0]

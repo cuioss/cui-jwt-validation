@@ -23,7 +23,7 @@ This project implements several measures to ensure reproducible builds. The foll
 
 * All plugin and dependency versions are pinned in all `pom.xml` files. No LATEST, RELEASE, or version ranges are used.
 * The Maven Wrapper is present (`mvnw`, `mvnw.cmd`, `.mvn/wrapper/maven-wrapper.properties`) and pins Maven `3.9.6`.
-* Java version is set explicitly in the root `pom.xml`, inherited by all modules.:
+* The Java version (e.g., Java 17) is typically defined in the parent POM and inherited by all modules. This is commonly configured using properties like:
 
 [source,xml]
 ----
