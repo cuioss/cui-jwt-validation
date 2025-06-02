@@ -131,7 +131,7 @@ The following aspects are covered in detail in the specification documents:
 [cols="1,1,2,1,1", options="header"]
 |===
 |Category |Total Items |Covered in Specifications |Covered in Tests |Not Covered
-|Threats |34 |34 (100%) |32 (94%) |2 (6%)
+|Threats |36 |Covered in Specifications 36 (100%) |Covered in Tests 34 (94%) |Not Covered 2 (6%)
 |Current Mitigations |28 |28 (100%) |26 (93%) |2 (7%)
 |Recommendations |36 |22 (61%) |20 (56%) |14 (39%)
 |===
@@ -217,6 +217,6 @@ The areas for improvement identified in the link:threat-coverage-analysis.adoc[T
 * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-52r2.pdf[NIST SP 800-52 Rev. 2] (2019)
 * https://datatracker.ietf.org/doc/html/rfc7519[RFC 7519 - JSON Web Token (JWT)]
 * https://datatracker.ietf.org/doc/html/rfc7518[RFC 7518 - JSON Web Algorithms (JWA)]
-* https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html[OAuth Common Vulnerabilities] (Doyensec, 2025)
+* https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html[OAuth Common Vulnerabilities] (Doyensec, [YYYY - TODO: Verify Year and Link])
 * https://datatracker.ietf.org/doc/html/rfc6749[RFC 6749 - The OAuth 2.0 Authorization Framework]
 * https://openid.net/specs/openid-connect-core-1_0.html[OpenID Connect Core 1.0]

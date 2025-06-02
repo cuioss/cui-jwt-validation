@@ -314,7 +314,7 @@ _See Requirement link:../Requirements.adoc#CUI-JWT-8.5[CUI-JWT-8.5: Cryptographi
 
 ==== Status: IMPLEMENTED
 
-The library uses Bouncy Castle (bcprov-jdk18on) version 1.80 for cryptographic operations. Bouncy Castle was chosen for its comprehensive support of cryptographic algorithms, consistent behavior across JVM implementations, and active maintenance.
+The library uses Bouncy Castle (bcprov-jdk18on) for cryptographic operations. The specific version is managed by the parent `de.cuioss:cui-java-parent` POM. Bouncy Castle was chosen for its comprehensive support of cryptographic algorithms, consistent behavior across JVM implementations, and active maintenance.
 
 ==== Integration Points
 
@@ -355,7 +355,7 @@ For implementation details, see the JavaDoc of the classes that use Bouncy Castl
 
 == Additional OAuth/JWT Security Considerations
 
-Based on research from https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html[OAuth Common Vulnerabilities (Doyensec, 2025)], this section addresses additional security considerations for JWT Token Validation in OAuth/OIDC scenarios.
+Based on research from https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html[OAuth Common Vulnerabilities (Doyensec, [YYYY - TODO: Verify Year and Link])], this section addresses additional security considerations for JWT Token Validation in OAuth/OIDC scenarios.
 
 === Client Confusion Attack Prevention
 _See Requirement link:../Requirements.adoc#CUI-JWT-8.4[CUI-JWT-8.4: Claims Validation]_
