@@ -37,12 +37,11 @@ import java.time.Duration;
 /**
  * A common wrapper around {@link HttpClient} that provides a builder for collecting
  * HTTP request attributes and methods for executing HTTP requests.
- * <p>
+ *
  * This class is designed to be easily extractable to a separate module in the future.
  * It provides a consistent way to configure and execute HTTP requests with proper
  * SSL context handling and timeout configuration.
- * </p>
- * <p>
+ *
  * <strong>Contract:</strong>
  * <ul>
  *   <li>The URI/URL must be valid and convertible to a URL. Invalid URIs will cause
@@ -52,8 +51,7 @@ import java.time.Duration;
  *   <li>If an HTTPS connection is attempted without a valid SSL context, an
  *       {@link IllegalStateException} will be thrown.</li>
  * </ul>
- * </p>
- * <p>
+ *
  * Use the builder to create instances of this class:
  * <pre>
  * HttpHandler handler = HttpHandler.builder()
@@ -61,7 +59,6 @@ import java.time.Duration;
  *     .requestTimeoutSeconds(10)
  *     .build();
  * </pre>
- * </p>
  */
 @EqualsAndHashCode
 @ToString

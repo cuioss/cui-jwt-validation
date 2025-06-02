@@ -48,27 +48,23 @@ import java.util.Optional;
 /**
  * Handles the discovery of OpenID Connect (OIDC) Provider metadata from a
  * .well-known/openid-configuration endpoint.
- * <p>
+ *
  * This class fetches, parses, and validates the OIDC discovery document.
  * It provides access to the discovered endpoint URLs like {@code jwks_uri},
  * {@code authorization_endpoint}, etc.
- * </p>
- * <p>
+ *
  * The implementation uses {@link java.net.http.HttpClient} for fetching the
  * discovery document and {@link jakarta.json.Json} for parsing the JSON response.
- * </p>
- * <p>
+ *
  * Issuer validation is performed to ensure the 'issuer' claim in the discovery
  * document is consistent with the .well-known URL from which it was fetched.
- * </p>
- * <p>
+ *
  * Use the builder to create instances of this class:
  * <pre>
  * WellKnownHandler handler = WellKnownHandler.builder()
  *     .url("https://example.com/.well-known/openid-configuration")
  *     .build();
  * </pre>
- * </p>
  */
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 @EqualsAndHashCode
