@@ -56,11 +56,11 @@
 
 *Actionable Tasks:*
 
-1.  *Verify RFC/Standard Versions:* For `draft-ietf-oauth-jwt-bcp-09`, check if it has been finalized or if a newer version exists. Update link if necessary.
+1.  *Verify RFC/Standard Versions:* For `draft-ietf-oauth-jwt-bcp-09`, check if it has been finalized or if a newer version exists. Update link if necessary. After verification, add a note in the corresponding section stating "Last verified: [DATE] by [NAME/SYSTEM]" to document when the verification was performed.
 2.  *Update Key Confusion Attack Reference:* Find a more recent or canonical reference for key confusion attacks if available.
 3.  *Clarify Algorithm Names in CUI-JWT-1.3:* Correct the wording regarding "RS1" and "RS256-512" to accurately reflect JWA algorithm names and key length requirements.
-4.  *Verify OWASP Cheat Sheet Links/Versions:* Ensure the links to OWASP JWT Cheat Sheets are the latest.
-5.  *Review Referenced Diagrams:* Check that `plantuml/token-structure.png` (and any other diagrams implicitly or explicitly referenced) are accurate and up-to-date.
+4.  *Verify OWASP Cheat Sheet Links/Versions:* Ensure the links to OWASP JWT Cheat Sheets are the latest. After verification, add a note in the corresponding section stating "Last verified: [DATE] by [NAME/SYSTEM]" to document when the verification was performed.
+5.  *Review Referenced Diagrams:* Check that `plantuml/token-structure.png` (and any other diagrams implicitly or explicitly referenced) are accurate and up-to-date. After verification, add a note in the corresponding section stating "Last verified: [DATE] by [NAME/SYSTEM]" to document when the verification was performed.
 6.  *Consider Shortening Long Titles:* For requirements like CUI-JWT-1, explore if titles can be made more concise.
 7.  *Elaborate on "Safe Parsing" Threats:* If possible, add more specific examples or types of JSON parsing/deserialization threats relevant to JWTs in CUI-JWT-8.2.
 
@@ -179,13 +179,13 @@
 
 *Actionable Tasks:*
 
-1.  *Verify PlantUML Diagrams:* Check `component-overview.png`, `multi-issuer-support.png`, `key-management.png`, `token-types.png` for accuracy against the current system architecture. Update if necessary.
-2.  *Spot-Check Source Code Links:* Randomly verify a sample of `../../src/...` links in `security.adoc`, `technical-components.adoc`, and `testing.adoc` to ensure they are correct and the code reflects the documented status/functionality.
-3.  *Verify Bouncy Castle Version:* Check `pom.xml` (or equivalent) for the Bouncy Castle version and update `security.adoc` if it's different from 1.80.
+1.  *Verify PlantUML Diagrams:* Check `component-overview.png`, `multi-issuer-support.png`, `key-management.png`, `token-types.png` for accuracy against the current system architecture. Update if necessary. After verification, add a note in the corresponding section stating "Last verified: [DATE] by [NAME/SYSTEM]" to document when the verification was performed.
+2.  *Spot-Check Source Code Links:* Randomly verify a sample of `../../src/...` links in `security.adoc`, `technical-components.adoc`, and `testing.adoc` to ensure they are correct and the code reflects the documented status/functionality. After verification, add a note in each document stating "Links last verified: [DATE] by [NAME/SYSTEM]" to document when the verification was performed.
+3.  *Verify Bouncy Castle Version:* Check `pom.xml` (or equivalent) for the Bouncy Castle version and update `security.adoc` if it's different from 1.80. After verification, add a note in the corresponding section stating "Version last verified: [DATE] by [NAME/SYSTEM]" to document when the verification was performed.
 4.  *Correct Doyensec Blog Post Reference:* In `security.adoc`, find the correct publication year for the Doyensec blog post and update the text. Verify the URL (https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html) or find the correct one.
-5.  *Verify External Links:* Check all external links in all reviewed specification documents (RFCs, OWASP, NIST, OpenID, CUI GitHub standards) for validity and currency. Update as needed.
-6.  *Verify Dependabot Configuration:* Check for the existence and content of `.github/dependabot.yml` as mentioned in `technical-components.adoc`.
-7.  *Review "Status: IMPLEMENTED":* For a few key features marked as implemented (e.g., specific security measures, core components), briefly cross-reference with linked code to ensure the description matches reality. This is a deeper check.
+5.  *Verify External Links:* Check all external links in all reviewed specification documents (RFCs, OWASP, NIST, OpenID, CUI GitHub standards) for validity and currency. Update as needed. After verification, add a note in each document stating "External links last verified: [DATE] by [NAME/SYSTEM]" to document when the verification was performed.
+6.  *Verify Dependabot Configuration:* Check for the existence and content of `.github/dependabot.yml` as mentioned in `technical-components.adoc`. After verification, add a note in the corresponding section stating "Configuration last verified: [DATE] by [NAME/SYSTEM]" to document when the verification was performed.
+7.  *Review "Status: IMPLEMENTED":* For a few key features marked as implemented (e.g., specific security measures, core components), briefly cross-reference with linked code to ensure the description matches reality. This is a deeper check. After verification, add a note in each verified section stating "Implementation status verified: [DATE] by [NAME/SYSTEM]" to document when the verification was performed.
 8.  *Freshness of JWKS Size Data:* In `jwks-size-recommendations.adoc`, consider adding a note or a last checked date for the JWKS sizes of providers like Auth0, Okta, as this data can change.
 
 === DOC3. Review `doc/threat-model/Threat-Model.adoc` and `doc/threat-model/threat-coverage-analysis.adoc`
@@ -241,16 +241,17 @@
 
 *Actionable Tasks:*
 
-1.  *Verify `plantuml/threat-model-dataflow.png`:* Check the diagram for accuracy and clarity.
+1.  *Verify `plantuml/threat-model-dataflow.png`:* Check the diagram for accuracy and clarity. After verification, add a note in the corresponding section stating "Diagram last verified: [DATE] by [NAME/SYSTEM]" to document when the verification was performed.
 2.  *Correct Doyensec Blog Post Reference:* In `Threat-Model.adoc`, fix the year and verify the URL.
-3.  *Verify External Links in `Threat-Model.adoc`:* Check OWASP, NIST, RFC links.
+3.  *Verify External Links in `Threat-Model.adoc`:* Check OWASP, NIST, RFC links. After verification, add a note in the document stating "External links last verified: [DATE] by [NAME/SYSTEM]" to document when the verification was performed.
 4.  *Reconcile Threat Counts:*
     *   Count threats listed in `Threat-Model.adoc` under each STRIDE category and sum them up. (S=5, T=5, R=5, I=6, D=6, E=9. Total = 36).
     *   Update the "Overall Coverage" table in `Threat-Model.adoc` to reflect 36 total threats.
     *   Verify that `threat-coverage-analysis.adoc` covers all 36 threats.
     *   Recalculate percentages in all coverage tables in `Threat-Model.adoc` based on the corrected total number of threats (36) and the detailed findings in `threat-coverage-analysis.adoc`. This will require careful counting of items marked as covered in specs/tests in `threat-coverage-analysis.adoc`.
-5.  *Spot-Check Links in `threat-coverage-analysis.adoc`:* Verify a sample of links to source code files, specification sections, and requirement sections to ensure they are correct and support the coverage claims.
-6.  *Review "Not Covered" Threats/Mitigations:* Pay special attention to items listed as "Not Covered" in `Threat-Model.adoc` and ensure this aligns with the details in `threat-coverage-analysis.adoc` (e.g., recommendations not implemented).
+    *   After verification, add a note in the document stating "Threat counts last verified: [DATE] by [NAME/SYSTEM]" to document when the verification was performed.
+5.  *Spot-Check Links in `threat-coverage-analysis.adoc`:* Verify a sample of links to source code files, specification sections, and requirement sections to ensure they are correct and support the coverage claims. After verification, add a note in the document stating "Links last verified: [DATE] by [NAME/SYSTEM]" to document when the verification was performed.
+6.  *Review "Not Covered" Threats/Mitigations:* Pay special attention to items listed as "Not Covered" in `Threat-Model.adoc` and ensure this aligns with the details in `threat-coverage-analysis.adoc` (e.g., recommendations not implemented). After verification, add a note in the document stating "Coverage gaps last verified: [DATE] by [NAME/SYSTEM]" to document when the verification was performed.
 
 === DOC4. Review `doc/Build.adoc`, `doc/LogMessages.adoc`, `doc/UnitTesting.adoc`, and `doc/Usage.adoc`
 [ ] *Priority:* Medium
@@ -338,11 +339,14 @@
     *   Confirm Java version in root `pom.xml` matches "17".
     *   Check for the existence and basic functionality of `./generate-plantuml.sh`.
     *   Verify the path `.github/workflows/maven.yml` and the job name `reproducible-build`.
-2.  *Spot-Check Log Messages (`LogMessages.adoc`):* Compare a few sample log messages (ID, template) from the document with the corresponding entries in the codebase (e.g., `JWTValidationLogMessages.java`) to check for synchronization.
+    *   After verification, add a note in the document stating "Build details last verified: [DATE] by [NAME/SYSTEM]" to document when the verification was performed.
+2.  *Spot-Check Log Messages (`LogMessages.adoc`):* Compare a few sample log messages (ID, template) from the document with the corresponding entries in the codebase (e.g., `JWTValidationLogMessages.java`) to check for synchronization. After verification, add a note in the document stating "Log messages last verified: [DATE] by [NAME/SYSTEM]" to document when the verification was performed.
 3.  *Verify Test Utility APIs (`UnitTesting.adoc`):*
     *   Spot-check key class and method names (e.g., `TestTokenHolder`, `@TestTokenSource`, `WellKnownDispatcher` methods) against the test artifact's source code.
     *   Ensure the Maven dependency snippet is accurate for including test utilities.
+    *   After verification, add a note in the document stating "Test utilities last verified: [DATE] by [NAME/SYSTEM]" to document when the verification was performed.
 4.  *Verify Usage Examples (`Usage.adoc`):*
     *   Review code examples for creating `TokenValidator`, `IssuerConfig`, `HttpJwksLoaderConfig`, `ParserConfig`, using `WellKnownHandler`, and custom claim mappers. Ensure they align with the current library API.
     *   Check the exception handling example for correctness.
-5.  *Check Internal Links:* Verify links between these documents and to the specification documents.
+    *   After verification, add a note in the document stating "Usage examples last verified: [DATE] by [NAME/SYSTEM]" to document when the verification was performed.
+5.  *Check Internal Links:* Verify links between these documents and to the specification documents. After verification, add a note in each document stating "Internal links last verified: [DATE] by [NAME/SYSTEM]" to document when the verification was performed.
