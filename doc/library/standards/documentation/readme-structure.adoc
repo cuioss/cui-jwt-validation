@@ -91,6 +91,13 @@ Defines the standard structure for module README.adoc files in CUI projects to e
 * Maintain proper heading hierarchy
 * Use code blocks with language specification
 * Include line breaks between sections
+* Always include a blank line before starting a list
+* Always include a blank line after a heading
+* For nested lists:
+  ** Indent nested items properly (typically 2 spaces more than parent)
+  ** Maintain consistent indentation across the document
+* No blank lines between items in the same list
+* Include a blank line after the last item in a list before starting new content
 
 === Code Examples
 * Must be complete and working
