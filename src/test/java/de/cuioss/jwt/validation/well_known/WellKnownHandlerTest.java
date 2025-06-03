@@ -25,7 +25,7 @@ import de.cuioss.test.mockwebserver.EnableMockWebServer;
 import de.cuioss.test.mockwebserver.URIBuilder;
 import de.cuioss.test.mockwebserver.dispatcher.ModuleDispatcher;
 import de.cuioss.test.mockwebserver.dispatcher.ModuleDispatcherElement;
-import de.cuioss.tools.http.SecureSSLContextProvider;
+import de.cuioss.tools.net.http.SecureSSLContextProvider;
 import lombok.Getter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -167,8 +167,7 @@ class WellKnownHandlerTest {
                     WellKnownDiscoveryException.class, builder::build,
                     "Should throw exception for null URL during build"
             );
-            assertTrue(nullException.getCause() instanceof IllegalArgumentException,
-                    "Cause should be IllegalArgumentException");
+            assertInstanceOf(IllegalArgumentException.class, nullException.getCause(), "Cause should be IllegalArgumentException");
             assertTrue(nullException.getCause().getMessage().contains("URI must not be null or empty"),
                     "Exception cause message should mention that URI must not be null or empty");
 
@@ -178,8 +177,7 @@ class WellKnownHandlerTest {
                     WellKnownDiscoveryException.class, builder::build,
                     "Should throw exception for empty URL during build"
             );
-            assertTrue(emptyException.getCause() instanceof IllegalArgumentException,
-                    "Cause should be IllegalArgumentException");
+            assertInstanceOf(IllegalArgumentException.class, emptyException.getCause(), "Cause should be IllegalArgumentException");
             assertTrue(emptyException.getCause().getMessage().contains("URI must not be null or empty"),
                     "Exception cause message should mention that URI must not be null or empty");
 
@@ -189,8 +187,7 @@ class WellKnownHandlerTest {
                     WellKnownDiscoveryException.class, builder::build,
                     "Should throw exception for blank URL during build"
             );
-            assertTrue(blankException.getCause() instanceof IllegalArgumentException,
-                    "Cause should be IllegalArgumentException");
+            assertInstanceOf(IllegalArgumentException.class, blankException.getCause(), "Cause should be IllegalArgumentException");
             assertTrue(blankException.getCause().getMessage().contains("URI must not be null or empty"),
                     "Exception cause message should mention that URI must not be null or empty");
         }

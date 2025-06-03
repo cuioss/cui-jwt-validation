@@ -15,8 +15,8 @@
  */
 package de.cuioss.jwt.validation.jwks.http;
 
-import de.cuioss.tools.http.HttpStatusFamily;
 import de.cuioss.tools.logging.CuiLogger;
+import de.cuioss.tools.net.http.HttpStatusFamily;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
