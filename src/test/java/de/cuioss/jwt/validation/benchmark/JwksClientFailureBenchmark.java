@@ -26,6 +26,7 @@ import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
 import okhttp3.Headers;
+import org.jetbrains.annotations.NotNull;
 import org.openjdk.jmh.annotations.*;
 
 import java.io.IOException;
@@ -101,19 +102,51 @@ public class JwksClientFailureBenchmark {
         return keyInfoOpt.map(KeyInfo::getKey);
     }
 
-    // TODO: Implement retrieveKey_Timeout benchmark.
-    // Current attempts to use MockResponse.setHeadersDelay, MockResponse.setBodyDelay,
-    // or MockResponse.setSocketPolicy with constants like NO_RESPONSE or DISCONNECT_AT_START
-    // have failed due to API mismatches with the version of mockwebserver3 used.
-    // Requires further investigation into the correct API for simulating client-side timeouts.
-    // @Benchmark
-    // public Optional<Key> retrieveKey_Timeout(BenchmarkSetupState serverState) {
-    //    // Configure MockWebServer to not respond or delay response beyond client timeout
-    //    MockResponse timeoutResponse = new MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE); // Example, if API was known
-    //    serverState.mockWebServer.enqueue(timeoutResponse);
-    //
-    //    JwksLoader loader = createLoader(serverState.serverUrl, 1, serverState.securityEventCounter); // 1-second timeout
-    //    Optional<KeyInfo> keyInfoOpt = loader.getKeyInfo(EXISTING_KEY_ID);
-    //    return keyInfoOpt.map(KeyInfo::getKey);
-    // }
+    /**
+     * Benchmark for testing timeout handling.
+     * This benchmark uses a custom dispatcher to simulate a timeout by delaying the response
+     * beyond the client's timeout setting.
+     *
+     * @param serverState the benchmark setup state
+     * @return an Optional containing the key if found, empty otherwise
+     */
+    @Benchmark
+    public Optional<Key> retrieveKey_Timeout(BenchmarkSetupState serverState) {
+        // Set a custom dispatcher that simulates a timeout by throwing an IOException
+        serverState.mockWebServer.setDispatcher(new TimeoutSimulatingDispatcher());
+
+        // Create a loader with a short timeout (1 second)
+        HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
+                .url(serverState.serverUrl)
+                .requestTimeoutSeconds(1) // Short timeout to make the test faster
+                .refreshIntervalSeconds(0) // Disable caching for failure tests
+                .build();
+        JwksLoader loader = JwksLoaderFactory.createHttpLoader(config, serverState.securityEventCounter);
+
+        // Expected to result in an empty KeyInfo due to timeout
+        Optional<KeyInfo> keyInfoOpt = loader.getKeyInfo(EXISTING_KEY_ID);
+        return keyInfoOpt.map(KeyInfo::getKey);
+    }
+
+    /**
+     * A custom dispatcher that simulates a timeout by sleeping longer than the client timeout
+     * or by throwing an IOException to simulate a network timeout.
+     */
+    @SuppressWarnings("java:S2925")
+    private static class TimeoutSimulatingDispatcher extends mockwebserver3.Dispatcher {
+        @NotNull
+        @Override
+        public MockResponse dispatch(@NotNull mockwebserver3.RecordedRequest request) {
+            // Simulate a timeout by sleeping for longer than the client timeout
+            try {
+                // Sleep for 2 seconds, which is longer than the 1-second client timeout
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+
+            // Return a response that will never be received due to the timeout
+            return new MockResponse(200, Headers.of("Content-Type", "application/json"), DEFAULT_JWKS_CONTENT);
+        }
+    }
 }
