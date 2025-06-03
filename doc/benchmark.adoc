@@ -474,7 +474,8 @@ public class ErrorLoadBenchmark {
 *Description:* Remove the old performance tests once the new benchmarks are implemented:
 1. Remove `TokenValidatorPerformanceTest.java`
 2. Remove `JwksClientBenchmarkTest.java`
-3. Update any references to these classes
+3. Update any references to these classes. Do not forget documentation and README files.
+4. Make a full build after removing the old benchmarks to ensure everything works correctly.
 
 *Rationale:* Maintaining both old and new benchmarks would create confusion and maintenance overhead.
 
