@@ -1,0 +1,98 @@
+= JWT Validation Benchmark Visualization
+:toc:
+:toclevels: 3
+:toc-title: Table of Contents
+:sectnums:
+
+This document describes the benchmark visualization system implemented for the cui-jwt-validation project.
+
+== Overview
+
+The benchmark visualization system provides an interactive way to view and analyze JMH benchmark results. It helps track performance trends over time and identify potential performance regressions.
+
+== Accessing Benchmark Results
+
+Benchmark results are automatically published to the cuioss.github.io site after each benchmark run. They can be accessed at:
+
+`https://cuioss.github.io/cui-jwt-validation/benchmarks/`
+
+== Visualization Features
+
+The benchmark visualization includes:
+
+1. *Interactive Charts*: Visual representation of benchmark results using Chart.js
+2. *Benchmark Selection*: Dropdown menu to select different benchmarks
+3. *Detailed Results Table*: Tabular display of benchmark scores, error margins, and units
+4. *Performance Badges*: Dynamic badges showing key performance metrics
+
+== Running Benchmarks
+
+=== Automated Runs
+
+Benchmarks are automatically run:
+
+* On pushes to the main branch
+* On version tag pushes (e.g., v1.2.3)
+
+=== Manual Trigger
+
+To manually trigger a benchmark run:
+
+1. Go to the "Actions" tab in the GitHub repository
+2. Select "JMH Benchmark" from the workflows list
+3. Click "Run workflow"
+4. Select the branch to run on and click "Run workflow"
+
+== Using Performance Badges
+
+The benchmark system generates performance badges that can be included in the project's README or other documentation.
+
+=== Available Badges
+
+* *Access Token Validation*: Shows the average time for validating access tokens
+
+=== Adding Badges to Documentation
+
+Badge markdown is available in the GitHub Pages deployment under `badge-markdown.txt`. To add a badge to your documentation:
+
+1. Copy the markdown from `badge-markdown.txt`
+2. Paste it into your README.adoc or other documentation file
+
+Example badge markdown:
+
+```markdown
+[![Access Token Validation](https://img.shields.io/endpoint?url=https://cuioss.github.io/cui-jwt-validation/benchmarks/validator-badge.json)](https://cuioss.github.io/cui-jwt-validation/benchmarks/)
+```
+
+== Interpreting Results
+
+=== Understanding Benchmark Metrics
+
+* *Score*: The primary metric value (lower is better for average time, higher is better for throughput)
+* *Error*: The statistical error margin (±)
+* *Unit*: The unit of measurement (ops/s for throughput, ms or μs for time)
+
+=== Performance Goals
+
+Compare benchmark results against the performance goals defined in link:benchmark.adoc#_performance_goals[Performance Goals].
+
+== Implementation Details
+
+The benchmark visualization system is implemented using:
+
+* *GitHub Actions*: For running benchmarks and deploying results
+* *External Repository Deployment*: Results are deployed to cuioss.github.io
+* *Chart.js*: For interactive charts
+* *JMH JSON Output*: For structured benchmark data
+* *Shields.io*: For dynamic performance badges
+
+For technical details of the implementation, see:
+
+* `.github/workflows/benchmark.yml`: GitHub Actions workflow configuration
+* `.github/workflows/README.md`: Documentation for GitHub workflows
+
+== Related Documentation
+
+* link:benchmark.adoc[Benchmark Implementation Plan]
+* link:specification/benchmark.adoc[Benchmark Specification]
+* link:Requirements.adoc#CUI-JWT-5[CUI-JWT-5: Performance Requirements]

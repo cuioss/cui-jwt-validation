@@ -132,7 +132,7 @@ Each task follows a consistent format:
 *Rationale:* Consistent reporting will make it easier to track performance over time and identify regressions.
 
 === A2. Document Benchmark Methodology
-[ ] *Priority:* Medium
+[x] *Priority:* Medium
 
 *Description:* Document the benchmark methodology, including:
 1. How benchmarks are designed
@@ -143,7 +143,7 @@ Each task follows a consistent format:
 *Rationale:* Clear documentation ensures that benchmarks are used correctly and results are interpreted properly.
 
 === A3. Analyze Real-World Token Characteristics
-[ ] *Priority:* Medium
+[x] *Priority:* Medium
 
 *Description:* Analyze real-world tokens from Keycloak and other OIDC providers to inform benchmark test cases:
 
@@ -259,11 +259,13 @@ Run specific benchmark:
 == GitHub Results Visualization
 
 === I3. Set up Benchmark Results Visualization on GitHub
-[ ] *Priority:* Medium
+[x] *Priority:* Medium
 
 *Description:* Implement a GitHub-based benchmark results visualization system that stores and displays benchmark results.
 
 *Rationale:* Visualizing benchmark results on GitHub makes performance trends easily accessible to all contributors, helping to identify performance regressions and improvements over time.
+
+*Implementation:* The benchmark visualization system has been implemented using GitHub Actions and GitHub Pages. For details, see link:benchmark-visualization.adoc[Benchmark Visualization Documentation].
 
 === A3. Set up Benchmark Badges
 [ ] *Priority:* Low
