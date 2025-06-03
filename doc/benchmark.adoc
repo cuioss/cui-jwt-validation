@@ -45,7 +45,7 @@ Each task follows a consistent format:
 == Implementation Tasks
 
 === S1. Set up JMH Dependencies
-[ ] *Priority:* High
+[x] *Priority:* High
 
 *Description:* Add JMH dependencies to the Maven pom.xml file:
 
@@ -68,7 +68,7 @@ Each task follows a consistent format:
 *Rationale:* JMH is the industry standard for Java microbenchmarking and will provide more accurate performance measurements than custom test implementations.
 
 === S2. Configure Maven Plugin for JMH
-[ ] *Priority:* High
+[x] *Priority:* High
 
 *Description:* Add the JMH Maven plugin to simplify running benchmarks:
 
@@ -108,7 +108,7 @@ Each task follows a consistent format:
 *Rationale:* The Maven plugin will make it easier to build and run benchmarks from the command line and during CI/CD processes.
 
 === S3. Create Base Benchmark Structure
-[ ] *Priority:* High
+[x] *Priority:* High
 
 *Description:* Create the base package structure and shared utility classes for benchmarks:
 1. Create package `de.cuioss.jwt.validation.benchmark`
