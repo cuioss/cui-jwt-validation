@@ -404,6 +404,60 @@ public final class JWTValidationLogMessages {
                 .identifier(126)
                 .template("Token audience %s does not match any of the expected audiences %s")
                 .build();
+
+        public static final LogRecord NO_ISSUER_CONFIG = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(127)
+                .template("No configuration found for issuer: %s")
+                .build();
+
+        public static final LogRecord INVALID_BASE64_CONTENT = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(128)
+                .template("Given contentKey '%s' does not resolve to a non base64 encoded String, actual content = %s")
+                .build();
+
+        public static final LogRecord ALGORITHM_REJECTED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(129)
+                .template("Algorithm %s is explicitly rejected for security reasons")
+                .build();
+
+        public static final LogRecord KEY_ROTATION_DETECTED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(130)
+                .template("Key rotation detected: JWKS content has changed")
+                .build();
+
+        public static final LogRecord ACCESSIBILITY_CHECK_HTTP_ERROR = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(131)
+                .template("Accessibility check for %s URL '%s' returned HTTP status %s. It might be inaccessible.")
+                .build();
+
+        public static final LogRecord JWKS_FETCH_HTTP_ERROR = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(132)
+                .template("Fetching JWKS from %s failed: HTTP status %s")
+                .build();
+
+        public static final LogRecord JWKS_REFRESH_HTTP_ERROR = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(133)
+                .template("Refreshing JWKS from %s failed: HTTP status %s")
+                .build();
+
+        public static final LogRecord JWKS_URL_MALFORMED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(134)
+                .template("JWKS URL '%s' is malformed")
+                .build();
+
+        public static final LogRecord INVALID_JWKS_URI = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(135)
+                .template("Creating HttpJwksLoaderConfig with invalid JWKS URI. The loader will return empty results.")
+                .build();
     }
 
 }
