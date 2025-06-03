@@ -101,7 +101,7 @@ public class ClaimValue implements Serializable {
      * @param dateTime the OffsetDateTime value (only relevant for DATETIME)
      */
     public ClaimValue(String originalString, @NonNull ClaimValueType type,
-            @NonNull List<String> asList, OffsetDateTime dateTime) {
+                      @NonNull List<String> asList, OffsetDateTime dateTime) {
         this.originalString = originalString;
         this.type = type;
         this.asList = asList;

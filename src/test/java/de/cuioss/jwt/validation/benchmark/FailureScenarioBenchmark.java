@@ -1,3 +1,18 @@
+/*
+ * Copyright 2023 the original author or authors.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * https://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package de.cuioss.jwt.validation.benchmark;
 
 import de.cuioss.jwt.validation.IssuerConfig;
@@ -34,38 +49,38 @@ public class FailureScenarioBenchmark {
     public void setup() {
         // Create a base token holder using TestTokenGenerators
         TestTokenHolder baseTokenHolder = TestTokenGenerators.accessTokens().next();
-        
+
         // Get the issuer config from the token holder
         IssuerConfig issuerConfig = baseTokenHolder.getIssuerConfig();
-        
+
         // Create a token validator with the issuer config
         tokenValidator = new TokenValidator(issuerConfig);
-        
+
         // Valid Access Token
         validAccessToken = baseTokenHolder.getRawToken();
-        
+
         // Expired Token
         TestTokenHolder expiredTokenHolder = TestTokenGenerators.accessTokens().next();
         ClaimControlParameter expiredParams = ClaimControlParameter.builder()
                 .expiredToken(true)
                 .build();
         expiredToken = new TestTokenHolder(expiredTokenHolder.getTokenType(), expiredParams).getRawToken();
-        
+
         // Wrong Issuer Token
         TestTokenHolder wrongIssuerTokenHolder = baseTokenHolder.regenerateClaims()
                 .withClaim(ClaimName.ISSUER.getName(), ClaimValue.forPlainString("rogue-issuer"));
         wrongIssuerToken = wrongIssuerTokenHolder.getRawToken();
-        
+
         // Wrong Audience Token
         TestTokenHolder wrongAudienceTokenHolder = baseTokenHolder.regenerateClaims()
                 .withClaim(ClaimName.AUDIENCE.getName(), ClaimValue.forList("rogue-audience", List.of("rogue-audience")));
         wrongAudienceToken = wrongAudienceTokenHolder.getRawToken();
-        
+
         // Invalid Signature Token - use a different key ID that doesn't match the issuer config
         TestTokenHolder invalidSignatureTokenHolder = baseTokenHolder.regenerateClaims()
                 .withKeyId("invalid-key-id");
         invalidSignatureToken = invalidSignatureTokenHolder.getRawToken();
-        
+
         // Malformed Token
         malformedToken = "this.is.not.a.valid.jwt";
     }

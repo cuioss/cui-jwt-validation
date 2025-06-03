@@ -116,8 +116,8 @@ public class TestTokenGenerators {
      * @param complexity the complexity of the token claims
      * @return a TypedGenerator that produces TestTokenHolder objects with ACCESS_TOKEN type, specified size, and complexity
      */
-    public static TypedGenerator<TestTokenHolder> accessTokens(ClaimControlParameter.TokenSize size, 
-                                                              ClaimControlParameter.TokenComplexity complexity) {
+    public static TypedGenerator<TestTokenHolder> accessTokens(ClaimControlParameter.TokenSize size,
+                                                               ClaimControlParameter.TokenComplexity complexity) {
         return () -> {
             ClaimControlParameter params = ClaimControlParameter.builder()
                     .tokenSize(size)
@@ -134,8 +134,8 @@ public class TestTokenGenerators {
      * @param complexity the complexity of the token claims
      * @return a TypedGenerator that produces TestTokenHolder objects with ID_TOKEN type, specified size, and complexity
      */
-    public static TypedGenerator<TestTokenHolder> idTokens(ClaimControlParameter.TokenSize size, 
-                                                          ClaimControlParameter.TokenComplexity complexity) {
+    public static TypedGenerator<TestTokenHolder> idTokens(ClaimControlParameter.TokenSize size,
+                                                           ClaimControlParameter.TokenComplexity complexity) {
         return () -> {
             ClaimControlParameter params = ClaimControlParameter.builder()
                     .tokenSize(size)
@@ -152,8 +152,8 @@ public class TestTokenGenerators {
      * @param complexity the complexity of the token claims
      * @return a TypedGenerator that produces TestTokenHolder objects with REFRESH_TOKEN type, specified size, and complexity
      */
-    public static TypedGenerator<TestTokenHolder> refreshTokens(ClaimControlParameter.TokenSize size, 
-                                                               ClaimControlParameter.TokenComplexity complexity) {
+    public static TypedGenerator<TestTokenHolder> refreshTokens(ClaimControlParameter.TokenSize size,
+                                                                ClaimControlParameter.TokenComplexity complexity) {
         return () -> {
             ClaimControlParameter params = ClaimControlParameter.builder()
                     .tokenSize(size)

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2023 the original author or authors.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * https://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package de.cuioss.jwt.validation.benchmark;
 
 import de.cuioss.jwt.validation.IssuerConfig;
@@ -44,17 +59,17 @@ public class ErrorLoadBenchmark {
     public void setup() {
         // Create a base token holder using TestTokenGenerators
         TestTokenHolder baseTokenHolder = TestTokenGenerators.accessTokens().next();
-        
+
         // Get the issuer config from the token holder
         IssuerConfig issuerConfig = baseTokenHolder.getIssuerConfig();
-        
+
         // Create a token validator with the issuer config
         tokenValidator = new TokenValidator(issuerConfig);
-        
+
         // Generate Token Lists
         validTokens = new ArrayList<>(TOKEN_COUNT);
         invalidTokens = new ArrayList<>(TOKEN_COUNT);
-        
+
         // Generate valid tokens
         for (int i = 0; i < TOKEN_COUNT; i++) {
             // Create a new token holder for each valid token
@@ -63,13 +78,13 @@ public class ErrorLoadBenchmark {
             tokenHolder.withClaim(ClaimName.SUBJECT.getName(), ClaimValue.forPlainString("test-subject-" + i));
             validTokens.add(tokenHolder.getRawToken());
         }
-        
+
         // Generate different types of invalid tokens
         for (int i = 0; i < TOKEN_COUNT; i++) {
             // Distribute invalid tokens across different error types
             int errorType = i % 5;
             String invalidToken;
-            
+
             switch (errorType) {
                 case 0: // Expired token
                     ClaimControlParameter expiredParams = ClaimControlParameter.builder()
@@ -79,34 +94,34 @@ public class ErrorLoadBenchmark {
                     expiredTokenHolder.withClaim(ClaimName.SUBJECT.getName(), ClaimValue.forPlainString("test-subject-" + i));
                     invalidToken = expiredTokenHolder.getRawToken();
                     break;
-                    
+
                 case 1: // Wrong issuer
                     TestTokenHolder wrongIssuerTokenHolder = baseTokenHolder.regenerateClaims()
                             .withClaim(ClaimName.ISSUER.getName(), ClaimValue.forPlainString("rogue-issuer-" + i))
                             .withClaim(ClaimName.SUBJECT.getName(), ClaimValue.forPlainString("test-subject-" + i));
                     invalidToken = wrongIssuerTokenHolder.getRawToken();
                     break;
-                    
+
                 case 2: // Wrong audience
                     TestTokenHolder wrongAudienceTokenHolder = baseTokenHolder.regenerateClaims()
                             .withClaim(ClaimName.AUDIENCE.getName(), ClaimValue.forList("rogue-audience-" + i, List.of("rogue-audience-" + i)))
                             .withClaim(ClaimName.SUBJECT.getName(), ClaimValue.forPlainString("test-subject-" + i));
                     invalidToken = wrongAudienceTokenHolder.getRawToken();
                     break;
-                    
+
                 case 3: // Invalid signature
                     TestTokenHolder invalidSignatureTokenHolder = baseTokenHolder.regenerateClaims()
                             .withKeyId("invalid-key-id-" + i)
                             .withClaim(ClaimName.SUBJECT.getName(), ClaimValue.forPlainString("test-subject-" + i));
                     invalidToken = invalidSignatureTokenHolder.getRawToken();
                     break;
-                    
+
                 case 4: // Malformed token
                 default:
                     invalidToken = "this.is.not.a.valid.jwt-" + i;
                     break;
             }
-            
+
             invalidTokens.add(invalidToken);
         }
     }

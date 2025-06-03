@@ -122,7 +122,7 @@ Each task follows a consistent format:
 *Rationale:* In security-critical applications, high rates of invalid tokens might be part of an attack scenario. Understanding performance characteristics during these scenarios is crucial for maintaining system availability and security.
 
 === A1. Create Performance Analysis Report Template
-[ ] *Priority:* Medium
+[x] *Priority:* Medium
 
 *Description:* Create a template for analyzing and reporting benchmark results:
 1. Define key metrics to track
@@ -130,6 +130,8 @@ Each task follows a consistent format:
 3. Establish baseline performance expectations
 
 *Rationale:* Consistent reporting will make it easier to track performance over time and identify regressions.
+
+*Implementation:* A comprehensive benchmark visualization system has been implemented and documented in link:benchmark-visualization.adoc[Benchmark Visualization Documentation]. The system includes interactive charts, detailed results tables, and performance badges. It defines key metrics (Score, Error, Unit), provides visualization templates, and references performance goals for baseline expectations.
 
 === A2. Document Benchmark Methodology
 [x] *Priority:* Medium
@@ -155,7 +157,7 @@ Each task follows a consistent format:
 *Rationale:* While in-memory token generators provide consistency for benchmarks, they should still represent real-world token characteristics. This analysis will ensure the benchmarks test scenarios that match production usage.
 
 === I1. Integrate Benchmarks with CI/CD Pipeline
-[ ] *Priority:* Low
+[x] *Priority:* Low
 
 *Description:* Set up integration with CI/CD to run benchmarks on a regular schedule:
 1. Create a separate CI job for benchmarks
@@ -163,6 +165,8 @@ Each task follows a consistent format:
 3. Set up alerting for performance regressions
 
 *Rationale:* Automated benchmark execution helps catch performance regressions early.
+
+*Implementation:* A GitHub Actions workflow has been created in `.github/workflows/benchmark.yml` that runs benchmarks on pushes to the main branch, version tag pushes, and can be manually triggered. The workflow stores benchmark results as artifacts, generates visualizations, and creates performance badges.
 
 === I2. Replace Existing Performance Tests
 [x] *Priority:* High
@@ -176,7 +180,7 @@ Each task follows a consistent format:
 *Rationale:* Maintaining both old and new benchmarks would create confusion and maintenance overhead.
 
 === I3. Create Comparison Test Between In-Memory and Real-World Tokens
-[ ] *Priority:* Low
+[x] *Priority:* Low
 
 *Description:* Create a test that compares validation performance between in-memory generated tokens and real tokens from Keycloak:
 
@@ -186,6 +190,8 @@ Each task follows a consistent format:
 4. Document findings and potential improvements to the in-memory generators
 
 *Rationale:* This comparison validates that the in-memory generators produce tokens that have similar validation characteristics to real-world tokens, ensuring benchmark relevance.
+
+*Implementation:* A comprehensive benchmark comparison test has been implemented in `TokenValidatorComparisonTest.java`. This benchmark extends KeycloakITBase to set up a Keycloak test container and obtain real tokens. It then compares the validation performance of in-memory generated tokens versus real Keycloak tokens for access tokens, ID tokens, and refresh tokens. The benchmark includes both direct return methods and Blackhole consumption methods for more accurate measurement. The implementation includes detailed documentation about the purpose of the comparison and notes that it requires a running Keycloak instance via testcontainers, making it slower than standard benchmarks but valuable for validation purposes.
 
 == JMH Best Practices
 
@@ -268,11 +274,13 @@ Run specific benchmark:
 *Implementation:* The benchmark visualization system has been implemented using GitHub Actions and GitHub Pages. For details, see link:benchmark-visualization.adoc[Benchmark Visualization Documentation].
 
 === A3. Set up Benchmark Badges
-[ ] *Priority:* Low
+[x] *Priority:* Low
 
 *Description:* Create dynamic badges that show key benchmark metrics in the project documentation.
 
 *Rationale:* Badges provide an immediate visual indicator of performance metrics directly in the project documentation.
+
+*Implementation:* A performance badge has been added to the README.adoc file showing the access token validation time. The badge is automatically updated by the benchmark workflow.
 
 === A4. Create Benchmark Specification Document
 [x] *Priority:* High

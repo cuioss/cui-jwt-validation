@@ -102,7 +102,7 @@ public class CollectionClaimHandler {
      * @return true if the claim contains all expected values, false otherwise
      */
     public boolean providesValuesAndDebugIfValuesMissing(Collection<String> expectedValues, String logContext,
-            CuiLogger logger) {
+                                                         CuiLogger logger) {
         Set<String> delta = determineMissingValues(expectedValues);
         if (delta.isEmpty()) {
             logger.trace("All expected values are present: {}, {}", expectedValues, logContext);

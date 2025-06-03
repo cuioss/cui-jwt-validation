@@ -164,7 +164,7 @@ class InMemoryKeyHandlingTest {
 
         // Verify the token can be parsed with the default public key
         var jws = Jwts.parser()
-                .verifyWith((RSAPublicKey) InMemoryKeyMaterialHandler.getDefaultPublicKey())
+                .verifyWith((RSAPublicKey)InMemoryKeyMaterialHandler.getDefaultPublicKey())
                 .build()
                 .parseSignedClaims(token);
 
@@ -184,7 +184,7 @@ class InMemoryKeyHandlingTest {
 
         // Verify the token can be parsed with the corresponding public key
         var jws = Jwts.parser()
-                .verifyWith((RSAPublicKey) InMemoryKeyMaterialHandler.getDefaultPublicKey(algorithm))
+                .verifyWith((RSAPublicKey)InMemoryKeyMaterialHandler.getDefaultPublicKey(algorithm))
                 .build()
                 .parseSignedClaims(token);
 
