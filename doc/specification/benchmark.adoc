@@ -44,8 +44,7 @@ The following classes implement this specification:
 
 The following tests verify the implementation:
 
-* link:../../src/test/java/de/cuioss/jwt/validation/TokenValidatorPerformanceTest.java[TokenValidatorPerformanceTest]
-* JMH benchmark classes (to be implemented):
+* JMH benchmark classes:
   * `de.cuioss.jwt.validation.benchmark.TokenValidatorBenchmark`
   * `de.cuioss.jwt.validation.benchmark.FailureScenarioBenchmark`
 
@@ -67,8 +66,7 @@ The following classes implement this specification:
 
 The following tests verify the implementation:
 
-* link:../../src/test/java/de/cuioss/jwt/validation/jwks/JwksClientBenchmarkTest.java[JwksClientBenchmarkTest]
-* JMH benchmark classes (to be implemented):
+* JMH benchmark classes:
   * `de.cuioss.jwt.validation.benchmark.JwksClientBenchmark`
   * `de.cuioss.jwt.validation.benchmark.JwksClientFailureBenchmark`
 
@@ -88,8 +86,7 @@ The following class implements this specification:
 
 The following tests verify the implementation:
 
-* link:../../src/test/java/de/cuioss/jwt/validation/TokenValidatorPerformanceTest.java[TokenValidatorPerformanceTest]
-* JMH benchmark classes (to be implemented):
+* JMH benchmark classes:
   * `de.cuioss.jwt.validation.benchmark.ConcurrentTokenValidationBenchmark`
 
 === Failure Handling Performance
@@ -205,9 +202,6 @@ Key performance metrics are displayed as badges in the project documentation:
 The implementation of this specification is verified by:
 
 * JMH benchmark classes (see link:../benchmark.adoc[Benchmark Implementation Plan])
-* Existing performance tests:
-  * link:../../src/test/java/de/cuioss/jwt/validation/TokenValidatorPerformanceTest.java[TokenValidatorPerformanceTest]
-  * link:../../src/test/java/de/cuioss/jwt/validation/jwks/JwksClientBenchmarkTest.java[JwksClientBenchmarkTest]
 
 == Token Generation Strategy for Benchmarks
 

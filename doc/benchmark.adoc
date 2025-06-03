@@ -165,7 +165,7 @@ Each task follows a consistent format:
 *Rationale:* Automated benchmark execution helps catch performance regressions early.
 
 === I2. Replace Existing Performance Tests
-[ ] *Priority:* High
+[x] *Priority:* High
 
 *Description:* Remove the old performance tests once the new benchmarks are implemented:
 1. Remove `TokenValidatorPerformanceTest.java`
@@ -280,7 +280,7 @@ Run specific benchmark:
 *Rationale:* A proper specification document following the project standards ensures that performance requirements are clearly documented without duplicating implementation details, and provides appropriate cross-references to other documentation and code.
 
 === B3. Implement Enhanced Token Generators for Benchmarks
-[ ] *Priority:* Medium
+[x] *Priority:* Medium
 
 *Description:* Create enhanced token generators for benchmarks that extend the existing `TestTokenGenerators` approach with configurable token sizes, signing algorithms, and claim complexity.
 
