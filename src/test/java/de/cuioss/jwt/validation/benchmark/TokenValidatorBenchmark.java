@@ -20,14 +20,8 @@ import de.cuioss.jwt.validation.domain.token.AccessTokenContent;
 import de.cuioss.jwt.validation.domain.token.IdTokenContent;
 import de.cuioss.jwt.validation.domain.token.RefreshTokenContent;
 import de.cuioss.jwt.validation.exception.TokenValidationException;
-import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
-import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler; // Added
-import io.jsonwebtoken.Jwts; // Added
-import io.jsonwebtoken.SignatureAlgorithm; // Added
-
-import java.security.PrivateKey; // Added
-import java.util.Date; // Added
-import java.util.Map; // Added
+import de.cuioss.jwt.validation.test.TestTokenHolder;
+import de.cuioss.jwt.validation.test.generator.TestTokenGenerators;
 
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
@@ -44,56 +38,21 @@ public class TokenValidatorBenchmark {
 
     @Setup
     public void setup() {
-        String jwksContent = InMemoryJWKSFactory.createDefaultJwks(); // Uses RS256 and DEFAULT_KEY_ID
-        IssuerConfig issuerConfig = IssuerConfig.builder()
-                .issuer("Benchmark-testIssuer")
-                .expectedAudience("benchmark-client")
-                .expectedClientId("benchmark-client")
-                .jwksContent(jwksContent)
-                .build();
+        // Create token holders using TestTokenGenerators
+        TestTokenHolder accessTokenHolder = TestTokenGenerators.accessTokens().next();
+        TestTokenHolder idTokenHolder = TestTokenGenerators.idTokens().next();
+        TestTokenHolder refreshTokenHolder = TestTokenGenerators.refreshTokens().next();
+        
+        // Get the issuer config from the access token holder
+        IssuerConfig issuerConfig = accessTokenHolder.getIssuerConfig();
+        
+        // Create a token validator with the issuer config
         tokenValidator = new TokenValidator(issuerConfig);
-
-        PrivateKey privateKey = InMemoryKeyMaterialHandler.getDefaultPrivateKey(InMemoryKeyMaterialHandler.Algorithm.RS256);
-        String keyId = InMemoryKeyMaterialHandler.DEFAULT_KEY_ID;
-
-        long currentTimeMillis = System.currentTimeMillis();
-        long expTimeMillis = currentTimeMillis + 3600 * 1000; // 1 hour from now
-        long iatSeconds = currentTimeMillis / 1000;
-        long expSeconds = expTimeMillis / 1000;
-
-        // Access Token
-        accessToken = Jwts.builder()
-                .header().add(Map.of("kid", keyId)).and()
-                .issuer("Benchmark-testIssuer")
-                .audience().add("benchmark-client").and()
-                .subject("test-subject")
-                .claim("client_id", "benchmark-client")
-                .issuedAt(new Date(currentTimeMillis))
-                .expiration(new Date(expTimeMillis))
-                .signWith(privateKey, SignatureAlgorithm.RS256)
-                .compact();
-
-        // ID Token
-        idToken = Jwts.builder()
-                .header().add(Map.of("kid", keyId)).and()
-                .issuer("Benchmark-testIssuer")
-                .audience().add("benchmark-client").and()
-                .subject("test-subject")
-                .claim("client_id", "benchmark-client")
-                .claim("nonce", "test-nonce")
-                .issuedAt(new Date(currentTimeMillis))
-                .expiration(new Date(expTimeMillis))
-                .signWith(privateKey, SignatureAlgorithm.RS256)
-                .compact();
-
-        // Refresh Token - typically simpler, may only need iss, sub, exp
-        refreshToken = Jwts.builder()
-                .header().add(Map.of("kid", keyId)).and()
-                .issuer("Benchmark-testIssuer")
-                .subject("test-subject")
-                .expiration(new Date(expTimeMillis))
-                .signWith(privateKey, SignatureAlgorithm.RS256)
-                .compact();
+        
+        // Get the raw tokens
+        accessToken = accessTokenHolder.getRawToken();
+        idToken = idTokenHolder.getRawToken();
+        refreshToken = refreshTokenHolder.getRawToken();
     }
 
     @Benchmark

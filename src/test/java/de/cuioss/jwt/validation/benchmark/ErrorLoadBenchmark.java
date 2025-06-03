@@ -2,25 +2,20 @@ package de.cuioss.jwt.validation.benchmark;
 
 import de.cuioss.jwt.validation.IssuerConfig;
 import de.cuioss.jwt.validation.TokenValidator;
+import de.cuioss.jwt.validation.domain.claim.ClaimName;
+import de.cuioss.jwt.validation.domain.claim.ClaimValue;
 import de.cuioss.jwt.validation.domain.token.AccessTokenContent;
 import de.cuioss.jwt.validation.exception.TokenValidationException;
-import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
-import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import de.cuioss.jwt.validation.test.TestTokenHolder;
+import de.cuioss.jwt.validation.test.generator.ClaimControlParameter;
+import de.cuioss.jwt.validation.test.generator.TestTokenGenerators;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Benchmark that measures system performance under high rates of validation errors.
@@ -46,104 +41,72 @@ public class ErrorLoadBenchmark {
     private static final int TOKEN_COUNT = 100;
 
     @Setup
-    public void setup() throws NoSuchAlgorithmException {
-        // 1. Setup Keys
-        PrivateKey signingKey = InMemoryKeyMaterialHandler.getDefaultPrivateKey(InMemoryKeyMaterialHandler.Algorithm.RS256);
-        String keyId = InMemoryKeyMaterialHandler.DEFAULT_KEY_ID;
-
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-        keyPairGenerator.initialize(2048);
-        KeyPair wrongKeyPair = keyPairGenerator.generateKeyPair();
-        PrivateKey wrongSigningKey = wrongKeyPair.getPrivate();
-
-        // 2. Configure TokenValidator
-        String jwksContent = InMemoryJWKSFactory.createDefaultJwks(); // Uses the default key (signingKey's public part)
-        IssuerConfig issuerConfig = IssuerConfig.builder()
-                .issuer("Benchmark-testIssuer")
-                .expectedAudience("benchmark-client")
-                .jwksContent(jwksContent)
-                .build();
+    public void setup() {
+        // Create a base token holder using TestTokenGenerators
+        TestTokenHolder baseTokenHolder = TestTokenGenerators.accessTokens().next();
+        
+        // Get the issuer config from the token holder
+        IssuerConfig issuerConfig = baseTokenHolder.getIssuerConfig();
+        
+        // Create a token validator with the issuer config
         tokenValidator = new TokenValidator(issuerConfig);
-
-        // 3. Generate Token Lists
+        
+        // Generate Token Lists
         validTokens = new ArrayList<>(TOKEN_COUNT);
         invalidTokens = new ArrayList<>(TOKEN_COUNT);
-
-        long currentTimeMillis = System.currentTimeMillis();
-        long futureExpTimeMillis = currentTimeMillis + 3600 * 1000; // 1 hour from now
-        long pastExpTimeMillis = currentTimeMillis - 3600 * 1000;   // 1 hour in the past
-
+        
         // Generate valid tokens
         for (int i = 0; i < TOKEN_COUNT; i++) {
-            String validToken = Jwts.builder()
-                    .header().add(Map.of("kid", keyId)).and()
-                    .issuer("Benchmark-testIssuer")
-                    .audience().add("benchmark-client").and()
-                    .subject("test-subject-" + i)
-                    .issuedAt(new Date(currentTimeMillis))
-                    .expiration(new Date(futureExpTimeMillis))
-                    .signWith(signingKey)
-                    .compact();
-            validTokens.add(validToken);
+            // Create a new token holder for each valid token
+            TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
+            // Add a unique subject to each token
+            tokenHolder.withClaim(ClaimName.SUBJECT.getName(), ClaimValue.forPlainString("test-subject-" + i));
+            validTokens.add(tokenHolder.getRawToken());
         }
-
+        
         // Generate different types of invalid tokens
         for (int i = 0; i < TOKEN_COUNT; i++) {
             // Distribute invalid tokens across different error types
             int errorType = i % 5;
             String invalidToken;
-
+            
             switch (errorType) {
                 case 0: // Expired token
-                    invalidToken = Jwts.builder()
-                            .header().add(Map.of("kid", keyId)).and()
-                            .issuer("Benchmark-testIssuer")
-                            .audience().add("benchmark-client").and()
-                            .subject("test-subject-" + i)
-                            .issuedAt(new Date(currentTimeMillis - 7200 * 1000))
-                            .expiration(new Date(pastExpTimeMillis))
-                            .signWith(signingKey)
-                            .compact();
+                    ClaimControlParameter expiredParams = ClaimControlParameter.builder()
+                            .expiredToken(true)
+                            .build();
+                    TestTokenHolder expiredTokenHolder = new TestTokenHolder(baseTokenHolder.getTokenType(), expiredParams);
+                    expiredTokenHolder.withClaim(ClaimName.SUBJECT.getName(), ClaimValue.forPlainString("test-subject-" + i));
+                    invalidToken = expiredTokenHolder.getRawToken();
                     break;
+                    
                 case 1: // Wrong issuer
-                    invalidToken = Jwts.builder()
-                            .header().add(Map.of("kid", keyId)).and()
-                            .issuer("rogue-issuer-" + i)
-                            .audience().add("benchmark-client").and()
-                            .subject("test-subject-" + i)
-                            .issuedAt(new Date(currentTimeMillis))
-                            .expiration(new Date(futureExpTimeMillis))
-                            .signWith(signingKey)
-                            .compact();
+                    TestTokenHolder wrongIssuerTokenHolder = baseTokenHolder.regenerateClaims()
+                            .withClaim(ClaimName.ISSUER.getName(), ClaimValue.forPlainString("rogue-issuer-" + i))
+                            .withClaim(ClaimName.SUBJECT.getName(), ClaimValue.forPlainString("test-subject-" + i));
+                    invalidToken = wrongIssuerTokenHolder.getRawToken();
                     break;
+                    
                 case 2: // Wrong audience
-                    invalidToken = Jwts.builder()
-                            .header().add(Map.of("kid", keyId)).and()
-                            .issuer("Benchmark-testIssuer")
-                            .audience().add("rogue-audience-" + i).and()
-                            .subject("test-subject-" + i)
-                            .issuedAt(new Date(currentTimeMillis))
-                            .expiration(new Date(futureExpTimeMillis))
-                            .signWith(signingKey)
-                            .compact();
+                    TestTokenHolder wrongAudienceTokenHolder = baseTokenHolder.regenerateClaims()
+                            .withClaim(ClaimName.AUDIENCE.getName(), ClaimValue.forList("rogue-audience-" + i, List.of("rogue-audience-" + i)))
+                            .withClaim(ClaimName.SUBJECT.getName(), ClaimValue.forPlainString("test-subject-" + i));
+                    invalidToken = wrongAudienceTokenHolder.getRawToken();
                     break;
+                    
                 case 3: // Invalid signature
-                    invalidToken = Jwts.builder()
-                            .header().add(Map.of("kid", keyId)).and()
-                            .issuer("Benchmark-testIssuer")
-                            .audience().add("benchmark-client").and()
-                            .subject("test-subject-" + i)
-                            .issuedAt(new Date(currentTimeMillis))
-                            .expiration(new Date(futureExpTimeMillis))
-                            .signWith(wrongSigningKey)
-                            .compact();
+                    TestTokenHolder invalidSignatureTokenHolder = baseTokenHolder.regenerateClaims()
+                            .withKeyId("invalid-key-id-" + i)
+                            .withClaim(ClaimName.SUBJECT.getName(), ClaimValue.forPlainString("test-subject-" + i));
+                    invalidToken = invalidSignatureTokenHolder.getRawToken();
                     break;
+                    
                 case 4: // Malformed token
                 default:
                     invalidToken = "this.is.not.a.valid.jwt-" + i;
                     break;
             }
-
+            
             invalidTokens.add(invalidToken);
         }
     }

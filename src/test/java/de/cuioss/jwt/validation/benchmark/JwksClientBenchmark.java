@@ -119,30 +119,21 @@ public class JwksClientBenchmark {
     @Benchmark
     public Optional<Key> retrieveKey_InMemoryLoader(InMemoryState state) {
         Optional<KeyInfo> keyInfoOpt = state.jwksClient.getKeyInfo(state.keyId);
-        if (keyInfoOpt.isPresent()) {
-            return Optional.of(keyInfoOpt.get().getKey());
-        }
-        return Optional.empty();
+        return keyInfoOpt.map(KeyInfo::getKey);
     }
 
     @Benchmark
     public Optional<Key> retrieveKey_HttpLoader_Cached(HttpBenchmarkState state) {
         // First call in an iteration might fill the cache, subsequent calls should hit it.
         Optional<KeyInfo> keyInfoOpt = state.jwksClient.getKeyInfo(state.keyId);
-        if (keyInfoOpt.isPresent()) {
-            return Optional.of(keyInfoOpt.get().getKey());
-        }
-        return Optional.empty();
+        return keyInfoOpt.map(KeyInfo::getKey);
     }
 
     @Benchmark
     public Optional<Key> retrieveKey_HttpLoader_NonCached(HttpNonCachedState state) {
         // This uses a JwksLoader instance created per invocation.
         Optional<KeyInfo> keyInfoOpt = state.jwksClient.getKeyInfo(state.keyId);
-        if (keyInfoOpt.isPresent()) {
-            return Optional.of(keyInfoOpt.get().getKey());
-        }
-        return Optional.empty();
+        return keyInfoOpt.map(KeyInfo::getKey);
     }
 
     // Example using Blackhole

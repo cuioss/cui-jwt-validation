@@ -35,6 +35,7 @@ import de.cuioss.test.generator.domain.UUIDStringGenerator;
 import io.jsonwebtoken.Jwts;
 import jakarta.json.Json;
 import lombok.Getter;
+import org.apache.commons.lang3.RandomStringUtils;
 
 import java.security.PublicKey;
 import java.time.OffsetDateTime;
@@ -442,6 +443,40 @@ public class TestTokenHolder implements TokenContent {
         Set<String> roles = new RoleGenerator().next();
         claimsMap.put("roles", ClaimValue.forList(
                 String.join(",", roles), new ArrayList<>(roles)));
+
+        // Handle token complexity
+        if (claimControl.getTokenComplexity() == ClaimControlParameter.TokenComplexity.COMPLEX) {
+            // Add nested claim
+            Map<String, Object> nestedClaim = new HashMap<>();
+            nestedClaim.put("attr1", "value1");
+            nestedClaim.put("attr2", true);
+            nestedClaim.put("attr3", 12345);
+            claimsMap.put("complex_claim", ClaimValue.forPlainString(nestedClaim.toString()));
+
+            // Add extra claims
+            for (int i = 0; i < 5; i++) {
+                claimsMap.put("extra_claim_" + i, ClaimValue.forPlainString(RandomStringUtils.randomAlphanumeric(50)));
+            }
+        }
+
+        // Handle token size
+        int paddingLength = 0;
+        switch (claimControl.getTokenSize()) {
+            case MEDIUM:
+                paddingLength = 4 * 1024; // Aim for roughly 5KB
+                break;
+            case LARGE:
+                paddingLength = 9 * 1024; // Aim for roughly 10KB
+                break;
+            case SMALL:
+            default:
+                // No padding needed
+                break;
+        }
+
+        if (paddingLength > 0) {
+            claimsMap.put("padding", ClaimValue.forPlainString(RandomStringUtils.randomAlphanumeric(paddingLength)));
+        }
 
         // Add type-specific claims
         if (!claimControl.isMissingTokenType()) {

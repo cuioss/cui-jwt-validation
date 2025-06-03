@@ -4,15 +4,10 @@ import de.cuioss.jwt.validation.IssuerConfig;
 import de.cuioss.jwt.validation.TokenValidator;
 import de.cuioss.jwt.validation.domain.token.AccessTokenContent;
 import de.cuioss.jwt.validation.exception.TokenValidationException;
-import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
-import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import de.cuioss.jwt.validation.test.TestTokenHolder;
+import de.cuioss.jwt.validation.test.generator.TestTokenGenerators;
 import org.openjdk.jmh.annotations.*;
 
-import java.security.PrivateKey;
-import java.util.Date;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @State(Scope.Benchmark) // Shared state for all benchmark threads
@@ -28,30 +23,17 @@ public class ConcurrentTokenValidationBenchmark {
 
     @Setup(Level.Trial) // Setup once for all benchmark threads
     public void setup() {
-        PrivateKey signingKey = InMemoryKeyMaterialHandler.getDefaultPrivateKey(InMemoryKeyMaterialHandler.Algorithm.RS256);
-        String keyId = InMemoryKeyMaterialHandler.DEFAULT_KEY_ID;
-
-        String jwksContent = InMemoryJWKSFactory.createDefaultJwks();
-        IssuerConfig issuerConfig = IssuerConfig.builder()
-                .issuer("Benchmark-testIssuer")
-                .expectedAudience("benchmark-client")
-                .expectedClientId("benchmark-client") // Though not strictly needed for access token by default
-                .jwksContent(jwksContent)
-                .build();
+        // Create a token holder using TestTokenGenerators
+        TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
+        
+        // Get the issuer config from the token holder
+        IssuerConfig issuerConfig = tokenHolder.getIssuerConfig();
+        
+        // Create a token validator with the issuer config
         tokenValidator = new TokenValidator(issuerConfig);
-
-        long currentTimeMillis = System.currentTimeMillis();
-        long futureExpTimeMillis = currentTimeMillis + 3600 * 1000; // 1 hour from now
-
-        validAccessToken = Jwts.builder()
-                .header().add(Map.of("kid", keyId)).and()
-                .issuer("Benchmark-testIssuer")
-                .audience().add("benchmark-client").and()
-                .subject("concurrent-test-subject")
-                .issuedAt(new Date(currentTimeMillis))
-                .expiration(new Date(futureExpTimeMillis))
-                .signWith(signingKey, SignatureAlgorithm.RS256)
-                .compact();
+        
+        // Get the raw token
+        validAccessToken = tokenHolder.getRawToken();
     }
 
     @Benchmark

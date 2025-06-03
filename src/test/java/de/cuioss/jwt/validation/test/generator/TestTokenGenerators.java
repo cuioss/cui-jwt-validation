@@ -30,6 +30,8 @@ import lombok.experimental.UtilityClass;
  *   <li>Refresh tokens</li>
  * </ul>
  * <p>
+ * It also provides methods for creating generators with specific token sizes and complexities.
+ * <p>
  * These generators are intended to replace the existing token generators in the project.
  */
 @UtilityClass
@@ -60,5 +62,104 @@ public class TestTokenGenerators {
      */
     public static TypedGenerator<TestTokenHolder> refreshTokens() {
         return () -> new TestTokenHolder(TokenType.REFRESH_TOKEN, ClaimControlParameter.defaultForTokenType(TokenType.REFRESH_TOKEN));
+    }
+
+    /**
+     * Creates a generator for TestTokenHolder objects with ACCESS_TOKEN type and specified size.
+     *
+     * @param size the size of the token
+     * @return a TypedGenerator that produces TestTokenHolder objects with ACCESS_TOKEN type and specified size
+     */
+    public static TypedGenerator<TestTokenHolder> accessTokens(ClaimControlParameter.TokenSize size) {
+        return () -> {
+            ClaimControlParameter params = ClaimControlParameter.builder()
+                    .tokenSize(size)
+                    .build();
+            return new TestTokenHolder(TokenType.ACCESS_TOKEN, params);
+        };
+    }
+
+    /**
+     * Creates a generator for TestTokenHolder objects with ID_TOKEN type and specified size.
+     *
+     * @param size the size of the token
+     * @return a TypedGenerator that produces TestTokenHolder objects with ID_TOKEN type and specified size
+     */
+    public static TypedGenerator<TestTokenHolder> idTokens(ClaimControlParameter.TokenSize size) {
+        return () -> {
+            ClaimControlParameter params = ClaimControlParameter.builder()
+                    .tokenSize(size)
+                    .build();
+            return new TestTokenHolder(TokenType.ID_TOKEN, params);
+        };
+    }
+
+    /**
+     * Creates a generator for TestTokenHolder objects with REFRESH_TOKEN type and specified size.
+     *
+     * @param size the size of the token
+     * @return a TypedGenerator that produces TestTokenHolder objects with REFRESH_TOKEN type and specified size
+     */
+    public static TypedGenerator<TestTokenHolder> refreshTokens(ClaimControlParameter.TokenSize size) {
+        return () -> {
+            ClaimControlParameter params = ClaimControlParameter.builder()
+                    .tokenSize(size)
+                    .build();
+            return new TestTokenHolder(TokenType.REFRESH_TOKEN, params);
+        };
+    }
+
+    /**
+     * Creates a generator for TestTokenHolder objects with ACCESS_TOKEN type, specified size, and complexity.
+     *
+     * @param size the size of the token
+     * @param complexity the complexity of the token claims
+     * @return a TypedGenerator that produces TestTokenHolder objects with ACCESS_TOKEN type, specified size, and complexity
+     */
+    public static TypedGenerator<TestTokenHolder> accessTokens(ClaimControlParameter.TokenSize size, 
+                                                              ClaimControlParameter.TokenComplexity complexity) {
+        return () -> {
+            ClaimControlParameter params = ClaimControlParameter.builder()
+                    .tokenSize(size)
+                    .tokenComplexity(complexity)
+                    .build();
+            return new TestTokenHolder(TokenType.ACCESS_TOKEN, params);
+        };
+    }
+
+    /**
+     * Creates a generator for TestTokenHolder objects with ID_TOKEN type, specified size, and complexity.
+     *
+     * @param size the size of the token
+     * @param complexity the complexity of the token claims
+     * @return a TypedGenerator that produces TestTokenHolder objects with ID_TOKEN type, specified size, and complexity
+     */
+    public static TypedGenerator<TestTokenHolder> idTokens(ClaimControlParameter.TokenSize size, 
+                                                          ClaimControlParameter.TokenComplexity complexity) {
+        return () -> {
+            ClaimControlParameter params = ClaimControlParameter.builder()
+                    .tokenSize(size)
+                    .tokenComplexity(complexity)
+                    .build();
+            return new TestTokenHolder(TokenType.ID_TOKEN, params);
+        };
+    }
+
+    /**
+     * Creates a generator for TestTokenHolder objects with REFRESH_TOKEN type, specified size, and complexity.
+     *
+     * @param size the size of the token
+     * @param complexity the complexity of the token claims
+     * @return a TypedGenerator that produces TestTokenHolder objects with REFRESH_TOKEN type, specified size, and complexity
+     */
+    public static TypedGenerator<TestTokenHolder> refreshTokens(ClaimControlParameter.TokenSize size, 
+                                                               ClaimControlParameter.TokenComplexity complexity) {
+        return () -> {
+            ClaimControlParameter params = ClaimControlParameter.builder()
+                    .tokenSize(size)
+                    .tokenComplexity(complexity)
+                    .build();
+            return new TestTokenHolder(TokenType.REFRESH_TOKEN, params);
+        };
     }
 }
