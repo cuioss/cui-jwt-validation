@@ -19,10 +19,10 @@ import de.cuioss.jwt.validation.JWTValidationLogMessages.DEBUG;
 import de.cuioss.jwt.validation.JWTValidationLogMessages.ERROR;
 import de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
 import de.cuioss.jwt.validation.ParserConfig;
-import de.cuioss.tools.http.HttpHandler;
-import de.cuioss.tools.http.HttpStatusFamily;
-import de.cuioss.tools.http.SecureSSLContextProvider;
 import de.cuioss.tools.logging.CuiLogger;
+import de.cuioss.tools.net.http.HttpHandler;
+import de.cuioss.tools.net.http.HttpStatusFamily;
+import de.cuioss.tools.net.http.SecureSSLContextProvider;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonReader;
 import jakarta.json.JsonString;
@@ -48,17 +48,13 @@ import java.util.Optional;
 /**
  * Handles the discovery of OpenID Connect (OIDC) Provider metadata from a
  * .well-known/openid-configuration endpoint.
- *
  * This class fetches, parses, and validates the OIDC discovery document.
  * It provides access to the discovered endpoint URLs like {@code jwks_uri},
  * {@code authorization_endpoint}, etc.
- *
  * The implementation uses {@link java.net.http.HttpClient} for fetching the
  * discovery document and {@link jakarta.json.Json} for parsing the JSON response.
- *
  * Issuer validation is performed to ensure the 'issuer' claim in the discovery
  * document is consistent with the .well-known URL from which it was fetched.
- *
  * Use the builder to create instances of this class:
  * <pre>
  * WellKnownHandler handler = WellKnownHandler.builder()
@@ -221,7 +217,7 @@ public final class WellKnownHandler {
         }
 
         /**
-         * Adds a HttpHandler to the map of endpoints.
+         * Adds an HttpHandler to the map of endpoints.
          *
          * @param map The map to add to
          * @param key The key for the HttpHandler
