@@ -47,385 +47,77 @@ Each task follows a consistent format:
 === S1. Set up JMH Dependencies
 [x] *Priority:* High
 
-*Description:* Add JMH dependencies to the Maven pom.xml file:
-
-```xml
-<!-- JMH -->
-<dependency>
-    <groupId>org.openjdk.jmh</groupId>
-    <artifactId>jmh-core</artifactId>
-    <version>1.37</version>
-    <scope>test</scope>
-</dependency>
-<dependency>
-    <groupId>org.openjdk.jmh</groupId>
-    <artifactId>jmh-generator-annprocess</artifactId>
-    <version>1.37</version>
-    <scope>test</scope>
-</dependency>
-```
+*Description:* Add JMH dependencies to the Maven pom.xml file.
 
 *Rationale:* JMH is the industry standard for Java microbenchmarking and will provide more accurate performance measurements than custom test implementations.
 
 === S2. Configure Maven Plugin for JMH
 [x] *Priority:* High
 
-*Description:* Add the JMH Maven plugin to simplify running benchmarks:
-
-```xml
-<plugin>
-    <groupId>org.apache.maven.plugins</groupId>
-    <artifactId>maven-shade-plugin</artifactId>
-    <executions>
-        <execution>
-            <phase>package</phase>
-            <goals>
-                <goal>shade</goal>
-            </goals>
-            <configuration>
-                <finalName>benchmarks</finalName>
-                <transformers>
-                    <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                        <mainClass>org.openjdk.jmh.Main</mainClass>
-                    </transformer>
-                </transformers>
-                <filters>
-                    <filter>
-                        <artifact>*:*</artifact>
-                        <excludes>
-                            <exclude>META-INF/*.SF</exclude>
-                            <exclude>META-INF/*.DSA</exclude>
-                            <exclude>META-INF/*.RSA</exclude>
-                        </excludes>
-                    </filter>
-                </filters>
-            </configuration>
-        </execution>
-    </executions>
-</plugin>
-```
+*Description:* Add the Maven Shade plugin configured for JMH to simplify running benchmarks.
 
 *Rationale:* The Maven plugin will make it easier to build and run benchmarks from the command line and during CI/CD processes.
 
 === S3. Create Base Benchmark Structure
 [x] *Priority:* High
 
-*Description:* Create the base package structure and shared utility classes for benchmarks:
-1. Create package `de.cuioss.jwt.validation.benchmark`
-2. Create package `de.cuioss.jwt.validation.benchmark.util` for shared utilities
-3. Create a `BenchmarkRunner` class to simplify benchmark execution
+*Description:* Create the base package structure and shared utility classes for benchmarks.
 
 *Rationale:* A consistent structure will make it easier to add, maintain, and run benchmarks.
 
 === B1. Implement TokenValidator Benchmarks
 [x] *Priority:* High
 
-*Description:* Create a comprehensive benchmark for TokenValidator that covers:
-1. Create `TokenValidatorBenchmark.java` in the new benchmark package
-2. Implement benchmarks for validating access tokens
-3. Implement benchmarks for validating ID tokens
-4. Add parameterization for different token sizes and types
-5. Test both "cold start" and "warmed up" scenarios
-6. Use the in-memory `TestTokenGenerators` approach for consistent, reproducible results
-
-Sample structure:
-```java
-@State(Scope.Benchmark)
-@BenchmarkMode(Mode.AverageTime)
-@OutputTimeUnit(TimeUnit.MICROSECONDS)
-@Fork(value = 1, warmups = 1)
-@Warmup(iterations = 5, time = 1)
-@Measurement(iterations = 5, time = 1)
-public class TokenValidatorBenchmark {
-    
-    private TokenValidator tokenValidator;
-    private String accessToken;
-    private String idToken;
-    private String refreshToken;
-    
-    @Setup
-    public void setup() {
-        // Setup code for TokenValidator with an InMemoryJWKSFactory
-        String jwksContent = InMemoryJWKSFactory.createDefaultJwks();
-        IssuerConfig issuerConfig = IssuerConfig.builder()
-                .issuer("Benchmark-testIssuer")
-                .expectedAudience("benchmark-client")
-                .expectedClientId("benchmark-client")
-                .jwksContent(jwksContent)
-                .build();
-        tokenValidator = new TokenValidator(issuerConfig);
-        
-        // Generate tokens using TestTokenGenerators
-        accessToken = TestTokenGenerators.accessTokens().next().getRawToken();
-        idToken = TestTokenGenerators.idTokens().next().getRawToken();
-        refreshToken = TestTokenGenerators.refreshTokens().next().getRawToken();
-    }
-    
-    @Benchmark
-    public ValidationResult validateAccessToken() {
-        return tokenValidator.createAccessToken(accessToken);
-    }
-    
-    @Benchmark
-    public ValidationResult validateIdToken() {
-        return tokenValidator.createIdToken(idToken);
-    }
-    
-    @Benchmark
-    public ValidationResult validateRefreshToken() {
-        return tokenValidator.createRefreshToken(refreshToken);
-    }
-    
-    // Additional benchmark methods with parameterized token sizes
-}
-```
+*Description:* Create a comprehensive benchmark for TokenValidator that measures performance of validating different token types with various configurations.
 
 *Rationale:* TokenValidator is a critical component, and its performance directly impacts application response times. Using in-memory test token generators provides consistent and reproducible benchmark results without external dependencies.
 
 === B2. Implement JwksClient Benchmarks
 [x] *Priority:* High
 
-*Description:* Create benchmarks for JwksClient:
-1. Create `JwksClientBenchmark.java`
-2. Benchmark key retrieval performance
-3. Test cached vs. non-cached scenarios
-4. Simulate different load patterns
-
-Sample structure:
-```java
-@State(Scope.Benchmark)
-@BenchmarkMode(Mode.AverageTime)
-@OutputTimeUnit(TimeUnit.MICROSECONDS)
-@Fork(value = 1, warmups = 1)
-@Warmup(iterations = 5, time = 1)
-@Measurement(iterations = 5, time = 1)
-public class JwksClientBenchmark {
-    
-    private JwksClient jwksClient;
-    private String keyId;
-    
-    @Setup
-    public void setup() {
-        // Setup code
-    }
-    
-    @Benchmark
-    public Optional<Key> retrieveKey() {
-        return jwksClient.getKeyInfo(keyId).map(KeyInfo::getKey);
-    }
-    
-    // Additional benchmark methods
-}
-```
+*Description:* Create benchmarks for JwksClient that measure key retrieval performance in various scenarios.
 
 *Rationale:* JWKS key retrieval is a common operation that should be optimized for performance, especially in high-volume scenarios.
 
 === B7. Implement JwksClient Failure Scenario Benchmarks
 [x] *Priority:* Medium
 
-*Description:* Create benchmarks specifically for JwksClient failure scenarios:
-1. Create `JwksClientFailureBenchmark.java`
-2. Benchmark performance for common JWKS failure scenarios:
-   a. Non-existent key ID lookups
-   b. Server errors (HTTP 500)
-   c. Server unavailability (connection timeouts)
-   d. Malformed JWKS responses
-   e. Rate limiting scenarios
-3. Measure performance impact of retry mechanisms
-4. Test cache behavior during failure scenarios
-
-Sample structure:
-```java
-@State(Scope.Benchmark)
-@BenchmarkMode(Mode.AverageTime)
-@OutputTimeUnit(TimeUnit.MICROSECONDS)
-@Fork(value = 1, warmups = 1)
-@Warmup(iterations = 5, time = 1)
-@Measurement(iterations = 5, time = 1)
-public class JwksClientFailureBenchmark {
-    
-    private JwksClient jwksClient;
-    private String existingKeyId;
-    private String nonExistentKeyId;
-    
-    @Setup
-    public void setup() {
-        // Setup code including mock server for different failure scenarios
-    }
-    
-    @Benchmark
-    public Optional<Key> retrieveExistingKey() {
-        return jwksClient.getKeyInfo(existingKeyId).map(KeyInfo::getKey);
-    }
-    
-    @Benchmark
-    public Optional<Key> retrieveNonExistentKey() {
-        return jwksClient.getKeyInfo(nonExistentKeyId).map(KeyInfo::getKey);
-    }
-    
-    // Additional benchmark methods for other failure scenarios
-}
-```
+*Description:* Create benchmarks specifically for JwksClient failure scenarios to measure performance during error conditions.
 
 *Rationale:* JWKS key retrieval failures can significantly impact system performance, especially in distributed systems. Understanding the performance characteristics during failure scenarios helps design more resilient systems.
 
 === B3. Implement Multi-Issuer Benchmarks
 [x] *Priority:* Medium
 
-*Description:* Create benchmarks for multi-issuer token validation scenarios:
-1. Create `MultiIssuerValidatorBenchmark.java`
-2. Test performance with varying numbers of configured issuers
-3. Measure impact of issuer resolution logic
+*Description:* Create benchmarks for multi-issuer token validation scenarios to measure performance with varying numbers of configured issuers.
 
 *Rationale:* Multi-issuer support introduces additional complexity that could impact performance and should be measured.
-
-*COMPLETED:* Implemented `MultiIssuerValidatorBenchmark.java` with parameterized issuer counts (1, 5, 10). Tokens are generated with matching 'iss' and 'kid' claims for each issuer, using `jwksContent` derived from `InMemoryKeyMaterialHandler` to ensure key consistency. The benchmark code compiles successfully. Build issues related to unrelated integration tests (`TokenKeycloakITTest`) prevented full Maven verification, but the benchmark logic itself is complete.
 
 === B4. Implement Token Generation Benchmarks
 [x] *Priority:* Medium
 
-*Description:* Create benchmarks for token generation processes used in tests:
-1. Create `TokenGenerationBenchmark.java`
-2. Measure performance of different token generation approaches
-3. Identify bottlenecks in the token creation process
+*Description:* Create benchmarks for token generation processes used in tests to measure performance of different approaches.
 
 *Rationale:* Efficient token generation is important for testing and can impact the overall test execution time.
-
-*COMPLETED:* Implemented `TokenGenerationBenchmark.java` with benchmarks for `TestTokenHolder` (default and custom claims) and `InMemoryKeyMaterialHandler` JWKS generation. Code compiles. Build successful with `-DskipTests`, but JAR execution is still subject to the previously noted `maven-shade-plugin` issue.
 
 === B6. Implement Failure Scenario Benchmarks
 [x] *Priority:* High
 
-*Description:* Create benchmarks that measure performance during failure scenarios:
-1. Create `FailureScenarioBenchmark.java`
-2. Benchmark common failure scenarios:
-   a. Invalid signatures
-   b. Expired tokens
-   c. Wrong issuer/audience
-   d. Malformed tokens
-   e. Missing key IDs (kid)
-   f. Key not found scenarios
-3. Compare failure handling performance to successful validation
-
-Sample structure:
-```java
-@State(Scope.Benchmark)
-@BenchmarkMode(Mode.AverageTime)
-@OutputTimeUnit(TimeUnit.MICROSECONDS)
-@Fork(value = 1, warmups = 1)
-@Warmup(iterations = 5, time = 1)
-@Measurement(iterations = 5, time = 1)
-public class FailureScenarioBenchmark {
-    
-    private TokenValidator tokenValidator;
-    private String validToken;
-    private String expiredToken;
-    private String wrongIssuerToken;
-    private String malformedToken;
-    private String missingKidToken;
-    
-    @Setup
-    public void setup() {
-        // Setup code to create tokenValidator and various invalid tokens
-    }
-    
-    @Benchmark
-    public Object validateValidToken() {
-        try {
-            return tokenValidator.validateToken(validToken);
-        } catch (TokenValidationException e) {
-            return e;
-        }
-    }
-    
-    @Benchmark
-    public Object validateExpiredToken() {
-        try {
-            return tokenValidator.validateToken(expiredToken);
-        } catch (TokenValidationException e) {
-            return e;
-        }
-    }
-    
-    // Additional benchmark methods for other failure scenarios
-}
-```
+*Description:* Create benchmarks that measure performance during common token validation failure scenarios.
 
 *Rationale:* In real-world applications, failure scenarios occur frequently and must be handled efficiently. Performance degradation during error handling can lead to denial of service vulnerabilities if not properly managed.
 
 === B5. Implement Concurrent Load Benchmarks
 [x] *Priority:* High
 
-*Description:* Create benchmarks that simulate concurrent access patterns:
-1. Create `ConcurrentTokenValidationBenchmark.java`
-2. Use JMH thread states to simulate concurrent validation
-3. Test different thread counts and access patterns
-
-Sample structure:
-```java
-@State(Scope.Benchmark)
-@BenchmarkMode(Mode.Throughput)
-@OutputTimeUnit(TimeUnit.SECONDS)
-@Threads(Threads.MAX)
-@Fork(value = 1, warmups = 1)
-@Warmup(iterations = 3, time = 1)
-@Measurement(iterations = 5, time = 1)
-public class ConcurrentTokenValidationBenchmark {
-    
-    // Implementation
-}
-```
+*Description:* Create benchmarks that simulate concurrent token validation access patterns with different thread counts.
 
 *Rationale:* Real-world applications will have concurrent token validation requests, and it's important to measure performance under these conditions.
 
 === B8. Implement Error-Load Benchmarks
-[ ] *Priority:* Medium
+[x] *Priority:* Medium
 
-*Description:* Create benchmarks that measure system performance under high rates of validation errors:
-1. Create `ErrorLoadBenchmark.java`
-2. Simulate scenarios with varying percentages of invalid tokens (10%, 50%, 90%, 100%)
-3. Measure impact on overall system throughput
-4. Evaluate memory usage patterns during high error rates
-5. Test how error handling affects parallel performance
-
-Sample structure:
-```java
-@State(Scope.Benchmark)
-@BenchmarkMode({Mode.Throughput, Mode.AverageTime})
-@OutputTimeUnit(TimeUnit.MILLISECONDS)
-@Fork(value = 1, warmups = 1)
-@Warmup(iterations = 3, time = 1)
-@Measurement(iterations = 5, time = 1)
-public class ErrorLoadBenchmark {
-    
-    private TokenValidator tokenValidator;
-    private List<String> validTokens;
-    private List<String> invalidTokens;
-    
-    @Param({"0", "10", "50", "90", "100"})
-    private int errorPercentage;
-    
-    @Setup
-    public void setup() {
-        // Setup code to initialize validator and token lists
-        // Prepare mix of valid and invalid tokens based on errorPercentage
-    }
-    
-    @Benchmark
-    public Object validateMixedTokens(Blackhole blackhole) {
-        // Select token based on current iteration and errorPercentage
-        String token = selectToken();
-        try {
-            ValidationResult result = tokenValidator.validateToken(token);
-            blackhole.consume(result);
-            return result;
-        } catch (TokenValidationException e) {
-            blackhole.consume(e);
-            return e;
-        }
-    }
-}
-```
+*Description:* Create benchmarks that measure system performance under high rates of validation errors with varying percentages of invalid tokens.
 
 *Rationale:* In security-critical applications, high rates of invalid tokens might be part of an attack scenario. Understanding performance characteristics during these scenarios is crucial for maintaining system availability and security.
 
@@ -527,23 +219,15 @@ public class ErrorLoadBenchmark {
 
 === Command Line Execution
 
-```bash
-# Run all benchmarks
-mvn clean package
-java -jar target/benchmarks.jar
+Run all benchmarks:
+`mvn clean package && java -jar target/benchmarks.jar`
 
-# Run specific benchmark
-java -jar target/benchmarks.jar TokenValidatorBenchmark
-
-# Run with specific parameters
-java -jar target/benchmarks.jar TokenValidatorBenchmark -f 1 -wi 5 -i 5 -r 1s
-```
+Run specific benchmark:
+`java -jar target/benchmarks.jar TokenValidatorBenchmark`
 
 === Maven Execution
 
-```bash
-mvn clean verify -Pbenchmark
-```
+`mvn clean verify -Pbenchmark`
 
 == Performance Goals
 
@@ -577,154 +261,27 @@ mvn clean verify -Pbenchmark
 === I3. Set up Benchmark Results Visualization on GitHub
 [ ] *Priority:* Medium
 
-*Description:* Implement a GitHub-based benchmark results visualization system:
-1. Configure JMH to output results in JSON format
-2. Create a GitHub workflow to run benchmarks and store results
-3. Set up a visualization system using one of the following approaches:
-   a. Use JMH Visualizer with GitHub Pages
-   b. Generate badges with benchmark metrics
-   c. Create GitHub Actions workflow that generates and commits charts
-
-Sample GitHub workflow for running benchmarks and storing results:
-```yaml
-name: JMH Benchmarks
-
-on:
-  workflow_dispatch:
-  schedule:
-    - cron: '0 0 * * 0'  # Run weekly on Sundays at midnight
-
-jobs:
-  run-benchmarks:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: maven
-      
-      - name: Run benchmarks
-        run: |
-          mvn clean verify -Pbenchmark
-          mkdir -p benchmark-results
-          cp target/jmh-result.json benchmark-results/jmh-result-$(date +%Y%m%d).json
-      
-      - name: Archive benchmark results
-        uses: actions/upload-artifact@v3
-        with:
-          name: benchmark-results
-          path: benchmark-results/
-      
-      - name: Generate visualization
-        run: |
-          # Generate charts from benchmark results
-          # This could use a script that processes the JMH JSON results
-          # and creates charts using tools like matplotlib, Chart.js, etc.
-          
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./benchmark-results
-```
+*Description:* Implement a GitHub-based benchmark results visualization system that stores and displays benchmark results.
 
 *Rationale:* Visualizing benchmark results on GitHub makes performance trends easily accessible to all contributors, helping to identify performance regressions and improvements over time.
 
 === A3. Set up Benchmark Badges
 [ ] *Priority:* Low
 
-*Description:* Create dynamic badges that show key benchmark metrics:
-1. Extract critical metrics from benchmark results (e.g., throughput, average time)
-2. Generate SVG badges using shields.io or similar service
-3. Add badges to the project README.md
-
-Example implementation:
-```bash
-# Extract benchmark metrics
-THROUGHPUT=$(jq '.[] | select(.benchmark | contains("KeyRetrieval")) | .primaryMetric.score' jmh-result.json)
-
-# Generate badge URL
-BADGE_URL="https://img.shields.io/badge/Key%20Retrieval-${THROUGHPUT}%20ops%2Fs-blue"
-
-# Update README with badge
-sed -i "s|<!-- BENCHMARK_BADGE -->|[![Benchmark](${BADGE_URL})](path/to/benchmark/results)|g" README.md
-```
+*Description:* Create dynamic badges that show key benchmark metrics in the project documentation.
 
 *Rationale:* Badges provide an immediate visual indicator of performance metrics directly in the project documentation.
 
 === A4. Create Benchmark Specification Document
 [x] *Priority:* High
 
-*Description:* Create a proper specification document for benchmarks at `doc/specification/benchmark.adoc` that follows the project's documentation standards:
-1. Define performance requirements and constraints
-2. Link to implementation classes instead of duplicating implementation details
-3. Explain the benchmark methodology without duplicating code
-4. Cross-reference other specification documents (security.adoc, technical-components.adoc)
-5. Include proper references to verification tests
-
-COMPLETED: The specification document has been created at `doc/specification/benchmark.adoc` and follows the project documentation standards.
+*Description:* Create a proper specification document for benchmarks at `doc/specification/benchmark.adoc` that follows the project's documentation standards.
 
 *Rationale:* A proper specification document following the project standards ensures that performance requirements are clearly documented without duplicating implementation details, and provides appropriate cross-references to other documentation and code.
 
 === B3. Implement Enhanced Token Generators for Benchmarks
 [ ] *Priority:* Medium
 
-*Description:* Create enhanced token generators for benchmarks that extend the existing `TestTokenGenerators` approach:
-
-1. Create `BenchmarkTokenGenerators.java` in the benchmark utilities package
-2. Implement configurable token size generation (small, medium, large tokens)
-3. Support different signing algorithms (RS256, RS384, RS512, ES256, ES384, ES512)
-4. Allow control of claim complexity (simple vs. complex token structures)
-5. Create realistic token generation profiles based on observed real-world tokens
+*Description:* Create enhanced token generators for benchmarks that extend the existing `TestTokenGenerators` approach with configurable token sizes, signing algorithms, and claim complexity.
 
 *Rationale:* Benchmarks need to test with a variety of token types and sizes to provide comprehensive performance data. The enhanced generators will allow testing different real-world scenarios while maintaining reproducibility.
-
-Sample implementation:
-```java
-public class BenchmarkTokenGenerators {
-    
-    /**
-     * Generate access tokens with configurable size and complexity.
-     * 
-     * @param size the size profile (SMALL, MEDIUM, LARGE)
-     * @param complexity the complexity profile (SIMPLE, COMPLEX)
-     * @param algorithm the signing algorithm to use
-     * @return a TypedGenerator for TestTokenHolder objects
-     */
-    public static TypedGenerator<TestTokenHolder> accessTokens(
-            TokenSize size, 
-            TokenComplexity complexity,
-            SigningAlgorithm algorithm) {
-        
-        ClaimControlParameter params = ClaimControlParameter.builder()
-                .tokenType(TokenType.ACCESS_TOKEN)
-                .sizeProfile(size)
-                .complexityProfile(complexity)
-                .signingAlgorithm(algorithm)
-                .build();
-                
-        return () -> new TestTokenHolder(TokenType.ACCESS_TOKEN, params);
-    }
-    
-    // Similar methods for ID and refresh tokens
-    
-    public enum TokenSize {
-        SMALL,   // ~1KB
-        MEDIUM,  // ~5KB
-        LARGE    // ~20KB
-    }
-    
-    public enum TokenComplexity {
-        SIMPLE,  // Basic claims
-        COMPLEX  // Many nested claims, arrays, etc.
-    }
-    
-    public enum SigningAlgorithm {
-        RS256, RS384, RS512,
-        ES256, ES384, ES512
-    }
-}
-```
