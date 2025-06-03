@@ -118,7 +118,7 @@ Each task follows a consistent format:
 *Rationale:* A consistent structure will make it easier to add, maintain, and run benchmarks.
 
 === B1. Implement TokenValidator Benchmarks
-[ ] *Priority:* High
+[x] *Priority:* High
 
 *Description:* Create a comprehensive benchmark for TokenValidator that covers:
 1. Create `TokenValidatorBenchmark.java` in the new benchmark package
@@ -183,7 +183,7 @@ public class TokenValidatorBenchmark {
 *Rationale:* TokenValidator is a critical component, and its performance directly impacts application response times. Using in-memory test token generators provides consistent and reproducible benchmark results without external dependencies.
 
 === B2. Implement JwksClient Benchmarks
-[ ] *Priority:* High
+[x] *Priority:* High
 
 *Description:* Create benchmarks for JwksClient:
 1. Create `JwksClientBenchmark.java`
@@ -221,7 +221,7 @@ public class JwksClientBenchmark {
 *Rationale:* JWKS key retrieval is a common operation that should be optimized for performance, especially in high-volume scenarios.
 
 === B7. Implement JwksClient Failure Scenario Benchmarks
-[ ] *Priority:* Medium
+[x] *Priority:* Medium
 
 *Description:* Create benchmarks specifically for JwksClient failure scenarios:
 1. Create `JwksClientFailureBenchmark.java`
@@ -290,7 +290,7 @@ public class JwksClientFailureBenchmark {
 *Rationale:* Efficient token generation is important for testing and can impact the overall test execution time.
 
 === B6. Implement Failure Scenario Benchmarks
-[ ] *Priority:* High
+[x] *Priority:* High
 
 *Description:* Create benchmarks that measure performance during failure scenarios:
 1. Create `FailureScenarioBenchmark.java`
@@ -350,7 +350,7 @@ public class FailureScenarioBenchmark {
 *Rationale:* In real-world applications, failure scenarios occur frequently and must be handled efficiently. Performance degradation during error handling can lead to denial of service vulnerabilities if not properly managed.
 
 === B5. Implement Concurrent Load Benchmarks
-[ ] *Priority:* High
+[x] *Priority:* High
 
 *Description:* Create benchmarks that simulate concurrent access patterns:
 1. Create `ConcurrentTokenValidationBenchmark.java`

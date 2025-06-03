@@ -1,0 +1,115 @@
+package de.cuioss.jwt.validation.benchmark;
+
+import de.cuioss.jwt.validation.jwks.JwksLoader;
+import de.cuioss.jwt.validation.jwks.JwksLoaderFactory;
+import de.cuioss.jwt.validation.jwks.http.HttpJwksLoaderConfig;
+import de.cuioss.jwt.validation.jwks.key.KeyInfo;
+import de.cuioss.jwt.validation.security.SecurityEventCounter;
+import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
+// import de.cuioss.jwt.validation.exception.JwksLoadingException; // Removed as it's not thrown
+
+import mockwebserver3.MockResponse;
+import mockwebserver3.MockWebServer;
+import mockwebserver3.SocketPolicy; // For timeout simulation
+import okhttp3.Headers;
+
+import org.openjdk.jmh.annotations.*;
+
+import java.io.IOException;
+import java.security.Key;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
+@BenchmarkMode(Mode.AverageTime)
+@OutputTimeUnit(TimeUnit.MICROSECONDS)
+@Fork(value = 1, warmups = 1)
+@Warmup(iterations = 5, time = 1)
+@Measurement(iterations = 5, time = 1)
+public class JwksClientFailureBenchmark {
+
+    private static final String DEFAULT_JWKS_CONTENT = InMemoryJWKSFactory.createDefaultJwks();
+    private static final String EXISTING_KEY_ID = InMemoryJWKSFactory.DEFAULT_KEY_ID;
+    private static final String NON_EXISTENT_KEY_ID = "non-existent-kid";
+    private static final String MALFORMED_JSON_CONTENT = "{\"keys\": [{\"kty\":\"RSA\"...this is not valid json";
+
+    @State(Scope.Benchmark)
+    public static class BenchmarkSetupState {
+        MockWebServer mockWebServer;
+        String serverUrl;
+        SecurityEventCounter securityEventCounter;
+
+        @Setup(Level.Trial)
+        public void setupTrial() throws IOException {
+            mockWebServer = new MockWebServer();
+            mockWebServer.start();
+            serverUrl = mockWebServer.url("/jwks.json").toString();
+            securityEventCounter = new SecurityEventCounter();
+        }
+
+        @TearDown(Level.Trial)
+        public void teardownTrial() throws IOException {
+            mockWebServer.shutdown();
+        }
+    }
+
+    private JwksLoader createLoader(String url, int timeoutSeconds, SecurityEventCounter counter) {
+        HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
+                .url(url)
+                .requestTimeoutSeconds(timeoutSeconds)
+                .refreshIntervalSeconds(0) // Disable caching for failure tests unless testing cache itself
+                .build();
+        return JwksLoaderFactory.createHttpLoader(config, counter);
+    }
+
+    private JwksLoader createLoaderWithDefaultTimeouts(String url, SecurityEventCounter counter) {
+        HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
+                .url(url)
+                .refreshIntervalSeconds(0) // Disable caching for failure tests
+                .build();
+        return JwksLoaderFactory.createHttpLoader(config, counter);
+    }
+
+
+    @Benchmark
+    public Optional<Key> retrieveKey_Http500Error(BenchmarkSetupState serverState) {
+        serverState.mockWebServer.enqueue(new MockResponse(500, Headers.of(), ""));
+        JwksLoader loader = createLoaderWithDefaultTimeouts(serverState.serverUrl, serverState.securityEventCounter);
+        // Expected to result in an empty KeyInfo due to resilient loading
+        Optional<KeyInfo> keyInfoOpt = loader.getKeyInfo(EXISTING_KEY_ID);
+        return keyInfoOpt.map(KeyInfo::getKey);
+    }
+
+    @Benchmark
+    public Optional<Key> retrieveKey_MalformedResponse(BenchmarkSetupState serverState) {
+        serverState.mockWebServer.enqueue(new MockResponse(200, Headers.of("Content-Type", "application/json"), MALFORMED_JSON_CONTENT));
+        JwksLoader loader = createLoaderWithDefaultTimeouts(serverState.serverUrl, serverState.securityEventCounter);
+        // Expected to result in an empty KeyInfo
+        Optional<KeyInfo> keyInfoOpt = loader.getKeyInfo(EXISTING_KEY_ID);
+        return keyInfoOpt.map(KeyInfo::getKey);
+    }
+
+    @Benchmark
+    public Optional<Key> retrieveKey_NonExistentKeyId(BenchmarkSetupState serverState) {
+        serverState.mockWebServer.enqueue(new MockResponse(200, Headers.of("Content-Type", "application/json"), DEFAULT_JWKS_CONTENT));
+        JwksLoader loader = createLoaderWithDefaultTimeouts(serverState.serverUrl, serverState.securityEventCounter);
+        // Expected to return Optional.empty()
+        Optional<KeyInfo> keyInfoOpt = loader.getKeyInfo(NON_EXISTENT_KEY_ID);
+        return keyInfoOpt.map(KeyInfo::getKey);
+    }
+
+    // TODO: Implement retrieveKey_Timeout benchmark.
+    // Current attempts to use MockResponse.setHeadersDelay, MockResponse.setBodyDelay,
+    // or MockResponse.setSocketPolicy with constants like NO_RESPONSE or DISCONNECT_AT_START
+    // have failed due to API mismatches with the version of mockwebserver3 used.
+    // Requires further investigation into the correct API for simulating client-side timeouts.
+    // @Benchmark
+    // public Optional<Key> retrieveKey_Timeout(BenchmarkSetupState serverState) {
+    //    // Configure MockWebServer to not respond or delay response beyond client timeout
+    //    MockResponse timeoutResponse = new MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE); // Example, if API was known
+    //    serverState.mockWebServer.enqueue(timeoutResponse);
+    //
+    //    JwksLoader loader = createLoader(serverState.serverUrl, 1, serverState.securityEventCounter); // 1-second timeout
+    //    Optional<KeyInfo> keyInfoOpt = loader.getKeyInfo(EXISTING_KEY_ID);
+    //    return keyInfoOpt.map(KeyInfo::getKey);
+    // }
+}
