@@ -36,7 +36,6 @@
         <maven.jar.plugin.automatic.module.name>de.cuioss.jwt.validation</maven.jar.plugin.automatic.module.name>
         <version.jjwt>0.12.6</version.jjwt>
         <version.jmh>1.37</version.jmh>
-        <version.maven-shade-plugin>3.6.0</version.maven-shade-plugin>
         <version.exec-maven-plugin>3.2.0</version.exec-maven-plugin>
     </properties>
     <dependencyManagement>
