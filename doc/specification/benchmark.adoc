@@ -244,7 +244,7 @@ For benchmarking purposes, the **in-memory token generation** approach is recomm
 
 The benchmark implementation includes:
 
-1. *Enhanced Token Generators*: The `BenchmarkTokenGenerators` class extends the existing `TestTokenGenerators` approach but offers more control over token size, claim complexity, and signing algorithms.
+1. *Token Generators*: The `TestTokenGenerators` class provides comprehensive token generation capabilities with control over token size, claim complexity, and signing algorithms.
 
 2. *Parameterized Benchmarks*: Measures performance across different token sizes, claim structures, and validation scenarios.
 
