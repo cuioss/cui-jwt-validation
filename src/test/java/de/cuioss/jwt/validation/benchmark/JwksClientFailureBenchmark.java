@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 the original author or authors.
+ * Copyright 2025 the original author or authors.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,10 @@ import de.cuioss.jwt.validation.jwks.http.HttpJwksLoaderConfig;
 import de.cuioss.jwt.validation.jwks.key.KeyInfo;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
-// import de.cuioss.jwt.validation.exception.JwksLoadingException; // Removed as it's not thrown
-
+import mockwebserver3.Dispatcher;
 import mockwebserver3.MockResponse;
 import mockwebserver3.MockWebServer;
+import mockwebserver3.RecordedRequest;
 import okhttp3.Headers;
 import org.jetbrains.annotations.NotNull;
 import org.openjdk.jmh.annotations.*;
@@ -133,10 +133,10 @@ public class JwksClientFailureBenchmark {
      * or by throwing an IOException to simulate a network timeout.
      */
     @SuppressWarnings("java:S2925")
-    private static class TimeoutSimulatingDispatcher extends mockwebserver3.Dispatcher {
+    private static class TimeoutSimulatingDispatcher extends Dispatcher {
         @NotNull
         @Override
-        public MockResponse dispatch(@NotNull mockwebserver3.RecordedRequest request) {
+        public MockResponse dispatch(@NotNull RecordedRequest request) {
             // Simulate a timeout by sleeping for longer than the client timeout
             try {
                 // Sleep for 2 seconds, which is longer than the 1-second client timeout

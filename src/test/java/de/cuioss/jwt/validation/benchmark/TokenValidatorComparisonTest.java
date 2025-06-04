@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 the original author or authors.
+ * Copyright 2025 the original author or authors.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ import java.util.concurrent.TimeUnit;
  * This benchmark compares the performance of validating in-memory generated tokens
  * versus real tokens from Keycloak. It helps validate that the in-memory token
  * generators used in benchmarks accurately represent real-world tokens.
- * 
+ * <p>
  * Note: This benchmark requires a running Keycloak instance via testcontainers,
  * which makes it slower than standard benchmarks. It's intended for comparison
  * analysis rather than regular performance testing.

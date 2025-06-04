@@ -173,7 +173,7 @@ public class AccessTokenContent extends BaseTokenContent {
      * {@link #providesScopes(Collection)} it log on debug the corresponding scopes
      */
     public boolean providesScopesAndDebugIfScopesAreMissing(Collection<String> expectedScopes, String logContext,
-                                                            CuiLogger logger) {
+            CuiLogger logger) {
         return getClaimOption(ClaimName.SCOPE)
                 .map(claimValue -> new CollectionClaimHandler(claimValue)
                         .providesValuesAndDebugIfValuesMissing(expectedScopes, logContext, logger))
@@ -212,7 +212,7 @@ public class AccessTokenContent extends BaseTokenContent {
      * @return true if the token contains all expected roles, false otherwise
      */
     public boolean providesRolesAndDebugIfRolesMissing(Collection<String> expectedRoles, String logContext,
-                                                       CuiLogger logger) {
+            CuiLogger logger) {
         return getClaimOption(ClaimName.ROLES)
                 .map(claimValue -> new CollectionClaimHandler(claimValue)
                         .providesValuesAndDebugIfValuesMissing(expectedRoles, logContext, logger))
@@ -253,7 +253,7 @@ public class AccessTokenContent extends BaseTokenContent {
      * @return true if the token contains all expected groups, false otherwise
      */
     public boolean providesGroupsAndDebugIfGroupsMissing(Collection<String> expectedGroups, String logContext,
-                                                         CuiLogger logger) {
+            CuiLogger logger) {
         return getClaimOption(ClaimName.GROUPS)
                 .map(claimValue -> new CollectionClaimHandler(claimValue)
                         .providesValuesAndDebugIfValuesMissing(expectedGroups, logContext, logger))

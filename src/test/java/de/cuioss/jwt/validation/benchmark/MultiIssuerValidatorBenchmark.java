@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 the original author or authors.
+ * Copyright 2025 the original author or authors.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,16 +41,15 @@ import java.util.concurrent.TimeUnit;
 public class MultiIssuerValidatorBenchmark {
 
     private TokenValidator validator;
-    private List<IssuerConfig> issuerConfigsList; // Changed name to avoid confusion
     private String tokenToValidate;
-    private IssuerConfig firstIssuerConfig;
 
     @Param({"1", "5", "10"})
     private int issuerCount;
 
     @Setup(Level.Trial)
     public void setup() {
-        issuerConfigsList = new ArrayList<>();
+        // Changed name to avoid confusion
+        List<IssuerConfig> issuerConfigsList = new ArrayList<>();
         for (int i = 0; i < issuerCount; i++) {
             String issuerUri = "issuer" + i;
             String kid = "kid" + i; // Unique kid for each issuer
@@ -70,7 +69,7 @@ public class MultiIssuerValidatorBenchmark {
         validator = new TokenValidator(issuerConfigsList.toArray(new IssuerConfig[0]));
 
         if (!issuerConfigsList.isEmpty()) {
-            firstIssuerConfig = issuerConfigsList.get(0);
+            IssuerConfig firstIssuerConfig = issuerConfigsList.get(0);
             String firstIssuerKid = "kid0"; // Kid used for the first issuer's JWKS
 
             try {

@@ -74,8 +74,8 @@ class JwksCacheManager {
      * @param securityEventCounter the counter for security events
      */
     JwksCacheManager(@NonNull HttpJwksLoaderConfig config,
-                     @NonNull Function<String, JWKSKeyLoader> cacheLoader,
-                     @NonNull SecurityEventCounter securityEventCounter) {
+            @NonNull Function<String, JWKSKeyLoader> cacheLoader,
+            @NonNull SecurityEventCounter securityEventCounter) {
         this.config = config;
         this.securityEventCounter = securityEventCounter;
         this.lastValidResult = null;

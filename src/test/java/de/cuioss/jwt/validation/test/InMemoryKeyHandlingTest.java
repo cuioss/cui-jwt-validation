@@ -18,6 +18,7 @@ package de.cuioss.jwt.validation.test;
 import de.cuioss.jwt.validation.jwks.JwksLoader;
 import de.cuioss.jwt.validation.jwks.key.KeyInfo;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
+import de.cuioss.jwt.validation.test.generator.TestTokenGenerators;
 import de.cuioss.test.juli.TestLogLevel;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import io.jsonwebtoken.Jwts;
@@ -32,10 +33,6 @@ import org.junit.jupiter.params.provider.EnumSource;
 import java.io.StringReader;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.interfaces.RSAPublicKey;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -46,9 +43,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @EnableTestLogger(rootLevel = TestLogLevel.DEBUG)
 @DisplayName("Tests for InMemoryKeyMaterialHandler and InMemoryJWKSFactory")
 class InMemoryKeyHandlingTest {
-
-    private static final String TEST_SUBJECT = "test-subject";
-    private static final String TEST_ISSUER = "test-issuer";
 
     @Test
     @DisplayName("Should generate default keys for all algorithms")
@@ -157,40 +151,42 @@ class InMemoryKeyHandlingTest {
     @Test
     @DisplayName("Should create valid token with default key")
     void shouldCreateValidTokenWithDefaultKey() {
-        // Create a token with the default key (RS256)
-        String token = createToken(InMemoryKeyMaterialHandler.Algorithm.RS256, InMemoryKeyMaterialHandler.DEFAULT_KEY_ID);
+        // Create a token using TestTokenGenerators
+        var tokenHolder = TestTokenGenerators.accessTokens().next();
+        String token = tokenHolder.getRawToken();
 
         assertNotNull(token, "Token should not be null");
 
         // Verify the token can be parsed with the default public key
         var jws = Jwts.parser()
-                .verifyWith((RSAPublicKey)InMemoryKeyMaterialHandler.getDefaultPublicKey())
+                .verifyWith(InMemoryKeyMaterialHandler.getDefaultPublicKey())
                 .build()
                 .parseSignedClaims(token);
 
         assertNotNull(jws, "JWS should not be null");
-        assertEquals(TEST_SUBJECT, jws.getPayload().getSubject(), "Subject should match");
-        assertEquals(TEST_ISSUER, jws.getPayload().getIssuer(), "Issuer should match");
+        assertEquals(tokenHolder.getSubject(), jws.getPayload().getSubject(), "Subject should match");
+        assertEquals(tokenHolder.getIssuer(), jws.getPayload().getIssuer(), "Issuer should match");
     }
 
     @ParameterizedTest
     @EnumSource(value = InMemoryKeyMaterialHandler.Algorithm.class, names = {"RS256", "RS384", "RS512", "PS256", "PS384", "PS512"})
     @DisplayName("Should create valid token with RSA keys")
     void shouldCreateValidTokenWithRsaKeys(InMemoryKeyMaterialHandler.Algorithm algorithm) {
-        // Create a token with the specified algorithm
-        String token = createToken(algorithm, InMemoryKeyMaterialHandler.DEFAULT_KEY_ID);
+        // Create a token with the specified algorithm using TestTokenGenerators
+        var tokenHolder = TestTokenGenerators.accessTokens().next().withSigningAlgorithm(algorithm);
+        String token = tokenHolder.getRawToken();
 
         assertNotNull(token, "Token should not be null");
 
         // Verify the token can be parsed with the corresponding public key
         var jws = Jwts.parser()
-                .verifyWith((RSAPublicKey)InMemoryKeyMaterialHandler.getDefaultPublicKey(algorithm))
+                .verifyWith(InMemoryKeyMaterialHandler.getDefaultPublicKey(algorithm))
                 .build()
                 .parseSignedClaims(token);
 
         assertNotNull(jws, "JWS should not be null");
-        assertEquals(TEST_SUBJECT, jws.getPayload().getSubject(), "Subject should match");
-        assertEquals(TEST_ISSUER, jws.getPayload().getIssuer(), "Issuer should match");
+        assertEquals(tokenHolder.getSubject(), jws.getPayload().getSubject(), "Subject should match");
+        assertEquals(tokenHolder.getIssuer(), jws.getPayload().getIssuer(), "Issuer should match");
     }
 
     @Test
@@ -208,24 +204,4 @@ class InMemoryKeyHandlingTest {
         }
     }
 
-    /**
-     * Creates a JWT token signed with the specified algorithm and key ID.
-     *
-     * @param algorithm the algorithm to use for signing
-     * @param keyId the key ID to use
-     * @return a signed JWT token
-     */
-    private String createToken(InMemoryKeyMaterialHandler.Algorithm algorithm, String keyId) {
-        Instant now = Instant.now();
-        Instant expiration = now.plus(1, ChronoUnit.HOURS);
-
-        return Jwts.builder()
-                .subject(TEST_SUBJECT)
-                .issuer(TEST_ISSUER)
-                .issuedAt(Date.from(now))
-                .expiration(Date.from(expiration))
-                .header().add("kid", keyId).and()
-                .signWith(InMemoryKeyMaterialHandler.getPrivateKey(algorithm, keyId), algorithm.getAlgorithm())
-                .compact();
-    }
 }

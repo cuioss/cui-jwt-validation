@@ -23,14 +23,12 @@ import de.cuioss.jwt.validation.pipeline.TokenSignatureValidator;
 import de.cuioss.jwt.validation.security.AlgorithmPreferences;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
-import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
 import de.cuioss.jwt.validation.test.JwtTokenTamperingUtil;
 import de.cuioss.jwt.validation.test.TestTokenHolder;
 import de.cuioss.jwt.validation.test.generator.TestTokenGenerators;
 import de.cuioss.jwt.validation.test.junit.TestTokenSource;
 import de.cuioss.test.generator.junit.EnableGeneratorController;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
-import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -41,7 +39,6 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -157,16 +154,12 @@ class OAuth2JWTBestPracticesComplianceTest {
         void shouldRejectTokenWithIncorrectIssuer() {
             // Given
             String wrongIssuer = "https://wrong-issuer.com";
-            String token = Jwts.builder()
-                    .issuer(wrongIssuer)
-                    .subject("test-subject")
-                    .issuedAt(Date.from(Instant.now()))
-                    .expiration(Date.from(Instant.now().plus(1, ChronoUnit.HOURS)))
-                    .claim("azp", CLIENT_ID)
-                    .claim("aud", AUDIENCE)
-                    .header().add("kid", "default-key-id").and()
-                    .signWith(InMemoryKeyMaterialHandler.getDefaultPrivateKey())
-                    .compact();
+
+            // Create a token with wrong issuer using TestTokenGenerators and withClaim
+            var tokenHolder = TestTokenGenerators.accessTokens().next()
+                    .withClaim(ClaimName.ISSUER.getName(), ClaimValue.forPlainString(wrongIssuer));
+
+            String token = tokenHolder.getRawToken();
 
             // When/Then
             TokenValidationException exception = assertThrows(TokenValidationException.class,
