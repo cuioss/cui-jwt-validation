@@ -45,7 +45,7 @@ jobs:
           mkdir -p benchmark-results
 
           # Run benchmarks with JSON output format
-          mvn clean verify -Pbenchmark -Djmh.result.format=JSON -Djmh.result.filePrefix=benchmark-results/jmh-result
+          ./mvnw --no-transfer-progress clean verify -Pbenchmark -Djmh.result.format=JSON -Djmh.result.filePrefix=benchmark-results/jmh-result
 
           # Add timestamp to results
           echo "{ \"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\", \"commit\": \"${{ github.sha }}\" }" > benchmark-results/metadata.json
