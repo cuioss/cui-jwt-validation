@@ -74,7 +74,7 @@ Example badge markdown:
 
 === Performance Goals
 
-Compare benchmark results against the performance goals defined in link:benchmark.adoc#_performance_goals[Performance Goals].
+Compare benchmark results against the performance goals defined in link:benchmark.adoc#_performance_requirements[Performance Requirements].
 
 == Implementation Details
 
@@ -93,6 +93,5 @@ For technical details of the implementation, see:
 
 == Related Documentation
 
-* link:benchmark.adoc[Benchmark Implementation Plan]
-* link:specification/benchmark.adoc[Benchmark Specification]
-* link:Requirements.adoc#CUI-JWT-5[CUI-JWT-5: Performance Requirements]
+* link:benchmark.adoc[Benchmark Specification]
+* link:../Requirements.adoc#CUI-JWT-5[CUI-JWT-5: Performance Requirements]
