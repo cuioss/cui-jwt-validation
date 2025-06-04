@@ -85,9 +85,29 @@ jobs:
           # Copy benchmark results to gh-pages directory
           cp -r benchmark-results/* gh-pages/
 
-          # Find the JMH result file and create a symlink with the expected name
-          # The file is likely named with a timestamp, but the visualization expects jmh-result.json
-          find benchmark-results -name "jmh-result*.json" -type f -exec cp {} gh-pages/jmh-result.json \;
+          # Debug: List files in project root and benchmark-results directory
+          echo "Files in project root:"
+          ls -la
+          echo "Files in benchmark-results directory:"
+          ls -la benchmark-results/
+
+          # First check if jmh-results.json exists in project root (from BenchmarkRunner)
+          if [ -f "jmh-results.json" ]; then
+            echo "Found jmh-results.json in project root, copying to gh-pages/"
+            cp jmh-results.json gh-pages/jmh-result.json
+          else
+            # Try to find the JMH result file in benchmark-results directory
+            echo "Looking for JMH result files in benchmark-results directory"
+            find benchmark-results -name "jmh-result*.json" -type f -exec cp {} gh-pages/jmh-result.json \;
+          fi
+
+          # Verify that the result file exists in gh-pages directory
+          if [ ! -f "gh-pages/jmh-result.json" ]; then
+            echo "ERROR: No benchmark result file found! Cannot continue."
+            exit 1
+          else
+            echo "Successfully copied benchmark results to gh-pages/jmh-result.json"
+          fi
 
           # Create index.html with visualization
           cat > gh-pages/index.html << 'EOL'
@@ -354,7 +374,13 @@ jobs:
             local color=$4
 
             # Extract average time for benchmark (if available)
-            local score=$(grep -o "\"$benchmark_name\".*\"score\":[0-9.]*" benchmark-results/jmh-result.json | grep -o '"score":[0-9.]*' | cut -d':' -f2 | head -1 || echo "N/A")
+            # First check if the file exists in gh-pages directory (should have been copied there)
+            if [ -f "gh-pages/jmh-result.json" ]; then
+              local score=$(grep -o "\"$benchmark_name\".*\"score\":[0-9.]*" gh-pages/jmh-result.json | grep -o '"score":[0-9.]*' | cut -d':' -f2 | head -1 || echo "N/A")
+            else
+              echo "Warning: jmh-result.json not found in gh-pages directory"
+              local score="N/A"
+            fi
 
             if [ "$score" != "N/A" ]; then
               # Round to 2 decimal places
