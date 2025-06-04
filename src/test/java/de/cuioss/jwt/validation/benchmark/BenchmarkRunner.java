@@ -58,7 +58,7 @@ public class BenchmarkRunner {
                 .mode(Mode.AverageTime)
                 // Configure result output - create a combined report for all benchmarks
                 .resultFormat(ResultFormatType.JSON)
-                .result("jmh-results.json")
+                .result("jmh-result.json")
                 // Add JVM argument to configure logging for forked JVM instances
                 .jvmArgsAppend("-Djava.util.logging.config.file=src/test/resources/benchmark-logging.properties")
                 .build();

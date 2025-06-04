@@ -77,7 +77,7 @@ jobs:
           path: benchmark-results/
           retention-days: 90  # Keep results for 90 days
 
-      - name: Generate benchmark visualization
+      - name: Prepare GitHub Pages visualization
         run: |
           # Create directory for GitHub Pages
           mkdir -p gh-pages
@@ -85,269 +85,25 @@ jobs:
           # Copy benchmark results to gh-pages directory
           cp -r benchmark-results/* gh-pages/
 
-          # Debug: List files in project root and benchmark-results directory
-          echo "Files in project root:"
-          ls -la
-          echo "Files in benchmark-results directory:"
-          ls -la benchmark-results/
-
-          # First check if jmh-results.json exists in project root (from BenchmarkRunner)
-          if [ -f "jmh-results.json" ]; then
-            echo "Found jmh-results.json in project root, copying to gh-pages/"
-            cp jmh-results.json gh-pages/jmh-result.json
+          # Find and rename the JMH result file for visualization
+          # First check if jmh-result.json exists in project root
+          if [ -f "jmh-result.json" ]; then
+            echo "Using jmh-result.json from project root"
+            cp jmh-result.json gh-pages/jmh-result.json
           else
-            # Try to find the JMH result file in benchmark-results directory
+            # Find the result file in benchmark-results directory
             echo "Looking for JMH result files in benchmark-results directory"
             find benchmark-results -name "jmh-result*.json" -type f -exec cp {} gh-pages/jmh-result.json \;
           fi
 
-          # Verify that the result file exists in gh-pages directory
+          # Verify and copy the visualizer template
           if [ ! -f "gh-pages/jmh-result.json" ]; then
-            echo "ERROR: No benchmark result file found! Cannot continue."
+            echo "ERROR: No benchmark result file found!"
             exit 1
-          else
-            echo "Successfully copied benchmark results to gh-pages/jmh-result.json"
           fi
-
-          # Create index.html with visualization
-          cat > gh-pages/index.html << 'EOL'
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>JWT Validation Benchmark Results</title>
-            <!-- Use specific versions with integrity hashes for better security -->
-            <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" 
-                    integrity="sha384-1hX5s6k/n6FvE0WOYQrXl/j0zGtCi3Ipdz9uYj+LKMNnuiXC0Wf3AwkTbzKFBGnw" 
-                    crossorigin="anonymous"></script>
-            <script src="https://cdn.jsdelivr.net/npm/moment@2.30.1/min/moment.min.js" 
-                    integrity="sha384-QRk9GBJqP8UxkPnkpGKmRXxZsQQuRsEOHckwF/mTcGM1TSSDxG9jAA+uHAcHZwP6" 
-                    crossorigin="anonymous"></script>
-            <style>
-              body { font-family: Arial, sans-serif; margin: 20px; }
-              .container { max-width: 1200px; margin: 0 auto; }
-              .chart-container { height: 400px; margin-bottom: 30px; }
-              h1, h2 { color: #333; }
-              .benchmark-selector { margin-bottom: 20px; }
-              select { padding: 8px; font-size: 16px; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <h1>JWT Validation Benchmark Results</h1>
-
-              <div class="benchmark-selector">
-                <label for="benchmark-select">Select Benchmark:</label>
-                <select id="benchmark-select"></select>
-              </div>
-
-              <div class="chart-container">
-                <canvas id="benchmarkChart"></canvas>
-              </div>
-
-              <h2>Latest Results</h2>
-              <div id="latest-results"></div>
-            </div>
-
-            <script>
-              // Fetch all benchmark results
-              async function fetchBenchmarkData() {
-                try {
-                  const response = await fetch('jmh-result.json');
-                  const data = await response.json();
-                  return data;
-                } catch (error) {
-                  console.error('Error fetching benchmark data:', error);
-                  return null;
-                }
-              }
-
-              // Process benchmark data for visualization
-              function processBenchmarkData(data) {
-                if (!data) return null;
-
-                const benchmarks = {};
-
-                // Group benchmarks by name
-                data.forEach(benchmark => {
-                  const name = benchmark.benchmark;
-                  const mode = benchmark.mode;
-                  const score = benchmark.primaryMetric.score;
-                  const error = benchmark.primaryMetric.scoreError;
-                  const unit = benchmark.primaryMetric.scoreUnit;
-
-                  if (!benchmarks[name]) {
-                    benchmarks[name] = {
-                      name,
-                      modes: {}
-                    };
-                  }
-
-                  benchmarks[name].modes[mode] = {
-                    score,
-                    error,
-                    unit
-                  };
-                });
-
-                return Object.values(benchmarks);
-              }
-
-              // Populate benchmark selector
-              function populateBenchmarkSelector(benchmarks) {
-                const select = document.getElementById('benchmark-select');
-
-                benchmarks.forEach(benchmark => {
-                  const option = document.createElement('option');
-                  option.value = benchmark.name;
-                  option.textContent = benchmark.name;
-                  select.appendChild(option);
-                });
-
-                // Set up change event
-                select.addEventListener('change', () => {
-                  const selectedBenchmark = benchmarks.find(b => b.name === select.value);
-                  displayBenchmarkResults(selectedBenchmark);
-                });
-
-                // Display first benchmark by default
-                if (benchmarks.length > 0) {
-                  displayBenchmarkResults(benchmarks[0]);
-                }
-              }
-
-              // Display benchmark results
-              function displayBenchmarkResults(benchmark) {
-                const latestResults = document.getElementById('latest-results');
-                latestResults.innerHTML = '';
-
-                // Create table for results
-                const table = document.createElement('table');
-                table.style.width = '100%';
-                table.style.borderCollapse = 'collapse';
-
-                // Create header row
-                const headerRow = document.createElement('tr');
-                ['Mode', 'Score', 'Error', 'Unit'].forEach(header => {
-                  const th = document.createElement('th');
-                  th.textContent = header;
-                  th.style.padding = '8px';
-                  th.style.borderBottom = '1px solid #ddd';
-                  th.style.textAlign = 'left';
-                  headerRow.appendChild(th);
-                });
-                table.appendChild(headerRow);
-
-                // Add data rows
-                Object.entries(benchmark.modes).forEach(([mode, data]) => {
-                  const row = document.createElement('tr');
-
-                  const modeCell = document.createElement('td');
-                  modeCell.textContent = mode;
-                  modeCell.style.padding = '8px';
-                  modeCell.style.borderBottom = '1px solid #ddd';
-                  row.appendChild(modeCell);
-
-                  const scoreCell = document.createElement('td');
-                  scoreCell.textContent = data.score.toFixed(3);
-                  scoreCell.style.padding = '8px';
-                  scoreCell.style.borderBottom = '1px solid #ddd';
-                  row.appendChild(scoreCell);
-
-                  const errorCell = document.createElement('td');
-                  errorCell.textContent = '±' + data.error.toFixed(3);
-                  errorCell.style.padding = '8px';
-                  errorCell.style.borderBottom = '1px solid #ddd';
-                  row.appendChild(errorCell);
-
-                  const unitCell = document.createElement('td');
-                  unitCell.textContent = data.unit;
-                  unitCell.style.padding = '8px';
-                  unitCell.style.borderBottom = '1px solid #ddd';
-                  row.appendChild(unitCell);
-
-                  table.appendChild(row);
-                });
-
-                latestResults.appendChild(table);
-
-                // Update chart
-                updateChart(benchmark);
-              }
-
-              // Update chart with benchmark data
-              function updateChart(benchmark) {
-                const ctx = document.getElementById('benchmarkChart').getContext('2d');
-
-                // Prepare data for chart
-                const labels = Object.keys(benchmark.modes);
-                const scores = labels.map(mode => benchmark.modes[mode].score);
-                const errors = labels.map(mode => benchmark.modes[mode].error);
-
-                // Create or update chart
-                if (window.benchmarkChart) {
-                  window.benchmarkChart.data.labels = labels;
-                  window.benchmarkChart.data.datasets[0].data = scores;
-                  window.benchmarkChart.data.datasets[0].label = benchmark.name;
-                  window.benchmarkChart.update();
-                } else {
-                  window.benchmarkChart = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                      labels: labels,
-                      datasets: [{
-                        label: benchmark.name,
-                        data: scores,
-                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        borderWidth: 1,
-                        errorBars: {
-                          show: true,
-                          color: 'rgba(0, 0, 0, 0.2)',
-                          lineWidth: 2
-                        }
-                      }]
-                    },
-                    options: {
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      scales: {
-                        y: {
-                          beginAtZero: true,
-                          title: {
-                            display: true,
-                            text: 'Score'
-                          }
-                        }
-                      }
-                    }
-                  });
-                }
-              }
-
-              // Initialize visualization
-              async function initVisualization() {
-                const data = await fetchBenchmarkData();
-                if (!data) {
-                  document.getElementById('latest-results').innerHTML = 
-                    '<p>No benchmark data available. Please run benchmarks first.</p>';
-                  return;
-                }
-
-                const benchmarks = processBenchmarkData(data);
-                if (benchmarks && benchmarks.length > 0) {
-                  populateBenchmarkSelector(benchmarks);
-                } else {
-                  document.getElementById('latest-results').innerHTML = 
-                    '<p>No benchmark data available or data format is incorrect.</p>';
-                }
-              }
-
-              // Start visualization when page loads
-              window.addEventListener('DOMContentLoaded', initVisualization);
-            </script>
-          </body>
-          </html>
-          EOL
+          
+          # Copy the JMH Visualizer template
+          cp .github/templates/benchmark/index-visualizer.html gh-pages/index.html
 
       - name: Deploy to cuioss.github.io
         uses: JamesIves/github-pages-deploy-action@6c2d9db40f9296374acc17b90404b6e8864128c8 # v4.7.3

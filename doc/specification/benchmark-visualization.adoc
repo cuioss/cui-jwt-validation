@@ -8,22 +8,41 @@ This document describes the benchmark visualization system implemented for the c
 
 == Overview
 
-The benchmark visualization system provides an interactive way to view and analyze JMH benchmark results. It helps track performance trends over time and identify potential performance regressions.
+The benchmark visualization system provides an interactive way to view and analyze JMH benchmark results. The project uses JMH Visualizer (https://jmh.morethan.io/), a powerful visualization tool for JMH benchmark results.
 
 == Accessing Benchmark Results
+
+Benchmark results are available in two main ways:
+
+=== GitHub Pages
 
 Benchmark results are automatically published to the cuioss.github.io site after each benchmark run. They can be accessed at:
 
 `https://cuioss.github.io/cui-jwt-validation/benchmarks/`
 
-== Visualization Features
+The page will automatically load the latest benchmark results into JMH Visualizer.
 
-The benchmark visualization includes:
+=== Local Viewing
 
-1. *Interactive Charts*: Visual representation of benchmark results using Chart.js
-2. *Benchmark Selection*: Dropdown menu to select different benchmarks
-3. *Detailed Results Table*: Tabular display of benchmark scores, error margins, and units
-4. *Performance Badges*: Dynamic badges showing key performance metrics
+For local development and testing, you can view benchmark results by directly uploading them to the JMH Visualizer website:
+
+1. Go to https://jmh.morethan.io/
+2. Click "Choose File" or drag and drop your benchmark results JSON file
+3. Explore the visualization
+
+JMH Visualizer will load your benchmark data and display it with interactive charts and analysis tools.
+
+*Note:* The JMH benchmark tool generates results files in JSON format, typically named `jmh-result.json` or similar, in the target directory after running benchmarks.
+
+== JMH Visualizer Features
+
+JMH Visualizer provides the following features:
+
+1. *Interactive Charts*: Visual representation of benchmark results with different chart types
+2. *Benchmark Filtering*: Filter benchmarks by name or type
+3. *Detailed Results*: Comprehensive view of benchmark scores, error margins, and units
+4. *Comparison Views*: Compare benchmark results across different modes
+5. *Export Options*: Download charts as images or raw data
 
 == Running Benchmarks
 

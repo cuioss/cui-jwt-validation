@@ -88,6 +88,33 @@ The following tests verify the implementation:
 * JMH benchmark classes:
   * `de.cuioss.jwt.validation.benchmark.ConcurrentTokenValidationBenchmark`
 
+== Running Benchmarks
+
+=== Maven Profile
+
+The project provides a Maven profile for running benchmarks:
+
+[source,bash]
+----
+mvn clean verify -Pbenchmark
+----
+
+This executes all benchmarks and generates results in `jmh-result.json`.
+
+=== Visualizing Results
+
+The project uses JMH Visualizer (https://jmh.morethan.io/) for benchmark visualization. There are two ways to visualize your results:
+
+1. **GitHub Pages**: Benchmark results are automatically published to:
+   [https://cuioss.github.io/cui-jwt-validation/benchmarks/](https://cuioss.github.io/cui-jwt-validation/benchmarks/)
+
+2. **Local Visualization**: After running benchmarks:
+   - Go to [https://jmh.morethan.io/](https://jmh.morethan.io/)
+   - Upload your benchmark results file (e.g., `target/jmh-result.json`)
+   - Explore the interactive visualizations
+
+See link:benchmark-visualization.adoc[Benchmark Visualization] for more details.
+
 === Failure Handling Performance
 
 ==== Status: IMPLEMENTED
