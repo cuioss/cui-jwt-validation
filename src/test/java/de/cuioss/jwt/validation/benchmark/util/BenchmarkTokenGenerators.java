@@ -43,7 +43,7 @@ import java.util.UUID;
  *     3600000, // 1 hour
  *     TokenSize.SMALL,
  *     TokenComplexity.SIMPLE,
- *     Jwts.SIG.RS256
+ *     InMemoryKeyMaterialHandler.Algorithm.RS256
  * );
  * 
  * // Generate a large, complex token signed with RS512
