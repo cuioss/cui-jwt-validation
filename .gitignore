@@ -11,4 +11,5 @@
 .qodo
 **/.vscode/
 .output.txt
-dependency-reduced-pom.xml
+jmh-results*.json
+/META-INF/MANIFEST.MF

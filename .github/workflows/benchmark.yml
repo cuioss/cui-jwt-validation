@@ -3,10 +3,14 @@ name: JMH Benchmark
 on:
   # Allow manual triggering
   workflow_dispatch:
+  # Run on merges to main branch
+  pull_request:
+    types:
+      - closed
+    branches:
+      - 'main'
   # Run on specific tags to capture performance at release points
   push:
-    branches:
-      - 'main'  # Run on each push to main
     tags:
       - 'v*.*.*'  # Run on version tags
 
@@ -22,6 +26,8 @@ jobs:
   benchmark:
     name: Run JMH Benchmarks
     runs-on: ubuntu-latest
+    # Only run on merged PRs, not just closed ones
+    if: github.event_name != 'pull_request' || github.event.pull_request.merged == true
     # Add timeout to prevent long-running jobs
     timeout-minutes: 30
     permissions:
@@ -53,7 +59,7 @@ jobs:
 
           # Run benchmarks with JSON output format, skipping tests to avoid duplicate runs
           # Configure JMH parameters for CI environment: fewer iterations for faster execution
-          ./mvnw --no-transfer-progress clean verify -Pbenchmark -DskipTests \
+          ./mvnw --no-transfer-progress clean verify -Pbenchmark \
             -Djmh.result.format=JSON \
             -Djmh.result.filePrefix=benchmark-results/jmh-result \
             -Djmh.iterations=3 \
