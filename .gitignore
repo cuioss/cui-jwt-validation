@@ -11,3 +11,4 @@
 .qodo
 **/.vscode/
 .output.txt
+dependency-reduced-pom.xml

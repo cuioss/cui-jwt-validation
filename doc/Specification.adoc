@@ -28,6 +28,7 @@ This specification is organized into the following documents:
 * link:specification/token-decryption.adoc[Token Decryption] - Specifications for token decryption support (JWE)
 * link:specification/testing.adoc[Testing] - Unit, integration, and security testing approach
 * link:specification/token-size-validation.adoc[Token Size Validation] - Specifications for token size validation
+* link:specification/benchmark.adoc[Performance Benchmarks] - Performance requirements, methodology, and verification
 
 == Architecture
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 the original author or authors.
+ * Copyright 2025 the original author or authors.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,7 +162,7 @@ class WellKnownHandlerTest {
         @DisplayName("Should throw exception for null or empty URL during build")
         void shouldThrowExceptionForNullOrEmptyUrl() {
             // Test with null URL
-            var builder = WellKnownHandler.builder().url((String) null);
+            var builder = WellKnownHandler.builder().url((String)null);
             WellKnownDiscoveryException nullException = assertThrows(
                     WellKnownDiscoveryException.class, builder::build,
                     "Should throw exception for null URL during build"

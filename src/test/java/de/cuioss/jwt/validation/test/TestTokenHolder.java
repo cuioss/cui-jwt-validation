@@ -38,7 +38,14 @@ import lombok.Getter;
 
 import java.security.PublicKey;
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Implementation of TokenContent for testing purposes that allows for dynamic token generation.
@@ -213,7 +220,7 @@ public class TestTokenHolder implements TokenContent {
      * Gets an IssuerConfig configured according to the current token configuration.
      * This method creates an IssuerConfig with the issuer, audience, and client ID
      * from the current token, and configures it with the public key material.
-     * 
+     *
      * <p>Note: This method does not initialize the security event counter.
      * It is the client's responsibility to initialize the security event counter
      * using {@code issuerConfig.initSecurityEventCounter(securityEventCounter)}
@@ -442,6 +449,40 @@ public class TestTokenHolder implements TokenContent {
         Set<String> roles = new RoleGenerator().next();
         claimsMap.put("roles", ClaimValue.forList(
                 String.join(",", roles), new ArrayList<>(roles)));
+
+        // Handle token complexity
+        if (claimControl.getTokenComplexity() == ClaimControlParameter.TokenComplexity.COMPLEX) {
+            // Add nested claim
+            Map<String, Object> nestedClaim = new HashMap<>();
+            nestedClaim.put("attr1", "value1");
+            nestedClaim.put("attr2", true);
+            nestedClaim.put("attr3", 12345);
+            claimsMap.put("complex_claim", ClaimValue.forPlainString(nestedClaim.toString()));
+
+            // Add extra claims
+            for (int i = 0; i < 5; i++) {
+                claimsMap.put("extra_claim_" + i, ClaimValue.forPlainString(Generators.letterStrings(50, 50).next()));
+            }
+        }
+
+        // Handle token size
+        int paddingLength = 0;
+        switch (claimControl.getTokenSize()) {
+            case MEDIUM:
+                paddingLength = 4 * 1024; // Aim for roughly 5KB
+                break;
+            case LARGE:
+                paddingLength = 9 * 1024; // Aim for roughly 10KB
+                break;
+            case SMALL:
+            default:
+                // No padding needed
+                break;
+        }
+
+        if (paddingLength > 0) {
+            claimsMap.put("padding", ClaimValue.forPlainString(Generators.letterStrings(paddingLength, paddingLength).next()));
+        }
 
         // Add type-specific claims
         if (!claimControl.isMissingTokenType()) {

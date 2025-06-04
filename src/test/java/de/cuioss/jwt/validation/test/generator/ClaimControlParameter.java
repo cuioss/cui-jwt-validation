@@ -30,6 +30,41 @@ import lombok.Value;
 @Builder
 public class ClaimControlParameter {
 
+    /**
+     * Enum defining the size of the token.
+     */
+    public enum TokenSize {
+        /**
+         * Default size, approximately 1KB or less.
+         */
+        SMALL,
+
+        /**
+         * Medium size, approximately 5KB.
+         */
+        MEDIUM,
+
+        /**
+         * Large size, approximately 10KB or more.
+         */
+        LARGE
+    }
+
+    /**
+     * Enum defining the complexity of the token claims.
+     */
+    public enum TokenComplexity {
+        /**
+         * Basic set of claims.
+         */
+        SIMPLE,
+
+        /**
+         * Additional nested claims or more numerous claims.
+         */
+        COMPLEX
+    }
+
     @Builder.Default
     boolean missingIssuer = false;
 
@@ -56,6 +91,18 @@ public class ClaimControlParameter {
 
     @Builder.Default
     boolean missingAuthorizedParty = false;
+
+    /**
+     * The size of the token.
+     */
+    @Builder.Default
+    TokenSize tokenSize = TokenSize.SMALL;
+
+    /**
+     * The complexity of the token claims.
+     */
+    @Builder.Default
+    TokenComplexity tokenComplexity = TokenComplexity.SIMPLE;
 
     /**
      * Creates default parameters for a valid validation of the given type.

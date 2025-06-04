@@ -194,8 +194,13 @@ Performance testing has been implemented to verify that the JWT Token Validation
 
 The following test classes implement performance testing:
 
-* link:../../src/test/java/de/cuioss/jwt/validation/TokenValidatorPerformanceTest.java[TokenValidatorPerformanceTest.java] - Tests for token parsing and validation performance
-* link:../../src/test/java/de/cuioss/jwt/validation/jwks/http/HttpJwksLoaderPerformanceTest.java[HttpJwksLoaderPerformanceTest.java] - Tests for JWKS loading and key retrieval performance
+* JMH benchmark classes in the `de.cuioss.jwt.validation.benchmark` package:
+  * `TokenValidatorBenchmark.java` - Tests for token parsing and validation performance
+  * `ConcurrentTokenValidationBenchmark.java` - Tests for concurrent token validation performance
+  * `FailureScenarioBenchmark.java` - Tests for failure scenario performance
+  * `JwksClientBenchmark.java` - Tests for JWKS client performance
+  * `JwksClientFailureBenchmark.java` - Tests for JWKS client failure scenarios
+  * `ErrorLoadBenchmark.java` - Tests for error load performance
 
 These tests cover:
 
