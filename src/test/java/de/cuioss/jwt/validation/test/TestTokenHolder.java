@@ -35,11 +35,17 @@ import de.cuioss.test.generator.domain.UUIDStringGenerator;
 import io.jsonwebtoken.Jwts;
 import jakarta.json.Json;
 import lombok.Getter;
-import org.apache.commons.lang3.RandomStringUtils;
 
 import java.security.PublicKey;
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Implementation of TokenContent for testing purposes that allows for dynamic token generation.
@@ -214,7 +220,7 @@ public class TestTokenHolder implements TokenContent {
      * Gets an IssuerConfig configured according to the current token configuration.
      * This method creates an IssuerConfig with the issuer, audience, and client ID
      * from the current token, and configures it with the public key material.
-     * 
+     *
      * <p>Note: This method does not initialize the security event counter.
      * It is the client's responsibility to initialize the security event counter
      * using {@code issuerConfig.initSecurityEventCounter(securityEventCounter)}
@@ -455,7 +461,7 @@ public class TestTokenHolder implements TokenContent {
 
             // Add extra claims
             for (int i = 0; i < 5; i++) {
-                claimsMap.put("extra_claim_" + i, ClaimValue.forPlainString(RandomStringUtils.randomAlphanumeric(50)));
+                claimsMap.put("extra_claim_" + i, ClaimValue.forPlainString(Generators.letterStrings(50, 50).next()));
             }
         }
 
@@ -475,7 +481,7 @@ public class TestTokenHolder implements TokenContent {
         }
 
         if (paddingLength > 0) {
-            claimsMap.put("padding", ClaimValue.forPlainString(RandomStringUtils.randomAlphanumeric(paddingLength)));
+            claimsMap.put("padding", ClaimValue.forPlainString(Generators.letterStrings(paddingLength, paddingLength).next()));
         }
 
         // Add type-specific claims
