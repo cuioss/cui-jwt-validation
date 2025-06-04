@@ -79,6 +79,10 @@ jobs:
           # Copy benchmark results to gh-pages directory
           cp -r benchmark-results/* gh-pages/
 
+          # Find the JMH result file and create a symlink with the expected name
+          # The file is likely named with a timestamp, but the visualization expects jmh-result.json
+          find benchmark-results -name "jmh-result*.json" -type f -exec cp {} gh-pages/jmh-result.json \;
+
           # Create index.html with visualization
           cat > gh-pages/index.html << 'EOL'
           <!DOCTYPE html>
