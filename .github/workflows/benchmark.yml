@@ -13,10 +13,17 @@ on:
 # Declare default permissions as read only
 permissions: read-all
 
+# Prevent concurrent benchmark runs to avoid interference
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false  # Don't cancel in-progress runs as benchmarks are expensive
+
 jobs:
   benchmark:
     name: Run JMH Benchmarks
     runs-on: ubuntu-latest
+    # Add timeout to prevent long-running jobs
+    timeout-minutes: 30
     permissions:
       # Needed to upload artifacts
       contents: write
@@ -44,8 +51,15 @@ jobs:
           # Create directory for benchmark results
           mkdir -p benchmark-results
 
-          # Run benchmarks with JSON output format
-          ./mvnw --no-transfer-progress clean verify -Pbenchmark -Djmh.result.format=JSON -Djmh.result.filePrefix=benchmark-results/jmh-result
+          # Run benchmarks with JSON output format, skipping tests to avoid duplicate runs
+          # Configure JMH parameters for CI environment: fewer iterations for faster execution
+          ./mvnw --no-transfer-progress clean verify -Pbenchmark -DskipTests \
+            -Djmh.result.format=JSON \
+            -Djmh.result.filePrefix=benchmark-results/jmh-result \
+            -Djmh.iterations=3 \
+            -Djmh.warmupIterations=2 \
+            -Djmh.forks=1 \
+            -Djmh.threads=2
 
           # Add timestamp to results
           echo "{ \"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\", \"commit\": \"${{ github.sha }}\" }" > benchmark-results/metadata.json
@@ -71,8 +85,13 @@ jobs:
           <html>
           <head>
             <title>JWT Validation Benchmark Results</title>
-            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-            <script src="https://cdn.jsdelivr.net/npm/moment"></script>
+            <!-- Use specific versions with integrity hashes for better security -->
+            <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" 
+                    integrity="sha384-1hX5s6k/n6FvE0WOYQrXl/j0zGtCi3Ipdz9uYj+LKMNnuiXC0Wf3AwkTbzKFBGnw" 
+                    crossorigin="anonymous"></script>
+            <script src="https://cdn.jsdelivr.net/npm/moment@2.30.1/min/moment.min.js" 
+                    integrity="sha384-QRk9GBJqP8UxkPnkpGKmRXxZsQQuRsEOHckwF/mTcGM1TSSDxG9jAA+uHAcHZwP6" 
+                    crossorigin="anonymous"></script>
             <style>
               body { font-family: Arial, sans-serif; margin: 20px; }
               .container { max-width: 1200px; margin: 0 auto; }
@@ -309,18 +328,50 @@ jobs:
           branch: main
           token: ${{ secrets.PAGES_DEPLOY_TOKEN }}
 
-      - name: Create benchmark badge
+      - name: Create benchmark badges
         run: |
-          # Extract average time for TokenValidator benchmark (if available)
-          VALIDATOR_TIME=$(grep -o '"de.cuioss.jwt.validation.benchmark.TokenValidatorBenchmark.validateAccessToken".*"score":[0-9.]*' benchmark-results/jmh-result.json | grep -o '"score":[0-9.]*' | cut -d':' -f2 | head -1 || echo "N/A")
+          # Create directory for badges
+          mkdir -p gh-pages/badges
 
-          if [ "$VALIDATOR_TIME" != "N/A" ]; then
-            # Round to 2 decimal places
-            VALIDATOR_TIME=$(printf "%.2f" $VALIDATOR_TIME)
+          # Get current date for badge timestamp
+          TIMESTAMP=$(date -u +"%Y-%m-%d")
 
-            # Create badge JSON
-            echo "{\"schemaVersion\":1,\"label\":\"Access Token Validation\",\"message\":\"${VALIDATOR_TIME} ms\",\"color\":\"blue\"}" > gh-pages/validator-badge.json
+          # Function to create a badge for a benchmark
+          create_badge() {
+            local benchmark_name=$1
+            local display_name=$2
+            local badge_name=$3
+            local color=$4
 
-            # Create badge markdown for README
-            echo "[![Access Token Validation](https://img.shields.io/endpoint?url=https://cuioss.github.io/cui-jwt-validation/benchmarks/validator-badge.json)](https://cuioss.github.io/cui-jwt-validation/benchmarks/)" > gh-pages/badge-markdown.txt
-          fi
+            # Extract average time for benchmark (if available)
+            local score=$(grep -o "\"$benchmark_name\".*\"score\":[0-9.]*" benchmark-results/jmh-result.json | grep -o '"score":[0-9.]*' | cut -d':' -f2 | head -1 || echo "N/A")
+
+            if [ "$score" != "N/A" ]; then
+              # Round to 2 decimal places
+              local formatted_score=$(printf "%.2f" $score)
+
+              # Create badge JSON with timestamp
+              echo "{\"schemaVersion\":1,\"label\":\"$display_name\",\"message\":\"${formatted_score} ms ($TIMESTAMP)\",\"color\":\"$color\"}" > "gh-pages/badges/$badge_name.json"
+
+              # Create badge markdown for README
+              echo "[![$display_name](https://img.shields.io/endpoint?url=https://cuioss.github.io/cui-jwt-validation/benchmarks/badges/$badge_name.json)](https://cuioss.github.io/cui-jwt-validation/benchmarks/)" >> gh-pages/badge-markdown.txt
+
+              echo "Created badge for $display_name: $formatted_score ms"
+            else
+              echo "Warning: Could not find benchmark results for $benchmark_name"
+            fi
+          }
+
+          # Create header for badge markdown
+          echo "## Benchmark Results ($TIMESTAMP)" > gh-pages/badge-markdown.txt
+
+          # Create badges for key benchmarks
+          create_badge "de.cuioss.jwt.validation.benchmark.TokenValidatorBenchmark.validateAccessToken" "Access Token Validation" "validator-badge" "blue"
+          create_badge "de.cuioss.jwt.validation.benchmark.MultiIssuerValidatorBenchmark.validateToken" "Multi-Issuer Validation" "multi-issuer-badge" "green"
+          create_badge "de.cuioss.jwt.validation.benchmark.JwksClientBenchmark.getKey" "JWKS Key Retrieval" "jwks-badge" "orange"
+
+          # Create a combined badge for all benchmarks
+          echo "{\"schemaVersion\":1,\"label\":\"JWT Benchmarks\",\"message\":\"Updated $TIMESTAMP\",\"color\":\"brightgreen\"}" > gh-pages/badges/all-benchmarks.json
+
+          # Copy the validator badge to the root for backward compatibility
+          cp -f gh-pages/badges/validator-badge.json gh-pages/validator-badge.json || true
