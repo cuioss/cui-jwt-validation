@@ -37,6 +37,7 @@ public class BenchmarkRunner {
      * @throws Exception if an error occurs during benchmark execution
      */
     public static void main(String[] args) throws Exception {
+
         // Configure JMH options
         Options options = new OptionsBuilder()
                 // Include all benchmark classes in this package
@@ -58,6 +59,8 @@ public class BenchmarkRunner {
                 // Configure result output - create a combined report for all benchmarks
                 .resultFormat(ResultFormatType.JSON)
                 .result("jmh-results.json")
+                // Add JVM argument to configure logging for forked JVM instances
+                .jvmArgsAppend("-Djava.util.logging.config.file=src/test/resources/benchmark-logging.properties")
                 .build();
 
         // Run the benchmarks

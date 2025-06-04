@@ -261,7 +261,6 @@
                             <classifier>test</classifier>
                             <includes>
                                 <include>de/cuioss/jwt/validation/test/**</include>
-                                <include>de/cuioss/jwt/validation/benchmark/**</include>
                             </includes>
                             <excludes>
                                 <exclude>de/cuioss/jwt/validation/test/**/*Test.class</exclude>
