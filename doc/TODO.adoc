@@ -1,0 +1,166 @@
+= JWT Validation Security TODO List
+:toc:
+:toclevels: 3
+:toc-title: Table of Contents
+:sectnums:
+
+link:Specification.adoc[Back to Main Specification]
+
+== Overview
+
+This document contains identified security tasks and improvements for the JWT validation library based on the analysis of common JWT vulnerabilities and attacks. Each item is prioritized based on its security impact and implementation complexity.
+
+== Security Test Coverage Enhancement
+
+=== 1. Embedded JWK Protection Test
+
+*Priority:* High
+*Status:* TODO
+
+*Description:*
+Create a unit test that verifies the library correctly rejects tokens with embedded JWK headers. The embedded JWK attack (CVE-2018-0114) is a significant security vulnerability where attackers include their own public key in the token header to bypass signature verification.
+
+*Implementation Plan:*
+1. Create a test class `EmbeddedJwkAttackTest.java`
+2. Implement a test that:
+   * Generates a token with an embedded JWK in the header
+   * Verifies that the token is rejected with the appropriate error
+   * Confirms that the security event counter is incremented
+
+*References:*
+* https://pentesterlab.com/blog/jwt-vulnerabilities-attacks-guide
+* https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/
+
+=== 2. JKU/X5U Header Abuse Test
+
+*Priority:* High
+*Status:* TODO
+
+*Description:*
+Create a unit test that verifies the library correctly rejects tokens with JKU or X5U headers pointing to attacker-controlled URLs. This attack allows attackers to host their own key sets and instruct the token validator to fetch and trust those keys.
+
+*Implementation Plan:*
+1. Create a test class `JkuX5uAttackTest.java`
+2. Implement a test that:
+   * Generates a token with a `jku` header pointing to a malicious URL
+   * Verifies that the token is rejected with the appropriate error
+   * Confirms that the security event counter is incremented
+   * Repeat the test with an `x5u` header
+
+*References:*
+* https://pentesterlab.com/blog/jwt-vulnerabilities-attacks-guide
+* https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/
+
+=== 3. ECDSA "Psychic Signature" Test (CVE-2022-21449)
+
+*Priority:* Medium
+*Status:* TODO
+
+*Description:*
+Create a unit test that verifies the library is protected against the "Psychic Signature" vulnerability (CVE-2022-21449), which allowed attackers to bypass ECDSA signature verification by using all-zero signatures.
+
+*Implementation Plan:*
+1. Create a test class `PsychicSignatureAttackTest.java`
+2. Implement a test that:
+   * Generates a token with an ECDSA algorithm (ES256, ES384, or ES512)
+   * Modifies the signature to use all zeros (r=0, s=0)
+   * Verifies that the token is rejected with the appropriate error
+   * Confirms that the security event counter is incremented
+
+*References:*
+* https://pentesterlab.com/blog/jwt-vulnerabilities-attacks-guide
+* https://neilmadden.blog/2022/04/19/psychic-signatures-in-java/
+
+=== 4. Key Injection Test
+
+*Priority:* Medium
+*Status:* TODO
+
+*Description:*
+Create a comprehensive test suite for key injection attacks, focusing on proper validation and sanitization of the `kid` header.
+
+*Implementation Plan:*
+1. Enhance the existing `KeyDisclosureVulnerabilityTest.java` or create a new test class
+2. Implement tests for:
+   * Path traversal via `kid` header
+   * SQL injection via `kid` header
+   * Null byte injection via `kid` header
+   * Other key injection techniques
+
+*References:*
+* https://pentesterlab.com/blog/jwt-vulnerabilities-attacks-guide
+* https://developer.okta.com/blog/2018/06/20/what-happens-if-your-jwt-is-stolen
+
+== Documentation Enhancement
+
+=== 1. JWT Attack Mitigation Documentation
+
+*Priority:* High
+*Status:* IN PROGRESS
+
+*Description:*
+Enhance the security documentation to clearly describe how the library mitigates each of the common JWT attacks.
+
+*Implementation Plan:*
+1. Update `doc/specification/security.adoc` to reference the PentesterLab article
+2. Create a new section for each attack vector
+3. Document the mitigation approach implemented in the library
+4. Link to relevant test classes that verify the mitigation
+
+*References:*
+* https://pentesterlab.com/blog/jwt-vulnerabilities-attacks-guide
+
+=== 2. JWT Security Best Practices Guide
+
+*Priority:* Medium
+*Status:* TODO
+
+*Description:*
+Create a comprehensive guide for users of the library on JWT security best practices.
+
+*Implementation Plan:*
+1. Create a new document `doc/jwt-security-best-practices.adoc`
+2. Include sections on:
+   * Secure token handling on the client
+   * Proper configuration of the library
+   * Key management best practices
+   * Logging and monitoring recommendations
+   * Common misconfigurations to avoid
+
+*References:*
+* https://auth0.com/blog/a-look-at-the-latest-draft-for-jwt-bcp/
+* https://datatracker.ietf.org/doc/html/draft-ietf-oauth-jwt-bcp
+
+== Implementation Enhancements
+
+=== 1. Enhanced JWK Header Validation
+
+*Priority:* Medium
+*Status:* TODO
+
+*Description:*
+Implement explicit validation and rejection of embedded JWK, JKU, and X5U headers in tokens.
+
+*Implementation Plan:*
+1. Update `TokenHeaderValidator` to explicitly check for and reject these headers
+2. Add appropriate security events for attempted attacks
+3. Ensure proper logging of rejection events
+
+*References:*
+* https://pentesterlab.com/blog/jwt-vulnerabilities-attacks-guide
+
+=== 2. Algorithm Whitelist Configuration
+
+*Priority:* Low
+*Status:* TODO
+
+*Description:*
+Enhance the `AlgorithmPreferences` class to support a configurable whitelist approach rather than just the current predefined lists.
+
+*Implementation Plan:*
+1. Update `AlgorithmPreferences` to allow custom algorithm whitelists
+2. Ensure backward compatibility with existing configurations
+3. Update documentation with examples of secure configurations
+
+*References:*
+* https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/

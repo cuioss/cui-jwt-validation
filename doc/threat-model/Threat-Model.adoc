@@ -18,6 +18,7 @@ This document outlines the threat model for the JWT Token Validation library. Th
 * link:../LogMessages.adoc[Log Messages] - Reference for all log messages
 * link:../Build.adoc[Building and Development] - Information for contributors
 * link:threat-coverage-analysis.adoc[Threat Coverage Analysis] - Detailed analysis of security threats
+* link:jwt-attacks-analysis.adoc[JWT Vulnerabilities and Attacks Analysis] - Analysis of common JWT vulnerabilities and their mitigations
 
 == System Context
 
