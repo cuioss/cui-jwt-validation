@@ -31,6 +31,7 @@ import lombok.NonNull;
  * <ul>
  *   <li>Algorithm (alg) - against configured AlgorithmPreferences</li>
  *   <li>Issuer (iss) - against configured expected issuer</li>
+ *   <li>Absence of embedded JWK - to prevent CVE-2018-0114 attacks</li>
  * </ul>
  * <p>
  * The validator logs appropriate warning messages for validation failures.
@@ -76,8 +77,28 @@ public class TokenHeaderValidator {
 
         validateAlgorithm(decodedJwt);
         validateIssuer(decodedJwt);
+        validateNoEmbeddedJwk(decodedJwt);
 
         LOGGER.debug("Token header is valid");
+    }
+
+    /**
+     * Validates that the token does not contain an embedded JWK in the header.
+     * This is protection against the embedded JWK attack (CVE-2018-0114).
+     *
+     * @param decodedJwt the decoded JWT Token
+     * @throws TokenValidationException if the token contains an embedded JWK
+     */
+    @SuppressWarnings("java:S3655") // owolff: False Positive: isPresent is checked before calling get()
+    private void validateNoEmbeddedJwk(DecodedJwt decodedJwt) {
+        if (decodedJwt.getHeader().isPresent() && decodedJwt.getHeader().get().containsKey("jwk")) {
+            LOGGER.warn(JWTValidationLogMessages.WARN.UNSUPPORTED_ALGORITHM.format("Embedded JWK"));
+            securityEventCounter.increment(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM);
+            throw new TokenValidationException(
+                    SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM,
+                    "Embedded JWK in token header is not allowed"
+            );
+        }
     }
 
     /**

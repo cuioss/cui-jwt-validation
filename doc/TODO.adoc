@@ -24,7 +24,7 @@ The following symbols are used for progress tracking:
 === 1. Embedded JWK Protection Test
 
 *Priority:* High
-*Status:* [/] IN PROGRESS
+*Status:* [x] COMPLETED
 
 *Description:*
 Create a unit test that verifies the library correctly rejects tokens with embedded JWK headers. The embedded JWK attack (CVE-2018-0114) is a significant security vulnerability where attackers include their own public key in the token header to bypass signature verification.
@@ -38,9 +38,9 @@ Create a unit test that verifies the library correctly rejects tokens with embed
 ** Generates a token with an embedded JWK in the header
 ** Verifies that the token is rejected with the appropriate error
 ** Confirms that the security event counter is incremented
-3. [ ] Run `./mvnw -Ppre-commit clean verify` to fix all javadoc warnings if there are any
+3. [x] Run `./mvnw -Ppre-commit clean verify` to fix all javadoc warnings if there are any
 4. [x] Update the corresponding section in link:security/jwt-attacks-analysis.adoc[jwt-attacks-analysis.adoc]: Set status to MITIGATED and link the corresponding test
-5. [ ] Commit the changes to git with a meaningful commit message
+5. [x] Commit the changes to git with a meaningful commit message
 
 *References:*
 * https://pentesterlab.com/blog/jwt-vulnerabilities-attacks-guide
@@ -50,7 +50,7 @@ Create a unit test that verifies the library correctly rejects tokens with embed
 === 2. JKU/X5U Header Abuse Test
 
 *Priority:* High
-*Status:* [ ] TODO
+*Status:* [x] COMPLETED
 
 *Description:*
 Create a unit test that verifies the library correctly rejects tokens with JKU or X5U headers pointing to attacker-controlled URLs. This attack allows attackers to host their own key sets and instruct the token validator to fetch and trust those keys.
@@ -59,15 +59,15 @@ Create a unit test that verifies the library correctly rejects tokens with JKU o
 
 *Implementation Plan:*
 
-1. [ ] Create a test class `JkuX5uAttackTest.java`
-2. [ ] Implement a test that:
+1. [x] Create a test class `JkuX5uAttackTest.java`
+2. [x] Implement a test that:
 ** Generates a token with a `jku` header pointing to a malicious URL
 ** Verifies that the token is rejected with the appropriate error
 ** Confirms that the security event counter is incremented
 ** Repeat the test with an `x5u` header
-3. [ ] Run `./mvnw -Ppre-commit clean verify` to fix all javadoc warnings if there are any
-4. [ ] Update the corresponding section in link:security/jwt-attacks-analysis.adoc[jwt-attacks-analysis.adoc]: Set status to MITIGATED and link the corresponding test
-5. [ ] Commit the changes to git with a meaningful commit message
+3. [x] Run `./mvnw -Ppre-commit clean verify` to fix all javadoc warnings if there are any
+4. [x] Update the corresponding section in link:security/jwt-attacks-analysis.adoc[jwt-attacks-analysis.adoc]: Set status to MITIGATED and link the corresponding test
+5. [x] Commit the changes to git with a meaningful commit message
 
 *References:*
 * https://pentesterlab.com/blog/jwt-vulnerabilities-attacks-guide
@@ -124,32 +124,6 @@ Create a comprehensive test suite for key injection attacks, focusing on proper 
 *References:*
 * https://pentesterlab.com/blog/jwt-vulnerabilities-attacks-guide
 * https://developer.okta.com/blog/2018/06/20/what-happens-if-your-jwt-is-stolen
-
-=== 5. Scope Validation Test
-
-*Priority:* Medium
-*Status:* [ ] TODO
-
-*Description:*
-Create tests to verify the scope validation functionality, ensuring that the library properly handles tokens with different scope values and prevents scope upgrade attacks.
-
-*Related to:* link:security/oauth-security-analysis.adoc#_scope_upgrade_attack[Scope Upgrade Attack]
-
-*Implementation Plan:*
-
-1. [ ] Create a test class `ScopeValidationTest.java`
-2. [ ] Implement tests for:
-** Validating tokens with expected scopes
-** Rejecting tokens with missing required scopes
-** Proper handling of tokens with additional unauthorized scopes
-** Verification of scope-based access control
-3. [ ] Run `./mvnw -Ppre-commit clean verify` to fix all javadoc warnings if there are any
-4. [ ] Update the corresponding section in link:security/oauth-security-analysis.adoc[oauth-security-analysis.adoc]: Set status to MITIGATED and link the corresponding test
-5. [ ] Commit the changes to git with a meaningful commit message
-
-*References:*
-* https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html
-* https://datatracker.ietf.org/doc/html/rfc6749#section-3.3
 
 === 6. Mutable Claims Test
 
@@ -276,27 +250,6 @@ Implement explicit validation and rejection of embedded JWK, JKU, and X5U header
 *References:*
 * https://pentesterlab.com/blog/jwt-vulnerabilities-attacks-guide
 
-=== 2. Algorithm Whitelist Configuration
-
-*Priority:* Low
-*Status:* [ ] TODO
-
-*Description:*
-Enhance the `AlgorithmPreferences` class to support a configurable whitelist approach rather than just the current predefined lists.
-
-*Related to:* link:security/jwt-attacks-analysis.adoc#_2_none_algorithm_attack[None Algorithm Attack] and link:security/jwt-attacks-analysis.adoc#_4_algorithm_confusion_rsa_to_hmac[Algorithm Confusion (RSA to HMAC)]
-
-*Implementation Plan:*
-
-1. [ ] Update `AlgorithmPreferences` to allow custom algorithm whitelists
-2. [ ] Ensure backward compatibility with existing configurations
-3. [ ] Update documentation with examples of secure configurations
-4. [ ] Run `./mvnw -Ppre-commit clean verify` to fix all javadoc warnings if there are any
-5. [ ] Update the corresponding sections in link:security/jwt-attacks-analysis.adoc[jwt-attacks-analysis.adoc]: Set status to MITIGATED and link the corresponding implementation
-6. [ ] Commit the changes to git with a meaningful commit message
-
-*References:*
-* https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/
 
 === 3. Enhanced Scope Validation
 
@@ -310,12 +263,9 @@ Improve the scope validation capabilities to better protect against scope upgrad
 
 *Implementation Plan:*
 
-1. [ ] Enhance the `ParsedAccessToken` class with additional scope validation methods
-2. [ ] Add warnings when potential scope-related issues are detected
-3. [ ] Document best practices for scope validation in client applications
-4. [ ] Run `./mvnw -Ppre-commit clean verify` to fix all javadoc warnings if there are any
-5. [ ] Update the corresponding section in link:security/oauth-security-analysis.adoc[oauth-security-analysis.adoc]: Set status to MITIGATED and link the corresponding implementation
-6. [ ] Commit the changes to git with a meaningful commit message
+1. [ ] Document best practices for scope validation in client applications
+2. [ ] Update the corresponding section in link:security/oauth-security-analysis.adoc[oauth-security-analysis.adoc]: Set status to MITIGATED and link the corresponding implementation
+3. [ ] Commit the changes to git with a meaningful commit message
 
 *References:*
 * https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html

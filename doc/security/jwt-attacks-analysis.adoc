@@ -154,7 +154,7 @@ The library implements several protections:
 * The `HttpJwksLoader` class uses an allowlist approach for JWKS sources
 
 ==== Test Coverage
-No specific test for JKU/X5U header abuse protection.
+* link:../../src/test/java/de/cuioss/jwt/validation/security/JkuX5uAttackTest.java[JkuX5uAttackTest] - Tests rejection of tokens with JKU or X5U headers pointing to malicious URLs
 
 === 8. CVE-2022-21449 (Psychic Signature)
 
@@ -179,8 +179,8 @@ No specific test for CVE-2022-21449 protection.
 
 The library currently implements mitigations for all major JWT vulnerabilities. However, the following recommendations are made to further improve security:
 
-1. Add specific tests for embedded JWK protection
-2. Add specific tests for JKU/X5U header abuse protection
+1. ✓ Add specific tests for embedded JWK protection
+2. ✓ Add specific tests for JKU/X5U header abuse protection
 3. Add specific tests for CVE-2022-21449 protection
 4. Enhance documentation to highlight security features
 

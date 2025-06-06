@@ -295,13 +295,15 @@ public class TokenValidator {
             );
         }
 
+        // Initialize the security event counter in the issuer config
+        issuerConfig.initSecurityEventCounter(securityEventCounter);
+
         // 5. Validate header - create validator only if needed
         TokenHeaderValidator headerValidator = new TokenHeaderValidator(issuerConfig, securityEventCounter);
         headerValidator.validate(decodedJwt);
 
         // 6. Validate signature - create validator only if needed
-        // Initialize the JwksLoader if needed
-        issuerConfig.initSecurityEventCounter(securityEventCounter);
+        // JwksLoader is already initialized by initSecurityEventCounter
         JwksLoader jwksLoader = issuerConfig.getJwksLoader();
 
         TokenSignatureValidator signatureValidator = new TokenSignatureValidator(jwksLoader, securityEventCounter);

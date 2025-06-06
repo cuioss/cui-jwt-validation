@@ -142,31 +142,6 @@ No specific tests for redirect scheme hijacking as it's out of scope for the tok
 
 == Security Testing Recommendations
 
-=== Client Confusion Attack Testing
-
-The existing test coverage for client confusion attacks is good. The `ClientConfusionAttackTest` class covers most scenarios including:
-
-* Validation of tokens with valid/invalid `azp` claims
-* Rejection of tokens from different clients
-* Audience validation
-* Validation of missing `azp` claims
-
-=== Scope Upgrade Attack Testing
-
-==== Recommended Test Cases
-
-[cols="2,3,1", options="header"]
-|===
-|Test Case |Description |Expected Outcome
-|verify_scope_validation |Test token validation with expected scopes |Success
-|verify_scope_mismatch |Test token validation with missing required scopes |Failure
-|verify_scope_upgrade_attempt |Test token with unauthorized additional scopes |Proper handling
-|===
-
-==== Implementation Plan
-1. Create a test class `ScopeValidationTest.java`
-2. Implement tests for scope validation functionality
-3. Verify that scope checking methods work as expected
 
 === Mutable Claims Testing
 
