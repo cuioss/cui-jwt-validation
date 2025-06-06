@@ -6,11 +6,6 @@
 
 link:../Specification.adoc[Back to Main Specification]
 
-[NOTE]
-====
-This document is part of a comprehensive security documentation set. A plan for reducing duplication across security documents has been created in link:../documentation-restructuring-plan.adoc[Documentation Restructuring Plan].
-====
-
 == Overview
 _See Requirement link:../Requirements.adoc#CUI-JWT-8[CUI-JWT-8: Security] and link:../security/Threat-Model.adoc[Threat Model]_
 
@@ -60,6 +55,7 @@ This section details how the library mitigates common JWT attack vectors as docu
 |8. CVE-2022-21449 (Psychic Signature) |Bypassing ECDSA signature verification using zero values |Using Bouncy Castle for cryptographic operations; specific validation of ECDSA parameters; signature format validation |link:../../src/test/java/de/cuioss/jwt/validation/security/PsychicSignatureAttackTest.java[PsychicSignatureAttackTest]
 |===
 
+[[signature-not-verified]]
 ==== 1. Signature Not Verified
 
 The JWT validation library enforces signature verification through its architecture:
@@ -74,6 +70,7 @@ Test coverage is provided by `TokenSignatureValidatorTest`, which verifies:
 * Invalid signatures are rejected
 * Algorithm confusion attacks are detected and prevented
 
+[[none-algorithm-attack]]
 ==== 2. None Algorithm Attack
 
 The library explicitly rejects the "none" algorithm through:
@@ -84,6 +81,7 @@ The library explicitly rejects the "none" algorithm through:
 
 Test coverage is provided by `TokenSignatureValidatorAlgorithmTest`, which verifies rejection of tokens using the "none" algorithm.
 
+[[trivial-secret]]
 ==== 3. Trivial Secret (Weak HMAC Keys)
 
 The library protects against weak HMAC keys through:
@@ -95,6 +93,7 @@ The library protects against weak HMAC keys through:
 
 Test coverage is provided by `AlgorithmPreferencesTest` and `KeyDisclosureVulnerabilityTest`, which verify the library's protection against weak keys and key disclosure.
 
+[[algorithm-confusion]]
 ==== 4. Algorithm Confusion (RSA to HMAC)
 
 The library prevents algorithm confusion attacks through:
@@ -106,6 +105,7 @@ The library prevents algorithm confusion attacks through:
 
 Test coverage is provided by `TokenSignatureValidatorTest`, which includes specific tests for algorithm confusion protection.
 
+[[kid-injection]]
 ==== 5. `kid` Injection (Key ID Manipulation)
 
 The library mitigates key ID injection attacks through:
@@ -117,6 +117,7 @@ The library mitigates key ID injection attacks through:
 
 Test coverage is provided by `KeyInjectionAttackTest`, which includes comprehensive tests for various KID injection techniques including path traversal, SQL injection, null byte injection, command injection, and DoS attacks.
 
+[[embedded-jwk]]
 ==== 6. Embedded JWK (CVE-2018-0114)
 
 The library prevents embedded JWK attacks through:
@@ -127,6 +128,7 @@ The library prevents embedded JWK attacks through:
 
 Test coverage is provided by `EmbeddedJwkAttackTest`, which verifies the rejection of tokens with embedded JWK in the header.
 
+[[jku-x5u-header-abuse]]
 ==== 7. JKU / X5U Header Abuse
 
 The library prevents JKU and X5U header abuse through:
@@ -137,6 +139,7 @@ The library prevents JKU and X5U header abuse through:
 
 Test coverage is provided by `JkuX5uAttackTest`, which verifies the rejection of tokens with JKU or X5U headers pointing to malicious URLs.
 
+[[psychic-signature]]
 ==== 8. CVE-2022-21449 (Psychic Signature)
 
 The library protects against the "Psychic Signature" vulnerability through:
@@ -588,6 +591,7 @@ For a detailed analysis of each vulnerability and our mitigation approach, pleas
 5. **Embedded JWK Attack** - Keys from token headers are never trusted
 6. **JKU/X5U Header Abuse** - External key URLs from tokens are ignored
 
+[[oauth-security-considerations]]
 === OAuth Security Considerations
 
 This section details how the library addresses OAuth-specific security considerations as documented in the Doyensec article "Common OAuth Vulnerabilities" (https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html). The following table summarizes the vulnerabilities and the library's mitigation approaches:
@@ -603,6 +607,7 @@ This section details how the library addresses OAuth-specific security considera
 |Redirect Scheme Hijacking |Intercepting OAuth redirects in mobile apps |Out of scope for token validation library; documentation recommends using PKCE for mobile apps |Out of scope
 |===
 
+[[client-confusion-attack]]
 ==== 1. Client Confusion Attack
 
 The library prevents client confusion attacks through:
@@ -621,6 +626,7 @@ Test coverage is provided by `ClientConfusionAttackTest`, which verifies:
 * `azp` validation works correctly without audience
 * Tokens with missing `azp` claims are rejected when validation is enabled
 
+[[scope-upgrade-attack]]
 ==== 2. Scope Upgrade Attack
 
 The library provides tools to prevent scope upgrade attacks through:
@@ -650,6 +656,7 @@ Redirect URI validation is the responsibility of the authorization server, not t
 * The library documentation recommends secure OAuth implementations including proper redirect URI validation
 * The library provides guidance on detecting and preventing token hijacking attempts
 
+[[mutable-claims-attack]]
 ==== 5. Mutable Claims Attack
 
 The library mitigates mutable claims attacks through:
@@ -676,6 +683,7 @@ Mobile app redirect scheme handling is outside the scope of the token validation
 
 Please refer to the link:../TODO.adoc[TODO] document for planned security enhancements and additional test coverage.
 
+[[key-management]]
 === Key Management
 _See Requirement link:../Requirements.adoc#CUI-JWT-4[CUI-JWT-4: Key Management]_
 

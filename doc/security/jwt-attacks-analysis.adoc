@@ -6,11 +6,6 @@
 
 link:../Specification.adoc[Back to Main Specification]
 
-[NOTE]
-====
-This document is part of a comprehensive security documentation set. A plan for reducing duplication across security documents has been created in link:../documentation-restructuring-plan.adoc[Documentation Restructuring Plan].
-====
-
 == Overview
 
 This document provides a comprehensive analysis of common JWT vulnerabilities and attacks as documented in the article "The Ultimate Guide to JWT Vulnerabilities and Attacks" from PentesterLab (https://pentesterlab.com/blog/jwt-vulnerabilities-attacks-guide). Each vulnerability is analyzed, the current mitigation approach in our library is documented, and test coverage is assessed.
@@ -54,11 +49,7 @@ The JWT specification allows tokens to specify the signing algorithm in their he
 * Authorization bypass
 
 ==== Current Implementation Status: MITIGATED
-The library explicitly rejects the "none" algorithm:
-
-* The `TokenSignatureValidator` includes specific logic to reject tokens with `alg: none`
-* The library uses a validation approach that ensures algorithm validation occurs before any token processing
-* The `AlgorithmPreferences` class explicitly excludes the "none" algorithm
+The library explicitly rejects the "none" algorithm. For implementation details, see link:security-specifications.adoc#none-algorithm-attack[None Algorithm Attack] in the Security Specifications document.
 
 ==== Test Coverage
 * link:../../src/test/java/de/cuioss/jwt/validation/pipeline/TokenSignatureValidatorAlgorithmTest.java[TokenSignatureValidatorAlgorithmTest] - Tests algorithm validation
@@ -73,12 +64,7 @@ When using HMAC-based algorithms like `HS256`, the integrity of the JWT depends 
 * Authentication bypass
 
 ==== Current Implementation Status: MITIGATED
-The library provides protection against weak keys:
-
-* The library prefers asymmetric algorithms (RSA, ECDSA) which don't rely on shared secrets
-* HMAC algorithms are explicitly rejected for security reasons in the default configuration
-* Key material is isolated in dedicated handler classes for better security
-* Key rotation is supported to limit the impact of potential key compromise
+The library provides protection against weak keys. For implementation details, see link:security-specifications.adoc#trivial-secret-weak-hmac-keys[Trivial Secret] in the Security Specifications document.
 
 ==== Test Coverage
 * link:../../src/test/java/de/cuioss/jwt/validation/security/AlgorithmPreferencesTest.java[AlgorithmPreferencesTest] - Tests algorithm preferences
@@ -94,12 +80,7 @@ This attack exploits the fact that the JWT header includes a user-controlled `al
 * Authorization bypass
 
 ==== Current Implementation Status: MITIGATED
-The library implements several protections:
-
-* Algorithm enforcement at the configuration level
-* Separation of token parsing from verification logic
-* No auto-selection of algorithms based on token header
-* Explicit key type validation
+The library implements several protections against algorithm confusion attacks. For implementation details, see link:security-specifications.adoc#algorithm-confusion[Algorithm Confusion] in the Security Specifications document.
 
 ==== Test Coverage
 * link:../../src/test/java/de/cuioss/jwt/validation/pipeline/TokenSignatureValidatorTest.java[TokenSignatureValidatorTest] - Tests algorithm confusion protection through `shouldRejectAlgorithmConfusionAttack()`
@@ -116,7 +97,7 @@ The JWT header supports a field called `kid` (Key ID) that allows the token to i
 * SQL Injection
 
 ==== Current Implementation Status: MITIGATED
-The library implements several protections:
+The library implements several protections against Key ID injection attacks. For implementation details, see link:security-specifications.adoc#kid-injection[Key ID Injection] in the Security Specifications document.
 
 * The `kid` value is validated and sanitized
 * Direct file or database lookups based on the `kid` value are not supported
@@ -142,11 +123,7 @@ JWTs can optionally include a JWK (JSON Web Key) directly inside the token heade
 * Authorization bypass
 
 ==== Current Implementation Status: MITIGATED
-The library implements several protections:
-
-* The library does not accept keys from the token itself
-* The `jwk` header is ignored during validation
-* Keys are loaded only from trusted sources configured at initialization time
+The library mitigates this vulnerability by refusing to accept keys from tokens. For implementation details, see link:security-specifications.adoc#embedded-jwk[Embedded JWK] in the Security Specifications document.
 
 ==== Test Coverage
 * link:../../src/test/java/de/cuioss/jwt/validation/security/EmbeddedJwkAttackTest.java[EmbeddedJwkAttackTest] - Tests rejection of tokens with embedded JWK in the header
@@ -162,11 +139,7 @@ JWT supports additional headers like `jku` (JWK Set URL) and `x5u` (X.509 certif
 * Server-Side Request Forgery
 
 ==== Current Implementation Status: MITIGATED
-The library implements several protections:
-
-* The library does not follow arbitrary `jku` or `x5u` URLs
-* JWKS URLs are configured at initialization time and not overridable from tokens
-* The `HttpJwksLoader` class uses an allowlist approach for JWKS sources
+The library prevents JKU/X5U header abuse by not following arbitrary URLs in tokens. For implementation details, see link:security-specifications.adoc#jku-x5u-header-abuse[JKU/X5U Header Abuse] in the Security Specifications document.
 
 ==== Test Coverage
 * link:../../src/test/java/de/cuioss/jwt/validation/security/JkuX5uAttackTest.java[JkuX5uAttackTest] - Tests rejection of tokens with JKU or X5U headers pointing to malicious URLs
@@ -181,11 +154,7 @@ In 2022, a critical vulnerability was discovered in the Java JDK's ECDSA signatu
 * Authorization bypass
 
 ==== Current Implementation Status: MITIGATED
-The library implements several protections:
-
-* The library uses Bouncy Castle for cryptographic operations, which is not affected by this vulnerability
-* Key validation includes specific checks for ECDSA parameters
-* The library validates signature formats before verification
+The library is protected against the "Psychic Signature" vulnerability. For implementation details, see link:security-specifications.adoc#psychic-signature[Psychic Signature] in the Security Specifications document.
 
 ==== Test Coverage
 * link:../../src/test/java/de/cuioss/jwt/validation/security/PsychicSignatureAttackTest.java[PsychicSignatureAttackTest] - Tests rejection of tokens with all-zero ECDSA signatures (ES256, ES384, ES512)

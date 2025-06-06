@@ -5,7 +5,7 @@
 :sectnums:
 
 == Overview
-_See Requirement link:../Requirements.adoc#CUI-JWT-8[CUI-JWT-8: Security Requirements] and Specification link:../Specification.adoc[Specification] and link:../specification/security-specifications.adoc[Security Specification]_
+_See Requirement link:../Requirements.adoc#CUI-JWT-8[CUI-JWT-8: Security Requirements] and Specification link:../Specification.adoc[Specification] and link:security-specifications.adoc[Security Specification]_
 
 This document outlines the threat model for the JWT Token Validation library. The threat model follows OWASP recommendations and identifies potential security threats, current mitigations, and additional recommendations.
 
