@@ -22,11 +22,8 @@ import de.cuioss.jwt.validation.jwks.key.KeyInfo;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import mockwebserver3.MockResponse;
-// Changed from okhttp3.mockwebserver
 import mockwebserver3.MockWebServer;
-// Changed from okhttp3.mockwebserver
 import okhttp3.Headers;
-// Added for MockResponse
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 
