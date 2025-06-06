@@ -46,7 +46,7 @@ Enhance the security documentation to clearly describe how the library mitigates
 === 2. OAuth Security Considerations Documentation
 
 *Priority:* High
-*Status:* [/] IN PROGRESS
+*Status:* [x] COMPLETED
 
 *Description:*
 Enhance the security documentation to clearly describe how the library addresses OAuth-specific security considerations.
@@ -55,12 +55,12 @@ Enhance the security documentation to clearly describe how the library addresses
 
 *Implementation Plan:*
 
-1. [ ] Update `doc/specification/security.adoc` to reference the Doyensec article
-2. [ ] Create a new section for each OAuth vulnerability
-3. [ ] Document the mitigation approach implemented in the library
-4. [ ] Link to relevant test classes and or documentation that verify the mitigation
-5. [ ] Update the corresponding sections in link:security/oauth-security-analysis.adoc[oauth-security-analysis.adoc] to ensure consistency
-6. [ ] Commit the changes to git with a meaningful commit message
+1. [x] Update `doc/security/security-specifications.adoc` to reference the Doyensec article
+2. [x] Create a new section for each OAuth vulnerability
+3. [x] Document the mitigation approach implemented in the library
+4. [x] Link to relevant test classes and or documentation that verify the mitigation
+5. [x] Update the corresponding sections in link:security/oauth-security-analysis.adoc[oauth-security-analysis.adoc] to ensure consistency
+6. [x] Commit the changes to git with a meaningful commit message
 
 *References:*
 * https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html

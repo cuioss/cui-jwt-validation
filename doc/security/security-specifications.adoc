@@ -574,6 +574,90 @@ For a detailed analysis of each vulnerability and our mitigation approach, pleas
 5. **Embedded JWK Attack** - Keys from token headers are never trusted
 6. **JKU/X5U Header Abuse** - External key URLs from tokens are ignored
 
+=== OAuth Security Considerations
+
+This section details how the library addresses OAuth-specific security considerations as documented in the Doyensec article "Common OAuth Vulnerabilities" (https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html). The following table summarizes the vulnerabilities and the library's mitigation approaches:
+
+[cols="1,2,2,2", options="header"]
+|===
+|Vulnerability |Description |Mitigation Approach |Test Coverage
+|Client Confusion Attack |Using a token issued for one client with a different client |Validation of `azp` (authorized party) and `aud` (audience) claims; configuration through `IssuerConfig` builder |link:../../src/test/java/de/cuioss/jwt/validation/ClientConfusionAttackTest.java[ClientConfusionAttackTest]
+|Scope Upgrade Attack |Adding additional scopes during token exchange |`ParsedAccessToken` class provides methods to verify token scopes; scope validation guidance in documentation |No specific tests
+|CSRF Attacks |Exploiting cross-site request forgery in OAuth flows |Out of scope for token validation library; documentation recommends using the `state` parameter |Out of scope
+|Redirect Attacks |Manipulating redirect URIs to steal authorization codes |Out of scope for token validation library; documentation recommends proper redirect URI validation |Out of scope
+|Mutable Claims Attack |Using changeable claims for user identification |Enforcing validation of the immutable `sub` claim; documentation recommends using `sub` for user identification |link:../../src/test/java/de/cuioss/jwt/validation/pipeline/TokenClaimValidatorTest.java[TokenClaimValidatorTest]
+|Redirect Scheme Hijacking |Intercepting OAuth redirects in mobile apps |Out of scope for token validation library; documentation recommends using PKCE for mobile apps |Out of scope
+|===
+
+==== 1. Client Confusion Attack
+
+The library prevents client confusion attacks through:
+
+* The `TokenClaimValidator` enforces validation of the `azp` (authorized party) claim
+* The `IssuerConfig` class supports both audience (`aud`) and `azp` validation
+* Configuration through the `IssuerConfig` builder:
+** `expectedAudience()` - sets the expected audience
+** `expectedClientId()` - sets the expected client ID for `azp` validation
+
+Test coverage is provided by `ClientConfusionAttackTest`, which verifies:
+* Tokens with valid `azp` claims are accepted
+* Tokens with invalid `azp` claims are rejected
+* Tokens from different clients are rejected
+* Audience validation works correctly without `azp`
+* `azp` validation works correctly without audience
+* Tokens with missing `azp` claims are rejected when validation is enabled
+
+==== 2. Scope Upgrade Attack
+
+The library provides tools to prevent scope upgrade attacks through:
+
+* The `ParsedAccessToken` class provides methods to verify token scopes:
+** `getScopes()` - retrieves the scopes from the token
+** `providesScopes()` - checks if the token provides specific scopes
+** `determineMissingScopes()` - identifies missing scopes
+* The token validation process does not modify or upgrade scopes
+* The library documentation recommends proper scope validation at the application level
+
+This is an area where additional test coverage is planned.
+
+==== 3. CSRF Attacks
+
+CSRF protection during the OAuth flow is primarily a concern at the application level, not in the token validation library:
+
+* The library focuses on token validation after the OAuth flow is complete
+* The library documentation recommends using the `state` parameter for CSRF protection
+* Implementing proper CSRF protection is the responsibility of the client application
+
+==== 4. Redirect Attacks
+
+Redirect URI validation is the responsibility of the authorization server, not the token validation library:
+
+* The library operates after the OAuth flow is complete and tokens have been issued
+* The library documentation recommends secure OAuth implementations including proper redirect URI validation
+* The library provides guidance on detecting and preventing token hijacking attempts
+
+==== 5. Mutable Claims Attack
+
+The library mitigates mutable claims attacks through:
+
+* The `TokenClaimValidator` enforces validation of the `sub` claim
+* The library documentation strongly recommends using `sub` for user identification instead of mutable claims like email
+* The library architecture encourages proper user identification practices
+
+Test coverage is provided by `TokenClaimValidatorTest`, which verifies:
+* Tokens with valid subject claims are accepted
+* Tokens with missing subject claims are rejected
+* Behavior with empty subject claims is documented
+* Handling of mutable claims is tested
+
+==== 6. Redirect Scheme Hijacking
+
+Mobile app redirect scheme handling is outside the scope of the token validation library:
+
+* The library focuses on token validation after the OAuth flow is complete
+* The library documentation recommends using the Authorization Code flow with PKCE for mobile apps
+* The library provides guidance on secure mobile OAuth implementations
+
 === Outstanding Security Tasks
 
 Please refer to the link:../TODO.adoc[TODO] document for planned security enhancements and additional test coverage.
