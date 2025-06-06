@@ -1,0 +1,128 @@
+= Documentation Restructuring Plan
+:toc:
+:toclevels: 3
+:toc-title: Table of Contents
+:sectnums:
+
+== Overview
+
+This document outlines a plan to restructure the JWT validation library documentation to eliminate duplication and improve clarity. The current documentation structure contains some overlapping information across different files.
+
+== Current Documentation Structure
+
+=== Security Documentation
+
+* `security-specifications.adoc` - Detailed specifications for security aspects, including JWT attack mitigations and OAuth security considerations
+* `jwt-attacks-analysis.adoc` - Analysis of JWT vulnerabilities and mitigations
+* `oauth-security-analysis.adoc` - Analysis of OAuth-related security vulnerabilities
+* `Threat-Model.adoc` - Threat model and security analysis
+* `threat-coverage-analysis.adoc` - Coverage analysis of threats identified in the threat model
+
+=== Best Practices Guide
+
+* `jwt-security-best-practices.adoc` - Comprehensive guide on JWT security best practices
+
+== Identified Duplication
+
+1. **JWT Attack Mitigations**
+   * Detailed in `security-specifications.adoc`
+   * Analyzed in `jwt-attacks-analysis.adoc`
+   * Best practices in `jwt-security-best-practices.adoc`
+
+2. **OAuth Security Considerations**
+   * Detailed in `security-specifications.adoc`
+   * Analyzed in `oauth-security-analysis.adoc`
+   * Related best practices in `jwt-security-best-practices.adoc`
+
+3. **Key Management**
+   * Implementation details in `security-specifications.adoc`
+   * Best practices in `jwt-security-best-practices.adoc`
+   * Threat considerations in `Threat-Model.adoc`
+
+== Restructuring Approach
+
+The primary goal is to reduce duplication while maintaining a clear separation of concerns:
+
+1. **Analysis Documents** (`jwt-attacks-analysis.adoc` and `oauth-security-analysis.adoc`) should focus on:
+   * Vulnerability descriptions
+   * Impact assessment
+   * High-level mitigation strategies
+   * References to implementation details
+
+2. **Specification Document** (`security-specifications.adoc`) should focus on:
+   * Implementation details
+   * Class and method references
+   * Technical approach
+   * Test coverage
+
+3. **Best Practices Guide** (`jwt-security-best-practices.adoc`) should focus on:
+   * Application-level guidance
+   * Configuration recommendations
+   * Code examples
+   * Integration patterns
+
+By clarifying these boundaries, we can reduce duplication while ensuring each document serves its intended purpose.
+
+== Specific Recommendations
+
+=== 1. JWT Attacks Analysis Document
+
+* **Keep**: Vulnerability descriptions, impact assessment, high-level mitigation strategies
+* **Remove**: Detailed implementation specifics that are already in the specification document
+* **Add**: Clear cross-references to the specification document for implementation details
+* **Example Change**:
+  * Change "The library implements the following measures: [detailed list]" to "The library implements mitigation measures as detailed in [link to security-specifications.adoc#section]"
+
+=== 2. OAuth Security Analysis Document
+
+* **Keep**: Vulnerability descriptions, impact assessment, high-level mitigation strategies
+* **Remove**: Detailed implementation specifics that are already in the specification document
+* **Add**: Clear cross-references to the specification document for implementation details
+* **Example Change**:
+  * Similar approach to the JWT attacks analysis document
+
+=== 3. Security Specifications Document
+
+* **Keep**: Detailed implementation information, class references, test coverage
+* **Remove**: Duplicated vulnerability descriptions that are already in the analysis documents
+* **Add**: Clear references to the analysis documents for vulnerability context
+* **Reorganize**: Structure sections to align with the analysis documents for easier cross-referencing
+
+=== 4. JWT Security Best Practices Guide
+
+* **Keep**: Application-level guidance, configuration recommendations, code examples
+* **Remove**: Library implementation details that are already in the specification document
+* **Add**: Clear cross-references to the specification and analysis documents
+* **Focus**: Emphasize how to use the library correctly rather than how the library works internally
+
+== Implementation Plan
+
+1. **First Phase**:
+   * Update cross-references between documents
+   * Add clear section headings for easier navigation
+   * Ensure document navigation sections are consistent across all documents
+
+2. **Second Phase**:
+   * Remove duplicated content from `jwt-attacks-analysis.adoc` and `oauth-security-analysis.adoc`
+   * Focus these documents on vulnerability analysis, not implementation details
+   * Add clear cross-references to `security-specifications.adoc` for implementation details
+
+3. **Third Phase**:
+   * Remove duplicated content from `security-specifications.adoc`
+   * Focus this document on implementation details, not vulnerability analysis
+   * Add clear cross-references to the analysis documents for vulnerability context
+
+4. **Fourth Phase**:
+   * Update `jwt-security-best-practices.adoc` to focus on application-level guidance
+   * Remove library implementation details from this document
+   * Add clear cross-references to the specification and analysis documents
+
+== Conclusion
+
+By implementing these changes, we can create a more cohesive and less redundant documentation structure that better serves the needs of different audiences:
+
+* **Security Researchers**: Analysis documents
+* **Library Developers**: Specification document
+* **Application Developers**: Best practices guide
+
+Each document will have a clear purpose and scope, reducing duplication and making the documentation easier to maintain.

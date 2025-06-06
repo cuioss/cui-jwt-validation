@@ -6,6 +6,11 @@
 
 link:../Specification.adoc[Back to Main Specification]
 
+[NOTE]
+====
+This document is part of a comprehensive security documentation set. A plan for reducing duplication across security documents has been created in link:../documentation-restructuring-plan.adoc[Documentation Restructuring Plan].
+====
+
 == Overview
 _See Requirement link:../Requirements.adoc#CUI-JWT-8[CUI-JWT-8: Security] and link:../security/Threat-Model.adoc[Threat Model]_
 
@@ -28,7 +33,15 @@ This document provides detailed specifications for the security aspects of the J
 
 == Security Measures
 
-This section outlines the security measures implemented in the JWT Token Validation library. For a comprehensive analysis of common JWT vulnerabilities and attacks, see the link:../security/jwt-attacks-analysis.adoc[JWT Vulnerabilities and Attacks Analysis] document.
+This section outlines the security measures implemented in the JWT Token Validation library.
+
+=== Document Structure and Cross-References
+
+* For a comprehensive analysis of common JWT vulnerabilities and attacks, see the link:jwt-attacks-analysis.adoc[JWT Vulnerabilities and Attacks Analysis] document.
+* For a comprehensive analysis of OAuth-related security vulnerabilities, see the link:oauth-security-analysis.adoc[OAuth Security Considerations Analysis] document.
+* For application-level security guidance and best practices, see the link:../jwt-security-best-practices.adoc[JWT Security Best Practices Guide].
+
+The sections below focus on the technical implementation details of security measures in the library.
 
 === JWT Attack Mitigations
 
@@ -662,3 +675,51 @@ Mobile app redirect scheme handling is outside the scope of the token validation
 === Outstanding Security Tasks
 
 Please refer to the link:../TODO.adoc[TODO] document for planned security enhancements and additional test coverage.
+
+=== Key Management
+_See Requirement link:../Requirements.adoc#CUI-JWT-4[CUI-JWT-4: Key Management]_
+
+==== Status: IMPLEMENTED
+
+The library implements a robust key management system for handling cryptographic keys used in JWT validation.
+
+==== Implementation Details
+
+The key management system is implemented through the following classes:
+
+* link:../../src/main/java/de/cuioss/jwt/validation/jwks/JwksLoader.java[JwksLoader] - Interface for loading JWKS (JSON Web Key Set)
+* link:../../src/main/java/de/cuioss/jwt/validation/jwks/http/HttpJwksLoader.java[HttpJwksLoader] - Implementation for loading JWKS from HTTP endpoints
+* link:../../src/main/java/de/cuioss/jwt/validation/jwks/file/FileSystemJwksLoader.java[FileSystemJwksLoader] - Implementation for loading JWKS from the file system
+* link:../../src/main/java/de/cuioss/jwt/validation/jwks/cache/CachedJwksLoader.java[CachedJwksLoader] - Implementation that adds caching to any JwksLoader
+* link:../../src/main/java/de/cuioss/jwt/validation/jwks/multi/MultiSourceJwksLoader.java[MultiSourceJwksLoader] - Implementation that aggregates multiple JwksLoader instances
+
+The key management system supports:
+
+* Automatic key rotation through JWKS refreshing
+* Caching of keys to improve performance and resilience
+* Multiple key sources for high availability
+* Validation of key types and usage
+* Protection against key injection attacks
+
+==== Security Features
+
+The key management system includes the following security features:
+
+* Strict validation of key IDs (`kid`) to prevent injection attacks
+* Sanitization of key material to prevent XSS and injection vulnerabilities
+* Enforcement of key usage constraints (e.g., RSA keys for signature verification)
+* Secure handling of JWKS retrieval with TLS validation
+* Protection against embedded JWK attacks by only trusting pre-configured key sources
+* Protection against JKU/X5U header abuse by ignoring these headers in tokens
+
+==== Test Coverage
+
+The key management system is thoroughly tested through:
+
+* link:../../src/test/java/de/cuioss/jwt/validation/jwks/http/HttpJwksLoaderTest.java[HttpJwksLoaderTest] - Tests for loading JWKS from HTTP endpoints
+* link:../../src/test/java/de/cuioss/jwt/validation/jwks/file/FileSystemJwksLoaderTest.java[FileSystemJwksLoaderTest] - Tests for loading JWKS from the file system
+* link:../../src/test/java/de/cuioss/jwt/validation/jwks/cache/CachedJwksLoaderTest.java[CachedJwksLoaderTest] - Tests for JWKS caching
+* link:../../src/test/java/de/cuioss/jwt/validation/jwks/multi/MultiSourceJwksLoaderTest.java[MultiSourceJwksLoaderTest] - Tests for multiple JWKS sources
+* link:../../src/test/java/de/cuioss/jwt/validation/security/KeyInjectionAttackTest.java[KeyInjectionAttackTest] - Tests for protection against key ID injection attacks
+* link:../../src/test/java/de/cuioss/jwt/validation/security/EmbeddedJwkAttackTest.java[EmbeddedJwkAttackTest] - Tests for protection against embedded JWK attacks
+* link:../../src/test/java/de/cuioss/jwt/validation/security/JkuX5uAttackTest.java[JkuX5uAttackTest] - Tests for protection against JKU/X5U header abuse

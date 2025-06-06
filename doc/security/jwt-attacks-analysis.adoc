@@ -6,9 +6,18 @@
 
 link:../Specification.adoc[Back to Main Specification]
 
+[NOTE]
+====
+This document is part of a comprehensive security documentation set. A plan for reducing duplication across security documents has been created in link:../documentation-restructuring-plan.adoc[Documentation Restructuring Plan].
+====
+
 == Overview
 
 This document provides a comprehensive analysis of common JWT vulnerabilities and attacks as documented in the article "The Ultimate Guide to JWT Vulnerabilities and Attacks" from PentesterLab (https://pentesterlab.com/blog/jwt-vulnerabilities-attacks-guide). Each vulnerability is analyzed, the current mitigation approach in our library is documented, and test coverage is assessed.
+
+For detailed implementation information on how these mitigations are implemented, see the link:security-specifications.adoc#jwt-attack-mitigations[JWT Attack Mitigations] section in the Security Specifications document.
+
+For guidance on secure token handling practices for application developers, see the link:../jwt-security-best-practices.adoc[JWT Security Best Practices Guide].
 
 == Vulnerability Analysis
 

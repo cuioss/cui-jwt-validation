@@ -6,9 +6,20 @@
 
 link:Specification.adoc[Back to Main Specification]
 
+[NOTE]
+====
+This document is part of a comprehensive security documentation set. A plan for reducing duplication across security documents has been created in link:documentation-restructuring-plan.adoc[Documentation Restructuring Plan].
+====
+
 == Overview
 
 This document provides a comprehensive guide on security best practices for JWT token handling in applications using the JWT Validation library. It covers secure token handling, proper library configuration, key management, monitoring, and common pitfalls to avoid.
+
+This guide focuses on application-level security practices rather than internal library implementation details. For information about how the library internally mitigates security vulnerabilities, please refer to:
+
+* link:security/security-specifications.adoc[Security Specifications] - Detailed implementation of security measures
+* link:security/jwt-attacks-analysis.adoc[JWT Vulnerabilities and Attacks Analysis] - Analysis of common JWT vulnerabilities
+* link:security/oauth-security-analysis.adoc[OAuth Security Considerations Analysis] - Analysis of OAuth-related security vulnerabilities
 
 === Document Navigation
 
@@ -21,6 +32,23 @@ This document provides a comprehensive guide on security best practices for JWT 
 * link:security/oauth-security-analysis.adoc[OAuth Security Considerations Analysis] - Analysis of OAuth security considerations
 * link:security/Threat-Model.adoc[Threat Model] - Security analysis and mitigations
 * link:TODO.adoc[TODO] - List of planned enhancements and tasks
+
+=== Document Scope and Related Documentation
+
+This guide is primarily intended for **application developers** who are using the JWT Validation library. It focuses on:
+
+1. **Application-level security practices** - How to securely use JWTs in your application
+2. **Configuration guidance** - How to properly configure the library for security
+3. **Implementation patterns** - Best practices for integrating JWT validation into your systems
+
+This document complements the following security-focused documents:
+
+* link:security/jwt-attacks-analysis.adoc[JWT Vulnerabilities and Attacks Analysis] - Detailed analysis of JWT vulnerabilities from a security research perspective
+* link:security/oauth-security-analysis.adoc[OAuth Security Considerations Analysis] - Detailed analysis of OAuth vulnerabilities
+* link:security/security-specifications.adoc[Security Specifications] - Technical implementation details of security measures in the library
+* link:security/Threat-Model.adoc[Threat Model] - Comprehensive threat modeling for the library
+
+Where appropriate, this guide will reference these documents for more detailed information on specific topics.
 
 == Secure Token Handling on the Client
 
@@ -119,6 +147,8 @@ function logout() {
 
 === Token Validation Settings
 
+This section provides guidance on configuring the library for secure token validation. For details on the internal implementation of these validation mechanisms, see link:security/security-specifications.adoc#signature-validation[Signature Validation] and link:security/security-specifications.adoc#claims-validation[Claims Validation] in the Security Specifications document.
+
 ==== Recommendations
 
 1. **Always validate token signatures**
@@ -153,6 +183,8 @@ TokenValidator validator = TokenValidator.builder()
 
 === Algorithm Configuration
 
+This section provides guidance on securely configuring JWT algorithms. For detailed information on how the library prevents algorithm-based attacks, see link:security/jwt-attacks-analysis.adoc#_2_none_algorithm_attack[None Algorithm Attack], link:security/jwt-attacks-analysis.adoc#_3_trivial_secret_weak_hmac_keys[Trivial Secret], and link:security/jwt-attacks-analysis.adoc#_4_algorithm_confusion_rsa_to_hmac[Algorithm Confusion] in the JWT Vulnerabilities and Attacks Analysis document.
+
 ==== Recommendations
 
 1. **Use strong, asymmetric algorithms**
@@ -182,6 +214,8 @@ TokenValidator validator = TokenValidator.builder()
 == Key Management Best Practices
 
 === Key Storage and Protection
+
+This section provides guidance on secure key management practices. For information on how the library implements key management internally, see link:security/security-specifications.adoc#key-management[Key Management] in the Security Specifications document.
 
 ==== Recommendations
 
@@ -213,6 +247,8 @@ JwksLoader jwksLoader = new CachedJwksLoader(
 ```
 
 === JWKS Configuration
+
+This section provides guidance on securely configuring JWKS endpoints. For details on how the library protects against JWKS-related vulnerabilities, see link:security/jwt-attacks-analysis.adoc#_7_jku_x5u_header_abuse[JKU / X5U Header Abuse] in the JWT Vulnerabilities and Attacks Analysis document.
 
 ==== Recommendations
 
@@ -248,6 +284,8 @@ JwksLoader jwksLoader = new CachedJwksLoader(
 == Logging and Monitoring Recommendations
 
 === Security Logging
+
+This section provides guidance on implementing effective security logging. For information on how the library implements security event logging, see link:security/security-specifications.adoc#security-event-counter[Security Event Counter] in the Security Specifications document.
 
 ==== Recommendations
 
@@ -310,6 +348,8 @@ tokenValidator.setMetricsCollector(metrics -> {
 == Common Misconfigurations to Avoid
 
 === Security Pitfalls
+
+This section outlines common security pitfalls to avoid. For a comprehensive analysis of JWT vulnerabilities and how they are mitigated in the library, see the link:security/jwt-attacks-analysis.adoc[JWT Vulnerabilities and Attacks Analysis] document.
 
 ==== Recommendations
 
@@ -381,10 +421,19 @@ try {
 
 == References
 
-* https://datatracker.ietf.org/doc/html/draft-ietf-oauth-jwt-bcp - JWT Best Current Practices
-* https://auth0.com/blog/a-look-at-the-latest-draft-for-jwt-bcp/ - A Look at the Latest Draft for JWT BCP
+=== Project Documentation
+
 * link:security/jwt-attacks-analysis.adoc[JWT Vulnerabilities and Attacks Analysis] - Analysis of common JWT vulnerabilities
 * link:security/oauth-security-analysis.adoc[OAuth Security Considerations Analysis] - Analysis of OAuth security considerations
+* link:security/security-specifications.adoc[Security Specifications] - Technical implementation details of security measures
+* link:security/Threat-Model.adoc[Threat Model] - Comprehensive threat modeling for the library
+
+=== External References
+
+* https://datatracker.ietf.org/doc/html/draft-ietf-oauth-jwt-bcp - JWT Best Current Practices
+* https://auth0.com/blog/a-look-at-the-latest-draft-for-jwt-bcp/ - A Look at the Latest Draft for JWT BCP
 * https://tools.ietf.org/html/rfc7519 - JSON Web Token (JWT) RFC
 * https://tools.ietf.org/html/rfc7515 - JSON Web Signature (JWS) RFC
 * https://tools.ietf.org/html/rfc7518 - JSON Web Algorithms (JWA) RFC
+* https://pentesterlab.com/blog/jwt-vulnerabilities-attacks-guide - The Ultimate Guide to JWT Vulnerabilities and Attacks
+* https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html - Common OAuth Vulnerabilities
