@@ -357,7 +357,7 @@ For implementation details, see the JavaDoc of the classes that use Bouncy Castl
 
 == Additional OAuth/JWT Security Considerations
 
-Based on research from https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html[OAuth Common Vulnerabilities (Doyensec, 2025)], this section addresses additional security considerations for JWT Token Validation in OAuth/OIDC scenarios.
+Based on research from https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html[OAuth Common Vulnerabilities (Doyensec, 2025)], this section addresses additional security considerations for JWT Token Validation in OAuth/OIDC scenarios. For a detailed analysis of each vulnerability and our mitigation approach, please refer to the link:../threat-model/oauth-security-analysis.adoc[OAuth Security Considerations Analysis] document.
 
 === Client Confusion Attack Prevention
 _See Requirement link:../Requirements.adoc#CUI-JWT-8.4[CUI-JWT-8.4: Claims Validation]_
