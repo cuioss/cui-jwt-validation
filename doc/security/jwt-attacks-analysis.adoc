@@ -116,6 +116,12 @@ The library implements several protections:
 
 ==== Test Coverage
 * link:../../src/test/java/de/cuioss/jwt/validation/pipeline/TokenSignatureValidatorTest.java[TokenSignatureValidatorTest] - Tests rejection of tokens with invalid `kid` values in `shouldRejectTokenWhenKeyNotFound()`
+* link:../../src/test/java/de/cuioss/jwt/validation/security/KeyInjectionAttackTest.java[KeyInjectionAttackTest] - Comprehensive tests for KID injection attacks:
+** Tests path traversal via `kid` header
+** Tests SQL injection via `kid` header
+** Tests null byte injection via `kid` header
+** Tests command injection via `kid` header
+** Tests very long `kid` header (potential DoS attack)
 
 === 6. Embedded JWK (CVE-2018-0114)
 
@@ -182,6 +188,7 @@ The library currently implements mitigations for all major JWT vulnerabilities. 
 1. ✓ Add specific tests for embedded JWK protection
 2. ✓ Add specific tests for JKU/X5U header abuse protection
 3. ✓ Add specific tests for CVE-2022-21449 protection
-4. Enhance documentation to highlight security features
+4. ✓ Add specific tests for KID injection protection
+5. Enhance documentation to highlight security features
 
 These recommendations have been captured in the TODO.adoc document.
