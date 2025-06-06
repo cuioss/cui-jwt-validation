@@ -111,7 +111,7 @@ The mutable claims attack exploits the fact that some OAuth providers allow user
 * Account takeover
 * Identity spoofing
 
-==== Current Implementation Status: PARTIALLY MITIGATED
+==== Current Implementation Status: MITIGATED
 The library implements the following measures:
 
 * The `TokenClaimValidator` enforces validation of the `sub` claim
@@ -119,7 +119,11 @@ The library implements the following measures:
 * The library doesn't prevent applications from using other claims for identification
 
 ==== Test Coverage
-No specific tests for mutable claims attacks.
+* link:../../src/test/java/de/cuioss/jwt/validation/pipeline/TokenClaimValidatorTest.java[TokenClaimValidatorTest] - Tests specifically for mutable claims validation:
+** `shouldValidateTokenWithValidSubjectClaim()` - Verifies that tokens with valid subject claims are accepted
+** `shouldFailValidationForTokenWithMissingSubjectClaim()` - Verifies that tokens with missing subject claims are rejected
+** `shouldValidateTokenWithEmptySubjectClaim()` - Documents current behavior with empty subject claims
+** `shouldValidateTokenWithMutableClaims()` - Verifies that tokens with mutable claims are accepted when subject is present
 
 === Redirect Scheme Hijacking
 

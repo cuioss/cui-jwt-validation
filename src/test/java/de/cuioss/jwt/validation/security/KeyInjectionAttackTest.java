@@ -177,8 +177,8 @@ class KeyInjectionAttackTest {
     @ParameterizedTest(name = "Should reject token with {1} in KID header")
     @MethodSource("kidInjectionTestCases")
     void shouldRejectTokenWithMaliciousKidHeader(String maliciousKid, String attackType,
-                                                SecurityEventCounter.EventType expectedEventType,
-                                                boolean checkKeyNotFoundMessage) {
+            SecurityEventCounter.EventType expectedEventType,
+            boolean checkKeyNotFoundMessage) {
         // Create a token with the malicious KID
         String token = createTokenWithMaliciousKid(maliciousKid);
 
