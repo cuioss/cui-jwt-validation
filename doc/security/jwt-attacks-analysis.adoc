@@ -173,7 +173,7 @@ The library implements several protections:
 * The library validates signature formats before verification
 
 ==== Test Coverage
-No specific test for CVE-2022-21449 protection.
+* link:../../src/test/java/de/cuioss/jwt/validation/security/PsychicSignatureAttackTest.java[PsychicSignatureAttackTest] - Tests rejection of tokens with all-zero ECDSA signatures (ES256, ES384, ES512)
 
 == Summary and Recommendations
 
@@ -181,7 +181,7 @@ The library currently implements mitigations for all major JWT vulnerabilities. 
 
 1. ✓ Add specific tests for embedded JWK protection
 2. ✓ Add specific tests for JKU/X5U header abuse protection
-3. Add specific tests for CVE-2022-21449 protection
+3. ✓ Add specific tests for CVE-2022-21449 protection
 4. Enhance documentation to highlight security features
 
 These recommendations have been captured in the TODO.adoc document.
