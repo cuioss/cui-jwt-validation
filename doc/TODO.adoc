@@ -30,6 +30,7 @@ Create a unit test that verifies the library correctly rejects tokens with embed
 *References:*
 * https://pentesterlab.com/blog/jwt-vulnerabilities-attacks-guide
 * https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/
+* https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/
 
 === 2. JKU/X5U Header Abuse Test
 
@@ -91,6 +92,46 @@ Create a comprehensive test suite for key injection attacks, focusing on proper 
 * https://pentesterlab.com/blog/jwt-vulnerabilities-attacks-guide
 * https://developer.okta.com/blog/2018/06/20/what-happens-if-your-jwt-is-stolen
 
+=== 5. Scope Validation Test
+
+*Priority:* Medium
+*Status:* TODO
+
+*Description:*
+Create tests to verify the scope validation functionality, ensuring that the library properly handles tokens with different scope values and prevents scope upgrade attacks.
+
+*Implementation Plan:*
+1. Create a test class `ScopeValidationTest.java`
+2. Implement tests for:
+   * Validating tokens with expected scopes
+   * Rejecting tokens with missing required scopes
+   * Proper handling of tokens with additional unauthorized scopes
+   * Verification of scope-based access control
+
+*References:*
+* https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html
+* https://datatracker.ietf.org/doc/html/rfc6749#section-3.3
+
+=== 6. Mutable Claims Test
+
+*Priority:* Low
+*Status:* TODO
+
+*Description:*
+Create tests to verify the library's handling of potentially mutable claims, focusing on the use of `sub` for user identification instead of mutable claims like email.
+
+*Implementation Plan:*
+1. Enhance `TokenClaimValidatorTest` to include specific tests for subject claim validation
+2. Implement tests for:
+   * Validating tokens with valid subject claims
+   * Rejecting tokens with missing subject claims
+   * Rejecting tokens with empty subject claims
+   * Warning when mutable claims are used for identification
+
+*References:*
+* https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html
+* https://learn.microsoft.com/en-us/entra/identity-platform/claims-validation#validate-the-subject
+
 == Documentation Enhancement
 
 === 1. JWT Attack Mitigation Documentation
@@ -110,7 +151,24 @@ Enhance the security documentation to clearly describe how the library mitigates
 *References:*
 * https://pentesterlab.com/blog/jwt-vulnerabilities-attacks-guide
 
-=== 2. JWT Security Best Practices Guide
+=== 2. OAuth Security Considerations Documentation
+
+*Priority:* High
+*Status:* IN PROGRESS
+
+*Description:*
+Enhance the security documentation to clearly describe how the library addresses OAuth-specific security considerations.
+
+*Implementation Plan:*
+1. Update `doc/specification/security.adoc` to reference the Doyensec article
+2. Create a new section for each OAuth vulnerability
+3. Document the mitigation approach implemented in the library
+4. Link to relevant test classes that verify the mitigation
+
+*References:*
+* https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html
+
+=== 3. JWT Security Best Practices Guide
 
 *Priority:* Medium
 *Status:* TODO
@@ -164,3 +222,20 @@ Enhance the `AlgorithmPreferences` class to support a configurable whitelist app
 
 *References:*
 * https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/
+
+=== 3. Enhanced Scope Validation
+
+*Priority:* Medium
+*Status:* TODO
+
+*Description:*
+Improve the scope validation capabilities to better protect against scope upgrade attacks.
+
+*Implementation Plan:*
+1. Enhance the `ParsedAccessToken` class with additional scope validation methods
+2. Add warnings when potential scope-related issues are detected
+3. Document best practices for scope validation in client applications
+
+*References:*
+* https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html
+* https://datatracker.ietf.org/doc/html/rfc6749#section-3.3

@@ -20,7 +20,7 @@ This document provides recommendations for sensible upper bounds for JWKS (JSON 
 * link:../LogMessages.adoc[Log Messages] - Reference for all log messages
 * link:../Build.adoc[Building and Development] - Information for contributors
 * link:technical-components.adoc[Technical Components] - Implementation details
-* link:security.adoc[Security] - Security measures implementation
+* link:security-specifications.adoc[Security] - Security measures implementation
 * link:testing.adoc[Testing] - Testing approach and coverage
 * link:token-size-validation.adoc[Token Size Validation] - Token size validation details
 * link:token-decryption.adoc[Token Decryption] - Future JWE support

@@ -18,7 +18,7 @@ _See Requirement link:../Requirements.adoc#CUI-JWT-1.4[CUI-JWT-1.4: Token Decryp
 * link:../LogMessages.adoc[Log Messages] - Reference for all log messages
 * link:../Build.adoc[Building and Development] - Information for contributors
 * link:technical-components.adoc[Technical Components] - Implementation details
-* link:security.adoc[Security] - Security measures implementation
+* link:security-specifications.adoc[Security] - Security measures implementation
 * link:testing.adoc[Testing] - Testing approach and coverage
 
 ==== Status: NOT IMPLEMENTED

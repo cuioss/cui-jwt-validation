@@ -17,6 +17,8 @@ This document analyzes the coverage of threats, mitigations, and recommendations
 * link:../LogMessages.adoc[Log Messages] - Reference for all log messages
 * link:../Build.adoc[Building and Development] - Information for contributors
 * link:Threat-Model.adoc[Threat Model] - Security analysis and mitigations
+* link:jwt-attacks-analysis.adoc[JWT Vulnerabilities and Attacks Analysis] - Analysis of common JWT vulnerabilities
+* link:oauth-security-analysis.adoc[OAuth Security Considerations Analysis] - Analysis of OAuth security considerations
 
 == Spoofing
 

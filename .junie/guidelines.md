@@ -18,7 +18,9 @@ This file provides guidance to Junie when working with code in this repository.
 - Token decryption: `doc/specification/token-decryption.adoc`
 - Token size validation: `doc/specification/token-size-validation.adoc`
 - Testing guidelines: `doc/specification/testing.adoc`
-- Threat model: `doc/threat-model/Threat-Model.adoc`
+- Threat model: `doc/security/Threat-Model.adoc`
+- JWT attacks analysis: `doc/security/jwt-attacks-analysis.adoc`
+- OAuth security analysis: `doc/security/oauth-security-analysis.adoc`
 - Refactorings: `doc/Refactorings.adoc`
 - TODOs: `doc/TODO.adoc`
 

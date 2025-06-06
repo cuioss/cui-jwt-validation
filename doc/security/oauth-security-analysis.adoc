@@ -1,0 +1,196 @@
+= OAuth Security Considerations Analysis
+:toc:
+:toclevels: 3
+:toc-title: Table of Contents
+:sectnums:
+
+link:../Specification.adoc[Back to Main Specification]
+
+== Overview
+
+This document provides a comprehensive analysis of OAuth-related security vulnerabilities as documented in the article "Common OAuth Vulnerabilities" from Doyensec (https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html). Each vulnerability is analyzed in the context of JWT token handling, the current mitigation approach in our library is documented, and test coverage is assessed.
+
+== Vulnerability Analysis
+
+=== Client Confusion Attack
+
+==== Description
+The client confusion attack occurs when a token issued for one client is used with a different client. This attack is possible when applications implementing OAuth don't verify that the token was generated for their specific client ID. An attacker could create a malicious website that implements OAuth login, collect legitimate access tokens from users, and then use these tokens to impersonate users on vulnerable applications that don't validate the token's intended audience.
+
+==== Impact
+* Account takeover
+* Authentication bypass
+* Session hijacking
+
+==== Current Implementation Status: MITIGATED
+The library has implemented protections against client confusion attacks:
+
+* The `TokenClaimValidator` validates the `azp` (authorized party) claim
+* The `IssuerConfig` class supports both audience (`aud`) and `azp` validation
+* Configuration is available through the `IssuerConfig` builder:
+** `expectedAudience()` - sets the expected audience
+** `expectedClientId()` - sets the expected client ID for `azp` validation
+
+==== Test Coverage
+* link:../../src/test/java/de/cuioss/jwt/validation/ClientConfusionAttackTest.java[ClientConfusionAttackTest] - Tests specifically for client confusion attacks:
+** `verify_azp_validation()` - Verifies that tokens with valid `azp` claims are accepted
+** `verify_azp_validation_failure()` - Verifies that tokens with invalid `azp` claims are rejected
+** `verify_different_client_token_rejected()` - Verifies that tokens from different clients are rejected
+** `verify_audience_validation_without_azp()` - Verifies audience validation
+** `verify_azp_validation_without_audience()` - Verifies `azp` validation without audience
+** `verify_missing_azp_rejected()` - Verifies rejection of tokens with missing `azp` claims
+
+=== Scope Upgrade Attack
+
+==== Description
+The scope upgrade attack occurs when an attacker attempts to add additional scopes during the token exchange process. If the authorization server accepts and implicitly trusts a `scope` parameter sent in the Access Token Request, a malicious application could try to upgrade the scope of Authorization Codes retrieved from user callbacks by sending a higher privileged scope in the Access Token Request.
+
+==== Impact
+* Privilege escalation
+* Unauthorized access to protected resources
+
+==== Current Implementation Status: PARTIALLY MITIGATED
+The library implements the following measures:
+
+* The `ParsedAccessToken` class provides methods to verify token scopes:
+** `getScopes()` - retrieves the scopes from the token
+** `providesScopes()` - checks if the token provides specific scopes
+** `determineMissingScopes()` - identifies missing scopes
+
+* The token validation process does not modify or upgrade scopes
+* Scope validation is primarily implemented at the application level, not as part of the token validation process
+
+==== Test Coverage
+No specific tests for scope upgrade attack prevention.
+
+=== CSRF Attacks
+
+==== Description
+OAuth CSRF is an attack against OAuth flows, where the browser consuming the authorization code is different than the one that has initiated the flow. It can be used by an attacker to coerce the victim to consume their Authorization Code, causing the victim to connect with attacker's authorization context.
+
+==== Impact
+* Account hijacking
+* Session fixation
+* Unauthorized authentication
+
+==== Current Implementation Status: OUT OF SCOPE
+CSRF protection is primarily a concern at the application level, not in the token validation library:
+
+* The library focuses on token validation after the OAuth flow is complete
+* CSRF protection during the OAuth flow is the responsibility of the client application
+* The library does document the importance of using the `state` parameter
+
+==== Test Coverage
+No specific tests for CSRF protection as it's out of scope for the token validation library.
+
+=== Redirect Attacks
+
+==== Description
+If the Authorization Server does not properly validate the `redirect_uri` parameter, a malicious actor can manipulate a victim to complete a flow that will disclose their Authorization Code to an untrusted party. Common validation mistakes include validating only the domain (not the full path), allowing subdomains, subpaths, wildcards, or using improper regular expressions.
+
+==== Impact
+* Authorization code theft
+* Account takeover
+* Token leakage
+
+==== Current Implementation Status: OUT OF SCOPE
+Redirect URI validation is the responsibility of the authorization server, not the token validation library:
+
+* The library operates after the OAuth flow is complete and tokens have been issued
+* The library documentation recommends secure OAuth implementations including proper redirect URI validation
+
+==== Test Coverage
+No specific tests for redirect attacks as they're out of scope for the token validation library.
+
+=== Mutable Claims Attack
+
+==== Description
+The mutable claims attack exploits the fact that some OAuth providers allow users to change certain claims (like email) without verification. If a client application uses these mutable claims for user identification instead of the immutable `sub` claim, an attacker could take over user accounts by creating an account with the victim's email.
+
+==== Impact
+* Account takeover
+* Identity spoofing
+
+==== Current Implementation Status: PARTIALLY MITIGATED
+The library implements the following measures:
+
+* The `TokenClaimValidator` enforces validation of the `sub` claim
+* The library documentation recommends using `sub` for user identification
+* The library doesn't prevent applications from using other claims for identification
+
+==== Test Coverage
+No specific tests for mutable claims attacks.
+
+=== Redirect Scheme Hijacking
+
+==== Description
+When OAuth is used in mobile applications, developers often use custom URL schemes to receive authorization codes. However, multiple applications can register the same URL scheme on a device, potentially allowing a malicious app to intercept authorization codes meant for the legitimate app.
+
+==== Impact
+* Authorization code theft
+* Account takeover
+
+==== Current Implementation Status: OUT OF SCOPE
+Mobile app redirect scheme handling is outside the scope of the token validation library:
+
+* The library focuses on token validation after the OAuth flow is complete
+* The library documentation recommends using the Authorization Code flow with PKCE for mobile apps
+* Mobile app security is the responsibility of the app developer
+
+==== Test Coverage
+No specific tests for redirect scheme hijacking as it's out of scope for the token validation library.
+
+== Security Testing Recommendations
+
+=== Client Confusion Attack Testing
+
+The existing test coverage for client confusion attacks is good. The `ClientConfusionAttackTest` class covers most scenarios including:
+
+* Validation of tokens with valid/invalid `azp` claims
+* Rejection of tokens from different clients
+* Audience validation
+* Validation of missing `azp` claims
+
+=== Scope Upgrade Attack Testing
+
+==== Recommended Test Cases
+
+[cols="2,3,1", options="header"]
+|===
+|Test Case |Description |Expected Outcome
+|verify_scope_validation |Test token validation with expected scopes |Success
+|verify_scope_mismatch |Test token validation with missing required scopes |Failure
+|verify_scope_upgrade_attempt |Test token with unauthorized additional scopes |Proper handling
+|===
+
+==== Implementation Plan
+1. Create a test class `ScopeValidationTest.java`
+2. Implement tests for scope validation functionality
+3. Verify that scope checking methods work as expected
+
+=== Mutable Claims Testing
+
+==== Recommended Test Cases
+
+[cols="2,3,1", options="header"]
+|===
+|Test Case |Description |Expected Outcome
+|verify_sub_validation |Test token validation with valid subject claim |Success
+|verify_missing_sub |Test token validation with missing subject claim |Failure
+|verify_empty_sub |Test token validation with empty subject claim |Failure
+|===
+
+==== Implementation Plan
+1. Enhance `TokenClaimValidatorTest` to include specific tests for subject claim validation
+2. Verify that tokens without valid subject claims are rejected
+
+== Summary and Recommendations
+
+The library currently implements good mitigations for client confusion attacks but could benefit from additional test coverage for scope validation and mutable claims handling. The following recommendations are made to further improve security:
+
+1. Add specific tests for scope validation functionality
+2. Enhance documentation about the importance of using the immutable `sub` claim for user identification
+3. Consider adding explicit warnings when applications use mutable claims for user identification
+4. Maintain clear documentation about which OAuth vulnerabilities are addressed by the library and which are the responsibility of the application developer
+
+These recommendations have been captured in the TODO.adoc document.

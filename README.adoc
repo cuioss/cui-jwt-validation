@@ -135,7 +135,7 @@ The project includes comprehensive documentation to help you get started and und
 * link:doc/Requirements.adoc[Requirements] - Functional and non-functional requirements
 * link:doc/specification/technical-components.adoc[Technical Components] - Detailed component specifications
 * link:doc/specification/well-known.adoc[OIDC Discovery Support] - Specification for OIDC .well-known endpoint interaction
-* link:doc/threat-model/Threat-Model.adoc[Threat Model] - Security analysis and mitigations
+* link:doc/security/Threat-Model.adoc[Threat Model] - Security analysis and mitigations
 * link:doc/LogMessages.adoc[Log Messages] - Logging and troubleshooting
 * link:doc/Build.adoc[Building and Development] - Information for contributors
 * link:doc/UnitTesting.adoc[Test Utilities] - Documentation for the test artifact and utilities

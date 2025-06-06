@@ -18,7 +18,7 @@ _See Requirement link:../Requirements.adoc#CUI-JWT-8.1[CUI-JWT-8.1: Token Size L
 * link:../LogMessages.adoc[Log Messages] - Reference for all log messages
 * link:../Build.adoc[Building and Development] - Information for contributors
 * link:technical-components.adoc[Technical Components] - Implementation details
-* link:security.adoc[Security] - Security measures implementation
+* link:../security/security-specifications.adoc[Security] - Security measures implementation
 * link:testing.adoc[Testing] - Testing approach and coverage
 * link:token-decryption.adoc[Token Decryption] - Future JWE support
 

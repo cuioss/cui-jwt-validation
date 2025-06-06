@@ -5,7 +5,7 @@
 :sectnums:
 
 == Overview
-_See Requirement link:../Requirements.adoc#CUI-JWT-8[CUI-JWT-8: Security Requirements] and Specification link:../Specification.adoc[Specification] and link:../specification/security.adoc[Security Specification]_
+_See Requirement link:../Requirements.adoc#CUI-JWT-8[CUI-JWT-8: Security Requirements] and Specification link:../Specification.adoc[Specification] and link:../specification/security-specifications.adoc[Security Specification]_
 
 This document outlines the threat model for the JWT Token Validation library. The threat model follows OWASP recommendations and identifies potential security threats, current mitigations, and additional recommendations.
 
@@ -120,7 +120,7 @@ For a detailed analysis of threats, current mitigations, and recommendations, pl
 
 The following aspects are covered in detail in the specification documents:
 
-* *Security Controls*: For detailed information about security controls, including input validation, cryptographic practices, authentication and authorization, secure communication, error handling and logging, and data protection, please refer to the link:../specification/security.adoc[Security Specification] document.
+* *Security Controls*: For detailed information about security controls, including input validation, cryptographic practices, authentication and authorization, secure communication, error handling and logging, and data protection, please refer to the link:../specification/security-specifications.adoc[Security Specification] document.
 
 * *Security Testing*: For detailed information about security testing, including required security tests and vulnerability scanning, please refer to the link:../specification/testing.adoc[Testing Specification] document.
 

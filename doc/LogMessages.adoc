@@ -14,7 +14,7 @@ This document provides a reference for all log messages used in the JWT Token Va
 * link:Usage.adoc[Usage Guide] - How to use the library with code examples
 * link:Requirements.adoc[Requirements] - Functional and non-functional requirements
 * link:Specification.adoc[Specification] - Technical specifications
-* link:threat-model/Threat-Model.adoc[Threat Model] - Security analysis and mitigations
+* link:security/Threat-Model.adoc[Threat Model] - Security analysis and mitigations
 * link:Build.adoc[Building and Development] - Information for contributors
 
 === Log Message Format
