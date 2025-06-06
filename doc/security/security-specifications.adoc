@@ -24,6 +24,7 @@ This document provides detailed specifications for the security aspects of the J
 * link:../specification/token-size-validation.adoc[Token Size Validation] - Token size validation details
 * link:../specification/jwks-size-recommendations.adoc[JWKS Size Recommendations] - JWKS size limits and recommendations
 * link:../specification/token-decryption.adoc[Token Decryption] - Future JWE support
+* link:../jwt-security-best-practices.adoc[JWT Security Best Practices Guide] - Comprehensive guide on JWT security best practices
 
 == Security Measures
 

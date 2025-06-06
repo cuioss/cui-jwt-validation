@@ -68,7 +68,7 @@ Enhance the security documentation to clearly describe how the library addresses
 === 3. JWT Security Best Practices Guide
 
 *Priority:* Medium
-*Status:* [ ] TODO
+*Status:* [x] COMPLETED
 
 *Description:*
 Create a comprehensive guide for users of the library on JWT security best practices.
@@ -77,16 +77,16 @@ Create a comprehensive guide for users of the library on JWT security best pract
 
 *Implementation Plan:*
 
-1. [ ] Create a new document `doc/jwt-security-best-practices.adoc`
-2. [ ] Include sections on:
+1. [x] Create a new document `doc/jwt-security-best-practices.adoc`
+2. [x] Include sections on:
 ** Secure token handling on the client
 ** Proper configuration of the library
 ** Key management best practices
 ** Logging and monitoring recommendations
 ** Common misconfigurations to avoid
-3. [ ] Run `./mvnw -Ppre-commit clean verify` to fix all javadoc warnings if there are any
-4. [ ] Cross-reference with link:security/jwt-attacks-analysis.adoc[jwt-attacks-analysis.adoc] and link:security/oauth-security-analysis.adoc[oauth-security-analysis.adoc]
-5. [ ] Commit the changes to git with a meaningful commit message
+3. [x] Run `./mvnw -Ppre-commit clean verify` to fix all javadoc warnings if there are any
+4. [x] Cross-reference with link:security/jwt-attacks-analysis.adoc[jwt-attacks-analysis.adoc] and link:security/oauth-security-analysis.adoc[oauth-security-analysis.adoc]
+5. [x] Commit the changes to git with a meaningful commit message
 
 *References:*
 * https://auth0.com/blog/a-look-at-the-latest-draft-for-jwt-bcp/
