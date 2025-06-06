@@ -19,40 +19,12 @@ The following symbols are used for progress tracking:
 |[x] |Completed
 |===
 
-== Security Test Coverage Enhancement
-
-=== 1. Mutable Claims Test
-
-*Priority:* Low
-*Status:* [x] COMPLETED
-
-*Description:*
-Create tests to verify the library's handling of potentially mutable claims, focusing on the use of `sub` for user identification instead of mutable claims like email.
-
-*Related to:* link:security/oauth-security-analysis.adoc#_mutable_claims_attack[Mutable Claims Attack]
-
-*Implementation Plan:*
-
-1. [x] Enhance `TokenClaimValidatorTest` to include specific tests for subject claim validation
-2. [x] Implement tests for:
-** Validating tokens with valid subject claims
-** Rejecting tokens with missing subject claims
-** Documenting behavior with empty subject claims
-** Validating tokens with mutable claims
-3. [x] Run `./mvnw -Ppre-commit clean verify` to fix all javadoc warnings if there are any
-4. [x] Update the corresponding section in link:security/oauth-security-analysis.adoc[oauth-security-analysis.adoc]: Set status to MITIGATED and link the corresponding test
-5. [x] Commit the changes to git with a meaningful commit message
-
-*References:*
-* https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html
-* https://learn.microsoft.com/en-us/entra/identity-platform/claims-validation#validate-the-subject
-
 == Documentation Enhancement
 
 === 1. JWT Attack Mitigation Documentation
 
 *Priority:* High
-*Status:* [/] IN PROGRESS
+*Status:* [x] COMPLETED
 
 *Description:*
 Enhance the security documentation to clearly describe how the library mitigates each of the common JWT attacks.
@@ -61,13 +33,12 @@ Enhance the security documentation to clearly describe how the library mitigates
 
 *Implementation Plan:*
 
-1. [ ] Update `doc/specification/security.adoc` to reference the PentesterLab article
-2. [ ] Create a new section for each attack vector
-3. [ ] Document the mitigation approach implemented in the library
-4. [ ] Link to relevant test classes that verify the mitigation
-5. [ ] Run `./mvnw -Ppre-commit clean verify` to fix all javadoc warnings if there are any
-6. [ ] Update the corresponding sections in link:security/jwt-attacks-analysis.adoc[jwt-attacks-analysis.adoc] to ensure consistency
-7. [ ] Commit the changes to git with a meaningful commit message
+1. [x] Update `doc/security/security-specifications.adoc` to reference the PentesterLab article
+2. [x] Create a new section for each attack vector
+3. [x] Document the mitigation approach implemented in the library
+4. [x] Link to relevant test classes that verify the mitigation and or documentation
+5. [x] Update the corresponding sections in link:security/jwt-attacks-analysis.adoc[jwt-attacks-analysis.adoc] to ensure consistency
+6. [x] Commit the changes to git with a meaningful commit message
 
 *References:*
 * https://pentesterlab.com/blog/jwt-vulnerabilities-attacks-guide
@@ -87,10 +58,9 @@ Enhance the security documentation to clearly describe how the library addresses
 1. [ ] Update `doc/specification/security.adoc` to reference the Doyensec article
 2. [ ] Create a new section for each OAuth vulnerability
 3. [ ] Document the mitigation approach implemented in the library
-4. [ ] Link to relevant test classes that verify the mitigation
-5. [ ] Run `./mvnw -Ppre-commit clean verify` to fix all javadoc warnings if there are any
-6. [ ] Update the corresponding sections in link:security/oauth-security-analysis.adoc[oauth-security-analysis.adoc] to ensure consistency
-7. [ ] Commit the changes to git with a meaningful commit message
+4. [ ] Link to relevant test classes and or documentation that verify the mitigation
+5. [ ] Update the corresponding sections in link:security/oauth-security-analysis.adoc[oauth-security-analysis.adoc] to ensure consistency
+6. [ ] Commit the changes to git with a meaningful commit message
 
 *References:*
 * https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html
