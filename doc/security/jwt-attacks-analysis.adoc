@@ -134,7 +134,7 @@ The library implements several protections:
 * Keys are loaded only from trusted sources configured at initialization time
 
 ==== Test Coverage
-No specific test for embedded JWK protection.
+* link:../../src/test/java/de/cuioss/jwt/validation/security/EmbeddedJwkAttackTest.java[EmbeddedJwkAttackTest] - Tests rejection of tokens with embedded JWK in the header
 
 === 7. JKU / X5U Header Abuse
 
