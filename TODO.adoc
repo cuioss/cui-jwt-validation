@@ -68,7 +68,7 @@ After implementing any task in this TODO list, follow these steps:
 * [ ] Include any additional notes about implementation decisions in the commit description
 
 === Task 1. Set GroupId to de.cuioss.jwt
-[ ] *Priority:* High
+[x] *Priority:* High
 
 *Description:* Update the Maven group ID to `<groupId>de.cuioss.jwt</groupId>` throughout the project. Ensure that all documentation, especially the badges on README.adoc, reflect this change.
 
@@ -76,16 +76,16 @@ After implementing any task in this TODO list, follow these steps:
 
 *Implementation Steps:*
 
-* [ ] Update group ID in root pom.xml
-* [ ] Update any references to the group ID in README.adoc
-* [ ] Update badges in README.adoc that include the group ID
-* [ ] Check and update any references in documentation files
-* [ ] Verify build works with new group ID
-* [ ] Complete the task completion process:
-** [ ] Verify documentation is updated correctly
-** [ ] Mark task as completed in TODO.adoc
-** [ ] Run a full build with `./mvnw clean verify`
-** [ ] Commit changes (git-commit) with task name as commit message
+* [x] Update group ID in root pom.xml
+* [x] Update any references to the group ID in README.adoc
+* [x] Update badges in README.adoc that include the group ID
+* [x] Check and update any references in documentation files
+* [x] Verify build works with new group ID
+* [x] Complete the task completion process:
+** [x] Verify documentation is updated correctly
+** [x] Mark task as completed in TODO.adoc
+** [x] Run a full build with `./mvnw clean verify`
+** [x] Commit changes (git-commit) with task name as commit message
 
 === Task 2. Remove Shell Scripts
 [x] *Priority:* Medium

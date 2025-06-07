@@ -6,15 +6,15 @@
 
 == Status
 
-image:https://github.com/cuioss/cui-jwt-validation/actions/workflows/maven.yml/badge.svg[Java CI with Maven,link=https://github.com/cuioss/cui-jwt-validation/actions/workflows/maven.yml]
+image:https://github.com/cuioss/cui-jwt/actions/workflows/maven.yml/badge.svg[Java CI with Maven,link=https://github.com/cuioss/cui-jwt/actions/workflows/maven.yml]
 image:http://img.shields.io/:license-apache-blue.svg[License,link=http://www.apache.org/licenses/LICENSE-2.0.html]
-image:https://img.shields.io/maven-central/v/de.cuioss/cui-jwt-validation.svg?label=Maven%20Central["Maven Central", link="https://search.maven.org/artifact/de.cuioss/cui-jwt-validation"]
+image:https://img.shields.io/maven-central/v/de.cuioss.jwt/cui-jwt.svg?label=Maven%20Central["Maven Central", link="https://search.maven.org/artifact/de.cuioss.jwt/cui-jwt"]
 image:https://sonarcloud.io/api/project_badges/measure?project=cuioss_cui-jwt-validation&metric=alert_status[Quality Gate Status,link=https://sonarcloud.io/summary/new_code?id=cuioss_cui-jwt-validation]
 image:https://sonarcloud.io/api/project_badges/measure?project=cuioss_cui-jwt-validation&metric=ncloc[Lines of Code,link=https://sonarcloud.io/summary/new_code?id=cuioss_cui-jwt-validation]
 image:https://sonarcloud.io/api/project_badges/measure?project=cuioss_cui-jwt-validation&metric=coverage[Coverage,link=https://sonarcloud.io/summary/new_code?id=cuioss_cui-jwt-validation]
 image:https://img.shields.io/endpoint?url=https://cuioss.github.io/cui-jwt-validation/benchmarks/validator-badge.json[Access Token Validation,link=https://cuioss.github.io/cui-jwt-validation/benchmarks/]
 
-https://cuioss.github.io/cui-jwt-validation/about.html[Generated Documentation on github-pages]
+https://cuioss.github.io/cui-jwt/about.html[Generated Documentation on github-pages]
 
 == What is it?
 
@@ -44,7 +44,7 @@ Therefore it will never be capable of creating tokens itself.
 [source,xml]
 ----
     <dependency>
-        <groupId>de.cuioss</groupId>
+        <groupId>de.cuioss.jwt</groupId>
         <artifactId>cui-jwt-validation</artifactId>
     </dependency>
 ----
@@ -72,7 +72,7 @@ The library also provides a test artifact with utilities for testing JWT validat
 [source,xml]
 ----
     <dependency>
-        <groupId>de.cuioss</groupId>
+        <groupId>de.cuioss.jwt</groupId>
         <artifactId>cui-jwt-validation</artifactId>
         <classifier>test</classifier>
         <scope>test</scope>
