@@ -82,7 +82,7 @@ After implementing any task in this TODO list, follow these steps:
    * JWKS endpoint configuration (cache TTL, refresh interval)
    * Keystore configuration options
    * The configuration must support the multi-issuer aproach of the library. Saying each of the configuration above mus be able to be configured for each issuer.
-   * The key are to be prexifed with `cui.jwt`
+   * The key are to be prefixed with `cui.jwt`
 . Implement property validation using Bean Validation annotations
 . Provide sensible default values
 . Add configuration documentation
