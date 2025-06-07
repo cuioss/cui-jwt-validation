@@ -57,7 +57,7 @@ After implementing any task in this TODO list, follow these steps:
 * [ ] Mark the task as completed with [x]
 * [ ] Add any notes about implementation challenges or decisions if needed
 
-. *Make a Full Build*: Run `./mvnw clean verify` to ensure all tests pass.
+. *Make a Full Build*: Run `./mvnw -Ppre-commit clean verify -pl cui-jwt-quarkus` (from project-root)to ensure all tests pass.
 * [ ] Run the full build command
 * [ ] Verify all tests pass
 * [ ] Check for any warnings that should be addressed

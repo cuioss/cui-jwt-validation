@@ -23,7 +23,7 @@ This document provides detailed specifications for the performance benchmarking 
 * link:testing.adoc[Testing] - Testing approach and coverage
 * link:security-specifications.adoc[Security] - Security specifications
 
-[#_performance_requirements]
+[[performance_requirements]]
 == Performance Requirements
 
 === Token Validation Performance
