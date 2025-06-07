@@ -11,5 +11,5 @@
 .qodo
 **/.vscode/
 .output.txt
-jmh-results*.json
+**/jmh-result*.json
 /META-INF/MANIFEST.MF

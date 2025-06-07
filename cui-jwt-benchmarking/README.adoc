@@ -1,0 +1,95 @@
+= JWT Token Validation Benchmarking Module
+:toc:
+:toclevels: 3
+:toc-title: Table of Contents
+:sectnums:
+
+This module contains benchmarking code for the JWT token validation library. It uses JMH (Java Microbenchmark Harness) to measure performance of various components.
+
+== Overview
+
+The benchmarking module provides performance measurements for key components of the JWT validation library:
+
+* Token validation performance
+* JWKS key retrieval performance
+* Multi-issuer validation performance
+* Error handling performance
+* Concurrent validation performance
+
+== Running Benchmarks Manually
+
+Benchmarks are configured to be skipped by default to prevent them from slowing down regular builds. To run the benchmarks manually, you need to explicitly enable them.
+
+=== Using Maven Command Line
+
+To run benchmarks from the command line:
+
+[source,bash]
+----
+# From the project root directory
+./mvnw clean verify -pl cui-jwt-benchmarking -Dskip.benchmark=false
+
+# With custom JMH parameters
+./mvnw clean verify -pl cui-jwt-benchmarking -Dskip.benchmark=false \
+  -Djmh.iterations=5 \
+  -Djmh.warmupIterations=3 \
+  -Djmh.forks=2 \
+  -Djmh.threads=4
+----
+
+=== JMH Parameters
+
+You can customize the benchmark execution with the following JMH parameters:
+
+* `jmh.iterations` - Number of measurement iterations (default: 5)
+* `jmh.warmupIterations` - Number of warmup iterations (default: 3)
+* `jmh.forks` - Number of JVM forks (default: 2)
+* `jmh.threads` - Number of threads (default: 4)
+* `jmh.result.format` - Result format (default: JSON)
+* `jmh.result.filePrefix` - Result file prefix
+
+=== Running Specific Benchmarks
+
+To run specific benchmarks, you can use the `jmh.includes` parameter:
+
+[source,bash]
+----
+./mvnw clean verify -pl cui-jwt-benchmarking -Dskip.benchmark=false \
+  -Djmh.includes=TokenValidatorBenchmark
+----
+
+== Benchmark Results
+
+After running the benchmarks, results will be available in the `target` directory. If you've configured JSON output, you can visualize the results using the HTML visualizer template included in this module.
+
+== Benchmark Classes
+
+=== TokenValidatorBenchmark
+
+Measures the performance of token validation operations.
+
+=== JwksClientBenchmark
+
+Measures the performance of JWKS key retrieval operations.
+
+=== MultiIssuerValidatorBenchmark
+
+Measures the performance of multi-issuer token validation.
+
+=== ErrorLoadBenchmark
+
+Measures the performance impact of error handling.
+
+=== ConcurrentTokenValidationBenchmark
+
+Measures the performance of concurrent token validation.
+
+== GitHub Actions Integration
+
+This module is configured to run benchmarks automatically via GitHub Actions:
+
+* On merges to the main branch
+* On version tag pushes
+* Manually via workflow dispatch
+
+Results are published to GitHub Pages for visualization and comparison over time.

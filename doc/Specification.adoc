@@ -12,13 +12,13 @@ This document provides the technical specification for the JWT Token Validation 
 === Document Navigation
 
 * link:../README.adoc[README] - Project overview and introduction
-* link:Usage.adoc[Usage Guide] - How to use the library with code examples
+* link:../cui-jwt-validation/README.adoc[Usage Guide] - How to use the library with code examples
 * link:Requirements.adoc[Requirements] - Functional and non-functional requirements
 * link:LogMessages.adoc[Log Messages] - Reference for all log messages
 * link:security/Threat-Model.adoc[Threat Model] - Security analysis and mitigations
 * link:security/jwt-attacks-analysis.adoc[JWT Vulnerabilities and Attacks Analysis] - Analysis of common JWT vulnerabilities
 * link:security/oauth-security-analysis.adoc[OAuth Security Considerations Analysis] - Analysis of OAuth security considerations
-* link:jwt-security-best-practices.adoc[JWT Security Best Practices Guide] - Comprehensive guide on JWT security best practices
+* link:security/jwt-security-best-practices.adoc[JWT Security Best Practices Guide] - Comprehensive guide on JWT security best practices
 * link:Build.adoc[Building and Development] - Information for contributors
 
 == Document Structure

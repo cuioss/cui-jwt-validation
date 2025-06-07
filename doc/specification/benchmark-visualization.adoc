@@ -30,6 +30,13 @@ For local development and testing, you can view benchmark results by directly up
 2. Click "Choose File" or drag and drop your benchmark results JSON file
 3. Explore the visualization
 
+Alternatively, you can open the visualizer with your results file directly in your browser by opening this URL (replacing the path with your actual results file path):
+
+[source]
+----
+https://jmh.morethan.io/?source=file:///path/to/your/jmh-result.json
+----
+
 JMH Visualizer will load your benchmark data and display it with interactive charts and analysis tools.
 
 *Note:* The JMH benchmark tool generates results files in JSON format, typically named `jmh-result.json` or similar, in the target directory after running benchmarks.
@@ -79,9 +86,10 @@ Badge markdown is available in the GitHub Pages deployment under `badge-markdown
 
 Example badge markdown:
 
-```markdown
+[source,markdown]
+----
 [![Access Token Validation](https://img.shields.io/endpoint?url=https://cuioss.github.io/cui-jwt-validation/benchmarks/validator-badge.json)](https://cuioss.github.io/cui-jwt-validation/benchmarks/)
-```
+----
 
 == Interpreting Results
 

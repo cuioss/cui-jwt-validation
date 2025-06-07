@@ -97,18 +97,16 @@ There are two ways to generate PNG images from PlantUML files:
 
 ==== Option 1: Using the Local PlantUML Installation (Recommended)
 
-If you have PlantUML installed locally, you can use the provided script to generate PNG images:
+If you have PlantUML installed locally, you can generate the diagrams directly with the PlantUML command:
 
 [source,bash]
 ----
-./generate-plantuml.sh
+# For a single file
+plantuml -tpng doc/plantuml/diagram-name.puml
+
+# For all files in the directory
+find doc/plantuml -name "*.puml" | xargs plantuml -tpng
 ----
-
-This script will:
-
-1. Find all `.puml` files in the `/doc/plantuml/` directory
-2. Generate corresponding PNG images with the same base name using the locally installed PlantUML
-3. Place the generated images in the same directory
 
 This method is faster and doesn't require a Maven build.
 
@@ -152,7 +150,7 @@ To add a new diagram:
 1. Create a new `.puml` file in the `/doc/plantuml/` directory
 2. Add your PlantUML content to the file
 3. Generate the PNG image using one of the following methods:
-   a. Run the `./generate-plantuml.sh` script (recommended if PlantUML is installed locally)
+   a. Run the PlantUML command directly: `plantuml -tpng doc/plantuml/your-diagram.puml`
    b. Run the Maven build with the `build-plantuml` profile
 4. Reference the generated PNG in your documentation
 

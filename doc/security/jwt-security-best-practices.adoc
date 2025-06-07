@@ -19,7 +19,7 @@ This guide focuses on application-level security practices rather than internal 
 === Document Navigation
 
 * link:../../README.adoc[README] - Project overview and introduction
-* link:../Usage.adoc[Usage Guide] - How to use the library with code examples
+* link:../../cui-jwt-validation/README.adoc[Usage Guide] - How to use the library with code examples
 * link:../Requirements.adoc[Requirements] - Functional and non-functional requirements
 * link:../Specification.adoc[Specification] - Technical specifications
 * link:../LogMessages.adoc[Log Messages] - Reference for all log messages
@@ -126,13 +126,13 @@ HttpRequest request = HttpRequest.newBuilder()
 function logout() {
     // Clear token from memory
     accessToken = null;
-    
+
     // Call server-side logout endpoint to revoke tokens
     fetch('https://api.example.com/logout', {
         method: 'POST',
         credentials: 'include', // Include cookies for refresh token
     });
-    
+
     // Redirect to login page
     window.location.href = '/login';
 }

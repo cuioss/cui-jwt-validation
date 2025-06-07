@@ -6,15 +6,17 @@
 
 == Status
 
-image:https://github.com/cuioss/cui-jwt-validation/actions/workflows/maven.yml/badge.svg[Java CI with Maven,link=https://github.com/cuioss/cui-jwt-validation/actions/workflows/maven.yml]
+image:https://github.com/cuioss/cui-jwt/actions/workflows/maven.yml/badge.svg[Java CI with Maven,link=https://github.com/cuioss/cui-jwt/actions/workflows/maven.yml]
 image:http://img.shields.io/:license-apache-blue.svg[License,link=http://www.apache.org/licenses/LICENSE-2.0.html]
-image:https://img.shields.io/maven-central/v/de.cuioss/cui-jwt-validation.svg?label=Maven%20Central["Maven Central", link="https://search.maven.org/artifact/de.cuioss/cui-jwt-validation"]
-image:https://sonarcloud.io/api/project_badges/measure?project=cuioss_cui-jwt-validation&metric=alert_status[Quality Gate Status,link=https://sonarcloud.io/summary/new_code?id=cuioss_cui-jwt-validation]
-image:https://sonarcloud.io/api/project_badges/measure?project=cuioss_cui-jwt-validation&metric=ncloc[Lines of Code,link=https://sonarcloud.io/summary/new_code?id=cuioss_cui-jwt-validation]
-image:https://sonarcloud.io/api/project_badges/measure?project=cuioss_cui-jwt-validation&metric=coverage[Coverage,link=https://sonarcloud.io/summary/new_code?id=cuioss_cui-jwt-validation]
-image:https://img.shields.io/endpoint?url=https://cuioss.github.io/cui-jwt-validation/benchmarks/validator-badge.json[Access Token Validation,link=https://cuioss.github.io/cui-jwt-validation/benchmarks/]
+image:https://img.shields.io/maven-central/v/de.cuioss.jwt/cui-jwt-parent.svg?label=Maven%20Central["Maven Central", link="https://central.sonatype.com/artifact/de.cuioss.jwt/cui-jwt-parent"]
 
-https://cuioss.github.io/cui-jwt-validation/about.html[Generated Documentation on github-pages]
+image:https://sonarcloud.io/api/project_badges/measure?project=cuioss_cui-jwt-validation-validation&metric=alert_status[Quality Gate Status,link=https://sonarcloud.io/summary/new_code?id=cuioss_cui-jwt-validation]
+image:https://sonarcloud.io/api/project_badges/measure?project=cuioss_cui-jwt-validation-validation&metric=ncloc[Lines of Code,link=https://sonarcloud.io/summary/new_code?id=cuioss_cui-jwt-validation]
+image:https://sonarcloud.io/api/project_badges/measure?project=cuioss_cui-jwt-validation-validation&metric=coverage[Coverage,link=https://sonarcloud.io/summary/new_code?id=cuioss_cui-jwt-validation]
+
+image:https://img.shields.io/endpoint?url=https://cuioss.github.io/cui-jwt/benchmarks/validator-badge.json[Access Token Validation,link=https://cuioss.github.io/cui-jwt/benchmarks/]
+
+https://cuioss.github.io/cui-jwt/about.html[Generated Documentation on github-pages]
 
 == What is it?
 
@@ -44,7 +46,7 @@ Therefore it will never be capable of creating tokens itself.
 [source,xml]
 ----
     <dependency>
-        <groupId>de.cuioss</groupId>
+        <groupId>de.cuioss.jwt</groupId>
         <artifactId>cui-jwt-validation</artifactId>
     </dependency>
 ----
@@ -72,7 +74,7 @@ The library also provides a test artifact with utilities for testing JWT validat
 [source,xml]
 ----
     <dependency>
-        <groupId>de.cuioss</groupId>
+        <groupId>de.cuioss.jwt</groupId>
         <artifactId>cui-jwt-validation</artifactId>
         <classifier>test</classifier>
         <scope>test</scope>
@@ -80,7 +82,7 @@ The library also provides a test artifact with utilities for testing JWT validat
 ----
 
 This artifact contains utility classes for creating and manipulating JWT tokens for testing purposes.
-See the link:doc/UnitTesting.adoc[Test Utilities Documentation] for more details.
+See the link:cui-jwt/UnitTesting.adoc[Test Utilities Documentation] for more details.
 
 == Architecture Overview
 
@@ -125,23 +127,23 @@ AccessTokenContent accessToken = validator.createAccessToken(tokenString);
 // For configuration using OIDC Discovery, see the Usage Guide.
 ----
 
-For more detailed examples and best practices, see the link:doc/Usage.adoc[Usage Guide].
+For more detailed examples and best practices, see the link:cui-jwt/README.adoc[Usage Guide].
 
 == Documentation
 
 The project includes comprehensive documentation to help you get started and understand the library's capabilities:
 
-* link:doc/Usage.adoc[Usage Guide] - How to use the library with code examples
+* link:cui-jwt/README.adoc[Usage Guide] - How to use the library with code examples
 * link:doc/Requirements.adoc[Requirements] - Functional and non-functional requirements
 * link:doc/specification/technical-components.adoc[Technical Components] - Detailed component specifications
 * link:doc/specification/well-known.adoc[OIDC Discovery Support] - Specification for OIDC .well-known endpoint interaction
 * link:doc/security/Threat-Model.adoc[Threat Model] - Security analysis and mitigations
 * link:doc/LogMessages.adoc[Log Messages] - Logging and troubleshooting
 * link:doc/Build.adoc[Building and Development] - Information for contributors
-* link:doc/UnitTesting.adoc[Test Utilities] - Documentation for the test artifact and utilities
+* link:cui-jwt/UnitTesting.adoc[Test Utilities] - Documentation for the test artifact and utilities
 
 == Next Steps
 
-* Read the link:doc/Usage.adoc[Usage Guide] for detailed examples
+* Read the link:cui-jwt/README.adoc[Usage Guide] for detailed examples
 * Review the link:doc/Requirements.adoc[Requirements] to understand the library's capabilities
 * Explore the link:doc/specification/technical-components.adoc[Technical Components] for implementation details

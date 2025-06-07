@@ -1,0 +1,379 @@
+= JWT Validation Test Utilities
+:doctype: book
+:toc: left
+:toclevels: 3
+:sectnums:
+:sectnumlevels: 3
+:icons: font
+
+== Overview
+
+This document describes the test utilities provided by the `cui-jwt-validation` project for testing JWT validation functionality in your applications.
+
+== Test Artifact
+
+The project provides a test artifact with the classifier `test` that contains utility classes for testing JWT validation. This artifact is published alongside the main artifact and can be included in your project's test dependencies.
+
+=== Maven Dependency
+
+To use the test utilities in your project, add the following dependency to your `pom.xml`:
+
+[source,xml]
+----
+<dependency>
+    <groupId>de.cuioss.jwt</groupId>
+    <artifactId>cui-jwt-validation</artifactId>
+    <version>${version}</version>
+    <classifier>test</classifier>
+    <scope>test</scope>
+</dependency>
+----
+
+=== Contents
+
+The test artifact includes the following packages:
+
+* `de.cuioss.jwt.validation.test` - Core test utilities
+* `de.cuioss.jwt.validation.test.generator` - Token and claim generators
+
+== Key Test Utilities
+
+=== TestTokenHolder
+
+The `TestTokenHolder` class is a comprehensive implementation of `TokenContent` for testing purposes that allows for dynamic token generation:
+
+[source,java]
+----
+// Create a token holder with default parameters
+TestTokenHolder tokenHolder = new TestTokenHolder(TokenType.ACCESS_TOKEN, 
+    ClaimControlParameter.defaultForTokenType(TokenType.ACCESS_TOKEN));
+
+// Get the raw JWT token
+String token = tokenHolder.getRawToken();
+
+// Modify claims
+tokenHolder.withClaim("custom-claim", ClaimValue.forPlainString("custom-value"));
+
+// Remove claims
+tokenHolder.withoutClaim("sub");
+
+// Get an IssuerConfig configured for this token
+IssuerConfig issuerConfig = tokenHolder.getIssuerConfig();
+
+// Initialize security event counter if needed
+SecurityEventCounter securityEventCounter = new SecurityEventCounter();
+issuerConfig.initSecurityEventCounter(securityEventCounter);
+
+// Access and modify audience claim
+List<String> audience = tokenHolder.getAudience();
+tokenHolder.withAudience(List.of("new-audience"));
+
+// Access and modify authorized party claim (azp)
+String authorizedParty = tokenHolder.getAuthorizedParty();
+tokenHolder.withAuthorizedParty("new-client-id");
+----
+
+==== Key Features
+
+* *Dynamic Token Generation*: Creates JWT tokens on demand with configurable claims
+* *Claim Manipulation*: Add, remove, or modify claims
+* *Token Type Support*: Supports ACCESS_TOKEN, ID_TOKEN, and REFRESH_TOKEN types
+* *IssuerConfig Generation*: Creates an IssuerConfig configured for the token
+* *Key Material Integration*: Uses InMemoryKeyMaterialHandler for signing and verification
+* *Audience and Authorized Party Support*: Direct access to get and set audience and authorized party (azp) claims
+
+=== ClaimControlParameter
+
+The `ClaimControlParameter` class is a parameter object for controlling which claims should be included or excluded when generating token content:
+
+[source,java]
+----
+// Create parameters for a token with missing issuer and subject
+ClaimControlParameter params = ClaimControlParameter.builder()
+    .missingIssuer(true)
+    .missingSubject(true)
+    .build();
+
+// Create a token holder with these parameters
+TestTokenHolder tokenHolder = new TestTokenHolder(TokenType.ACCESS_TOKEN, params);
+
+// Get default parameters for a specific token type
+ClaimControlParameter defaultParams = ClaimControlParameter.defaultForTokenType(TokenType.ID_TOKEN);
+----
+
+==== Key Features
+
+* *Claim Control*: Control which standard claims are included or excluded
+* *Token Type Defaults*: Get default parameters for specific token types
+* *Builder Pattern*: Use the builder pattern for easy configuration
+
+=== TestTokenGenerators
+
+The `TestTokenGenerators` class provides factory methods for creating TypedGenerator instances that produce TestTokenHolder objects:
+
+[source,java]
+----
+// Get a generator for access tokens
+TypedGenerator<TestTokenHolder> accessTokenGenerator = TestTokenGenerators.accessTokens();
+
+// Generate an access token
+TestTokenHolder accessToken = accessTokenGenerator.next();
+String accessTokenString = accessToken.getRawToken();
+
+// Get a generator for ID tokens
+TypedGenerator<TestTokenHolder> idTokenGenerator = TestTokenGenerators.idTokens();
+
+// Generate an ID token
+TestTokenHolder idToken = idTokenGenerator.next();
+String idTokenString = idToken.getRawToken();
+
+// Get a generator for refresh tokens
+TypedGenerator<TestTokenHolder> refreshTokenGenerator = TestTokenGenerators.refreshTokens();
+
+// Generate a refresh token
+TestTokenHolder refreshToken = refreshTokenGenerator.next();
+String refreshTokenString = refreshToken.getRawToken();
+----
+
+==== Key Features
+
+* *Token Type Generators*: Provides generators for ACCESS_TOKEN, ID_TOKEN, and REFRESH_TOKEN types
+* *TypedGenerator Interface*: Implements the TypedGenerator interface for easy integration with testing frameworks
+* *Default Parameters*: Uses default parameters for each token type
+
+=== TestTokenSource (Preferred Approach)
+
+The `@TestTokenSource` annotation is the preferred way to inject test tokens into parameterized tests:
+
+[source,java]
+----
+@ParameterizedTest
+@TestTokenSource(value = TokenType.ACCESS_TOKEN, count = 5)
+@DisplayName("Test with access token")
+void shouldTestWithAccessToken(TestTokenHolder tokenHolder) {
+    // Given
+    String token = tokenHolder.getRawToken();
+
+    // When
+    AccessTokenContent result = new TokenValidator(tokenHolder.getIssuerConfig()).createAccessToken(token);
+
+    // Then
+    assertNotNull(result, "Token should be parsed successfully");
+    assertEquals(ISSUER, result.getIssuer(), "Issuer claim should match the expected value");
+}
+----
+
+==== Key Features
+
+* *JUnit 5 Integration*: Seamlessly integrates with JUnit 5 parameterized tests
+* *Token Type Selection*: Specify which token type to generate (ACCESS_TOKEN, ID_TOKEN, REFRESH_TOKEN)
+* *Multiple Tokens*: Generate multiple test tokens with the `count` parameter (default value of 5 is recommended for thorough testing)
+* *Simplified Testing*: Eliminates boilerplate code for token generation
+* *Consistent Approach*: Provides a standardized way to test with JWT tokens
+
+==== Example with Multiple Tokens
+
+[source,java]
+----
+@ParameterizedTest
+@TestTokenSource(value = TokenType.ACCESS_TOKEN, count = 5)
+@DisplayName("Test with multiple access tokens")
+void shouldTestWithMultipleAccessTokens(TestTokenHolder tokenHolder) {
+    // This test will run 5 times with different token holders
+
+    // Given
+    String token = tokenHolder.getRawToken();
+
+    // When
+    AccessTokenContent result = new TokenValidator(tokenHolder.getIssuerConfig()).createAccessToken(token);
+
+    // Then
+    assertNotNull(result, "Token should be parsed successfully");
+}
+----
+
+== Usage Examples
+
+=== Testing Token Validation
+
+[source,java]
+----
+@Test
+void shouldValidateToken() {
+    // Arrange
+    TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
+    String token = tokenHolder.getRawToken();
+
+    // Act - Using the simplified approach with the new TokenValidator constructor
+    AccessTokenContent result = new TokenValidator(tokenHolder.getIssuerConfig()).createAccessToken(token);
+
+    // Assert
+    assertNotNull(result);
+    assertEquals(tokenHolder.getClaims().get("sub").getOriginalString(), result.getSubject());
+}
+----
+
+=== Testing Invalid Tokens
+
+[source,java]
+----
+@Test
+void shouldRejectTokenWithMissingClaims() {
+    // Arrange
+    ClaimControlParameter params = ClaimControlParameter.builder()
+        .missingIssuer(true)
+        .build();
+
+    TestTokenHolder tokenHolder = new TestTokenHolder(TokenType.ACCESS_TOKEN, params);
+    String token = tokenHolder.getRawToken();
+
+    // Create an IssuerConfig for validation
+    IssuerConfig issuerConfig = IssuerConfig.builder()
+        .issuer("Token-Test-testIssuer")
+        .expectedAudience("test-client")
+        .expectedClientId("test-client")
+        .jwksContent(InMemoryJWKSFactory.createDefaultJwks())
+        .build();
+
+    TokenValidator validator = new TokenValidator(issuerConfig);
+
+    // Act/Assert
+    TokenValidationException exception = assertThrows(TokenValidationException.class,
+        () -> validator.createAccessToken(token));
+
+    assertEquals(SecurityEventCounter.EventType.MISSING_CLAIM, exception.getEventType());
+}
+----
+
+== Testing Code Using OIDC Discovery (`WellKnownHandler`)
+_See link:../doc/specification/well-known.adoc[OIDC Discovery Specification Details]_
+
+When your application uses the `WellKnownHandler` to discover OIDC provider details, you'll want to test this integration without making actual network calls. The `de.cuioss.jwt.validation.wellknown.dispatcher.WellKnownDispatcher` utility class is provided for this purpose.
+
+=== Introducing `WellKnownDispatcher`
+
+`WellKnownDispatcher` uses WireMock (a library for stubbing and mocking HTTP services) to simulate an OpenID Provider's `/.well-known/openid-configuration` endpoint and its associated JWKS (JSON Web Key Set) endpoint. This allows you to control the responses that `WellKnownHandler` receives during tests, enabling you to simulate various scenarios including:
+
+* Successful discovery of OIDC configuration.
+* Missing or malformed OIDC configuration documents.
+* Network errors during discovery.
+* Inaccessible JWKS URIs.
+
+By using `WellKnownDispatcher`, your tests for components relying on `WellKnownHandler` become isolated, reliable, and fast.
+
+=== Using `WellKnownDispatcher` in JUnit 5 Tests
+
+Here's a typical setup for using `WellKnownDispatcher` in a JUnit 5 test class:
+
+[source,java]
+----
+import de.cuioss.jwt.validation.well_known.WellKnownHandler;
+import de.cuioss.jwt.validation.wellknown.dispatcher.WellKnownDispatcher;
+import de.cuioss.jwt.validation.jwks.http.HttpJwksLoaderConfig; // For example usage
+import org.junit.jupiter.api.*;
+
+// In your test class
+class MyServiceUsingWellKnownTest {
+
+    static WellKnownDispatcher dispatcher = new WellKnownDispatcher();
+
+    @BeforeAll
+    static void startServer() {
+        dispatcher.start(); // Starts the WireMock server on a dynamic port
+    }
+
+    @AfterAll
+    static void stopServer() {
+        dispatcher.stop(); // Stops the WireMock server
+    }
+
+    @BeforeEach
+    void resetDispatcher() {
+        dispatcher.reset(); // Clears all WireMock stubs from previous tests
+    }
+
+    @Test
+    void testSuccessfulOidcDiscoveryAndUsage() throws Exception {
+        String serverBaseUrl = dispatcher.getServerUrl(); // e.g., http://localhost:12345
+        String wellKnownPath = "/.well-known/openid-configuration";
+        String fullWellKnownUrl = serverBaseUrl + wellKnownPath;
+
+        String jwksPath = "/jwks.json"; // Relative path for the JWKS endpoint
+        String jwksUri = serverBaseUrl + jwksPath; // Full URI for JWKS
+
+        // 1. Prepare the OIDC discovery document JSON
+        String oidcConfigJson = String.format(
+            "{\"issuer\":\"%s\", \"jwks_uri\":\"%s\"}",
+            serverBaseUrl, // The mocked issuer URL is the base URL of our dispatcher
+            jwksUri        // The mocked JWKS URI
+        );
+
+        // 2. Stub the OIDC discovery endpoint response
+        // When WellKnownHandler requests fullWellKnownUrl, it will get oidcConfigJson
+        dispatcher.successfullyRespondTo(wellKnownPath, oidcConfigJson);
+
+        // 3. Stub the JWKS endpoint response (if WellKnownHandler or HttpJwksLoader will access it)
+        // WellKnownHandler itself performs an accessibility check for the jwks_uri.
+        dispatcher.respondWithJwks(jwksPath, "{\"keys\":[{\"kty\":\"RSA\",\"kid\":\"test-kid\",\"n\":\"...\",\"e\":\"AQAB\"}]}");
+
+        // 4. Create WellKnownHandler instance using the dispatcher's URL
+        WellKnownHandler handler = WellKnownHandler.builder()
+            .url(fullWellKnownUrl)
+            .build();
+
+        // Assertions for the handler (optional, but good for verification)
+        Assertions.assertEquals(serverBaseUrl, handler.getIssuer().getUrl().toString());
+        Assertions.assertEquals(jwksUri, handler.getJwksUri().getUrl().toString());
+
+        // 5. Example: Configure HttpJwksLoaderConfig using the handler
+        HttpJwksLoaderConfig jwksConfig = HttpJwksLoaderConfig.builder()
+            .wellKnown(handler)
+            // .sslContext(...) // If needed, though dispatcher is HTTP
+            .build();
+
+        // Assertions for the jwksConfig
+        Assertions.assertEquals(jwksUri, jwksConfig.getJwksUri().toString());
+
+        // ... your further test logic using the handler or jwksConfig ...
+        // For instance, setting up a TokenValidator:
+        // IssuerConfig issuerConfig = IssuerConfig.builder()
+        //     .issuer(handler.getIssuer().getUrl().toString())
+        //     .httpJwksLoaderConfig(jwksConfig)
+        //     .addAudience("test-audience")
+        //     .build();
+        // TokenValidator validator = new TokenValidator(issuerConfig);
+        // ... then validate a token ...
+    }
+
+    @Test
+    void testOidcDiscoveryError() {
+        String serverBaseUrl = dispatcher.getServerUrl();
+        String wellKnownPath = "/.well-known/openid-configuration";
+        String fullWellKnownUrl = serverBaseUrl + wellKnownPath;
+
+        // Stub an error response (e.g., 404 Not Found)
+        dispatcher.respondWithError(wellKnownPath, 404);
+
+        // Verify that WellKnownHandler throws an exception
+        Assertions.assertThrows(Exception.class, () -> { // Replace Exception with specific WellKnownDiscoveryException
+            WellKnownHandler.builder()
+                .url(fullWellKnownUrl)
+                .build();
+        });
+    }
+}
+----
+
+=== Key `WellKnownDispatcher` Methods
+
+*   `start()`: Starts the WireMock server. Call this in `@BeforeAll`.
+*   `stop()`: Stops the WireMock server. Call this in `@AfterAll`.
+*   `reset()`: Resets all WireMock stubs. Call this in `@BeforeEach` to ensure test isolation.
+*   `getServerUrl()`: Gets the base URL of the running WireMock server (e.g., `http://localhost:PORT`). Use this to construct the `wellKnownUrl` for `WellKnownHandler`.
+*   `successfullyRespondTo(String path, String responseBody)`: Stubs a GET request to the given `path` (e.g., `/.well-known/openid-configuration`) to return HTTP 200 with the provided `responseBody` (JSON string).
+*   `respondWithJwks(String path, String jwksBody)`: A convenience method to stub a GET and HEAD request to the given `path` (typically the `jwks_uri` path) to return HTTP 200 with the JWKS JSON `jwksBody`. This is useful because `WellKnownHandler` performs an accessibility check (HEAD or GET) on the `jwks_uri`.
+*   `respondWithError(String path, int statusCode)`: Stubs a GET request to `path` to return the specified HTTP error `statusCode`.
+*   `respondWithConnectionError(String path)`: Simulates a connection error for requests to `path`.
+*   `respondWithMalformedBody(String path, String malformedJson)`: Stubs a GET request to return HTTP 200 but with a syntactically incorrect JSON body.
+
+By using these methods, you can effectively simulate various conditions of an OIDC provider's discovery endpoint and test how your application's `WellKnownHandler` integration behaves.
