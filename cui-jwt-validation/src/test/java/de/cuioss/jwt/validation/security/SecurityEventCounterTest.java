@@ -40,7 +40,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * and that the counter implementation is thread-safe for concurrent access.
  *
  * @author Oliver Wolff
- * @see <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/security.adoc#security-controls">Security Controls Specification</a>
+ * @see <a href="https://github.com/cuioss/cui-jwt/tree/main/doc/specification/security.adoc#security-controls">Security Controls Specification</a>
  */
 class SecurityEventCounterTest {
 

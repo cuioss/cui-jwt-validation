@@ -48,7 +48,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * </ul>
  * 
  * @author Oliver Wolff
- * @see <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/token-size-validation.adoc">Token Size Validation Specification</a>
+ * @see <a href="https://github.com/cuioss/cui-jwt/tree/main/doc/specification/token-size-validation.adoc">Token Size Validation Specification</a>
  */
 @EnableTestLogger
 @DisplayName("Tests TokenValidator functionality")

@@ -44,7 +44,7 @@ import java.util.Optional;
  * for proper validation.
  * <p>
  * For more details on the token validation process, see the
- * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/technical-components.adoc#token-validation-pipeline">Token Validation Pipeline</a>
+ * <a href="https://github.com/cuioss/cui-jwt/tree/main/doc/specification/technical-components.adoc#token-validation-pipeline">Token Validation Pipeline</a>
  *
  * @author Oliver Wolff
  * @since 1.0

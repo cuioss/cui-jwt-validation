@@ -25,7 +25,7 @@ import de.cuioss.test.valueobjects.junit5.contracts.ShouldImplementToString;
  * Supports requirement CUI-JWT-1.2: Multi-Issuer Support.
  *
  * @author Oliver Wolff
- * @see <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/technical-components.adoc#multi-issuer">Multi-Issuer Specification</a>
+ * @see <a href="https://github.com/cuioss/cui-jwt/tree/main/doc/specification/technical-components.adoc#multi-issuer">Multi-Issuer Specification</a>
  */
 class IssuerConfigTest implements ShouldImplementToString<IssuerConfig>, ShouldImplementEqualsAndHashCode<IssuerConfig> {
 

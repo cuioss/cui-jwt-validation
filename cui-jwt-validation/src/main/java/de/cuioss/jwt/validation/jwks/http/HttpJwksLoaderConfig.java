@@ -44,7 +44,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * It provides validation for all parameters and default values where appropriate.
  * <p>
  * For more detailed information about the HTTP-based JWKS loading, see the
- * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/technical-components.adoc#_jwksloader">Technical Components Specification</a>
+ * <a href="https://github.com/cuioss/cui-jwt/tree/main/doc/specification/technical-components.adoc#_jwksloader">Technical Components Specification</a>
  *
  * @author Oliver Wolff
  * @author Your Name (for well-known integration)

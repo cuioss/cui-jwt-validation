@@ -57,7 +57,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * </ul>
  * <p>
  * For more details on the security aspects, see the
- * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/security.adoc">Security Specification</a>
+ * <a href="https://github.com/cuioss/cui-jwt/tree/main/doc/specification/security.adoc">Security Specification</a>
  *
  * @author Oliver Wolff
  * @since 1.0

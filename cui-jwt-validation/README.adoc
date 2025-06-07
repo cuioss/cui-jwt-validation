@@ -6,19 +6,19 @@
 
 == Overview
 
-This document provides usage examples for the cui-jwt-validation library. For detailed technical specifications, see the link:specification/technical-components.adoc[Technical Components] document.
+This document provides usage examples for the cui-jwt-validation library. For detailed technical specifications, see the link:../doc/specification/technical-components.adoc[Technical Components] document.
 
 === Document Navigation
 
 * link:../README.adoc[README] - Project overview and introduction
-* link:Requirements.adoc[Requirements] - Functional and non-functional requirements
-* link:Specification.adoc[Specification] - Technical specifications
-* link:LogMessages.adoc[Log Messages] - Reference for all log messages
-* link:security/Threat-Model.adoc[Threat Model] - Security analysis and mitigations
-* link:Build.adoc[Building and Development] - Information for contributors
+* link:../doc/Requirements.adoc[Requirements] - Functional and non-functional requirements
+* link:../doc/Specification.adoc[Specification] - Technical specifications
+* link:../doc/LogMessages.adoc[Log Messages] - Reference for all log messages
+* link:../doc/security/Threat-Model.adoc[Threat Model] - Security analysis and mitigations
+* link:../doc/Build.adoc[Building and Development] - Information for contributors
 
 == TokenValidator: The Main Entry Point
-_See link:specification/technical-components.adoc#_tokenvalidator[TokenValidator Technical Specification]_'
+_See link:../doc/specification/technical-components.adoc#_tokenvalidator[TokenValidator Technical Specification]_'
 
 The `TokenValidator` serves as the primary entry point for token operations.
 It provides:
@@ -52,7 +52,7 @@ RefreshTokenContent refreshToken = validator.createRefreshToken(tokenString);
 ----
 
 == Multi-Issuer Support
-_See link:specification/technical-components.adoc[Technical Specification] for details_
+_See link:../doc/specification/technical-components.adoc[Technical Specification] for details_
 
 The module provides robust support for multi-issuer environments:
 
@@ -91,7 +91,7 @@ SecurityEventCounter securityEventCounter = validator.getSecurityEventCounter();
 ----
 
 == Configuration via OpenID Connect (OIDC) Discovery
-_See link:specification/well-known.adoc[OIDC Discovery Specification Details]_
+_See link:../doc/specification/well-known.adoc[OIDC Discovery Specification Details]_
 
 OpenID Connect Discovery provides a standardized way for clients (Relying Parties) to dynamically discover information about an OpenID Provider (OP), such as its issuer identifier and JWKS URI. This is typically done by fetching a JSON document from a well-known endpoint: `/.well-known/openid-configuration` relative to the issuer's base URL.
 
@@ -180,7 +180,7 @@ TokenValidator validator = new TokenValidator(issuerConfig);
 * **SSL/TLS**: Ensure the JVM running the application trusts the SSL certificate of the OIDC provider if its well-known endpoint is served over HTTPS. For fetching the JWKS via `HttpJwksLoader`, you can provide a custom `SSLContext` in `HttpJwksLoaderConfig`.
 
 == Custom Claim Mappers
-_See link:specification/technical-components.adoc[Technical Specification] for details_
+_See link:../doc/specification/technical-components.adoc[Technical Specification] for details_
 
 The module supports custom claim mappers that take precedence over the default ones:
 
@@ -347,7 +347,7 @@ The mapper:
 You can also implement your own custom mappers for special formats:
 
 == Security Settings
-_See link:specification/technical-components.adoc[Technical Specification] for details_
+_See link:../doc/specification/technical-components.adoc[Technical Specification] for details_
 
 The `ParserConfig` class provides important security settings for token processing:
 
@@ -485,7 +485,6 @@ try {
             // Log the event for monitoring
             break;
     }
-}
 }
 ----
 

@@ -14,7 +14,7 @@ This document provides recommendations for sensible upper bounds for JWKS (JSON 
 === Document Navigation
 
 * link:../../README.adoc[README] - Project overview and introduction
-* link:../Usage.adoc[Usage Guide] - How to use the library with code examples
+* link:../../cui-jwt-validation/README.adoc[Usage Guide] - How to use the library with code examples
 * link:../Requirements.adoc[Requirements] - Functional and non-functional requirements
 * link:../Specification.adoc[Specification] - Technical specifications
 * link:../LogMessages.adoc[Log Messages] - Reference for all log messages

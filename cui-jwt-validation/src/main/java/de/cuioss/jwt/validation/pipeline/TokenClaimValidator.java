@@ -56,7 +56,7 @@ import java.util.stream.Collectors;
  * where tokens issued for one client are used with a different client.
  * <p>
  * For more details on the security aspects, see the
- * <a href="https://github.com/cuioss/cui-jwt-validation/tree/main/doc/specification/security.adoc">Security Specification</a>
+ * <a href="https://github.com/cuioss/cui-jwt/tree/main/doc/specification/security.adoc">Security Specification</a>
  * <p>
  * Note: Issuer (iss) validation is handled by {@link TokenHeaderValidator}.
  *
