@@ -172,7 +172,7 @@ After implementing any task in this TODO list, follow these steps:
 ** [x] Verify documentation is updated correctly
 ** [x] Mark task as completed in TODO.adoc
 ** [x] Run a full build with `./mvnw clean verify`
-** [x] Commit changes (git-commit) with task name as commit message
+** [ ] Commit changes (git-commit) with task name as commit message
 
 === Task 5. Set Up BOM Module
 [x] *Priority:* High

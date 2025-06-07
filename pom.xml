@@ -40,4 +40,14 @@
         <module>cui-jwt-benchmarking</module>
         <module>cui-jwt-quarkus</module>
     </modules>
+
+    <properties>
+        <!-- Sonar exclusions -->
+        <sonar.coverage.exclusions>
+            **/cui-jwt-benchmarking/**/*
+        </sonar.coverage.exclusions>
+        <sonar.cpd.exclusions>
+            **/cui-jwt-benchmarking/**/*
+        </sonar.cpd.exclusions>
+    </properties>
 </project>
