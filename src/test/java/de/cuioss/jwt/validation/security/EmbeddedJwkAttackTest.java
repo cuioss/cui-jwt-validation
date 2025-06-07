@@ -22,15 +22,14 @@ import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.jwt.validation.test.generator.TestTokenGenerators;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
-import de.cuioss.tools.logging.CuiLogger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Base64;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests for validating protection against embedded JWK attacks.
@@ -46,10 +45,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @DisplayName("Tests for Embedded JWK Attack Protection")
 class EmbeddedJwkAttackTest {
 
-    private static final CuiLogger LOGGER = new CuiLogger(EmbeddedJwkAttackTest.class);
-
     private TokenValidator tokenValidator;
-    private SecurityEventCounter securityEventCounter;
 
     @BeforeEach
     void setUp() {
@@ -63,19 +59,11 @@ class EmbeddedJwkAttackTest {
         // Create validation factory
         ParserConfig config = ParserConfig.builder().build();
         tokenValidator = new TokenValidator(config, issuerConfig);
-
-        // Get the security event counter from the TokenValidator
-        securityEventCounter = tokenValidator.getSecurityEventCounter();
     }
 
     @Test
     @DisplayName("Should reject tokens with embedded JWK in header")
     void shouldRejectTokenWithEmbeddedJwk() {
-        // Log initial counter state
-        LOGGER.debug("Initial SIGNATURE_VALIDATION_FAILED count: %s",
-                securityEventCounter.getCount(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED));
-        LOGGER.debug("Initial UNSUPPORTED_ALGORITHM count: %s",
-                securityEventCounter.getCount(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM));
 
         // Generate a valid token
         String validToken = TestTokenGenerators.accessTokens().next().getRawToken();
@@ -98,28 +86,13 @@ class EmbeddedJwkAttackTest {
         // Reconstruct the token with the original signature
         String tamperedToken = tamperedHeader + "." + parts[1] + "." + parts[2];
 
-        LOGGER.debug("Created token with embedded JWK: %s", tamperedToken);
-
         // Verify that the token is rejected
-        var exception = assertThrows(TokenValidationException.class,
+        assertThrows(TokenValidationException.class,
                 () -> tokenValidator.createAccessToken(tamperedToken));
 
-        // Verify the exception details
-        LOGGER.debug("Exception message: %s", exception.getMessage());
-
-        // Log the security event counter values
-        LOGGER.debug("Final SIGNATURE_VALIDATION_FAILED count: %s",
-                securityEventCounter.getCount(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED));
-        LOGGER.debug("Final UNSUPPORTED_ALGORITHM count: %s",
-                securityEventCounter.getCount(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM));
-
-        // Log all counter values
-        securityEventCounter.getCounters().forEach((type, count) ->
-                LOGGER.debug("Counter %s: %s", type, count));
-
-        // Verify that the security event counter was incremented
-        assertTrue(securityEventCounter.getCount(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED) > 0 ||
-                securityEventCounter.getCount(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM) > 0,
-                "Security event counter should be incremented for embedded JWK attack");
+        // For embedded JWK attacks, we expect UNSUPPORTED_ALGORITHM to be triggered
+        // This makes the test deterministic by checking for a specific event
+        assertEquals(1, tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM),
+                "UNSUPPORTED_ALGORITHM counter should be incremented for embedded JWK attack");
     }
 }

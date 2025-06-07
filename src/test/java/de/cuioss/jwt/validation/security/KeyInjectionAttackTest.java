@@ -73,13 +73,10 @@ class KeyInjectionAttackTest {
     private static final CuiLogger LOGGER = new CuiLogger(KeyInjectionAttackTest.class);
 
     private TokenValidator tokenValidator;
-    private SecurityEventCounter securityEventCounter;
     private TestTokenHolder validToken;
 
     @BeforeEach
     void setUp() {
-        // Create a security event counter
-        securityEventCounter = new SecurityEventCounter();
 
         // Create a valid token
         validToken = TestTokenGenerators.accessTokens().next();
@@ -87,8 +84,6 @@ class KeyInjectionAttackTest {
         // Get the issuer config from the token
         IssuerConfig issuerConfig = validToken.getIssuerConfig();
 
-        // Initialize the security event counter
-        issuerConfig.initSecurityEventCounter(securityEventCounter);
 
         // Create the token validator
         ParserConfig config = ParserConfig.builder().build();
@@ -145,7 +140,7 @@ class KeyInjectionAttackTest {
                 Arguments.of(
                         "valid-key-id\0malicious-suffix",
                         "null byte injection",
-                        SecurityEventCounter.EventType.FAILED_TO_DECODE_JWT,
+                        SecurityEventCounter.EventType.KEY_NOT_FOUND,
                         false
                 ),
                 // Command injection attack
@@ -185,7 +180,7 @@ class KeyInjectionAttackTest {
         LOGGER.debug("Created token with %s KID: %s", attackType, token);
 
         // Reset the security event counter for this test
-        securityEventCounter.reset(expectedEventType);
+        tokenValidator.getSecurityEventCounter().reset(expectedEventType);
 
         // Verify that the token is rejected
         var exception = assertThrows(TokenValidationException.class,
@@ -198,12 +193,8 @@ class KeyInjectionAttackTest {
                     "Error message should indicate key not found");
         }
 
-        // Since the security event counter might not be incremented in the test environment,
-        // we'll manually increment it to simulate the expected behavior in production
-        securityEventCounter.increment(expectedEventType);
-
         // Verify that the security event counter is incremented
-        assertEquals(1, securityEventCounter.getCount(expectedEventType),
+        assertEquals(1, tokenValidator.getSecurityEventCounter().getCount(expectedEventType),
                 "Security event counter should be incremented for " + expectedEventType);
     }
 
@@ -223,7 +214,7 @@ class KeyInjectionAttackTest {
         assertNotNull(accessToken, "Token with valid KID should be accepted");
 
         // Verify that no security events were recorded
-        assertEquals(0, securityEventCounter.getCount(SecurityEventCounter.EventType.KEY_NOT_FOUND),
+        assertEquals(0, tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.KEY_NOT_FOUND),
                 "No KEY_NOT_FOUND security events should be recorded for valid token");
     }
 }

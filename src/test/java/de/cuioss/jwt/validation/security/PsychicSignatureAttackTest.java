@@ -24,15 +24,14 @@ import de.cuioss.jwt.validation.test.InMemoryKeyMaterialHandler;
 import de.cuioss.jwt.validation.test.TestTokenHolder;
 import de.cuioss.jwt.validation.test.generator.TestTokenGenerators;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
-import de.cuioss.tools.logging.CuiLogger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Base64;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests for validating protection against the "Psychic Signature" vulnerability (CVE-2022-21449).
@@ -45,10 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @DisplayName("Tests for ECDSA Psychic Signature Attack Protection")
 class PsychicSignatureAttackTest {
 
-    private static final CuiLogger LOGGER = new CuiLogger(PsychicSignatureAttackTest.class);
-
     private TokenValidator tokenValidator;
-    private SecurityEventCounter securityEventCounter;
 
     @BeforeEach
     void setUp() {
@@ -60,19 +56,12 @@ class PsychicSignatureAttackTest {
                 .build();
 
         // Create validation factory
-        ParserConfig config = ParserConfig.builder().build();
-        tokenValidator = new TokenValidator(config, issuerConfig);
-
-        // Get the security event counter from the TokenValidator
-        securityEventCounter = tokenValidator.getSecurityEventCounter();
+        tokenValidator = new TokenValidator(ParserConfig.builder().build(), issuerConfig);
     }
 
     @Test
     @DisplayName("Should reject tokens with ES256 all-zero signature")
     void shouldRejectTokenWithES256ZeroSignature() {
-        // Log initial counter state
-        LOGGER.debug("Initial UNSUPPORTED_ALGORITHM count: %s",
-                securityEventCounter.getCount(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM));
 
         // Generate a token with ES256 algorithm
         TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next()
@@ -90,35 +79,19 @@ class PsychicSignatureAttackTest {
         // Reconstruct the token with the zero signature
         String tamperedToken = parts[0] + "." + parts[1] + "." + zeroSignatureBase64;
 
-        LOGGER.debug("Created token with ES256 zero signature: %s", tamperedToken);
-
         // Verify that the token is rejected
-        var exception = assertThrows(TokenValidationException.class,
+        assertThrows(TokenValidationException.class,
                 () -> tokenValidator.createAccessToken(tamperedToken));
-
-        // Verify the exception details
-        LOGGER.debug("Exception message: %s", exception.getMessage());
-
-        // Log the security event counter values
-        LOGGER.debug("Final UNSUPPORTED_ALGORITHM count: %s",
-                securityEventCounter.getCount(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM));
-
-        // Log all counter values
-        securityEventCounter.getCounters().forEach((type, count) ->
-                LOGGER.debug("Counter %s: %s", type, count));
 
         // Verify that the security event counter was incremented
         // The logs show that ES256 is an unsupported algorithm, so we should check for that event
-        assertTrue(securityEventCounter.getCount(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM) > 0,
+        assertEquals(1, tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM),
                 "Security event counter should be incremented for ES256 zero signature attack");
     }
 
     @Test
     @DisplayName("Should reject tokens with ES384 all-zero signature")
     void shouldRejectTokenWithES384ZeroSignature() {
-        // Log initial counter state
-        LOGGER.debug("Initial UNSUPPORTED_ALGORITHM count: %s",
-                securityEventCounter.getCount(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM));
 
         // Generate a token with ES384 algorithm
         TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next()
@@ -136,35 +109,19 @@ class PsychicSignatureAttackTest {
         // Reconstruct the token with the zero signature
         String tamperedToken = parts[0] + "." + parts[1] + "." + zeroSignatureBase64;
 
-        LOGGER.debug("Created token with ES384 zero signature: %s", tamperedToken);
-
         // Verify that the token is rejected
-        var exception = assertThrows(TokenValidationException.class,
+        assertThrows(TokenValidationException.class,
                 () -> tokenValidator.createAccessToken(tamperedToken));
-
-        // Verify the exception details
-        LOGGER.debug("Exception message: %s", exception.getMessage());
-
-        // Log the security event counter values
-        LOGGER.debug("Final UNSUPPORTED_ALGORITHM count: %s",
-                securityEventCounter.getCount(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM));
-
-        // Log all counter values
-        securityEventCounter.getCounters().forEach((type, count) ->
-                LOGGER.debug("Counter %s: %s", type, count));
 
         // Verify that the security event counter was incremented
         // The logs show that ES384 is an unsupported algorithm, so we should check for that event
-        assertTrue(securityEventCounter.getCount(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM) > 0,
+        assertEquals(1, tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM),
                 "Security event counter should be incremented for ES384 zero signature attack");
     }
 
     @Test
     @DisplayName("Should reject tokens with ES512 all-zero signature")
     void shouldRejectTokenWithES512ZeroSignature() {
-        // Log initial counter state
-        LOGGER.debug("Initial UNSUPPORTED_ALGORITHM count: %s",
-                securityEventCounter.getCount(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM));
 
         // Generate a token with ES512 algorithm
         TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next()
@@ -182,26 +139,13 @@ class PsychicSignatureAttackTest {
         // Reconstruct the token with the zero signature
         String tamperedToken = parts[0] + "." + parts[1] + "." + zeroSignatureBase64;
 
-        LOGGER.debug("Created token with ES512 zero signature: %s", tamperedToken);
-
         // Verify that the token is rejected
-        var exception = assertThrows(TokenValidationException.class,
+        assertThrows(TokenValidationException.class,
                 () -> tokenValidator.createAccessToken(tamperedToken));
-
-        // Verify the exception details
-        LOGGER.debug("Exception message: %s", exception.getMessage());
-
-        // Log the security event counter values
-        LOGGER.debug("Final UNSUPPORTED_ALGORITHM count: %s",
-                securityEventCounter.getCount(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM));
-
-        // Log all counter values
-        securityEventCounter.getCounters().forEach((type, count) ->
-                LOGGER.debug("Counter %s: %s", type, count));
 
         // Verify that the security event counter was incremented
         // The logs show that ES512 is an unsupported algorithm, so we should check for that event
-        assertTrue(securityEventCounter.getCount(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM) > 0,
+        assertEquals(1, tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM),
                 "Security event counter should be incremented for ES512 zero signature attack");
     }
 }

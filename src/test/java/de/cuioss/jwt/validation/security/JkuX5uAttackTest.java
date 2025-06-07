@@ -22,15 +22,14 @@ import de.cuioss.jwt.validation.exception.TokenValidationException;
 import de.cuioss.jwt.validation.test.InMemoryJWKSFactory;
 import de.cuioss.jwt.validation.test.generator.TestTokenGenerators;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
-import de.cuioss.tools.logging.CuiLogger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Base64;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests for validating protection against JKU/X5U header abuse attacks.
@@ -46,10 +45,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @DisplayName("Tests for JKU/X5U Header Abuse Protection")
 class JkuX5uAttackTest {
 
-    private static final CuiLogger LOGGER = new CuiLogger(JkuX5uAttackTest.class);
-
     private TokenValidator tokenValidator;
-    private SecurityEventCounter securityEventCounter;
 
     @BeforeEach
     void setUp() {
@@ -61,21 +57,13 @@ class JkuX5uAttackTest {
                 .build();
 
         // Create validation factory
-        ParserConfig config = ParserConfig.builder().build();
-        tokenValidator = new TokenValidator(config, issuerConfig);
+        tokenValidator = new TokenValidator(ParserConfig.builder().build(), issuerConfig);
 
-        // Get the security event counter from the TokenValidator
-        securityEventCounter = tokenValidator.getSecurityEventCounter();
     }
 
     @Test
     @DisplayName("Should reject tokens with JKU header pointing to malicious URL")
     void shouldRejectTokenWithJkuHeader() {
-        // Log initial counter state
-        LOGGER.debug("Initial SIGNATURE_VALIDATION_FAILED count: %s",
-                securityEventCounter.getCount(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED));
-        LOGGER.debug("Initial UNSUPPORTED_ALGORITHM count: %s",
-                securityEventCounter.getCount(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM));
 
         // Generate a valid token
         String validToken = TestTokenGenerators.accessTokens().next().getRawToken();
@@ -98,39 +86,20 @@ class JkuX5uAttackTest {
         // Reconstruct the token with the original signature
         String tamperedToken = tamperedHeader + "." + parts[1] + "." + parts[2];
 
-        LOGGER.debug("Created token with malicious JKU header: %s", tamperedToken);
-
         // Verify that the token is rejected
-        var exception = assertThrows(TokenValidationException.class,
+        assertThrows(TokenValidationException.class,
                 () -> tokenValidator.createAccessToken(tamperedToken));
 
-        // Verify the exception details
-        LOGGER.debug("Exception message: %s", exception.getMessage());
 
-        // Log the security event counter values
-        LOGGER.debug("Final SIGNATURE_VALIDATION_FAILED count: %s",
-                securityEventCounter.getCount(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED));
-        LOGGER.debug("Final UNSUPPORTED_ALGORITHM count: %s",
-                securityEventCounter.getCount(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM));
-
-        // Log all counter values
-        securityEventCounter.getCounters().forEach((type, count) ->
-                LOGGER.debug("Counter %s: %s", type, count));
-
-        // Verify that the security event counter was incremented
-        assertTrue(securityEventCounter.getCount(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED) > 0 ||
-                securityEventCounter.getCount(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM) > 0,
-                "Security event counter should be incremented for JKU header attack");
+        // For JKU header attacks, we expect SIGNATURE_VALIDATION_FAILED to be triggered
+        // This makes the test deterministic by checking for a specific event
+        assertEquals(1, tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED),
+                "SIGNATURE_VALIDATION_FAILED counter should be incremented for JKU header attack");
     }
 
     @Test
     @DisplayName("Should reject tokens with X5U header pointing to malicious URL")
     void shouldRejectTokenWithX5uHeader() {
-        // Log initial counter state
-        LOGGER.debug("Initial SIGNATURE_VALIDATION_FAILED count: %s",
-                securityEventCounter.getCount(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED));
-        LOGGER.debug("Initial UNSUPPORTED_ALGORITHM count: %s",
-                securityEventCounter.getCount(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM));
 
         // Generate a valid token
         String validToken = TestTokenGenerators.accessTokens().next().getRawToken();
@@ -153,28 +122,14 @@ class JkuX5uAttackTest {
         // Reconstruct the token with the original signature
         String tamperedToken = tamperedHeader + "." + parts[1] + "." + parts[2];
 
-        LOGGER.debug("Created token with malicious X5U header: %s", tamperedToken);
 
         // Verify that the token is rejected
-        var exception = assertThrows(TokenValidationException.class,
+        assertThrows(TokenValidationException.class,
                 () -> tokenValidator.createAccessToken(tamperedToken));
 
-        // Verify the exception details
-        LOGGER.debug("Exception message: %s", exception.getMessage());
-
-        // Log the security event counter values
-        LOGGER.debug("Final SIGNATURE_VALIDATION_FAILED count: %s",
-                securityEventCounter.getCount(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED));
-        LOGGER.debug("Final UNSUPPORTED_ALGORITHM count: %s",
-                securityEventCounter.getCount(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM));
-
-        // Log all counter values
-        securityEventCounter.getCounters().forEach((type, count) ->
-                LOGGER.debug("Counter %s: %s", type, count));
-
-        // Verify that the security event counter was incremented
-        assertTrue(securityEventCounter.getCount(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED) > 0 ||
-                securityEventCounter.getCount(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM) > 0,
-                "Security event counter should be incremented for X5U header attack");
+        // For X5U header attacks, we expect SIGNATURE_VALIDATION_FAILED to be triggered
+        // This makes the test deterministic by checking for a specific event
+        assertEquals(1, tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED),
+                "SIGNATURE_VALIDATION_FAILED counter should be incremented for X5U header attack");
     }
 }

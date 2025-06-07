@@ -69,7 +69,7 @@ class BouncyCastleProviderSingletonTest {
     @DisplayName("Should register the provider with the JVM security system")
     void shouldRegisterProviderWithJvm() {
         // When
-        BouncyCastleProviderSingleton.getInstance(); // Ensure provider is registered
+        assertNotNull(BouncyCastleProviderSingleton.getInstance()); // Ensure provider is registered
 
         // Then
         Provider registeredProvider = Security.getProvider(BouncyCastleProvider.PROVIDER_NAME);
