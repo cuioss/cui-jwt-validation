@@ -40,45 +40,14 @@
         <module>cui-jwt-quarkus</module>
     </modules>
 
-    <properties>
-        <version.jjwt>0.12.6</version.jjwt>
-        <version.jmh>1.37</version.jmh>
-        <version.exec-maven-plugin>3.2.0</version.exec-maven-plugin>
-    </properties>
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>de.cuioss</groupId>
-                <artifactId>java-ee-orthogonal</artifactId>
-                <version>${version.cui.parent}</version>
+                <groupId>de.cuioss.jwt</groupId>
+                <artifactId>bom</artifactId>
+                <version>${project.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>de.cuioss</groupId>
-                <artifactId>java-ee-10-bom</artifactId>
-                <version>${version.cui.parent}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <!-- JJWT dependencies -->
-            <dependency>
-                <groupId>io.jsonwebtoken</groupId>
-                <artifactId>jjwt-api</artifactId>
-                <version>${version.jjwt}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>io.jsonwebtoken</groupId>
-                <artifactId>jjwt-impl</artifactId>
-                <scope>test</scope>
-                <version>${version.jjwt}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.jsonwebtoken</groupId>
-                <artifactId>jjwt-jackson</artifactId>
-                <version>${version.jjwt}</version>
-                <scope>test</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

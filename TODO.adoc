@@ -175,7 +175,7 @@ After implementing any task in this TODO list, follow these steps:
 ** [ ] Commit changes (git-commit) with task name as commit message
 
 === Task 5. Set Up BOM Module
-[ ] *Priority:* High
+[x] *Priority:* High
 
 *Description:* Create and configure the Bill of Materials (BOM) module:
 
@@ -206,19 +206,19 @@ After implementing any task in this TODO list, follow these steps:
 
 *Implementation Steps:*
 
-* [ ] Create bom module directory structure
-* [ ] Create pom.xml for bom module with packaging type 'pom'
-* [ ] Move dependency management from parent pom to bom pom
-* [ ] Add project modules to bom's dependency management
-* [ ] Configure version properties in bom module
-* [ ] Set up Maven release configuration
-* [ ] Update other modules to import the bom
-* [ ] Test building with the new structure
-* [ ] Complete the task completion process:
-** [ ] Verify documentation is updated correctly
-** [ ] Mark task as completed in TODO.adoc
-** [ ] Run a full build with `./mvnw clean verify`
-** [ ] Commit changes (git-commit) with task name as commit message
+* [x] Create bom module directory structure
+* [x] Create pom.xml for bom module with packaging type 'pom'
+* [x] Move dependency management from parent pom to bom pom
+* [x] Add project modules to bom's dependency management
+* [x] Configure version properties in bom module
+* [x] Set up Maven release configuration
+* [x] Update other modules to import the bom
+* [x] Test building with the new structure
+* [x] Complete the task completion process:
+** [x] Verify documentation is updated correctly
+** [x] Mark task as completed in TODO.adoc
+** [x] Run a full build with `./mvnw clean verify`
+** [x] Commit changes (git-commit) with task name as commit message
 
 === Task 6. Set Up Core Validation Module
 [ ] *Priority:* High
