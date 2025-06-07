@@ -39,18 +39,33 @@ This simple visual indicator allows for quick assessment of project status. The 
 
 Progress can be assessed by:
 
-1. Counting completed tasks within each category
-2. Calculating the overall completion percentage
-3. Focusing on high-priority tasks first
+. Counting completed tasks within each category
+. Calculating the overall completion percentage
+. Focusing on high-priority tasks first
 
 == Task Completion Process
 
 After implementing any task in this TODO list, follow these steps:
 
-1. *Verify Documentation*: Ensure the documentation is updated correctly. Especially verif all the links / names are correct and consistent with the refactoring changes made.
-2. *Commit Changes*: Commit the changes with a git commit. Use the task name (e.g., "Task 1. Review Error Handling") as the commit message
-3. *Update Status*: Check the checkbox for the completed task in this TODO.adoc file
-4. *Make a Full Build*: Run `./mvnw clean verify` to ensure all tests pass
+. *Verify Documentation*: Ensure the documentation is updated correctly. Especially verify all the links/names are correct and consistent with the refactoring changes made.
+* [ ] Update all references in README.adoc
+* [ ] Update relevant documentation in doc/ directory
+* [ ] Check for outdated file paths or references
+* [ ] Ensure consistent naming across all documentation
+
+. *Update Status*: Check the checkbox for the completed task in this TODO.adoc file.
+* [ ] Mark the task as completed with [x]
+* [ ] Add any notes about implementation challenges or decisions if needed
+
+. *Make a Full Build*: Run `./mvnw clean verify` to ensure all tests pass.
+* [ ] Run the full build command
+* [ ] Verify all tests pass
+* [ ] Check for any warnings that should be addressed
+
+. *Commit Changes (git-commit)*: Commit the changes with a git commit. Use the task name (e.g., "Task 1. Review Error Handling") as the commit message.
+* [ ] Stage all modified files
+* [ ] Use the task name as the commit message
+* [ ] Include any additional notes about implementation decisions in the commit description
 
 === Task 1. Set GroupId to de.cuioss.jwt
 [ ] *Priority:* High
@@ -59,12 +74,38 @@ After implementing any task in this TODO list, follow these steps:
 
 *Rationale:* Consistent group ID naming improves project identification and aligns with organizational standards.
 
+*Implementation Steps:*
+
+* [ ] Update group ID in root pom.xml
+* [ ] Update any references to the group ID in README.adoc
+* [ ] Update badges in README.adoc that include the group ID
+* [ ] Check and update any references in documentation files
+* [ ] Verify build works with new group ID
+* [ ] Complete the task completion process:
+** [ ] Verify documentation is updated correctly
+** [ ] Mark task as completed in TODO.adoc
+** [ ] Run a full build with `./mvnw clean verify`
+** [ ] Commit changes (git-commit) with task name as commit message
+
 === Task 2. Remove Shell Scripts
-[ ] *Priority:* Medium
+[x] *Priority:* Medium
 
 *Description:* Remove `view-benchmarks.sh` and `generate-plantuml.sh` scripts and adapt the documentation accordingly to reflect alternative approaches for these functionalities.
 
 *Rationale:* Reducing reliance on shell scripts improves cross-platform compatibility and simplifies maintenance.
+
+*Implementation Steps:*
+
+* [x] Remove view-benchmarks.sh script
+* [x] Remove generate-plantuml.sh script
+* [x] Update PlantUML documentation in Build.adoc with alternative approaches
+* [x] Update benchmark visualization documentation with alternative approaches
+* [x] Verify documentation correctly reflects the changes
+* [x] Complete the task completion process:
+** [x] Verify documentation is updated correctly
+** [x] Mark task as completed in TODO.adoc
+** [x] Run a full build with `./mvnw clean verify`
+** [x] Commit changes (git-commit) with task name as commit message
 
 === Task 3. Transform to Multi-Module Project
 [ ] *Priority:* High
@@ -78,76 +119,145 @@ After implementing any task in this TODO list, follow these steps:
 
 *Rationale:* A multi-module structure improves separation of concerns, allows for more focused dependencies per module, and makes the project more maintainable and scalable.
 
+*Implementation Steps:*
+
+* [ ] Create basic parent pom.xml structure with modules declaration
+* [ ] Set up directory structure for each module
+* [ ] Configure Maven modules in IDE
+* [ ] Create initial minimal pom.xml for each module
+* [ ] Ensure parent-child relationships are correctly configured
+* [ ] Verify basic multi-module structure builds correctly
+* [ ] Complete the task completion process:
+** [ ] Verify documentation is updated correctly
+** [ ] Mark task as completed in TODO.adoc
+** [ ] Run a full build with `./mvnw clean verify`
+** [ ] Commit changes (git-commit) with task name as commit message
+
 === Task 4. Set Up Benchmarking Module
 [ ] *Priority:* Medium
 
 *Description:* Move benchmark-related code to the dedicated benchmarking module:
 
-1. Move `src/test/java/de/cuioss/jwt/validation/benchmark` to `cui-jwt-benchmarking/src/main` (not as test code)
-2. Move `.github/templates/benchmark/index-visualizer.html` to the benchmarking module
-3. Thoroughly review and adapt `.github/workflows/benchmark.yml` to:
-   a. Update references to the new template location
-   b. Modify build commands to target the new module structure
-   c. Ensure proper artifact paths are updated
-   d. Verify GitHub Pages deployment still works correctly
-4. Incorporate the benchmark profile from the root pom.xml into the benchmarking module's pom.xml (as default configuration, not as a profile)
-5. Make necessary code adaptations since the code is no longer in a test module
-6. Configure Sonar in the parent pom.xml to exclude the benchmarking module from test coverage metrics
-7. Ensure the benchmarking module's build configuration does not trigger performance tests during regular builds:
-   a. Set up a specific Maven property that must be explicitly enabled to run benchmarks
-   b. Configure a Maven plugin to skip benchmark execution by default
-   c. Document how to manually run benchmarks in the module's README
+. Move `src/test/java/de/cuioss/jwt/validation/benchmark` to `cui-jwt-benchmarking/src/main` (not as test code)
+. Move `.github/templates/benchmark/index-visualizer.html` to the benchmarking module
+. Thoroughly review and adapt `.github/workflows/benchmark.yml` to:
+.. Update references to the new template location
+.. Modify build commands to target the new module structure
+.. Ensure proper artifact paths are updated
+.. Verify GitHub Pages deployment still works correctly
+. Incorporate the benchmark profile from the root pom.xml into the benchmarking module's pom.xml (as default configuration, not as a profile)
+. Make necessary code adaptations since the code is no longer in a test module
+. Configure Sonar in the parent pom.xml to exclude the benchmarking module from test coverage metrics
+. Ensure the benchmarking module's build configuration does not trigger performance tests during regular builds:
+.. Set up a specific Maven property that must be explicitly enabled to run benchmarks
+.. Configure a Maven plugin to skip benchmark execution by default
+.. Document how to manually run benchmarks in the module's README
 
 *Rationale:* Separating benchmarking code into its own module improves project organization, ensures clear separation between production code and benchmarks, and prevents benchmarking dependencies from affecting the core library. Proper configuration prevents performance tests from slowing down regular builds while maintaining the ability to run them when needed.
+
+*Implementation Steps:*
+
+* [ ] Create basic benchmarking module structure
+* [ ] Move benchmark code to the new module (src/main)
+* [ ] Move HTML visualizer template to the benchmarking module
+* [ ] Update GitHub workflow configuration file
+* [ ] Configure benchmark module's pom.xml with necessary dependencies
+* [ ] Update code to work as main (not test) code
+* [ ] Configure Sonar exclusion in parent pom
+* [ ] Configure benchmark execution to be opt-in only
+* [ ] Write documentation for manually running benchmarks
+* [ ] Test benchmark execution in isolation
+* [ ] Verify GitHub Pages benchmark deployment
+* [ ] Complete the task completion process:
+** [ ] Verify documentation is updated correctly
+** [ ] Mark task as completed in TODO.adoc
+** [ ] Run a full build with `./mvnw clean verify`
+** [ ] Commit changes (git-commit) with task name as commit message
 
 === Task 5. Set Up BOM Module
 [ ] *Priority:* High
 
 *Description:* Create and configure the Bill of Materials (BOM) module:
 
-1. Create the `de.cuioss.jwt:bom` module with appropriate Maven configuration
-2. Move all dependency management definitions from the original pom.xml to this module
-3. Include all project modules (cui-jwt-validation, cui-jwt-benchmarking, cui-jwt-quarkus) in the BOM's dependency management section
-4. Configure each module to import the BOM in its dependency management section:
-   ```xml
-   <dependencyManagement>
-     <dependencies>
-       <dependency>
-         <groupId>de.cuioss.jwt</groupId>
-         <artifactId>bom</artifactId>
-         <version>${project.version}</version>
-         <type>pom</type>
-         <scope>import</scope>
-       </dependency>
-     </dependencies>
-   </dependencyManagement>
-   ```
-5. Ensure version properties are properly consolidated in the BOM
-6. Set up appropriate Maven release configuration in the BOM
-7. Verify that all modules build correctly with the new dependency structure
+. Create the `de.cuioss.jwt:bom` module with appropriate Maven configuration
+. Move all dependency management definitions from the original pom.xml to this module
+. Include all project modules (cui-jwt-validation, cui-jwt-benchmarking, cui-jwt-quarkus) in the BOM's dependency management section
+. Configure each module to import the BOM in its dependency management section:
++
+[source,xml]
+----
+<dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>de.cuioss.jwt</groupId>
+      <artifactId>bom</artifactId>
+      <version>${project.version}</version>
+      <type>pom</type>
+      <scope>import</scope>
+    </dependency>
+  </dependencies>
+</dependencyManagement>
+----
+. Ensure version properties are properly consolidated in the BOM
+. Set up appropriate Maven release configuration in the BOM
+. Verify that all modules build correctly with the new dependency structure
 
 *Rationale:* A well-configured BOM module centralizes dependency management, ensuring consistent versions across all modules, simplifying upgrades, and reducing the risk of dependency conflicts. Importing the BOM in each module maintains a single source of truth for dependency versions.
+
+*Implementation Steps:*
+
+* [ ] Create bom module directory structure
+* [ ] Create pom.xml for bom module with packaging type 'pom'
+* [ ] Move dependency management from parent pom to bom pom
+* [ ] Add project modules to bom's dependency management
+* [ ] Configure version properties in bom module
+* [ ] Set up Maven release configuration
+* [ ] Update other modules to import the bom
+* [ ] Test building with the new structure
+* [ ] Complete the task completion process:
+** [ ] Verify documentation is updated correctly
+** [ ] Mark task as completed in TODO.adoc
+** [ ] Run a full build with `./mvnw clean verify`
+** [ ] Commit changes (git-commit) with task name as commit message
 
 === Task 6. Set Up Core Validation Module
 [ ] *Priority:* High
 
 *Description:* Move the main source code to the core validation module:
 
-1. Create the `de.cuioss.jwt:cui-jwt-validation` module with appropriate Maven configuration
-2. Configure the pom.xml with:
-   a. Import of the BOM module for dependency management
-   b. All required dependencies from the original project
-   c. Configuration for creating a test artifact (jar-with-dependencies)
-3. Move all source code from the original `src` directory to the new module, excluding benchmark-related code:
-   a. Move `src/main/java` to `cui-jwt-validation/src/main/java`
-   b. Move `src/main/resources` to `cui-jwt-validation/src/main/resources` (if exists)
-   c. Move `src/test/java` to `cui-jwt-validation/src/test/java`, excluding the benchmark package
-   d. Move `src/test/resources` to `cui-jwt-validation/src/test/resources`
-4. Update package declarations if necessary to align with the new module structure
-5. Ensure documentation references are updated to reflect the new module structure
-6. Verify that all tests pass in the new module structure
+. Create the `de.cuioss.jwt:cui-jwt-validation` module with appropriate Maven configuration
+. Configure the pom.xml with:
+.. Import of the BOM module for dependency management
+.. All required dependencies from the original project
+.. Configuration for creating a test artifact (jar-with-dependencies)
+. Move all source code from the original `src` directory to the new module, excluding benchmark-related code:
+.. Move `src/main/java` to `cui-jwt-validation/src/main/java`
+.. Move `src/main/resources` to `cui-jwt-validation/src/main/resources` (if exists)
+.. Move `src/test/java` to `cui-jwt-validation/src/test/java`, excluding the benchmark package
+.. Move `src/test/resources` to `cui-jwt-validation/src/test/resources`
+. Update package declarations if necessary to align with the new module structure
+. Ensure documentation references are updated to reflect the new module structure
+. Verify that all tests pass in the new module structure
 
 *Rationale:* Moving the core validation code to a dedicated module improves project organization, allows for more focused dependencies, and enables separate versioning and release cycles. Creating a test artifact facilitates reuse of test utilities in other modules.
+
+*Implementation Steps:*
+
+* [ ] Create cui-jwt-validation module directory structure
+* [ ] Create pom.xml with proper dependencies and configuration
+* [ ] Set up test artifact configuration
+* [ ] Move main source code to the new module
+* [ ] Move test code to the new module (excluding benchmarks)
+* [ ] Move resources to the new module
+* [ ] Update package declarations if needed
+* [ ] Update documentation references
+* [ ] Run tests in the new module
+* [ ] Verify all functionality works correctly
+* [ ] Complete the task completion process:
+** [ ] Verify documentation is updated correctly
+** [ ] Mark task as completed in TODO.adoc
+** [ ] Run a full build with `./mvnw clean verify`
+** [ ] Commit changes (git-commit) with task name as commit message
 
 == Best Practices
 
