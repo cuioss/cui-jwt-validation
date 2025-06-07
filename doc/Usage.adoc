@@ -14,7 +14,7 @@ This document provides usage examples for the cui-jwt-validation library. For de
 * link:Requirements.adoc[Requirements] - Functional and non-functional requirements
 * link:Specification.adoc[Specification] - Technical specifications
 * link:LogMessages.adoc[Log Messages] - Reference for all log messages
-* link:threat-model/Threat-Model.adoc[Threat Model] - Security analysis and mitigations
+* link:security/Threat-Model.adoc[Threat Model] - Security analysis and mitigations
 * link:Build.adoc[Building and Development] - Information for contributors
 
 == TokenValidator: The Main Entry Point

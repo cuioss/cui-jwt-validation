@@ -39,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * which implements the requirement CUI-JWT-8.5: Cryptographic Agility as specified
  * in the security specification.
  * <p>
- * See: doc/specification/security.adoc
+ * See: doc/specification/security-specifications.adoc
  */
 @EnableTestLogger(debug = AlgorithmPreferences.class, warn = AlgorithmPreferences.class)
 @DisplayName("Tests AlgorithmPreferences")

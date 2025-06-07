@@ -21,7 +21,7 @@ This document provides detailed specifications for the performance benchmarking 
 * link:../Build.adoc[Building and Development] - Information for contributors
 * link:technical-components.adoc[Technical Components] - Implementation details
 * link:testing.adoc[Testing] - Testing approach and coverage
-* link:security.adoc[Security] - Security specifications
+* link:security-specifications.adoc[Security] - Security specifications
 
 == Performance Requirements
 
@@ -219,7 +219,7 @@ Key performance metrics are displayed as badges in the project documentation:
 == Related Documentation
 
 * link:../Requirements.adoc#CUI-JWT-5[CUI-JWT-5: Performance] - Performance requirements
-* link:security.adoc[Security] - Security specifications with performance implications
+* link:security-specifications.adoc[Security] - Security specifications with performance implications
 * link:technical-components.adoc[Technical Components] - Component specifications
 
 == Token Generation Strategy for Benchmarks

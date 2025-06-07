@@ -382,4 +382,148 @@ class TokenClaimValidatorTest {
                     "MISSING_CLAIM event should be incremented");
         }
     }
+
+    @Nested
+    @DisplayName("Mutable Claims Validation Tests")
+    class MutableClaimsValidationTests {
+        @Test
+        @DisplayName("Should validate token with valid subject claim")
+        void shouldValidateTokenWithValidSubjectClaim() {
+            // Given a validator with expected audience and client ID
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer("test-issuer")
+                    .expectedAudience(EXPECTED_AUDIENCE)
+                    .expectedClientId(EXPECTED_CLIENT_ID)
+                    .build();
+            var validator = createValidator(issuerConfig);
+
+            // Create a token with a valid subject claim
+            TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
+            // Set the authorized party to match the expected client ID
+            tokenHolder.withClaim("azp", ClaimValue.forPlainString(EXPECTED_CLIENT_ID));
+            // Ensure subject claim is present with a valid value
+            tokenHolder.withClaim("sub", ClaimValue.forPlainString("valid-subject-id"));
+
+            // When validating the token - should not throw an exception
+            TokenContent result = assertDoesNotThrow(() -> validator.validate(tokenHolder),
+                    "Token should be valid with valid subject claim");
+
+            // Then the validation should pass
+            assertNotNull(result, "Validated token should not be null");
+        }
+
+        @Test
+        @DisplayName("Should fail validation for token with missing subject claim")
+        void shouldFailValidationForTokenWithMissingSubjectClaim() {
+            // Get initial count
+            long initialCount = SECURITY_EVENT_COUNTER.getCount(SecurityEventCounter.EventType.MISSING_CLAIM);
+
+            // Given a validator with expected audience and client ID
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer("test-issuer")
+                    .expectedAudience(EXPECTED_AUDIENCE)
+                    .expectedClientId(EXPECTED_CLIENT_ID)
+                    .build();
+            var validator = createValidator(issuerConfig);
+
+            // Create a token with a missing subject claim
+            TestTokenHolder tokenContent = new TestTokenHolder(TokenType.ACCESS_TOKEN,
+                    ClaimControlParameter.builder()
+                            .missingSubject(true)
+                            .build());
+            // Set the authorized party to match the expected client ID
+            tokenContent.withClaim("azp", ClaimValue.forPlainString(EXPECTED_CLIENT_ID));
+
+            // When validating the token - should throw an exception
+            TokenValidationException exception = assertThrows(TokenValidationException.class,
+                    () -> validator.validate(tokenContent),
+                    "Token with missing subject claim should be rejected");
+
+            // Verify the exception has the correct event type
+            assertEquals(SecurityEventCounter.EventType.MISSING_CLAIM, exception.getEventType(),
+                    "Exception should have MISSING_CLAIM event type");
+
+            // Verify that the appropriate warning is logged
+            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, JWTValidationLogMessages.WARN.MISSING_CLAIM.resolveIdentifierString());
+
+            // Verify security event was recorded
+            assertEquals(initialCount + 1, SECURITY_EVENT_COUNTER.getCount(SecurityEventCounter.EventType.MISSING_CLAIM),
+                    "MISSING_CLAIM event should be incremented");
+        }
+
+        @Test
+        @DisplayName("Should validate token with empty subject claim (current behavior)")
+        void shouldValidateTokenWithEmptySubjectClaim() {
+            // Given a validator with expected audience and client ID
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer("test-issuer")
+                    .expectedAudience(EXPECTED_AUDIENCE)
+                    .expectedClientId(EXPECTED_CLIENT_ID)
+                    .build();
+            var validator = createValidator(issuerConfig);
+
+            // Create a token with an empty subject claim
+            TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
+            // Set the authorized party to match the expected client ID
+            tokenHolder.withClaim("azp", ClaimValue.forPlainString(EXPECTED_CLIENT_ID));
+            // Set an empty subject claim
+            tokenHolder.withClaim("sub", ClaimValue.forPlainString(""));
+
+            // When validating the token - should not throw an exception (current behavior)
+            // This is because ClaimValue.isPresent() only checks if originalString is not null, not if it's empty
+            TokenContent result = assertDoesNotThrow(() -> validator.validate(tokenHolder),
+                    "Token with empty subject claim is currently accepted");
+
+            // Then the validation should pass
+            assertNotNull(result, "Validated token should not be null");
+
+            // Verify the token has an empty subject claim
+            assertTrue(result.getClaims().containsKey("sub"), "Token should contain subject claim");
+            assertEquals("", result.getClaims().get("sub").getOriginalString(), "Subject claim should be empty");
+
+            // Note: This test documents the current behavior of the library.
+            // In a future enhancement, the library could be modified to reject tokens with empty subject claims
+            // by updating the ClaimValue.isPresent() method to also check if the string is empty.
+        }
+
+        @Test
+        @DisplayName("Should validate token with mutable claims but still use subject for identification")
+        void shouldValidateTokenWithMutableClaims() {
+            // Given a validator with expected audience and client ID
+            var issuerConfig = IssuerConfig.builder()
+                    .issuer("test-issuer")
+                    .expectedAudience(EXPECTED_AUDIENCE)
+                    .expectedClientId(EXPECTED_CLIENT_ID)
+                    .build();
+            var validator = createValidator(issuerConfig);
+
+            // Create a token with both subject and mutable claims
+            TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
+            // Set the authorized party to match the expected client ID
+            tokenHolder.withClaim("azp", ClaimValue.forPlainString(EXPECTED_CLIENT_ID));
+            // Ensure subject claim is present with a valid value
+            tokenHolder.withClaim("sub", ClaimValue.forPlainString("valid-subject-id"));
+            // Add mutable claims
+            tokenHolder.withClaim("email", ClaimValue.forPlainString("user@example.com"));
+            tokenHolder.withClaim("name", ClaimValue.forPlainString("Test User"));
+            tokenHolder.withClaim("preferred_username", ClaimValue.forPlainString("testuser"));
+
+            // When validating the token - should not throw an exception
+            TokenContent result = assertDoesNotThrow(() -> validator.validate(tokenHolder),
+                    "Token should be valid with both subject and mutable claims");
+
+            // Then the validation should pass
+            assertNotNull(result, "Validated token should not be null");
+
+            // Verify the token has both subject and mutable claims
+            assertTrue(result.getClaims().containsKey("sub"), "Token should contain subject claim");
+            assertTrue(result.getClaims().containsKey("email"), "Token should contain email claim");
+            assertTrue(result.getClaims().containsKey("name"), "Token should contain name claim");
+            assertTrue(result.getClaims().containsKey("preferred_username"), "Token should contain preferred_username claim");
+
+            // The library correctly validates the subject claim but doesn't warn about mutable claims
+            // This test documents this behavior and serves as a reminder that applications should use
+            // the immutable 'sub' claim for user identification rather than mutable claims like email
+        }
+    }
 }

@@ -15,7 +15,10 @@ This document provides the technical specification for the JWT Token Validation 
 * link:Usage.adoc[Usage Guide] - How to use the library with code examples
 * link:Requirements.adoc[Requirements] - Functional and non-functional requirements
 * link:LogMessages.adoc[Log Messages] - Reference for all log messages
-* link:threat-model/Threat-Model.adoc[Threat Model] - Security analysis and mitigations
+* link:security/Threat-Model.adoc[Threat Model] - Security analysis and mitigations
+* link:security/jwt-attacks-analysis.adoc[JWT Vulnerabilities and Attacks Analysis] - Analysis of common JWT vulnerabilities
+* link:security/oauth-security-analysis.adoc[OAuth Security Considerations Analysis] - Analysis of OAuth security considerations
+* link:jwt-security-best-practices.adoc[JWT Security Best Practices Guide] - Comprehensive guide on JWT security best practices
 * link:Build.adoc[Building and Development] - Information for contributors
 
 == Document Structure
@@ -24,10 +27,11 @@ This specification is organized into the following documents:
 
 * link:specification/technical-components.adoc[Technical Components] - Core implementation details for token parsing, validation, and management
 * link:specification/well-known.adoc[OIDC Discovery Support] - How the library supports OpenID Connect Discovery for fetching provider metadata.
-* link:specification/security.adoc[Security] - Security measures and implementation details
+* link:security/security-specifications.adoc[Security] - Security measures and implementation details
 * link:specification/token-decryption.adoc[Token Decryption] - Specifications for token decryption support (JWE)
 * link:specification/testing.adoc[Testing] - Unit, integration, and security testing approach
 * link:specification/token-size-validation.adoc[Token Size Validation] - Specifications for token size validation
+* link:specification/jwks-size-recommendations.adoc[JWKS Size Recommendations] - JWKS size limits and recommendations
 * link:specification/benchmark.adoc[Performance Benchmarks] - Performance requirements, methodology, and verification
 
 == Architecture
@@ -108,7 +112,7 @@ The library provides the following token content classes:
 For detailed information about the implementation of the JWT Token Validation library, please refer to the following documents:
 
 * link:specification/technical-components.adoc[Technical Components] - Details about the implementation of core components
-* link:specification/security.adoc[Security] - Details about security measures and implementation
+* link:security/security-specifications.adoc[Security] - Details about security measures and implementation
 * link:specification/token-size-validation.adoc[Token Size Validation] - Details about token size validation implementation
 * link:specification/token-decryption.adoc[Token Decryption] - Details about token decryption support (future implementation)
 

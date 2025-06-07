@@ -5,7 +5,7 @@
 :sectnums:
 
 == Overview
-_See Requirement link:../Requirements.adoc#CUI-JWT-8[CUI-JWT-8: Security Requirements] and Specification link:../Specification.adoc[Specification] and link:../specification/security.adoc[Security Specification]_
+_See Requirement link:../Requirements.adoc#CUI-JWT-8[CUI-JWT-8: Security Requirements] and Specification link:../Specification.adoc[Specification] and link:security-specifications.adoc[Security Specification]_
 
 This document outlines the threat model for the JWT Token Validation library. The threat model follows OWASP recommendations and identifies potential security threats, current mitigations, and additional recommendations.
 
@@ -18,6 +18,8 @@ This document outlines the threat model for the JWT Token Validation library. Th
 * link:../LogMessages.adoc[Log Messages] - Reference for all log messages
 * link:../Build.adoc[Building and Development] - Information for contributors
 * link:threat-coverage-analysis.adoc[Threat Coverage Analysis] - Detailed analysis of security threats
+* link:jwt-attacks-analysis.adoc[JWT Vulnerabilities and Attacks Analysis] - Analysis of common JWT vulnerabilities and their mitigations
+* link:oauth-security-analysis.adoc[OAuth Security Considerations Analysis] - Analysis of OAuth-related security vulnerabilities
 
 == System Context
 
@@ -118,7 +120,7 @@ For a detailed analysis of threats, current mitigations, and recommendations, pl
 
 The following aspects are covered in detail in the specification documents:
 
-* *Security Controls*: For detailed information about security controls, including input validation, cryptographic practices, authentication and authorization, secure communication, error handling and logging, and data protection, please refer to the link:../specification/security.adoc[Security Specification] document.
+* *Security Controls*: For detailed information about security controls, including input validation, cryptographic practices, authentication and authorization, secure communication, error handling and logging, and data protection, please refer to the link:../specification/security-specifications.adoc[Security Specification] document.
 
 * *Security Testing*: For detailed information about security testing, including required security tests and vulnerability scanning, please refer to the link:../specification/testing.adoc[Testing Specification] document.
 
