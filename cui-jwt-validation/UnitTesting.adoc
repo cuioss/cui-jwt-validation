@@ -109,7 +109,7 @@ ClaimControlParameter defaultParams = ClaimControlParameter.defaultForTokenType(
 
 === TestTokenGenerators
 
-The `TestTokenGenerators` class provides factory methods for creating TypedGenerator instances that produce TestTokenHolder objects:
+The `TestTokenGenerators` class provides factory methods for creating TypedGenerator instances that produce TestTokenHolder objects. These generators are built using the https://github.com/cuioss/cui-test-generator[cui-test-generator] framework, which provides a robust foundation for creating test data generators:
 
 [source,java]
 ----
@@ -138,8 +138,9 @@ String refreshTokenString = refreshToken.getRawToken();
 ==== Key Features
 
 * *Token Type Generators*: Provides generators for ACCESS_TOKEN, ID_TOKEN, and REFRESH_TOKEN types
-* *TypedGenerator Interface*: Implements the TypedGenerator interface for easy integration with testing frameworks
+* *TypedGenerator Interface*: Implements the TypedGenerator interface from cui-test-generator for easy integration with testing frameworks
 * *Default Parameters*: Uses default parameters for each token type
+* *Built on cui-test-generator*: Leverages the powerful generator framework from https://github.com/cuioss/cui-test-generator
 
 === TestTokenSource (Preferred Approach)
 
@@ -248,132 +249,164 @@ void shouldRejectTokenWithMissingClaims() {
 == Testing Code Using OIDC Discovery (`WellKnownHandler`)
 _See link:../doc/specification/well-known.adoc[OIDC Discovery Specification Details]_
 
-When your application uses the `WellKnownHandler` to discover OIDC provider details, you'll want to test this integration without making actual network calls. The `de.cuioss.jwt.validation.wellknown.dispatcher.WellKnownDispatcher` utility class is provided for this purpose.
+When your application uses the `WellKnownHandler` to discover OIDC provider details, you'll want to test this integration without making actual network calls. The `de.cuioss.jwt.validation.test.dispatcher.WellKnownDispatcher` utility class is provided for this purpose.
 
 === Introducing `WellKnownDispatcher`
 
-`WellKnownDispatcher` uses WireMock (a library for stubbing and mocking HTTP services) to simulate an OpenID Provider's `/.well-known/openid-configuration` endpoint and its associated JWKS (JSON Web Key Set) endpoint. This allows you to control the responses that `WellKnownHandler` receives during tests, enabling you to simulate various scenarios including:
+`WellKnownDispatcher` implements the `ModuleDispatcherElement` interface from the `cui-test-mockwebserver-junit5` framework to simulate an OpenID Provider's `/.well-known/openid-configuration` endpoint and its associated JWKS (JSON Web Key Set) endpoint. This allows you to control the responses that `WellKnownHandler` receives during tests, enabling you to simulate various scenarios including:
 
 * Successful discovery of OIDC configuration.
 * Missing or malformed OIDC configuration documents.
 * Network errors during discovery.
-* Inaccessible JWKS URIs.
+* Missing required fields like issuer or jwks_uri.
+* Invalid issuer values.
 
 By using `WellKnownDispatcher`, your tests for components relying on `WellKnownHandler` become isolated, reliable, and fast.
 
-=== Using `WellKnownDispatcher` in JUnit 5 Tests
+=== Using `WellKnownDispatcher` with JUnit 5 Tests
 
 Here's a typical setup for using `WellKnownDispatcher` in a JUnit 5 test class:
 
 [source,java]
 ----
 import de.cuioss.jwt.validation.well_known.WellKnownHandler;
-import de.cuioss.jwt.validation.wellknown.dispatcher.WellKnownDispatcher;
-import de.cuioss.jwt.validation.jwks.http.HttpJwksLoaderConfig; // For example usage
+import de.cuioss.jwt.validation.test.dispatcher.WellKnownDispatcher;
+import de.cuioss.jwt.validation.jwks.http.HttpJwksLoaderConfig;
+import de.cuioss.test.mockwebserver.EnableMockWebServer;
+import de.cuioss.test.mockwebserver.URIBuilder;
+import de.cuioss.test.mockwebserver.dispatcher.ModuleDispatcher;
+import de.cuioss.test.mockwebserver.dispatcher.ModuleDispatcherElement;
+import lombok.Getter;
 import org.junit.jupiter.api.*;
 
-// In your test class
+@EnableMockWebServer
+@ModuleDispatcher
 class MyServiceUsingWellKnownTest {
 
-    static WellKnownDispatcher dispatcher = new WellKnownDispatcher();
-
-    @BeforeAll
-    static void startServer() {
-        dispatcher.start(); // Starts the WireMock server on a dynamic port
+    @Getter
+    private static final WellKnownDispatcher wellKnownDispatcher = new WellKnownDispatcher();
+    
+    /**
+     * Returns the WellKnownDispatcher for the ModuleDispatcher annotation.
+     * This method is called by the ModuleDispatcher framework.
+     *
+     * @return the WellKnownDispatcher
+     */
+    public ModuleDispatcherElement getModuleDispatcher() {
+        return wellKnownDispatcher;
     }
-
-    @AfterAll
-    static void stopServer() {
-        dispatcher.stop(); // Stops the WireMock server
-    }
-
+    
     @BeforeEach
-    void resetDispatcher() {
-        dispatcher.reset(); // Clears all WireMock stubs from previous tests
+    void setUp(URIBuilder uriBuilder) {
+        // Reset the dispatcher to its default state
+        wellKnownDispatcher.returnDefault();
+        
+        // Reset the call counter
+        wellKnownDispatcher.setCallCounter(0);
     }
 
     @Test
-    void testSuccessfulOidcDiscoveryAndUsage() throws Exception {
-        String serverBaseUrl = dispatcher.getServerUrl(); // e.g., http://localhost:12345
-        String wellKnownPath = "/.well-known/openid-configuration";
-        String fullWellKnownUrl = serverBaseUrl + wellKnownPath;
-
-        String jwksPath = "/jwks.json"; // Relative path for the JWKS endpoint
-        String jwksUri = serverBaseUrl + jwksPath; // Full URI for JWKS
-
-        // 1. Prepare the OIDC discovery document JSON
-        String oidcConfigJson = String.format(
-            "{\"issuer\":\"%s\", \"jwks_uri\":\"%s\"}",
-            serverBaseUrl, // The mocked issuer URL is the base URL of our dispatcher
-            jwksUri        // The mocked JWKS URI
-        );
-
-        // 2. Stub the OIDC discovery endpoint response
-        // When WellKnownHandler requests fullWellKnownUrl, it will get oidcConfigJson
-        dispatcher.successfullyRespondTo(wellKnownPath, oidcConfigJson);
-
-        // 3. Stub the JWKS endpoint response (if WellKnownHandler or HttpJwksLoader will access it)
-        // WellKnownHandler itself performs an accessibility check for the jwks_uri.
-        dispatcher.respondWithJwks(jwksPath, "{\"keys\":[{\"kty\":\"RSA\",\"kid\":\"test-kid\",\"n\":\"...\",\"e\":\"AQAB\"}]}");
-
-        // 4. Create WellKnownHandler instance using the dispatcher's URL
+    void testSuccessfulOidcDiscoveryAndUsage(URIBuilder uriBuilder) throws Exception {
+        // Build the URL for the well-known endpoint
+        URL wellKnownUrl = URI.create(uriBuilder
+                .addPathSegment("/.well-known/openid-configuration")
+                .buildAsString()).toURL();
+        
+        // Create WellKnownHandler instance using the mock server's URL
         WellKnownHandler handler = WellKnownHandler.builder()
-            .url(fullWellKnownUrl)
+            .url(wellKnownUrl)
             .build();
 
-        // Assertions for the handler (optional, but good for verification)
-        Assertions.assertEquals(serverBaseUrl, handler.getIssuer().getUrl().toString());
-        Assertions.assertEquals(jwksUri, handler.getJwksUri().getUrl().toString());
+        // Assertions for the handler
+        String baseUrl = uriBuilder.buildAsString();
+        assertEquals(baseUrl, handler.getIssuer().getUrl().toString());
+        assertEquals(baseUrl + "/oidc/jwks.json", handler.getJwksUri().getUrl().toString());
+        
+        // Verify the dispatcher was called
+        wellKnownDispatcher.assertCallsAnswered(1);
 
-        // 5. Example: Configure HttpJwksLoaderConfig using the handler
+        // Example: Configure HttpJwksLoaderConfig using the handler
         HttpJwksLoaderConfig jwksConfig = HttpJwksLoaderConfig.builder()
             .wellKnown(handler)
-            // .sslContext(...) // If needed, though dispatcher is HTTP
             .build();
 
         // Assertions for the jwksConfig
-        Assertions.assertEquals(jwksUri, jwksConfig.getJwksUri().toString());
+        assertEquals(handler.getJwksUri().getUrl().toString(), jwksConfig.getJwksUri().toString());
 
         // ... your further test logic using the handler or jwksConfig ...
-        // For instance, setting up a TokenValidator:
-        // IssuerConfig issuerConfig = IssuerConfig.builder()
-        //     .issuer(handler.getIssuer().getUrl().toString())
-        //     .httpJwksLoaderConfig(jwksConfig)
-        //     .addAudience("test-audience")
-        //     .build();
-        // TokenValidator validator = new TokenValidator(issuerConfig);
-        // ... then validate a token ...
     }
 
     @Test
-    void testOidcDiscoveryError() {
-        String serverBaseUrl = dispatcher.getServerUrl();
-        String wellKnownPath = "/.well-known/openid-configuration";
-        String fullWellKnownUrl = serverBaseUrl + wellKnownPath;
-
-        // Stub an error response (e.g., 404 Not Found)
-        dispatcher.respondWithError(wellKnownPath, 404);
-
+    void testOidcDiscoveryError(URIBuilder uriBuilder) throws Exception {
+        // Configure the dispatcher to return an error
+        wellKnownDispatcher.returnError();
+        
+        // Build the URL for the well-known endpoint
+        URL wellKnownUrl = URI.create(uriBuilder
+                .addPathSegment("/.well-known/openid-configuration")
+                .buildAsString()).toURL();
+        
         // Verify that WellKnownHandler throws an exception
-        Assertions.assertThrows(Exception.class, () -> { // Replace Exception with specific WellKnownDiscoveryException
-            WellKnownHandler.builder()
-                .url(fullWellKnownUrl)
-                .build();
-        });
+        var builder = WellKnownHandler.builder().url(wellKnownUrl);
+        assertThrows(WellKnownDiscoveryException.class, builder::build);
+        
+        // Verify the dispatcher was called
+        wellKnownDispatcher.assertCallsAnswered(1);
+    }
+    
+    @Test
+    void testMissingJwksUri(URIBuilder uriBuilder) throws Exception {
+        // Configure the dispatcher to return a response without jwks_uri
+        wellKnownDispatcher.returnMissingJwksUri();
+        
+        // Build the URL for the well-known endpoint
+        URL wellKnownUrl = URI.create(uriBuilder
+                .addPathSegment("/.well-known/openid-configuration")
+                .buildAsString()).toURL();
+        
+        // Verify that WellKnownHandler throws an exception
+        var builder = WellKnownHandler.builder().url(wellKnownUrl);
+        WellKnownDiscoveryException exception = assertThrows(
+                WellKnownDiscoveryException.class, builder::build);
+                
+        // Verify exception message
+        assertTrue(exception.getMessage().contains("Required URL field 'jwks_uri' is missing"));
+        
+        // Verify the dispatcher was called
+        wellKnownDispatcher.assertCallsAnswered(1);
     }
 }
 ----
 
-=== Key `WellKnownDispatcher` Methods
+=== Key `WellKnownDispatcher` Features
 
-*   `start()`: Starts the WireMock server. Call this in `@BeforeAll`.
-*   `stop()`: Stops the WireMock server. Call this in `@AfterAll`.
-*   `reset()`: Resets all WireMock stubs. Call this in `@BeforeEach` to ensure test isolation.
-*   `getServerUrl()`: Gets the base URL of the running WireMock server (e.g., `http://localhost:PORT`). Use this to construct the `wellKnownUrl` for `WellKnownHandler`.
-*   `successfullyRespondTo(String path, String responseBody)`: Stubs a GET request to the given `path` (e.g., `/.well-known/openid-configuration`) to return HTTP 200 with the provided `responseBody` (JSON string).
-*   `respondWithJwks(String path, String jwksBody)`: A convenience method to stub a GET and HEAD request to the given `path` (typically the `jwks_uri` path) to return HTTP 200 with the JWKS JSON `jwksBody`. This is useful because `WellKnownHandler` performs an accessibility check (HEAD or GET) on the `jwks_uri`.
-*   `respondWithError(String path, int statusCode)`: Stubs a GET request to `path` to return the specified HTTP error `statusCode`.
-*   `respondWithConnectionError(String path)`: Simulates a connection error for requests to `path`.
-*   `respondWithMalformedBody(String path, String malformedJson)`: Stubs a GET request to return HTTP 200 but with a syntactically incorrect JSON body.
+The `WellKnownDispatcher` provides several methods to control its behavior:
 
-By using these methods, you can effectively simulate various conditions of an OIDC provider's discovery endpoint and test how your application's `WellKnownHandler` integration behaves.
+* **Configuration Methods**:
+  * `returnDefault()`: Resets to the default response behavior (valid OpenID Connect discovery document)
+  * `returnError()`: Configures the dispatcher to return an HTTP 500 error
+  * `returnInvalidJson()`: Configures the dispatcher to return invalid JSON content
+  * `returnMissingIssuer()`: Configures the dispatcher to return a response with missing issuer field
+  * `returnMissingJwksUri()`: Configures the dispatcher to return a response with missing jwks_uri field
+  * `returnInvalidIssuer()`: Configures the dispatcher to return a response with an invalid issuer value
+  * `returnOnlyRequiredFields()`: Configures the dispatcher to return a response with only the required fields (issuer and jwks_uri)
+
+* **Utility Methods**:
+  * `assertCallsAnswered(int expected)`: Verifies that the dispatcher was called the expected number of times
+  * `getCallCounter()`: Returns the current call count
+  * `setCallCounter(int callCounter)`: Sets the call counter to a specific value
+
+The `WellKnownDispatcher` dynamically generates appropriate URLs based on the incoming request, ensuring that the `issuer` and `jwks_uri` values in the response are consistent with the server's base URL. This makes it easier to work with the mock server in various test environments without hardcoding URLs.
+
+=== Integration with `cui-test-mockwebserver-junit5`
+
+The `WellKnownDispatcher` is designed to work seamlessly with the `cui-test-mockwebserver-junit5` framework. It implements the `ModuleDispatcherElement` interface, which allows it to be used with the `@ModuleDispatcher` annotation.
+
+Key benefits of this integration:
+
+1. **Automatic Server Management**: The framework handles starting and stopping the mock server
+2. **Dynamic Port Assignment**: The server uses a random available port to avoid conflicts
+3. **Parameter Injection**: Test methods can receive useful parameters like `URIBuilder` configured with the server's details
+4. **HTTPS Support**: The framework provides HTTPS capability with automatic certificate handling
+
+For more information about the `cui-test-mockwebserver-junit5` framework, see the documentation in the `doc/library/cui-test-mockwebserver-junit5/` directory.
