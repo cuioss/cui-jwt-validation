@@ -108,7 +108,7 @@ After implementing any task in this TODO list, follow these steps:
 ** [x] Commit changes (git-commit) with task name as commit message
 
 === Task 3. Transform to Multi-Module Project
-[ ] *Priority:* High
+[x] *Priority:* High
 
 *Description:* Restructure the project into a multi-module Maven project with the following modules:
 
@@ -121,17 +121,17 @@ After implementing any task in this TODO list, follow these steps:
 
 *Implementation Steps:*
 
-* [ ] Create basic parent pom.xml structure with modules declaration
-* [ ] Set up directory structure for each module
-* [ ] Configure Maven modules in IDE
-* [ ] Create initial minimal pom.xml for each module
-* [ ] Ensure parent-child relationships are correctly configured
-* [ ] Verify basic multi-module structure builds correctly
-* [ ] Complete the task completion process:
-** [ ] Verify documentation is updated correctly
-** [ ] Mark task as completed in TODO.adoc
-** [ ] Run a full build with `./mvnw clean verify`
-** [ ] Commit changes (git-commit) with task name as commit message
+* [x] Create basic parent pom.xml structure with modules declaration
+* [x] Set up directory structure for each module
+* [x] Configure Maven modules in IDE
+* [x] Create initial minimal pom.xml for each module
+* [x] Ensure parent-child relationships are correctly configured
+* [x] Verify basic multi-module structure builds correctly
+* [x] Complete the task completion process:
+** [x] Verify documentation is updated correctly
+** [x] Mark task as completed in TODO.adoc
+** [x] Run a full build with `./mvnw clean verify`
+** [x] Commit changes (git-commit) with task name as commit message
 
 === Task 4. Set Up Benchmarking Module
 [ ] *Priority:* Medium

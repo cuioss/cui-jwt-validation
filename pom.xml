@@ -10,10 +10,10 @@
         <relativePath/>
     </parent>
     <groupId>de.cuioss.jwt</groupId>
-    <artifactId>cui-jwt</artifactId>
+    <artifactId>cui-jwt-parent</artifactId>
     <version>1.0.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
-    <name>JWT Token Validation</name>
+    <packaging>pom</packaging>
+    <name>JWT Token Validation Parent</name>
     <description>A comprehensive framework for validating JWT tokens in multi-issuer environments.
         The module provides robust token parsing, validation, and management capabilities
         with a focus on security and ease of use, using Bouncy Castle for cryptographic operations.
@@ -33,8 +33,14 @@
         <url>https://github.com/cuioss/cui-jwt/issues</url>
         <system>GitHub Issues</system>
     </issueManagement>
+    <modules>
+        <module>bom</module>
+        <module>cui-jwt-validation</module>
+        <module>cui-jwt-benchmarking</module>
+        <module>cui-jwt-quarkus</module>
+    </modules>
+
     <properties>
-        <maven.jar.plugin.automatic.module.name>de.cuioss.jwt.validation</maven.jar.plugin.automatic.module.name>
         <version.jjwt>0.12.6</version.jjwt>
         <version.jmh>1.37</version.jmh>
         <version.exec-maven-plugin>3.2.0</version.exec-maven-plugin>
@@ -76,275 +82,11 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-    <dependencies>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.json</groupId>
-            <artifactId>jakarta.json-api</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <!-- Caffeine cache -->
-        <dependency>
-            <groupId>com.github.ben-manes.caffeine</groupId>
-            <artifactId>caffeine</artifactId>
-        </dependency>
-        <!-- BouncyCastle for cryptographic operations -->
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk18on</artifactId>
-        </dependency>
-        <!-- Unit testing -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <!-- JJWT dependencies. Reduced to testing -->
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-api</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-impl</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-jackson</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <!-- Test -->
-        <dependency>
-            <groupId>de.cuioss.test</groupId>
-            <artifactId>cui-test-mockwebserver-junit5</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <!-- Implementation of jakarta.json-api-->
-        <dependency>
-            <groupId>org.eclipse.parsson</groupId>
-            <artifactId>parsson</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-params</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>de.cuioss.test</groupId>
-            <artifactId>cui-test-value-objects</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.rest-assured</groupId>
-            <artifactId>rest-assured</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.servlet</groupId>
-            <artifactId>jakarta.servlet-api</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>de.cuioss.test</groupId>
-            <artifactId>cui-test-generator</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>de.cuioss.test</groupId>
-            <artifactId>cui-test-juli-logger</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>de.cuioss.test</groupId>
-            <artifactId>cui-test-keycloak-integration</artifactId>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>junit</groupId>
-                    <artifactId>junit</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <!-- Simple implementation that is actually a bridge to juli logging. Used for test-containers slf4j -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-jdk14</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <!-- Bridge jakarta-commons logging  to slf4j -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>jcl-over-slf4j</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <!-- JMH dependencies for test compilation -->
-        <dependency>
-            <groupId>org.openjdk.jmh</groupId>
-            <artifactId>jmh-core</artifactId>
-            <version>${version.jmh}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.openjdk.jmh</groupId>
-            <artifactId>jmh-generator-annprocess</artifactId>
-            <version>${version.jmh}</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+    <!-- No global dependencies - all dependencies are defined in the individual modules -->
 
     <build>
         <plugins>
-            <!-- Clean plugin to remove benchmark result files -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-clean-plugin</artifactId>
-                <configuration>
-                    <filesets>
-                        <fileset>
-                            <directory>${project.basedir}</directory>
-                            <includes>
-                                <include>jmh-results*.json</include>
-                            </includes>
-                        </fileset>
-                    </filesets>
-                </configuration>
-            </plugin>
-            <!-- Enable annotation processing for JMH -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>org.openjdk.jmh</groupId>
-                            <artifactId>jmh-generator-annprocess</artifactId>
-                            <version>${version.jmh}</version>
-                        </path>
-                    </annotationProcessorPaths>
-                </configuration>
-                <executions>
-                    <!-- Process test classes for JMH annotation processing -->
-                    <execution>
-                        <id>process-test-annotations</id>
-                        <phase>process-test-classes</phase>
-                        <goals>
-                            <goal>testCompile</goal>
-                        </goals>
-                        <configuration>
-                            <annotationProcessorPaths>
-                                <path>
-                                    <groupId>org.openjdk.jmh</groupId>
-                                    <artifactId>jmh-generator-annprocess</artifactId>
-                                    <version>${version.jmh}</version>
-                                </path>
-                            </annotationProcessorPaths>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- Create test artifact with classifier "test" -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>create-test-jar</id>
-                        <goals>
-                            <goal>test-jar</goal>
-                        </goals>
-                        <configuration>
-                            <classifier>test</classifier>
-                            <includes>
-                                <include>de/cuioss/jwt/validation/test/**</include>
-                            </includes>
-                            <excludes>
-                                <exclude>de/cuioss/jwt/validation/test/**/*Test.class</exclude>
-                            </excludes>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
+            <!-- Parent pom doesn't need specific build plugins -->
         </plugins>
     </build>
-    <profiles>
-        <profile>
-            <id>benchmark</id>
-            <dependencies>
-                <!-- JMH -->
-                <dependency>
-                    <groupId>org.openjdk.jmh</groupId>
-                    <artifactId>jmh-core</artifactId>
-                    <version>${version.jmh}</version>
-                    <scope>compile</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.openjdk.jmh</groupId>
-                    <artifactId>jmh-generator-annprocess</artifactId>
-                    <version>${version.jmh}</version>
-                    <scope>provided</scope>
-                </dependency>
-            </dependencies>
-            <build>
-                <plugins>
-                    <!-- Skip unit tests when running benchmarks -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <configuration>
-                            <skipTests>true</skipTests>
-                        </configuration>
-                    </plugin>
-
-                    <!-- Build classpath for benchmark execution -->
-                    <plugin>
-                        <artifactId>maven-dependency-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>build-classpath</id>
-                                <goals>
-                                    <goal>build-classpath</goal>
-                                </goals>
-                                <configuration>
-                                    <includeScope>test</includeScope>
-                                    <outputProperty>depClasspath</outputProperty>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <!-- Execute benchmark tests -->
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maven-plugin</artifactId>
-                        <version>${version.exec-maven-plugin}</version>
-                        <executions>
-                            <execution>
-                                <id>run-benchmarks</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>exec</goal>
-                                </goals>
-                                <configuration>
-                                    <executable>java</executable>
-                                    <arguments>
-                                        <argument>-classpath</argument>
-                                        <argument>
-                                            ${project.build.outputDirectory}${path.separator}${project.build.testOutputDirectory}${path.separator}${depClasspath}
-                                        </argument>
-                                        <argument>de.cuioss.jwt.validation.benchmark.BenchmarkRunner</argument>
-                                    </arguments>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>
