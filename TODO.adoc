@@ -1,0 +1,169 @@
+= TODO List for cui-jwt-token-handling
+:toc:
+:toclevels: 3
+:toc-title: Table of Contents
+:sectnums:
+
+This document outlines the planned refactoring tasks for the cui-jwt-token-handling project.
+
+== Task Structure
+
+=== Task Numbering
+
+Tasks are numbered sequentially (e.g., Task 1, Task 2, Task 3) for easy reference and tracking. All tasks fall under the single category of "Restructuring".
+
+=== Task Format
+
+Each task follows a consistent format:
+
+[source]
+----
+=== Task [Number]. [Task Title]
+[ ] *Priority:* [High/Medium/Low]
+
+*Description:* [Detailed description of the task]
+
+*Rationale:* [Explanation of why this task is important]
+----
+
+== Progress Tracking
+
+Progress is tracked using checkboxes in the task list:
+
+* `[ ]` - Task not started or in progress
+* `[x]` - Task completed
+
+This simple visual indicator allows for quick assessment of project status. The checkboxes are updated manually after completing a task according to the Task Completion Process.
+
+=== Current Progress
+
+Progress can be assessed by:
+
+1. Counting completed tasks within each category
+2. Calculating the overall completion percentage
+3. Focusing on high-priority tasks first
+
+== Task Completion Process
+
+After implementing any task in this TODO list, follow these steps:
+
+1. *Verify Documentation*: Ensure the documentation is updated correctly. Especially verif all the links / names are correct and consistent with the refactoring changes made.
+2. *Commit Changes*: Commit the changes with a git commit. Use the task name (e.g., "Task 1. Review Error Handling") as the commit message
+3. *Update Status*: Check the checkbox for the completed task in this TODO.adoc file
+4. *Make a Full Build*: Run `./mvnw clean verify` to ensure all tests pass
+
+=== Task 1. Set GroupId to de.cuioss.jwt
+[ ] *Priority:* High
+
+*Description:* Update the Maven group ID to `<groupId>de.cuioss.jwt</groupId>` throughout the project. Ensure that all documentation, especially the badges on README.adoc, reflect this change.
+
+*Rationale:* Consistent group ID naming improves project identification and aligns with organizational standards.
+
+=== Task 2. Remove Shell Scripts
+[ ] *Priority:* Medium
+
+*Description:* Remove `view-benchmarks.sh` and `generate-plantuml.sh` scripts and adapt the documentation accordingly to reflect alternative approaches for these functionalities.
+
+*Rationale:* Reducing reliance on shell scripts improves cross-platform compatibility and simplifies maintenance.
+
+=== Task 3. Transform to Multi-Module Project
+[ ] *Priority:* High
+
+*Description:* Restructure the project into a multi-module Maven project with the following modules:
+
+* `de.cuioss.jwt:bom` - Bill of Materials (BOM) module that defines dependency management for all modules and should be imported by all other modules
+* `de.cuioss.jwt:cui-jwt-validation` - The core library module containing the JWT validation functionality
+* `de.cuioss.jwt:cui-jwt-benchmarking` - Module dedicated to benchmarking aspects
+* `de.cuioss.jwt:cui-jwt-quarkus` - Quarkus integration module that provides configuration, producers, and integration from SecurityEvents to Micrometer
+
+*Rationale:* A multi-module structure improves separation of concerns, allows for more focused dependencies per module, and makes the project more maintainable and scalable.
+
+=== Task 4. Set Up Benchmarking Module
+[ ] *Priority:* Medium
+
+*Description:* Move benchmark-related code to the dedicated benchmarking module:
+
+1. Move `src/test/java/de/cuioss/jwt/validation/benchmark` to `cui-jwt-benchmarking/src/main` (not as test code)
+2. Move `.github/templates/benchmark/index-visualizer.html` to the benchmarking module
+3. Thoroughly review and adapt `.github/workflows/benchmark.yml` to:
+   a. Update references to the new template location
+   b. Modify build commands to target the new module structure
+   c. Ensure proper artifact paths are updated
+   d. Verify GitHub Pages deployment still works correctly
+4. Incorporate the benchmark profile from the root pom.xml into the benchmarking module's pom.xml (as default configuration, not as a profile)
+5. Make necessary code adaptations since the code is no longer in a test module
+6. Configure Sonar in the parent pom.xml to exclude the benchmarking module from test coverage metrics
+7. Ensure the benchmarking module's build configuration does not trigger performance tests during regular builds:
+   a. Set up a specific Maven property that must be explicitly enabled to run benchmarks
+   b. Configure a Maven plugin to skip benchmark execution by default
+   c. Document how to manually run benchmarks in the module's README
+
+*Rationale:* Separating benchmarking code into its own module improves project organization, ensures clear separation between production code and benchmarks, and prevents benchmarking dependencies from affecting the core library. Proper configuration prevents performance tests from slowing down regular builds while maintaining the ability to run them when needed.
+
+=== Task 5. Set Up BOM Module
+[ ] *Priority:* High
+
+*Description:* Create and configure the Bill of Materials (BOM) module:
+
+1. Create the `de.cuioss.jwt:bom` module with appropriate Maven configuration
+2. Move all dependency management definitions from the original pom.xml to this module
+3. Include all project modules (cui-jwt-validation, cui-jwt-benchmarking, cui-jwt-quarkus) in the BOM's dependency management section
+4. Configure each module to import the BOM in its dependency management section:
+   ```xml
+   <dependencyManagement>
+     <dependencies>
+       <dependency>
+         <groupId>de.cuioss.jwt</groupId>
+         <artifactId>bom</artifactId>
+         <version>${project.version}</version>
+         <type>pom</type>
+         <scope>import</scope>
+       </dependency>
+     </dependencies>
+   </dependencyManagement>
+   ```
+5. Ensure version properties are properly consolidated in the BOM
+6. Set up appropriate Maven release configuration in the BOM
+7. Verify that all modules build correctly with the new dependency structure
+
+*Rationale:* A well-configured BOM module centralizes dependency management, ensuring consistent versions across all modules, simplifying upgrades, and reducing the risk of dependency conflicts. Importing the BOM in each module maintains a single source of truth for dependency versions.
+
+=== Task 6. Set Up Core Validation Module
+[ ] *Priority:* High
+
+*Description:* Move the main source code to the core validation module:
+
+1. Create the `de.cuioss.jwt:cui-jwt-validation` module with appropriate Maven configuration
+2. Configure the pom.xml with:
+   a. Import of the BOM module for dependency management
+   b. All required dependencies from the original project
+   c. Configuration for creating a test artifact (jar-with-dependencies)
+3. Move all source code from the original `src` directory to the new module, excluding benchmark-related code:
+   a. Move `src/main/java` to `cui-jwt-validation/src/main/java`
+   b. Move `src/main/resources` to `cui-jwt-validation/src/main/resources` (if exists)
+   c. Move `src/test/java` to `cui-jwt-validation/src/test/java`, excluding the benchmark package
+   d. Move `src/test/resources` to `cui-jwt-validation/src/test/resources`
+4. Update package declarations if necessary to align with the new module structure
+5. Ensure documentation references are updated to reflect the new module structure
+6. Verify that all tests pass in the new module structure
+
+*Rationale:* Moving the core validation code to a dedicated module improves project organization, allows for more focused dependencies, and enables separate versioning and release cycles. Creating a test artifact facilitates reuse of test utilities in other modules.
+
+== Best Practices
+
+=== Task Implementation
+
+* Focus on one task at a time
+* Complete the entire Task Completion Process before moving to the next task
+* Prioritize tasks based on their priority level (High, Medium, Low)
+* Document any unexpected challenges or decisions made during implementation
+
+=== Documentation Updates
+
+* Keep this TODO.adoc file up to date
+* Document any changes to the refactoring process
+* Ensure all team members understand the process
+
+== Conclusion
+
+This structured approach to refactoring ensures that improvements are made systematically, with clear tracking of progress and consistent quality standards. The categorization and numbering system provides flexibility while maintaining organization, and the standardized completion process ensures that all aspects of code quality are addressed.
