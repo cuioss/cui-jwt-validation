@@ -10,10 +10,15 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>cui-jwt-quarkus</artifactId>
-    <packaging>jar</packaging>
-    <name>JWT Token Validation Quarkus Integration</name>
-    <description>Quarkus integration for JWT token validation, providing configuration, producers, and integration from SecurityEvents to Micrometer</description>
+    <artifactId>cui-jwt-quarkus-parent</artifactId>
+    <packaging>pom</packaging>
+    <name>JWT Token Validation Quarkus Integration Parent</name>
+    <description>Parent module for Quarkus integration for JWT token validation, providing configuration, producers, and integration from SecurityEvents to Micrometer</description>
+
+    <modules>
+        <module>runtime</module>
+        <module>deployment</module>
+    </modules>
 
     <properties>
         <maven.jar.plugin.automatic.module.name>de.cuioss.jwt.quarkus</maven.jar.plugin.automatic.module.name>

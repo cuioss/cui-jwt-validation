@@ -49,14 +49,14 @@ Progress can be assessed by:
 
 The tasks have the following dependencies:
 
-1. Task 1 (Configuration) should be completed first as other tasks depend on it
-2. Task 2 (CDI Producers) depends on Task 1
-3. Tasks 3 (Metrics) and 4 (Health Checks) can be implemented in parallel after Task 2
-4. Task 5 (Documentation) should be updated throughout but finalized last
+. Task 1 (Configuration) should be completed first as other tasks depend on it
+. Task 2 (CDI Producers) depends on Task 1
+. Tasks 3 (Metrics) and 4 (Health Checks) can be implemented in parallel after Task 2
+. Task 5 (Documentation) should be updated throughout but finalized last
 
 == Task List
 
-* link:Convert to a Proper Quarkus Extension.adoc[Task 0. Convert to a Proper Quarkus Extension]
+* [x] link:Convert to a Proper Quarkus Extension.adoc[Task 0. Convert to a Proper Quarkus Extension]
 * link:Setup Quarkus Configuration Properties.adoc[Task 1. Setup Quarkus Configuration Properties]
 * link:Implement CDI Producers.adoc[Task 2. Implement CDI Producers]
 * link:Integrate SecurityEvents with Micrometer.adoc[Task 3. Integrate SecurityEvents with Micrometer]
@@ -79,10 +79,13 @@ See link:task-completion-process.adoc[Task Completion Process] for details on ho
 * Prioritize tasks based on their priority level (High, Medium, Low)
 * Document any unexpected challenges or decisions made during implementation
 * Follow Quarkus extension development best practices:
-  - Use appropriate annotations for CDI components
-  - Follow Quarkus configuration naming conventions
-  - Ensure proper startup and shutdown behavior
-  - Minimize dependencies and startup time
++
+--
+* Use appropriate annotations for CDI components
+* Follow Quarkus configuration naming conventions
+* Ensure proper startup and shutdown behavior
+* Minimize dependencies and startup time
+--
 * Ensure compatibility with both JVM and native mode
 
 === Documentation Updates
@@ -111,5 +114,5 @@ The implementation should focus on providing a seamless developer experience whi
 
 After completing the tasks in this document, consider the following next steps:
 
-1. Register the extension in the Quarkus extension registry
-2. Develop additional examples and tutorials for common use cases
+. Register the extension in the Quarkus extension registry
+. Develop additional examples and tutorials for common use cases

@@ -4,7 +4,7 @@
 :toc-title: Table of Contents
 :sectnums:
 
-include::task-completion-process.adoc[leveloffset=+1,tag=none]
+include::task-completion-process.adoc[leveloffset=+1]
 
 == Overview
 [ ] *Priority:* High
@@ -12,17 +12,26 @@ include::task-completion-process.adoc[leveloffset=+1,tag=none]
 *Description:* Ensure the extension works properly in native mode:
 
 . Add native image configuration:
-   * Create reflection configuration for classes that need reflection
-   * Configure resources that need to be included in the native image
-   * Add proxy configuration for dynamic proxies
++
+--
+* Create reflection configuration for classes that need reflection
+* Configure resources that need to be included in the native image
+* Add proxy configuration for dynamic proxies
+--
 . Test native image compatibility:
-   * Create native tests with @NativeImageTest
-   * Verify all functionality works in native mode
-   * Measure and optimize native startup time
++
+--
+* Create native tests with @NativeImageTest
+* Verify all functionality works in native mode
+* Measure and optimize native startup time
+--
 . Optimize for native performance:
-   * Minimize reflection usage where possible
-   * Use build-time initialization where appropriate
-   * Ensure proper resource cleanup
++
+--
+* Minimize reflection usage where possible
+* Use build-time initialization where appropriate
+* Ensure proper resource cleanup
+--
 
 *Rationale:* Native image support is a key feature of Quarkus, and extensions should work seamlessly in both JVM and native modes. This requires special configuration and testing to ensure all functionality works correctly when compiled to a native executable.
 
@@ -39,35 +48,53 @@ include::task-completion-process.adoc[leveloffset=+1,tag=none]
 == Task Completion Checklist
 
 *1. Verify Implementation:*
++
+--
 * [ ] Verify all implementation steps are completed
 * [ ] Check code against Quarkus and CUI standards
 * [ ] Ensure proper error handling and edge cases are covered
 * [ ] Verify compatibility with both JVM and native mode
+--
 
 *2. Write Tests:*
++
+--
 * [ ] Write unit tests for all components
 * [ ] Create integration tests for real-world scenarios
 * [ ] Test with different configuration options
 * [ ] Verify error cases and edge conditions
+--
 
 *3. Verify Documentation:*
++
+--
 * [ ] Update all references in README.adoc
 * [ ] Update relevant documentation in doc/ directory
 * [ ] Check for outdated file paths or references
 * [ ] Ensure consistent naming across all documentation
 * [ ] Add examples for common use cases
+--
 
 *4. Update Status:*
++
+--
 * [ ] Mark the task as completed with [x]
 * [ ] Add any notes about implementation challenges or decisions if needed
+--
 
 *5. Make a Full Build:*
-* [ ] Run the full build command: `./mvnw -Ppre-commit clean verify -pl cui-jwt-quarkus` (from project-root)
++
+--
+* [ ] Run the full build command: `./mvnw -Ppre-commit clean verify -pl cui-jwt-quarkus-parent` (from project-root)
 * [ ] Verify all tests pass
 * [ ] Check for any warnings that should be addressed
 * [ ] Verify code coverage meets standards
+--
 
 *6. Commit Changes:*
++
+--
 * [ ] Stage all modified files
 * [ ] Use the task name as the commit message
 * [ ] Include any additional notes about implementation decisions in the commit description
+--

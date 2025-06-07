@@ -4,7 +4,7 @@
 :toc-title: Table of Contents
 :sectnums:
 
-include::task-completion-process.adoc[leveloffset=+1,tag=none]
+include::task-completion-process.adoc[leveloffset=+1]
 
 == Overview
 [ ] *Priority:* High
@@ -12,18 +12,30 @@ include::task-completion-process.adoc[leveloffset=+1,tag=none]
 *Description:* Implement auto-configuration support for the Quarkus extension:
 
 . Create runtime configuration classes:
-   * Implement build-time configuration with `@BuildTimeConfig`
-   * Implement runtime configuration with `@ConfigRoot`
-   * Add proper default values and validation
++
+--
+* Implement build-time configuration with `@BuildTimeConfig`
+* Implement runtime configuration with `@ConfigRoot`
+* Add proper default values and validation
+--
 . Add feature detection and conditional enablement:
-   * Create feature detection logic to enable/disable components based on classpath
-   * Implement conditional bean registration
++
+--
+* Create feature detection logic to enable/disable components based on classpath
+* Implement conditional bean registration
+--
 . Implement proper bean lifecycle management:
-   * Handle startup and shutdown properly
-   * Ensure proper cleanup of resources
++
+--
+* Handle startup and shutdown properly
+* Ensure proper cleanup of resources
+--
 . Add extension capability metadata:
-   * Define extension capabilities and requirements
-   * Configure proper extension dependencies
++
+--
+* Define extension capabilities and requirements
+* Configure proper extension dependencies
+--
 
 *Rationale:* Proper auto-configuration is essential for a seamless user experience with Quarkus extensions. It allows the extension to work out-of-the-box with minimal configuration while still providing flexibility for advanced use cases.
 
@@ -40,35 +52,53 @@ include::task-completion-process.adoc[leveloffset=+1,tag=none]
 == Task Completion Checklist
 
 *1. Verify Implementation:*
++
+--
 * [ ] Verify all implementation steps are completed
 * [ ] Check code against Quarkus and CUI standards
 * [ ] Ensure proper error handling and edge cases are covered
 * [ ] Verify compatibility with both JVM and native mode
+--
 
 *2. Write Tests:*
++
+--
 * [ ] Write unit tests for all components
 * [ ] Create integration tests for real-world scenarios
 * [ ] Test with different configuration options
 * [ ] Verify error cases and edge conditions
+--
 
 *3. Verify Documentation:*
++
+--
 * [ ] Update all references in README.adoc
 * [ ] Update relevant documentation in doc/ directory
 * [ ] Check for outdated file paths or references
 * [ ] Ensure consistent naming across all documentation
 * [ ] Add examples for common use cases
+--
 
 *4. Update Status:*
++
+--
 * [ ] Mark the task as completed with [x]
 * [ ] Add any notes about implementation challenges or decisions if needed
+--
 
 *5. Make a Full Build:*
-* [ ] Run the full build command: `./mvnw -Ppre-commit clean verify -pl cui-jwt-quarkus` (from project-root)
++
+--
+* [ ] Run the full build command: `./mvnw -Ppre-commit clean verify -pl cui-jwt-quarkus-parent` (from project-root)
 * [ ] Verify all tests pass
 * [ ] Check for any warnings that should be addressed
 * [ ] Verify code coverage meets standards
+--
 
 *6. Commit Changes:*
++
+--
 * [ ] Stage all modified files
 * [ ] Use the task name as the commit message
 * [ ] Include any additional notes about implementation decisions in the commit description
+--
