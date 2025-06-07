@@ -1,3 +1,0 @@
-== About
-
-See https://github.com/cuioss/cui-jwt-validation[Project Documentation on github] for more information.

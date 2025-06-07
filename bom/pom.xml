@@ -14,11 +14,8 @@
     <packaging>pom</packaging>
     <name>JWT Token Validation BOM</name>
     <description>Bill of Materials (BOM) for JWT Token Validation modules</description>
-
     <properties>
         <version.jjwt>0.12.6</version.jjwt>
-        <version.jmh>1.37</version.jmh>
-        <version.exec-maven-plugin>3.2.0</version.exec-maven-plugin>
     </properties>
 
     <dependencyManagement>

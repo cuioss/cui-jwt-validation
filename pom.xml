@@ -18,6 +18,7 @@
         The module provides robust token parsing, validation, and management capabilities
         with a focus on security and ease of use, using Bouncy Castle for cryptographic operations.
     </description>
+
     <url>https://github.com/cuioss/cui-jwt/</url>
     <scm>
         <url>https://github.com/cuioss/cui-jwt/</url>
@@ -39,23 +40,4 @@
         <module>cui-jwt-benchmarking</module>
         <module>cui-jwt-quarkus</module>
     </modules>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>de.cuioss.jwt</groupId>
-                <artifactId>bom</artifactId>
-                <version>${project.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-    <!-- No global dependencies - all dependencies are defined in the individual modules -->
-
-    <build>
-        <plugins>
-            <!-- Parent pom doesn't need specific build plugins -->
-        </plugins>
-    </build>
 </project>

@@ -18,8 +18,8 @@
     <properties>
         <maven.jar.plugin.automatic.module.name>de.cuioss.jwt.validation.benchmark</maven.jar.plugin.automatic.module.name>
         <skip.benchmark>true</skip.benchmark>
-        <version.jmh>1.37</version.jmh>
         <version.exec-maven-plugin>3.2.0</version.exec-maven-plugin>
+        <version.jmh>1.37</version.jmh>
     </properties>
 
     <dependencyManagement>
@@ -31,6 +31,38 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <dependency>
+                <groupId>org.openjdk.jmh</groupId>
+                <artifactId>jmh-core</artifactId>
+                <version>${version.jmh}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openjdk.jmh</groupId>
+                <artifactId>jmh-generator-annprocess</artifactId>
+                <scope>provided</scope>
+                <version>${version.jmh}</version>
+            </dependency>
+            <dependency>
+                <groupId>de.cuioss.jwt</groupId>
+                <artifactId>cui-jwt-validation</artifactId>
+                <version>${project.version}</version>
+                <classifier>test</classifier>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>mockwebserver3</artifactId>
+                <version>5.0.0-alpha.12</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>okhttp</artifactId>
+                <version>5.0.0-alpha.12</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jetbrains</groupId>
+                <artifactId>annotations</artifactId>
+                <version>24.1.0</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -39,6 +71,54 @@
         <dependency>
             <groupId>de.cuioss.jwt</groupId>
             <artifactId>cui-jwt-validation</artifactId>
+        </dependency>
+
+        <!-- Test dependencies from validation module -->
+        <dependency>
+            <groupId>de.cuioss.jwt</groupId>
+            <artifactId>cui-jwt-validation</artifactId>
+            <classifier>test</classifier>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- Mock Web Server for HTTP testing -->
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>mockwebserver3</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- Keycloak test integration -->
+        <dependency>
+            <groupId>de.cuioss.test</groupId>
+            <artifactId>cui-test-keycloak-integration</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- Rest Assured for API testing -->
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- JetBrains annotations -->
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- Test utilities -->
+        <dependency>
+            <groupId>de.cuioss.test</groupId>
+            <artifactId>cui-test-generator</artifactId>
+            <scope>compile</scope>
         </dependency>
 
         <!-- JMH dependencies -->

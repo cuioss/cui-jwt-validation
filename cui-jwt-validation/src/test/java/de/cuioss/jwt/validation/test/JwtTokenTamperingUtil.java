@@ -371,6 +371,7 @@ public class JwtTokenTamperingUtil {
      * @param token the original JWT Token
      * @return the tampered validation
      */
+    @SuppressWarnings("java:S5852") // owolff: Safe enough for unit-tests
     private static String removeKeyId(String token) {
         String[] parts = token.split("\\.");
         if (parts.length != 3) {

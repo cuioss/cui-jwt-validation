@@ -101,9 +101,9 @@ jobs:
             echo "ERROR: No benchmark result file found!"
             exit 1
           fi
-          
+
           # Copy the JMH Visualizer template
-          cp .github/templates/benchmark/index-visualizer.html gh-pages/index.html
+          cp cui-jwt-benchmarking/src/main/resources/templates/index-visualizer.html gh-pages/index.html
 
       - name: Deploy to cuioss.github.io
         uses: JamesIves/github-pages-deploy-action@6c2d9db40f9296374acc17b90404b6e8864128c8 # v4.7.3

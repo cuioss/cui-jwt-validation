@@ -20,12 +20,9 @@ import de.cuioss.jwt.validation.domain.claim.ClaimValueType;
 import de.cuioss.test.generator.Generators;
 import de.cuioss.test.generator.TypedGenerator;
 
-import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Generator for {@link ClaimValue} objects.
@@ -76,7 +73,7 @@ public class ClaimValueGenerator implements TypedGenerator<ClaimValue> {
     @Override
     public ClaimValue next() {
         // Determine the type of claim value to generate
-        ClaimValueType type = fixedType != null ? fixedType : randomClaimValueType();
+        ClaimValueType type = fixedType != null ? fixedType : Generators.enumValues(ClaimValueType.class).next();
 
         // Generate the original string (may be null if allowNullOriginalString is true)
         String originalString = generateOriginalString();
@@ -88,13 +85,8 @@ public class ClaimValueGenerator implements TypedGenerator<ClaimValue> {
         };
     }
 
-    private ClaimValueType randomClaimValueType() {
-        ClaimValueType[] types = ClaimValueType.values();
-        return types[ThreadLocalRandom.current().nextInt(types.length)];
-    }
-
     private String generateOriginalString() {
-        if (allowNullOriginalString && ThreadLocalRandom.current().nextBoolean()) {
+        if (allowNullOriginalString && Generators.booleans().next()) {
             return null;
         }
         return Generators.strings(5, 20).next();
@@ -105,7 +97,7 @@ public class ClaimValueGenerator implements TypedGenerator<ClaimValue> {
     }
 
     private ClaimValue generateStringListClaimValue(String originalString) {
-        int listSize = ThreadLocalRandom.current().nextInt(0, 5);
+        int listSize = Generators.integers(0, 5).next();
         List<String> list = new ArrayList<>(listSize);
 
         for (int i = 0; i < listSize; i++) {
@@ -116,15 +108,7 @@ public class ClaimValueGenerator implements TypedGenerator<ClaimValue> {
     }
 
     private ClaimValue generateDateTimeClaimValue(String originalString) {
-        // Generate a random date within the last 10 years
-        long now = System.currentTimeMillis();
-        long tenYearsInMillis = 10L * 365 * 24 * 60 * 60 * 1000;
-        long randomTime = now - ThreadLocalRandom.current().nextLong(0, tenYearsInMillis);
-
-        OffsetDateTime dateTime = OffsetDateTime.ofInstant(
-                Instant.ofEpochMilli(randomTime),
-                ZoneOffset.UTC);
-
+        OffsetDateTime dateTime = Generators.zonedDateTimes().next().toOffsetDateTime();
         return ClaimValue.forDateTime(originalString, dateTime);
     }
 }

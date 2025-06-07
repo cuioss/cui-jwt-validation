@@ -134,7 +134,7 @@ After implementing any task in this TODO list, follow these steps:
 ** [x] Commit changes (git-commit) with task name as commit message
 
 === Task 4. Set Up Benchmarking Module
-[ ] *Priority:* Medium
+[x] *Priority:* Medium
 
 *Description:* Move benchmark-related code to the dedicated benchmarking module:
 
@@ -157,22 +157,22 @@ After implementing any task in this TODO list, follow these steps:
 
 *Implementation Steps:*
 
-* [ ] Create basic benchmarking module structure
-* [ ] Move benchmark code to the new module (src/main)
-* [ ] Move HTML visualizer template to the benchmarking module
-* [ ] Update GitHub workflow configuration file
-* [ ] Configure benchmark module's pom.xml with necessary dependencies
-* [ ] Update code to work as main (not test) code
-* [ ] Configure Sonar exclusion in parent pom
-* [ ] Configure benchmark execution to be opt-in only
-* [ ] Write documentation for manually running benchmarks
-* [ ] Test benchmark execution in isolation
-* [ ] Verify GitHub Pages benchmark deployment
-* [ ] Complete the task completion process:
-** [ ] Verify documentation is updated correctly
-** [ ] Mark task as completed in TODO.adoc
-** [ ] Run a full build with `./mvnw clean verify`
-** [ ] Commit changes (git-commit) with task name as commit message
+* [x] Create basic benchmarking module structure
+* [x] Move benchmark code to the new module (src/main)
+* [x] Move HTML visualizer template to the benchmarking module
+* [x] Update GitHub workflow configuration file
+* [x] Configure benchmark module's pom.xml with necessary dependencies
+* [x] Update code to work as main (not test) code
+* [x] Configure Sonar exclusion in parent pom
+* [x] Configure benchmark execution to be opt-in only
+* [x] Write documentation for manually running benchmarks
+* [x] Test benchmark execution in isolation
+* [x] Verify GitHub Pages benchmark deployment
+* [x] Complete the task completion process:
+** [x] Verify documentation is updated correctly
+** [x] Mark task as completed in TODO.adoc
+** [x] Run a full build with `./mvnw clean verify`
+** [x] Commit changes (git-commit) with task name as commit message
 
 === Task 5. Set Up BOM Module
 [x] *Priority:* High
@@ -221,7 +221,7 @@ After implementing any task in this TODO list, follow these steps:
 ** [x] Commit changes (git-commit) with task name as commit message
 
 === Task 6. Set Up Core Validation Module
-[ ] *Priority:* High
+[x] *Priority:* High
 
 *Description:* Move the main source code to the core validation module:
 
@@ -243,21 +243,22 @@ After implementing any task in this TODO list, follow these steps:
 
 *Implementation Steps:*
 
-* [ ] Create cui-jwt-validation module directory structure
-* [ ] Create pom.xml with proper dependencies and configuration
-* [ ] Set up test artifact configuration
-* [ ] Move main source code to the new module
-* [ ] Move test code to the new module (excluding benchmarks)
-* [ ] Move resources to the new module
-* [ ] Update package declarations if needed
-* [ ] Update documentation references
-* [ ] Run tests in the new module
-* [ ] Verify all functionality works correctly
-* [ ] Complete the task completion process:
-** [ ] Verify documentation is updated correctly
-** [ ] Mark task as completed in TODO.adoc
-** [ ] Run a full build with `./mvnw clean verify`
-** [ ] Commit changes (git-commit) with task name as commit message
+* [x] Create cui-jwt-validation module directory structure
+* [x] Create pom.xml with proper dependencies and configuration
+* [x] Set up test artifact configuration
+* [x] Move main source code to the new module
+* [x] Move test code to the new module (excluding benchmarks)
+* [x] Move resources to the new module
+* [x] Update package declarations if needed
+* [x] Update documentation references
+* [x] Run tests in the new module
+* [x] Verify all functionality works correctly
+* [x] Fix Javadoc generation issues by removing duplicate files from src directory
+* [x] Complete the task completion process:
+** [x] Verify documentation is updated correctly
+** [x] Mark task as completed in TODO.adoc
+** [x] Run a full build with `./mvnw clean verify`
+** [x] Commit changes (git-commit) with task name as commit message
 
 == Best Practices
 
