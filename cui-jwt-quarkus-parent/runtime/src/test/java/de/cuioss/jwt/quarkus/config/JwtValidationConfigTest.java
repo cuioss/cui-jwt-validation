@@ -15,7 +15,9 @@
  */
 package de.cuioss.jwt.quarkus.config;
 
-import org.junit.jupiter.api.BeforeEach;
+import de.cuioss.test.juli.junit5.EnableTestLogger;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -26,18 +28,16 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Tests for {@link JwtValidationConfig}.
  * 
- * Note: Using direct instantiation instead of Quarkus CDI to avoid initialization issues.
+ * Note: Using @QuarkusTest to enable the full Quarkus CDI context for these tests.
  */
+@QuarkusTest
+@EnableTestLogger
 @DisplayName("Tests JwtValidationConfig")
 class JwtValidationConfigTest {
 
-    private JwtValidationConfig jwtConfig;
-
-    @BeforeEach
-    void setUp() {
-        TestJwtValidationConfig testConfig = new TestJwtValidationConfig();
-        jwtConfig = testConfig.createTestConfig();
-    }
+    @Inject
+    @TestConfig
+    JwtValidationConfig jwtConfig;
 
     @Test
     @DisplayName("Should load configuration with default values")

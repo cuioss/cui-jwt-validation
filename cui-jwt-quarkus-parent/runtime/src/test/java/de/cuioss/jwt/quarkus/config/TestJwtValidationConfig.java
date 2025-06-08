@@ -40,195 +40,206 @@ public class TestJwtValidationConfig {
      */
     @Produces
     @ApplicationScoped
+    @TestConfig
     public JwtValidationConfig createTestConfig() {
-        return new JwtValidationConfig() {
-            @Override
-            public Map<String, IssuerConfig> issuers() {
-                Map<String, IssuerConfig> issuers = new HashMap<>();
-                issuers.put("default", createDefaultIssuerConfig());
-                issuers.put("keycloak", createKeycloakIssuerConfig());
-                return issuers;
-            }
-
-            @Override
-            public ParserConfig parser() {
-                return createGlobalParserConfig();
-            }
-        };
+        return new TestJwtValidationConfigImpl();
     }
 
-    private IssuerConfig createDefaultIssuerConfig() {
-        return new IssuerConfig() {
-            @Override
-            public String url() {
-                return "https://example.com/auth";
-            }
+    /**
+     * Konkrete Implementierung statt anonymer Klasse
+     */
+    static class TestJwtValidationConfigImpl implements JwtValidationConfig {
+        @Override
+        public Map<String, IssuerConfig> issuers() {
+            Map<String, IssuerConfig> issuers = new HashMap<>();
+            issuers.put("default", new DefaultIssuerConfigImpl());
+            issuers.put("keycloak", new KeycloakIssuerConfigImpl());
+            return issuers;
+        }
 
-            @Override
-            public Optional<String> publicKeyLocation() {
-                return Optional.empty();
-            }
-
-            @Override
-            public Optional<HttpJwksLoaderConfig> jwks() {
-                return Optional.empty();
-            }
-
-            @Override
-            public Optional<ParserConfig> parser() {
-                return Optional.empty();
-            }
-
-            @Override
-            public boolean enabled() {
-                return true;
-            }
-        };
+        @Override
+        public ParserConfig parser() {
+            return new GlobalParserConfigImpl();
+        }
     }
 
-    private IssuerConfig createKeycloakIssuerConfig() {
-        return new IssuerConfig() {
-            @Override
-            public String url() {
-                return "https://keycloak.example.com/auth/realms/master";
-            }
+    /**
+     * Default-Issuer-Konfiguration
+     */
+    static class DefaultIssuerConfigImpl implements IssuerConfig {
+        @Override
+        public String url() {
+            return "https://example.com/auth";
+        }
 
-            @Override
-            public Optional<String> publicKeyLocation() {
-                return Optional.of("classpath:keys/public_key.pem");
-            }
+        @Override
+        public Optional<String> publicKeyLocation() {
+            return Optional.empty();
+        }
 
-            @Override
-            public Optional<HttpJwksLoaderConfig> jwks() {
-                return Optional.of(createKeycloakJwksConfig());
-            }
+        @Override
+        public Optional<HttpJwksLoaderConfig> jwks() {
+            return Optional.empty();
+        }
 
-            @Override
-            public Optional<ParserConfig> parser() {
-                return Optional.of(createKeycloakParserConfig());
-            }
+        @Override
+        public Optional<ParserConfig> parser() {
+            return Optional.empty();
+        }
 
-            @Override
-            public boolean enabled() {
-                return true;
-            }
-        };
+        @Override
+        public boolean enabled() {
+            return true;
+        }
     }
 
-    private HttpJwksLoaderConfig createKeycloakJwksConfig() {
-        return new HttpJwksLoaderConfig() {
-            @Override
-            public String url() {
-                return "https://keycloak.example.com/auth/realms/master/protocol/openid-connect/certs";
-            }
+    /**
+     * Keycloak-Issuer-Konfiguration
+     */
+    static class KeycloakIssuerConfigImpl implements IssuerConfig {
+        @Override
+        public String url() {
+            return "https://keycloak.example.com/auth/realms/master";
+        }
 
-            @Override
-            public int cacheTtlSeconds() {
-                return 7200;
-            }
+        @Override
+        public Optional<String> publicKeyLocation() {
+            return Optional.of("classpath:keys/public_key.pem");
+        }
 
-            @Override
-            public int refreshIntervalSeconds() {
-                return 600;
-            }
+        @Override
+        public Optional<HttpJwksLoaderConfig> jwks() {
+            return Optional.of(new KeycloakJwksConfigImpl());
+        }
 
-            @Override
-            public int connectionTimeoutMs() {
-                return 3000;
-            }
+        @Override
+        public Optional<ParserConfig> parser() {
+            return Optional.of(new KeycloakParserConfigImpl());
+        }
 
-            @Override
-            public int readTimeoutMs() {
-                return 3000;
-            }
-
-            @Override
-            public int maxRetries() {
-                return 5;
-            }
-
-            @Override
-            public boolean useSystemProxy() {
-                return true;
-            }
-        };
+        @Override
+        public boolean enabled() {
+            return true;
+        }
     }
 
-    private ParserConfig createKeycloakParserConfig() {
-        return new ParserConfig() {
-            @Override
-            public Optional<String> audience() {
-                return Optional.of("my-app");
-            }
+    /**
+     * Keycloak JWKS-Konfiguration
+     */
+    static class KeycloakJwksConfigImpl implements HttpJwksLoaderConfig {
+        @Override
+        public String url() {
+            return "https://keycloak.example.com/auth/realms/master/protocol/openid-connect/certs";
+        }
 
-            @Override
-            public int leewaySeconds() {
-                return 60;
-            }
+        @Override
+        public int cacheTtlSeconds() {
+            return 7200;
+        }
 
-            @Override
-            public int maxTokenSizeBytes() {
-                return 16384;
-            }
+        @Override
+        public int refreshIntervalSeconds() {
+            return 600;
+        }
 
-            @Override
-            public boolean validateNotBefore() {
-                return false;
-            }
+        @Override
+        public int connectionTimeoutMs() {
+            return 3000;
+        }
 
-            @Override
-            public boolean validateExpiration() {
-                return true;
-            }
+        @Override
+        public int readTimeoutMs() {
+            return 3000;
+        }
 
-            @Override
-            public boolean validateIssuedAt() {
-                return true;
-            }
+        @Override
+        public int maxRetries() {
+            return 5;
+        }
 
-            @Override
-            public String allowedAlgorithms() {
-                return "RS256,ES256";
-            }
-        };
+        @Override
+        public boolean useSystemProxy() {
+            return true;
+        }
     }
 
-    private ParserConfig createGlobalParserConfig() {
-        return new ParserConfig() {
-            @Override
-            public Optional<String> audience() {
-                return Optional.empty();
-            }
+    /**
+     * Keycloak Parser-Konfiguration
+     */
+    static class KeycloakParserConfigImpl implements ParserConfig {
+        @Override
+        public Optional<String> audience() {
+            return Optional.of("my-app");
+        }
 
-            @Override
-            public int leewaySeconds() {
-                return 30;
-            }
+        @Override
+        public int leewaySeconds() {
+            return 60;
+        }
 
-            @Override
-            public int maxTokenSizeBytes() {
-                return 8192;
-            }
+        @Override
+        public int maxTokenSizeBytes() {
+            return 16384;
+        }
 
-            @Override
-            public boolean validateNotBefore() {
-                return true;
-            }
+        @Override
+        public boolean validateNotBefore() {
+            return false;
+        }
 
-            @Override
-            public boolean validateExpiration() {
-                return true;
-            }
+        @Override
+        public boolean validateExpiration() {
+            return true;
+        }
 
-            @Override
-            public boolean validateIssuedAt() {
-                return false;
-            }
+        @Override
+        public boolean validateIssuedAt() {
+            return true;
+        }
 
-            @Override
-            public String allowedAlgorithms() {
-                return "RS256,RS384,RS512,ES256,ES384,ES512";
-            }
-        };
+        @Override
+        public String allowedAlgorithms() {
+            return "RS256,ES256";
+        }
+    }
+
+    /**
+     * Globale Parser-Konfiguration
+     */
+    static class GlobalParserConfigImpl implements ParserConfig {
+        @Override
+        public Optional<String> audience() {
+            return Optional.empty();
+        }
+
+        @Override
+        public int leewaySeconds() {
+            return 30;
+        }
+
+        @Override
+        public int maxTokenSizeBytes() {
+            return 8192;
+        }
+
+        @Override
+        public boolean validateNotBefore() {
+            return true;
+        }
+
+        @Override
+        public boolean validateExpiration() {
+            return true;
+        }
+
+        @Override
+        public boolean validateIssuedAt() {
+            return false;
+        }
+
+        @Override
+        public String allowedAlgorithms() {
+            return "RS256,RS384,RS512,ES256,ES384,ES512";
+        }
     }
 }

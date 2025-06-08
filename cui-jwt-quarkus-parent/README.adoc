@@ -1,0 +1,44 @@
+= CUI JWT Quarkus Integration
+:toc: macro
+:toclevels: 3
+:toc-title: Inhaltsverzeichnis
+:icons: font
+
+Eine Quarkus-Erweiterung für die CUI JWT-Validierungsbibliothek.
+
+toc::[]
+
+== Überblick
+
+Dieses Modul bietet die Integration der CUI JWT-Validierungsbibliothek in Quarkus-Anwendungen. Es beinhaltet:
+
+* Quarkus-Konfigurationsunterstützung
+* CDI-Produzenten für JWT-Validierungskomponenten
+* Integrierte Sicherheitsüberprüfungen
+* Unterstützung für mehrere JWT-Aussteller
+
+== Dokumentation
+
+=== Konfigurationsdokumentation
+
+Die vollständige Dokumentation der Konfigurationsoptionen befindet sich in der Quarkus-Extension-Metadaten:
+
+link:runtime/src/main/resources/META-INF/quarkus-config-doc.adoc[Quarkus Konfigurationsdokumentation]
+
+=== Testeinrichtung
+
+Informationen zur Einrichtung von Tests finden Sie hier:
+
+link:doc/quarkus-test-setup.adoc[Quarkus Test-Setup]
+
+== Module
+
+Das Projekt besteht aus folgenden Modulen:
+
+* `deployment` - Enthält den Quarkus-Deployment-Code für die Erweiterung
+* `runtime` - Enthält den Runtime-Code für die Erweiterung
+* `doc` - Enthält zusätzliche Dokumentation
+
+== Entwicklung
+
+Informationen zur Entwicklung finden Sie im Verzeichnis `todo`, das Aufgaben und Hinweise für die weitere Entwicklung enthält.

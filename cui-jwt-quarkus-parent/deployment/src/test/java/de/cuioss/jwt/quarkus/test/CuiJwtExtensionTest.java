@@ -16,32 +16,31 @@
 package de.cuioss.jwt.quarkus.test;
 
 import de.cuioss.test.juli.junit5.EnableTestLogger;
+import io.quarkus.test.QuarkusUnitTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Basic test to verify the CUI JWT extension is properly registered.
+ * Test to verify the CUI JWT extension is properly registered and configured.
  * 
- * Note: We're using a simplified approach without QuarkusUnitTest to avoid
- * logger initialization issues. The test still verifies the extension is
- * properly configured.
+ * Uses QuarkusUnitTest to properly test the extension in a Quarkus context.
  */
 @EnableTestLogger
 @DisplayName("CUI JWT Extension Registration Test")
 class CuiJwtExtensionTest {
 
-    // Using a simplified approach without QuarkusUnitTest to avoid
-    // logger initialization issues
-    // @RegisterExtension
-    // static final QuarkusUnitTest unitTest = new QuarkusUnitTest()
-    //        .withEmptyApplication();
+    @RegisterExtension
+    static final QuarkusUnitTest unitTest = new QuarkusUnitTest()
+            .withEmptyApplication()
+            .setLogRecordPredicate(log -> true);
 
     @Test
     @DisplayName("Should register the extension")
     void shouldRegisterExtension() {
-        // The test will fail if the extension is not properly registered
+        // The QuarkusUnitTest will fail if the extension is not properly registered
         // This is a basic test to ensure the extension is loaded
         assertTrue(true, "Extension should be registered");
     }
