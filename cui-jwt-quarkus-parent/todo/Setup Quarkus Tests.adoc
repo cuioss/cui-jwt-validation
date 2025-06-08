@@ -1,0 +1,123 @@
+= Task 9. Setup Quarkus Tests
+:toc:
+:toclevels: 3
+:toc-title: Table of Contents
+:sectnums:
+
+include::task-completion-process.adoc[leveloffset=+1]
+
+== Overview
+[ ] *Priority:* High
+
+*Description:* Resolve testing infrastructure issues for the Quarkus extension:
+
+. Fix logging initialization issues for tests:
++
+--
+* Research appropriate Maven setup for proper test logging
+* Configure logging properly to eliminate warnings during test execution
+* Ensure consistent logging behavior across test types
+* Integrate with Quarkus test logging framework
+--
+. Enable and properly configure QuarkusUnitTest (CuiJwtExtensionTest):
++
+--
+* Research proper Maven configuration for Quarkus tests
+* Configure test resources correctly
+* Ensure proper dependency injection in test context
+* Enable testing with both JVM and native modes
+--
+. Analyze test framework selection strategy:
++
+--
+* Research when to use QuarkusUnitTest vs WeldJunit
+* Document decision criteria for test framework selection
+* Create guidelines for which framework to use for different test scenarios
+* Compare startup times, capabilities, and limitations of each approach
+--
+
+*Rationale:* A stable and properly configured test environment is essential for maintaining the quality of the extension. Fixing logging issues and enabling proper Quarkus tests will make development more efficient and prevent regressions.
+
+== Helpful Documentation
+
+* Quarkus Testing Guide: https://quarkus.io/guides/getting-started-testing
+* Quarkus Extension Testing: https://quarkus.io/guides/writing-extensions#testing-extensions
+* CDI Testing with QuarkusUnitTest: https://quarkus.io/guides/cdi-reference#testing
+* Quarkus Logging Configuration: https://quarkus.io/guides/logging
+* Maven Surefire Configuration for Quarkus: https://quarkus.io/guides/maven-tooling#configuring-the-surefire-maven-plugin
+* Testing Extensions with @QuarkusTest: https://quarkus.io/guides/continuous-testing
+* Native Testing Guide: https://quarkus.io/guides/native-reference#testing-native-executables
+* Weld JUnit 5: https://github.com/weld/weld-junit/tree/master/junit5
+* Weld vs Quarkus testing: https://quarkus.io/guides/cdi-reference#differences-from-weld-se
+
+== Implementation Steps
+
+* [ ] Research logging configurations for Quarkus tests
+* [ ] Configure logback-test.xml or other appropriate logging configuration
+* [ ] Research QuarkusUnitTest setup requirements
+* [ ] Configure test resources for proper Quarkus test context initialization
+* [ ] Update pom.xml with necessary test dependencies
+* [ ] Configure surefire plugin for proper test execution
+* [ ] Compare QuarkusUnitTest and WeldJunit performance and capabilities
+* [ ] Create decision matrix for test framework selection
+* [ ] Document guidelines for when to use each testing approach
+* [ ] Create example tests using both frameworks for comparison
+* [ ] Test the configuration with different test scenarios
+* [ ] Document the test setup for future reference
+
+== Task Completion Checklist
+
+*1. Verify Implementation:*
++
+--
+* [ ] Verify all implementation steps are completed
+* [ ] Check code against Quarkus and CUI standards
+* [ ] Ensure proper error handling and edge cases are covered
+* [ ] Verify compatibility with both JVM and native mode
+--
+
+*2. Write Tests:*
++
+--
+* [ ] Write unit tests for all components
+* [ ] Create integration tests for real-world scenarios
+* [ ] Test with different configuration options
+* [ ] Verify error cases and edge conditions
+--
+
+*3. Verify Documentation:*
++
+--
+* [ ] Update all references in README.adoc
+* [ ] Update relevant documentation in doc/ directory
+* [ ] Check for outdated file paths or references
+* [ ] Ensure consistent naming across all documentation
+* [ ] Add examples for common use cases
+--
+
+*4. Update Status:*
++
+--
+* [ ] Mark the task as completed with [x]
+* [ ] Add any notes about implementation challenges or decisions if needed
+--
+
+*5. Make a Full Build:*
++
+--
+* [ ] Run the the module build: `.cd cui-jwt-quarkus-parent && mvn clean install` (from project-root)
+** [ ] Verify all tests pass
+** [ ] Check for any warnings that should be addressed
+** [ ] Verify code coverage meets standards
+* [ ] Run the full build command: `./mvnw -Ppre-commit clean verify` (from project-root)
+** [ ] Verify all tests pass
+** [ ] Check for any warnings that should be addressed
+--
+
+*6. Commit Changes:*
++
+--
+* [ ] Stage all modified files
+* [ ] Use the task name as the commit message
+* [ ] Include any additional notes about implementation decisions in the commit description
+--

@@ -22,6 +22,21 @@
     <dependencies>
         <!-- Runtime-specific dependencies can be added here -->
         <!-- All common dependencies are inherited from parent -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-config-yaml</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-hibernate-validator</artifactId>
+        </dependency>
+
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -52,6 +67,8 @@
                             <version>${quarkus.version}</version>
                         </path>
                     </annotationProcessorPaths>
+                    <compilerArgs>
+                    </compilerArgs>
                 </configuration>
             </plugin>
         </plugins>

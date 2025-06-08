@@ -83,16 +83,11 @@ include::task-completion-process.adoc[leveloffset=+1]
 *5. Make a Full Build:*
 +
 --
-* [ ] Run the full build command: `./mvnw -Ppre-commit clean verify -pl cui-jwt-quarkus-parent` (from project-root)
-* [ ] Verify all tests pass
-* [ ] Check for any warnings that should be addressed
-* [ ] Verify code coverage meets standards
---
-
-*6. Commit Changes:*
-+
---
-* [ ] Stage all modified files
-* [ ] Use the task name as the commit message
-* [ ] Include any additional notes about implementation decisions in the commit description
+* [ ] Run the the module build: `.cd cui-jwt-quarkus-parent && mvn clean install` (from project-root)
+** [ ] Verify all tests pass
+** [ ] Check for any warnings that should be addressed
+** [ ] Verify code coverage meets standards
+* [ ] Run the full build command: `./mvnw -Ppre-commit clean verify` (from project-root)
+** [ ] Verify all tests pass
+** [ ] Check for any warnings that should be addressed
 --

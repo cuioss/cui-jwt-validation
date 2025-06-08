@@ -14,27 +14,20 @@
  * limitations under the License.
  */
 /**
- * <h2>CUI JWT Quarkus Extension</h2>
+ * <h2>Configuration for CUI JWT Quarkus Extension</h2>
  * <p>
- * This package provides Quarkus integration for the CUI JWT validation library.
- * It enables Quarkus applications to easily configure and use JWT validation
- * with proper CDI integration, metrics, and health checks.
+ * This package contains the configuration classes for the CUI JWT Quarkus extension.
+ * The main configuration interface is {@link de.cuioss.jwt.quarkus.config.JwtValidationConfig},
+ * which provides type-safe configuration properties for JWT validation.
  * </p>
  * <p>
- * The extension provides:
+ * The configuration supports the multi-issuer approach of the library,
+ * allowing different validation settings for different token issuers.
  * </p>
- * <ul>
- * <li>Configuration properties for JWT validation</li>
- * <li>CDI producers for token validators</li>
- * <li>Integration with Quarkus security</li>
- * <li>Metrics for token validation events</li>
- * <li>Health checks for JWT validation</li>
- * </ul>
  * <p>
- * This extension follows the Quarkus extension architecture with separate
- * runtime and deployment modules.
+ * All properties are prefixed with "cui.jwt".
  * </p>
  * 
  * @since 1.0
  */
-package de.cuioss.jwt.quarkus;
+package de.cuioss.jwt.quarkus.config;

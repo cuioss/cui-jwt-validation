@@ -41,13 +41,17 @@ After implementing any task, follow these steps:
 * [ ] Add any notes about implementation challenges or decisions if needed
 --
 
-. *Make a Full Build*: Run `./mvnw -Ppre-commit clean verify -pl cui-jwt-quarkus-parent` (from project-root) to ensure all tests pass.
+. *Make a Full Build*:
 +
 --
-* [ ] Run the full build command: `./mvnw -Ppre-commit clean verify -pl cui-jwt-quarkus-parent` (from project-root)
-* [ ] Verify all tests pass
-* [ ] Check for any warnings that should be addressed
-* [ ] Verify code coverage meets standards
+* [ ] Run the the module build: `.cd cui-jwt-quarkus-parent && mvn clean install` (from project-root)
+** [ ] Verify all tests pass
+** [ ] Check for any warnings that should be addressed
+** [ ] Verify code coverage meets standards
+* [ ] Run the full build command: `./mvnw -Ppre-commit clean verify` (from project-root)
+** [ ] Verify all tests pass
+** [ ] Check for any warnings that should be addressed
+
 --
 
 . *Commit Changes (git-commit)*: Commit the changes with a git commit. Use the task name (e.g., "Task 1. Implement JWT Configuration") as the commit message.
