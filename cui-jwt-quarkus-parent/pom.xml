@@ -16,24 +16,19 @@
     <description>Parent module for Quarkus integration for JWT token validation, providing configuration, producers, and integration from SecurityEvents to Micrometer</description>
 
     <modules>
-        <module>runtime</module>
-        <module>deployment</module>
+        <module>cui-jwt-quarkus</module>
+        <module>cui-jwt-quarkus-deployment</module>
     </modules>
 
     <properties>
         <maven.jar.plugin.automatic.module.name>de.cuioss.jwt.quarkus</maven.jar.plugin.automatic.module.name>
         <quarkus.version>3.23.0</quarkus.version>
+        <!-- Caution: Must be in sync with quarkus -->
+        <version.junit.jupiter>5.12.2</version.junit.jupiter>
     </properties>
 
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>de.cuioss.jwt</groupId>
-                <artifactId>bom</artifactId>
-                <version>${project.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
             <dependency>
                 <groupId>io.quarkus</groupId>
                 <artifactId>quarkus-bom</artifactId>
@@ -41,6 +36,14 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <dependency>
+                <groupId>de.cuioss.jwt</groupId>
+                <artifactId>bom</artifactId>
+                <version>${project.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- JUnit BOM is already imported by quarkus-bom -->
             <!-- Additional dependencies -->
             <dependency>
                 <groupId>org.jboss.weld</groupId>

@@ -25,6 +25,43 @@ Die vollständige Dokumentation der Konfigurationsoptionen befindet sich in der 
 
 link:runtime/src/main/resources/META-INF/quarkus-config-doc.adoc[Quarkus Konfigurationsdokumentation]
 
+=== CDI-Beans und Injection
+
+Die Erweiterung stellt folgende CDI-Beans zur Verfügung:
+
+==== TokenValidator
+
+Der `TokenValidator` wird als ApplicationScoped-Bean bereitgestellt und kann direkt in Ihre Anwendung injiziert werden:
+
+[source,java]
+----
+@Inject
+TokenValidator tokenValidator;
+----
+
+Der TokenValidator wird automatisch mit den Konfigurationseinstellungen aus der Quarkus-Konfiguration initialisiert.
+
+Beispiel für die Verwendung:
+
+[source,java]
+----
+@ApplicationScoped
+public class JwtAuthenticationService {
+
+    @Inject
+    TokenValidator tokenValidator;
+
+    public Optional<AccessTokenContent> validateAccessToken(String token) {
+        try {
+            return tokenValidator.validateAccessToken(token);
+        } catch (TokenValidationException e) {
+            // Handle validation exception
+            return Optional.empty();
+        }
+    }
+}
+----
+
 === Testeinrichtung
 
 Informationen zur Einrichtung von Tests finden Sie hier:

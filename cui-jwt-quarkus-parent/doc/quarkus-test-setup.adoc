@@ -43,7 +43,6 @@ The following test dependencies are required:
 <dependency>
     <groupId>org.jboss.weld</groupId>
     <artifactId>weld-junit5</artifactId>
-    <version>4.0.1.Final</version>
     <scope>test</scope>
 </dependency>
 ----
@@ -118,7 +117,7 @@ class MyQuarkusTest {
     static final QuarkusUnitTest unitTest = new QuarkusUnitTest()
             .withEmptyApplication()
             .setLogRecordPredicate(log -> true);
-            
+
     @Test
     void shouldRegisterExtension() {
         // Test code here
@@ -132,21 +131,22 @@ Used for CDI tests without the full Quarkus context:
 
 [source,java]
 ----
+import org.jboss.weld.junit5.auto.EnableAutoWeld;
+
 @EnableTestLogger
-@EnableWeld
+@EnableAutoWeld
 class MyCdiTest {
-    @WeldSetup
-    WeldInitiator weld = WeldInitiator.of(MyService.class, TestConfiguration.class);
-    
     @Inject
     MyService service;
-    
+
     @Test
     void shouldInjectService() {
         // Test service functionality
     }
 }
 ----
+
+The `@EnableAutoWeld` annotation automatically discovers and registers beans for testing. Unlike the previous approach with `WeldInitiator`, you don't need to explicitly specify which classes to include - it will automatically scan and register beans based on CDI discovery rules. This makes the test setup simpler and more closely resembles how beans are discovered in a real application.
 
 == Handling Configuration
 
@@ -165,6 +165,82 @@ With WeldJunit5, configuration must be:
 * Programmatically created and injected
 * Mocked through test alternatives
 * Set up in the test setup phase
+
+== Testing with JWT Tokens
+
+The cui-jwt-validation module provides test utilities that make it easy to create and validate JWT tokens in tests. These utilities are available in the test classifier of the cui-jwt-validation artifact.
+
+=== Adding the Test Dependency
+
+To use the test utilities, add the following dependency to your pom.xml:
+
+[source,xml]
+----
+<dependency>
+    <groupId>de.cuioss.jwt</groupId>
+    <artifactId>cui-jwt-validation</artifactId>
+    <classifier>test</classifier>
+    <scope>test</scope>
+</dependency>
+----
+
+=== Key Test Utilities
+
+The test utilities include:
+
+* `TestTokenHolder` - Creates JWT tokens with configurable claims
+* `TestTokenGenerators` - Factory methods for creating token generators
+* `@TestTokenSource` - JUnit 5 annotation for parameterized tests with tokens
+
+=== Example: Testing with TestTokenHolder
+
+[source,java]
+----
+@Test
+void shouldValidateToken() {
+    // Arrange
+    TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
+    String token = tokenHolder.getRawToken();
+
+    // Get the IssuerConfig from the token holder
+    IssuerConfig issuerConfig = tokenHolder.getIssuerConfig();
+
+    // Create a TokenValidator with the IssuerConfig
+    TokenValidator tokenValidator = new TokenValidator(issuerConfig);
+
+    // Act
+    AccessTokenContent result = tokenValidator.createAccessToken(token);
+
+    // Assert
+    assertNotNull(result);
+    assertEquals(tokenHolder.getSubject(), result.getSubject());
+}
+----
+
+=== Example: Using @TestTokenSource
+
+[source,java]
+----
+@ParameterizedTest
+@TestTokenSource(value = TokenType.ACCESS_TOKEN, count = 3)
+void shouldValidateTokensUsingTestTokenSource(TestTokenHolder tokenHolder) {
+    // Arrange
+    String token = tokenHolder.getRawToken();
+    IssuerConfig issuerConfig = tokenHolder.getIssuerConfig();
+    TokenValidator tokenValidator = new TokenValidator(issuerConfig);
+
+    // Act
+    AccessTokenContent result = tokenValidator.createAccessToken(token);
+
+    // Assert
+    assertNotNull(result);
+    assertEquals(tokenHolder.getSubject(), result.getSubject());
+}
+----
+
+=== For More Information
+
+For more detailed information about the test utilities, see the UnitTesting.adoc document in the cui-jwt-validation module.
 
 == Framework Selection Guidelines
 

@@ -20,28 +20,20 @@
     </properties>
 
     <dependencies>
-        <!-- Runtime-specific dependencies can be added here -->
-        <!-- All common dependencies are inherited from parent -->
+        <!-- Test dependencies -->
+        <!-- JUnit dependencies first to ensure correct version resolution -->
         <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-config-yaml</artifactId>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-hibernate-validator</artifactId>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
         </dependency>
 
-        <!-- Test dependencies -->
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-junit5</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>de.cuioss.test</groupId>
-            <artifactId>cui-test-juli-logger</artifactId>
-            <scope>test</scope>
-        </dependency>
+        <!-- Other test dependencies -->
         <dependency>
             <groupId>org.jboss.logmanager</groupId>
             <artifactId>jboss-logmanager</artifactId>
@@ -51,6 +43,24 @@
             <groupId>org.jboss.weld</groupId>
             <artifactId>weld-junit5</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>de.cuioss.jwt</groupId>
+            <artifactId>cui-jwt-validation</artifactId>
+            <version>${project.version}</version>
+            <classifier>test</classifier>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Runtime-specific dependencies can be added here -->
+        <!-- All common dependencies are inherited from parent -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-config-yaml</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-hibernate-validator</artifactId>
         </dependency>
     </dependencies>
 
@@ -91,6 +101,10 @@
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                         <java.util.logging.config.file>${project.build.testOutputDirectory}/logging.properties</java.util.logging.config.file>
                     </systemPropertyVariables>
+                    <useModulePath>false</useModulePath>
+                    <useFile>false</useFile>
+                    <trimStackTrace>false</trimStackTrace>
+                    <enableAssertions>true</enableAssertions>
                 </configuration>
             </plugin>
         </plugins>
