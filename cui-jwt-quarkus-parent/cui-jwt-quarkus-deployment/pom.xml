@@ -68,6 +68,8 @@
                             <artifactId>quarkus-extension-processor</artifactId>
                         </path>
                     </annotationProcessorPaths>
+                    <!-- Use release instead of source/target to properly handle modules -->
+                    <release>17</release>
                 </configuration>
             </plugin>
             <plugin>
