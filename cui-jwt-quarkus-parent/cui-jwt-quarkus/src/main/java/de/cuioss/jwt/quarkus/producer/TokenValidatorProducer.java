@@ -1,5 +1,6 @@
 package de.cuioss.jwt.quarkus.producer;
 
+import de.cuioss.jwt.quarkus.config.DefaultConfig;
 import de.cuioss.jwt.quarkus.config.JwtValidationConfig;
 import de.cuioss.jwt.validation.IssuerConfig;
 import de.cuioss.jwt.validation.ParserConfig;
@@ -33,6 +34,7 @@ public class TokenValidatorProducer {
     private static final CuiLogger log = new CuiLogger(TokenValidatorProducer.class);
 
     @Inject
+    @DefaultConfig
     JwtValidationConfig jwtValidationConfig;
 
     @Getter

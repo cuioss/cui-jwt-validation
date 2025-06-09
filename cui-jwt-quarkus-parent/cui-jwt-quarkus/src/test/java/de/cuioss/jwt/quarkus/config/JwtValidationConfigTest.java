@@ -30,9 +30,9 @@ import static org.junit.jupiter.api.Assertions.*;
  * 
  * Note: Using @QuarkusTest to enable the full Quarkus CDI context for these tests.
  */
-@QuarkusTest
 @EnableTestLogger
 @DisplayName("Tests JwtValidationConfig")
+@QuarkusTest
 class JwtValidationConfigTest {
 
     @Inject

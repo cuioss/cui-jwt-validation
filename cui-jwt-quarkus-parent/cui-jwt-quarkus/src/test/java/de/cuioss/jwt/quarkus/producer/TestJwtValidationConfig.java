@@ -1,6 +1,7 @@
 package de.cuioss.jwt.quarkus.producer;
 
 import de.cuioss.jwt.quarkus.config.JwtValidationConfig;
+import de.cuioss.jwt.quarkus.config.TestConfig;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import java.util.HashMap;
@@ -11,14 +12,45 @@ import java.util.Optional;
  * Test implementation of {@link JwtValidationConfig} for use in unit tests.
  */
 @ApplicationScoped
+@TestConfig
 public class TestJwtValidationConfig implements JwtValidationConfig {
 
     private final Map<String, IssuerConfig> issuers = new HashMap<>();
     private final ParserConfig parserConfig = new TestParserConfig();
 
     public TestJwtValidationConfig() {
-        // Add a default test issuer
-        issuers.put("test-issuer", new TestIssuerConfig());
+        // Add default issuer to match test expectations
+        issuers.put("default", new TestIssuerConfig()
+                .withUrl("https://example.com/auth")
+                .withEnabled(true)
+                .withPublicKeyLocation(null)
+                .withJwks(null));
+        
+        // Add keycloak issuer to match test expectations
+        TestHttpJwksLoaderConfig keycloakJwksConfig = new TestHttpJwksLoaderConfig()
+                .withUrl("https://keycloak.example.com/auth/realms/master/protocol/openid-connect/certs")
+                .withCacheTtlSeconds(7200)
+                .withRefreshIntervalSeconds(600)
+                .withConnectionTimeoutMs(3000)
+                .withReadTimeoutMs(3000)
+                .withMaxRetries(5)
+                .withUseSystemProxy(true);
+                
+        TestParserConfig keycloakParserConfig = new TestParserConfig()
+                .withAudience("my-app")
+                .withLeewaySeconds(60)
+                .withMaxTokenSizeBytes(16384)
+                .withValidateNotBefore(false)
+                .withValidateExpiration(true)
+                .withValidateIssuedAt(true)
+                .withAllowedAlgorithms("RS256,ES256");
+                
+        issuers.put("keycloak", new TestIssuerConfig()
+                .withUrl("https://keycloak.example.com/auth/realms/master")
+                .withEnabled(true)
+                .withPublicKeyLocation("classpath:keys/public_key.pem")
+                .withJwks(keycloakJwksConfig)
+                .withParser(keycloakParserConfig));
     }
 
     @Override
@@ -74,17 +106,17 @@ public class TestJwtValidationConfig implements JwtValidationConfig {
         }
 
         public TestIssuerConfig withPublicKeyLocation(String location) {
-            this.publicKeyLocation = Optional.of(location);
+            this.publicKeyLocation = (location != null) ? Optional.of(location) : Optional.empty();
             return this;
         }
 
         public TestIssuerConfig withJwks(HttpJwksLoaderConfig jwks) {
-            this.jwks = Optional.of(jwks);
+            this.jwks = (jwks != null) ? Optional.of(jwks) : Optional.empty();
             return this;
         }
 
         public TestIssuerConfig withParser(ParserConfig parser) {
-            this.parser = Optional.of(parser);
+            this.parser = (parser != null) ? Optional.of(parser) : Optional.empty();
             return this;
         }
 

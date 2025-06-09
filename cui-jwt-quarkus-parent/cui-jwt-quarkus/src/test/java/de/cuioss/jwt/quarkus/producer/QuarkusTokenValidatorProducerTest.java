@@ -1,5 +1,8 @@
 package de.cuioss.jwt.quarkus.producer;
 
+import de.cuioss.jwt.quarkus.config.JwtValidationConfig;
+import de.cuioss.jwt.quarkus.config.TestConfig;
+import de.cuioss.jwt.validation.TokenValidator;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -17,6 +20,13 @@ public class QuarkusTokenValidatorProducerTest {
 
     @Inject
     TokenValidatorProducer producer;
+    
+    @Inject
+    @TestConfig
+    JwtValidationConfig testConfig;
+    
+    @Inject
+    TokenValidator tokenValidator;
 
     /**
      * Test that the producer is properly injected.
@@ -26,5 +36,7 @@ public class QuarkusTokenValidatorProducerTest {
     void shouldInjectProducer() {
         // Assert
         assertNotNull(producer, "Producer should be injected");
+        assertNotNull(testConfig, "Test config should be injected");
+        assertNotNull(tokenValidator, "TokenValidator should be injected");
     }
 }
