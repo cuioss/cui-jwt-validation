@@ -1,3 +1,18 @@
+/**
+ * Copyright © 2025 CUI-OpenSource-Software (info@cuioss.de)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package de.cuioss.jwt.quarkus.producer;
 
 import de.cuioss.jwt.quarkus.config.DefaultConfig;
@@ -5,6 +20,7 @@ import de.cuioss.jwt.quarkus.config.JwtValidationConfig;
 import de.cuioss.jwt.validation.IssuerConfig;
 import de.cuioss.jwt.validation.ParserConfig;
 import de.cuioss.jwt.validation.TokenValidator;
+import de.cuioss.jwt.validation.jwks.http.HttpJwksLoaderConfig;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.tools.logging.CuiLogger;
 import jakarta.annotation.PostConstruct;
@@ -88,6 +104,7 @@ public class TokenValidatorProducer {
      * @param issuersConfig the map of issuer configurations
      * @return a list of IssuerConfig instances
      */
+    @SuppressWarnings("java:S3655") // owolff: False positive, already checked
     private List<IssuerConfig> createIssuerConfigs(Map<String, JwtValidationConfig.IssuerConfig> issuersConfig) {
         List<IssuerConfig> result = new ArrayList<>();
 
@@ -108,7 +125,7 @@ public class TokenValidatorProducer {
             if (issuerConfig.jwks().isPresent()) {
                 JwtValidationConfig.HttpJwksLoaderConfig jwksConfig = issuerConfig.jwks().get();
                 builder.httpJwksLoaderConfig(
-                        de.cuioss.jwt.validation.jwks.http.HttpJwksLoaderConfig.builder()
+                        HttpJwksLoaderConfig.builder()
                                 .url(jwksConfig.url())
                                 .refreshIntervalSeconds(jwksConfig.refreshIntervalSeconds())
                                 .requestTimeoutSeconds(jwksConfig.readTimeoutMs() / 1000) // Convert ms to seconds

@@ -15,7 +15,6 @@
  */
 package de.cuioss.jwt.quarkus.config;
 
-import de.cuioss.jwt.quarkus.producer.TestJwtValidationConfig;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Alternative;
 import jakarta.enterprise.inject.Produces;

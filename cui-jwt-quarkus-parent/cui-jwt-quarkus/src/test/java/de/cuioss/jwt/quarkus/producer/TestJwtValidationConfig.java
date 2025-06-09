@@ -1,3 +1,18 @@
+/**
+ * Copyright © 2025 CUI-OpenSource-Software (info@cuioss.de)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package de.cuioss.jwt.quarkus.producer;
 
 import de.cuioss.jwt.quarkus.config.JwtValidationConfig;
@@ -25,7 +40,7 @@ public class TestJwtValidationConfig implements JwtValidationConfig {
                 .withEnabled(true)
                 .withPublicKeyLocation(null)
                 .withJwks(null));
-        
+
         // Add keycloak issuer to match test expectations
         TestHttpJwksLoaderConfig keycloakJwksConfig = new TestHttpJwksLoaderConfig()
                 .withUrl("https://keycloak.example.com/auth/realms/master/protocol/openid-connect/certs")
@@ -35,7 +50,7 @@ public class TestJwtValidationConfig implements JwtValidationConfig {
                 .withReadTimeoutMs(3000)
                 .withMaxRetries(5)
                 .withUseSystemProxy(true);
-                
+
         TestParserConfig keycloakParserConfig = new TestParserConfig()
                 .withAudience("my-app")
                 .withLeewaySeconds(60)
@@ -44,7 +59,7 @@ public class TestJwtValidationConfig implements JwtValidationConfig {
                 .withValidateExpiration(true)
                 .withValidateIssuedAt(true)
                 .withAllowedAlgorithms("RS256,ES256");
-                
+
         issuers.put("keycloak", new TestIssuerConfig()
                 .withUrl("https://keycloak.example.com/auth/realms/master")
                 .withEnabled(true)
