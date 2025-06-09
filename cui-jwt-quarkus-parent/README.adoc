@@ -1,37 +1,37 @@
 = CUI JWT Quarkus Integration
 :toc: macro
 :toclevels: 3
-:toc-title: Inhaltsverzeichnis
+:toc-title: Table of Contents
 :icons: font
 
-Eine Quarkus-Erweiterung für die CUI JWT-Validierungsbibliothek.
+A Quarkus extension for the CUI JWT validation library.
 
 toc::[]
 
-== Überblick
+== Overview
 
-Dieses Modul bietet die Integration der CUI JWT-Validierungsbibliothek in Quarkus-Anwendungen. Es beinhaltet:
+This module provides integration of the CUI JWT validation library into Quarkus applications. It includes:
 
-* Quarkus-Konfigurationsunterstützung
-* CDI-Produzenten für JWT-Validierungskomponenten
-* Integrierte Sicherheitsüberprüfungen
-* Unterstützung für mehrere JWT-Aussteller
+* Quarkus configuration support
+* CDI producers for JWT validation components
+* Integrated security checks
+* Support for multiple JWT issuers
 
-== Dokumentation
+== Documentation
 
-=== Konfigurationsdokumentation
+=== Configuration Documentation
 
-Die vollständige Dokumentation der Konfigurationsoptionen befindet sich in der Quarkus-Extension-Metadaten:
+The complete documentation of the configuration options can be found in the Quarkus extension metadata:
 
-link:runtime/src/main/resources/META-INF/quarkus-config-doc.adoc[Quarkus Konfigurationsdokumentation]
+link:cui-jwt-quarkus/src/main/resources/META-INF/quarkus-config-doc.adoc[Quarkus Configuration Documentation]
 
-=== CDI-Beans und Injection
+=== CDI Beans and Injection
 
-Die Erweiterung stellt folgende CDI-Beans zur Verfügung:
+The extension provides the following CDI beans:
 
 ==== TokenValidator
 
-Der `TokenValidator` wird als ApplicationScoped-Bean bereitgestellt und kann direkt in Ihre Anwendung injiziert werden:
+The `TokenValidator` is provided as an ApplicationScoped bean and can be directly injected into your application:
 
 [source,java]
 ----
@@ -39,9 +39,9 @@ Der `TokenValidator` wird als ApplicationScoped-Bean bereitgestellt und kann dir
 TokenValidator tokenValidator;
 ----
 
-Der TokenValidator wird automatisch mit den Konfigurationseinstellungen aus der Quarkus-Konfiguration initialisiert.
+The TokenValidator is automatically initialized with the configuration settings from the Quarkus configuration.
 
-Beispiel für die Verwendung:
+Example usage:
 
 [source,java]
 ----
@@ -62,20 +62,26 @@ public class JwtAuthenticationService {
 }
 ----
 
-=== Testeinrichtung
+=== Test Setup
 
-Informationen zur Einrichtung von Tests finden Sie hier:
+Information on setting up tests can be found here:
 
-link:doc/quarkus-test-setup.adoc[Quarkus Test-Setup]
+link:doc/quarkus-test-setup.adoc[Quarkus Test Setup]
 
-== Module
+=== Native Image Support
 
-Das Projekt besteht aus folgenden Modulen:
+The extension supports GraalVM Native Image compilation. More information can be found here:
 
-* `deployment` - Enthält den Quarkus-Deployment-Code für die Erweiterung
-* `runtime` - Enthält den Runtime-Code für die Erweiterung
-* `doc` - Enthält zusätzliche Dokumentation
+link:doc/native-image-support.adoc[Native Image Support]
 
-== Entwicklung
+== Modules
 
-Informationen zur Entwicklung finden Sie im Verzeichnis `todo`, das Aufgaben und Hinweise für die weitere Entwicklung enthält.
+The project consists of the following modules:
+
+* `deployment` - Contains the Quarkus deployment code for the extension
+* `runtime` - Contains the runtime code for the extension
+* `doc` - Contains additional documentation
+
+== Development
+
+Development information can be found in the `todo` directory, which contains tasks and notes for further development.

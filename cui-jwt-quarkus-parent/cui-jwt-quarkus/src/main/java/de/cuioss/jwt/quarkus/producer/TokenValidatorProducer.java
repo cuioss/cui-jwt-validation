@@ -111,8 +111,21 @@ public class TokenValidatorProducer {
      * @return a ParserConfig instance
      */
     private ParserConfig createParserConfig(JwtValidationConfig.ParserConfig parserConfig) {
+        // Note: The ParserConfig class only supports maxTokenSize configuration
+        // Other validation settings like expiration, issuedAt, notBefore, leeway, audience, and algorithms
+        // are handled by the TokenValidator internally
         ParserConfig.ParserConfigBuilder builder = ParserConfig.builder()
                 .maxTokenSize(parserConfig.maxTokenSizeBytes());
+
+        // Log the configuration that will be applied by the TokenValidator
+        LOGGER.info("Creating ParserConfig with maxTokenSize=%d bytes", parserConfig.maxTokenSizeBytes());
+        LOGGER.info("TokenValidator will use validateExpiration=%s", parserConfig.validateExpiration());
+        LOGGER.info("TokenValidator will use validateIssuedAt=%s", parserConfig.validateIssuedAt());
+        LOGGER.info("TokenValidator will use validateNotBefore=%s", parserConfig.validateNotBefore());
+        LOGGER.info("TokenValidator will use leeway=%d seconds", parserConfig.leewaySeconds());
+        parserConfig.audience().ifPresent(audience ->
+            LOGGER.info("TokenValidator will use expected audience=%s", audience));
+        LOGGER.info("TokenValidator will use allowedAlgorithms=%s", parserConfig.allowedAlgorithms());
 
         return builder.build();
     }

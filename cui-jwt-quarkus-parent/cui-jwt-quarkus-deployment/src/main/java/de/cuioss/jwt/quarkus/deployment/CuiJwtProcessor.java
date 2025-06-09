@@ -20,6 +20,7 @@ import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
+import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
 
 /**
  * Processor for the CUI JWT Quarkus extension.
@@ -65,5 +66,50 @@ public class CuiJwtProcessor {
                 .methods(true)
                 .fields(true)
                 .build();
+    }
+
+    /**
+     * Register nested configuration classes for reflection.
+     *
+     * @return A {@link ReflectiveClassBuildItem} for the nested configuration classes
+     */
+    @BuildStep
+    ReflectiveClassBuildItem registerNestedConfigForReflection() {
+        return ReflectiveClassBuildItem.builder(
+                "de.cuioss.jwt.quarkus.config.JwtValidationConfig$IssuerConfig",
+                "de.cuioss.jwt.quarkus.config.JwtValidationConfig$ParserConfig",
+                "de.cuioss.jwt.quarkus.config.JwtValidationConfig$HttpJwksLoaderConfig")
+                .methods(true)
+                .fields(true)
+                .build();
+    }
+
+    /**
+     * Register JWT validation classes for reflection.
+     *
+     * @return A {@link ReflectiveClassBuildItem} for the JWT validation classes
+     */
+    @BuildStep
+    ReflectiveClassBuildItem registerJwtValidationClassesForReflection() {
+        return ReflectiveClassBuildItem.builder(
+                "de.cuioss.jwt.validation.TokenValidator",
+                "de.cuioss.jwt.validation.IssuerConfig",
+                "de.cuioss.jwt.validation.ParserConfig",
+                "de.cuioss.jwt.validation.jwks.http.HttpJwksLoaderConfig",
+                "de.cuioss.jwt.validation.security.SecurityEventCounter")
+                .methods(true)
+                .fields(true)
+                .constructors(true)
+                .build();
+    }
+
+    /**
+     * Register classes that need to be initialized at runtime.
+     *
+     * @return A {@link RuntimeInitializedClassBuildItem} for classes that need runtime initialization
+     */
+    @BuildStep
+    RuntimeInitializedClassBuildItem runtimeInitializedClasses() {
+        return new RuntimeInitializedClassBuildItem("de.cuioss.jwt.validation.jwks.http.HttpJwksLoader");
     }
 }

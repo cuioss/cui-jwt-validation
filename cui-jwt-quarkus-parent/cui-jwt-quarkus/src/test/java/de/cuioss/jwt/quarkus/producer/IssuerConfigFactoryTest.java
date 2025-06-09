@@ -16,42 +16,30 @@
 package de.cuioss.jwt.quarkus.producer;
 
 import de.cuioss.jwt.quarkus.config.JwtValidationConfig;
+import de.cuioss.jwt.quarkus.producer.TestJwtValidationConfig.TestHttpJwksLoaderConfig;
+import de.cuioss.jwt.quarkus.producer.TestJwtValidationConfig.TestIssuerConfig;
+import de.cuioss.jwt.quarkus.producer.TestJwtValidationConfig.TestParserConfig;
 import de.cuioss.jwt.validation.IssuerConfig;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link IssuerConfigFactory}.
  */
 @EnableTestLogger
-@ExtendWith(MockitoExtension.class)
 class IssuerConfigFactoryTest {
 
     private static final String ISSUER_URL = "https://example.com/auth";
     private static final String JWKS_URL = "https://example.com/auth/jwks.json";
     private static final String PUBLIC_KEY_LOCATION = "classpath:keys/public_key.pem";
     private static final String AUDIENCE = "test-audience";
-
-    @Mock
-    private JwtValidationConfig.IssuerConfig issuerConfig;
-
-    @Mock
-    private JwtValidationConfig.ParserConfig parserConfig;
-
-    @Mock
-    private JwtValidationConfig.HttpJwksLoaderConfig jwksConfig;
 
     /**
      * Test creating issuer configs with JWKS configuration.
@@ -61,17 +49,26 @@ class IssuerConfigFactoryTest {
     void shouldCreateIssuerConfigsWithJwks() {
         // Arrange
         Map<String, JwtValidationConfig.IssuerConfig> issuersConfig = new HashMap<>();
+        
+        // Create test JWKS config
+        TestHttpJwksLoaderConfig jwksConfig = new TestHttpJwksLoaderConfig()
+                .withUrl(JWKS_URL)
+                .withRefreshIntervalSeconds(300)
+                .withReadTimeoutMs(5000);
+        
+        // Create test parser config
+        TestParserConfig parserConfig = new TestParserConfig()
+                .withAudience(AUDIENCE);
+        
+        // Create test issuer config
+        TestIssuerConfig issuerConfig = new TestIssuerConfig()
+                .withEnabled(true)
+                .withUrl(ISSUER_URL)
+                .withJwks(jwksConfig)
+                .withPublicKeyLocation(null)
+                .withParser(parserConfig);
+        
         issuersConfig.put("test-issuer", issuerConfig);
-
-        lenient().when(issuerConfig.enabled()).thenReturn(true);
-        lenient().when(issuerConfig.url()).thenReturn(ISSUER_URL);
-        lenient().when(issuerConfig.jwks()).thenReturn(Optional.of(jwksConfig));
-        lenient().when(issuerConfig.publicKeyLocation()).thenReturn(Optional.empty());
-        lenient().when(issuerConfig.parser()).thenReturn(Optional.of(parserConfig));
-        lenient().when(parserConfig.audience()).thenReturn(Optional.of(AUDIENCE));
-        lenient().when(jwksConfig.url()).thenReturn(JWKS_URL);
-        lenient().when(jwksConfig.refreshIntervalSeconds()).thenReturn(300);
-        lenient().when(jwksConfig.readTimeoutMs()).thenReturn(5000);
 
         // Act
         List<IssuerConfig> result = IssuerConfigFactory.createIssuerConfigs(issuersConfig);
@@ -92,13 +89,16 @@ class IssuerConfigFactoryTest {
     void shouldCreateIssuerConfigsWithPublicKey() {
         // Arrange
         Map<String, JwtValidationConfig.IssuerConfig> issuersConfig = new HashMap<>();
+        
+        // Create test issuer config with public key location
+        TestIssuerConfig issuerConfig = new TestIssuerConfig()
+                .withEnabled(true)
+                .withUrl(ISSUER_URL)
+                .withJwks(null)
+                .withPublicKeyLocation(PUBLIC_KEY_LOCATION)
+                .withParser(null);
+        
         issuersConfig.put("test-issuer", issuerConfig);
-
-        lenient().when(issuerConfig.enabled()).thenReturn(true);
-        lenient().when(issuerConfig.url()).thenReturn(ISSUER_URL);
-        lenient().when(issuerConfig.jwks()).thenReturn(Optional.empty());
-        lenient().when(issuerConfig.publicKeyLocation()).thenReturn(Optional.of(PUBLIC_KEY_LOCATION));
-        lenient().when(issuerConfig.parser()).thenReturn(Optional.empty());
 
         // Act
         List<IssuerConfig> result = IssuerConfigFactory.createIssuerConfigs(issuersConfig);
@@ -118,9 +118,13 @@ class IssuerConfigFactoryTest {
     void shouldSkipDisabledIssuers() {
         // Arrange
         Map<String, JwtValidationConfig.IssuerConfig> issuersConfig = new HashMap<>();
+        
+        // Create test issuer config that is disabled
+        TestIssuerConfig issuerConfig = new TestIssuerConfig()
+                .withEnabled(false)
+                .withUrl(ISSUER_URL);
+        
         issuersConfig.put("test-issuer", issuerConfig);
-
-        lenient().when(issuerConfig.enabled()).thenReturn(false);
 
         // Act
         List<IssuerConfig> result = IssuerConfigFactory.createIssuerConfigs(issuersConfig);
@@ -138,12 +142,15 @@ class IssuerConfigFactoryTest {
     void shouldThrowExceptionWhenNoJwksConfig() {
         // Arrange
         Map<String, JwtValidationConfig.IssuerConfig> issuersConfig = new HashMap<>();
+        
+        // Create test issuer config with no JWKS and no public key
+        TestIssuerConfig issuerConfig = new TestIssuerConfig()
+                .withEnabled(true)
+                .withUrl(ISSUER_URL)
+                .withJwks(null)
+                .withPublicKeyLocation(null);
+        
         issuersConfig.put("test-issuer", issuerConfig);
-
-        lenient().when(issuerConfig.enabled()).thenReturn(true);
-        lenient().when(issuerConfig.url()).thenReturn(ISSUER_URL);
-        lenient().when(issuerConfig.jwks()).thenReturn(Optional.empty());
-        lenient().when(issuerConfig.publicKeyLocation()).thenReturn(Optional.empty());
 
         // Act & Assert
         IllegalStateException exception = assertThrows(IllegalStateException.class,
@@ -163,32 +170,30 @@ class IssuerConfigFactoryTest {
         Map<String, JwtValidationConfig.IssuerConfig> issuersConfig = new HashMap<>();
 
         // First issuer with JWKS
-        JwtValidationConfig.IssuerConfig issuer1 = mock(JwtValidationConfig.IssuerConfig.class);
-        JwtValidationConfig.HttpJwksLoaderConfig jwks1 = mock(JwtValidationConfig.HttpJwksLoaderConfig.class);
-
-        // Configure issuer1
-        lenient().when(issuer1.enabled()).thenReturn(true);
-        lenient().when(issuer1.url()).thenReturn("https://issuer1.example.com");
-        lenient().when(issuer1.jwks()).thenReturn(Optional.of(jwks1));
-        lenient().when(issuer1.publicKeyLocation()).thenReturn(Optional.empty());
-        lenient().when(issuer1.parser()).thenReturn(Optional.empty());
-
-        // Configure jwks1
-        lenient().when(jwks1.url()).thenReturn("https://issuer1.example.com/jwks.json");
-        lenient().when(jwks1.refreshIntervalSeconds()).thenReturn(300);
-        lenient().when(jwks1.readTimeoutMs()).thenReturn(5000);
+        TestHttpJwksLoaderConfig jwks1 = new TestHttpJwksLoaderConfig()
+                .withUrl("https://issuer1.example.com/jwks.json")
+                .withRefreshIntervalSeconds(300)
+                .withReadTimeoutMs(5000);
+        
+        TestIssuerConfig issuer1 = new TestIssuerConfig()
+                .withEnabled(true)
+                .withUrl("https://issuer1.example.com")
+                .withJwks(jwks1)
+                .withPublicKeyLocation(null)
+                .withParser(null);
 
         // Second issuer with public key
-        JwtValidationConfig.IssuerConfig issuer2 = mock(JwtValidationConfig.IssuerConfig.class);
-        lenient().when(issuer2.enabled()).thenReturn(true);
-        lenient().when(issuer2.url()).thenReturn("https://issuer2.example.com");
-        lenient().when(issuer2.jwks()).thenReturn(Optional.empty());
-        lenient().when(issuer2.publicKeyLocation()).thenReturn(Optional.of("classpath:keys/issuer2_key.pem"));
-        lenient().when(issuer2.parser()).thenReturn(Optional.empty());
+        TestIssuerConfig issuer2 = new TestIssuerConfig()
+                .withEnabled(true)
+                .withUrl("https://issuer2.example.com")
+                .withJwks(null)
+                .withPublicKeyLocation("classpath:keys/issuer2_key.pem")
+                .withParser(null);
 
         // Third issuer disabled
-        JwtValidationConfig.IssuerConfig issuer3 = mock(JwtValidationConfig.IssuerConfig.class);
-        lenient().when(issuer3.enabled()).thenReturn(false);
+        TestIssuerConfig issuer3 = new TestIssuerConfig()
+                .withEnabled(false)
+                .withUrl("https://issuer3.example.com");
 
         issuersConfig.put("issuer1", issuer1);
         issuersConfig.put("issuer2", issuer2);
