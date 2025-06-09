@@ -78,7 +78,14 @@
                     <systemPropertyVariables>
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                         <java.util.logging.config.file>${project.build.testOutputDirectory}/logging.properties</java.util.logging.config.file>
+                        <maven.home>${maven.home}</maven.home>
                     </systemPropertyVariables>
+                    <useModulePath>false</useModulePath>
+                    <useFile>false</useFile>
+                    <trimStackTrace>false</trimStackTrace>
+                    <enableAssertions>true</enableAssertions>
+                    <!-- Suppress JVM warnings -->
+                    <argLine>-XX:+IgnoreUnrecognizedVMOptions -Djava.awt.headless=true</argLine>
                 </configuration>
             </plugin>
         </plugins>

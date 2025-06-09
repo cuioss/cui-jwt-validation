@@ -23,11 +23,6 @@
         <!-- Test dependencies -->
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-junit5</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
             <artifactId>quarkus-junit5-mockito</artifactId>
             <scope>test</scope>
         </dependency>
@@ -110,6 +105,8 @@
                     <useFile>false</useFile>
                     <trimStackTrace>false</trimStackTrace>
                     <enableAssertions>true</enableAssertions>
+                    <!-- Suppress JVM warnings -->
+                    <argLine>-XX:+IgnoreUnrecognizedVMOptions -Djava.awt.headless=true</argLine>
                 </configuration>
             </plugin>
         </plugins>

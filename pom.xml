@@ -40,14 +40,17 @@
         <module>cui-jwt-benchmarking</module>
         <module>cui-jwt-quarkus-parent</module>
     </modules>
-
-    <properties>
-        <!-- Sonar exclusions -->
-        <sonar.coverage.exclusions>
-            **/cui-jwt-benchmarking/**/*
-        </sonar.coverage.exclusions>
-        <sonar.cpd.exclusions>
-            **/cui-jwt-benchmarking/**/*
-        </sonar.cpd.exclusions>
-    </properties>
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <!-- Use release instead of source/target to properly handle modules -->
+                        <release>17</release>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 </project>
