@@ -20,7 +20,6 @@ import de.cuioss.jwt.quarkus.config.JwtValidationConfig;
 import de.cuioss.jwt.validation.IssuerConfig;
 import de.cuioss.jwt.validation.ParserConfig;
 import de.cuioss.jwt.validation.TokenValidator;
-import de.cuioss.jwt.validation.jwks.http.HttpJwksLoaderConfig;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.tools.logging.CuiLogger;
 import jakarta.annotation.PostConstruct;
@@ -29,9 +28,7 @@ import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
 import lombok.Getter;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * CDI producer for {@link TokenValidator} instances.
@@ -47,7 +44,7 @@ import java.util.Map;
 @ApplicationScoped
 public class TokenValidatorProducer {
 
-    private static final CuiLogger log = new CuiLogger(TokenValidatorProducer.class);
+    private static final CuiLogger LOGGER = new CuiLogger(TokenValidatorProducer.class);
 
     @Getter
     private TokenValidator tokenValidator;
@@ -72,13 +69,13 @@ public class TokenValidatorProducer {
      */
     @PostConstruct
     void initialize() {
-        log.info("Initializing TokenValidator");
+        LOGGER.info("Initializing TokenValidator");
 
         // Create parser config
         ParserConfig parserConfig = createParserConfig(jwtValidationConfig.parser());
 
-        // Create issuer configs
-        List<IssuerConfig> issuerConfigs = createIssuerConfigs(jwtValidationConfig.issuers());
+        // Create issuer configs using the factory
+        List<IssuerConfig> issuerConfigs = IssuerConfigFactory.createIssuerConfigs(jwtValidationConfig.issuers());
 
         if (issuerConfigs.isEmpty()) {
             throw new IllegalStateException("No enabled issuers found in configuration");
@@ -92,7 +89,7 @@ public class TokenValidatorProducer {
         // Create TokenValidator
         tokenValidator = new TokenValidator(parserConfig, issuerConfigs.toArray(new IssuerConfig[0]));
 
-        log.info("TokenValidator initialized with {} issuers", issuerConfigs.size());
+        LOGGER.info("TokenValidator initialized with %s issuers", issuerConfigs.size());
     }
 
     /**
@@ -106,59 +103,6 @@ public class TokenValidatorProducer {
         return tokenValidator;
     }
 
-    /**
-     * Creates a list of IssuerConfig instances from the configuration map.
-     *
-     * @param issuersConfig the map of issuer configurations
-     * @return a list of IssuerConfig instances
-     */
-    @SuppressWarnings("java:S3655") // owolff: False positive, already checked
-    private List<IssuerConfig> createIssuerConfigs(Map<String, JwtValidationConfig.IssuerConfig> issuersConfig) {
-        List<IssuerConfig> result = new ArrayList<>();
-
-        for (Map.Entry<String, JwtValidationConfig.IssuerConfig> entry : issuersConfig.entrySet()) {
-            String issuerName = entry.getKey();
-            JwtValidationConfig.IssuerConfig issuerConfig = entry.getValue();
-
-            // Skip disabled issuers
-            if (!issuerConfig.enabled()) {
-                log.info("Skipping disabled issuer: {}", issuerName);
-                continue;
-            }
-
-            IssuerConfig.IssuerConfigBuilder builder = IssuerConfig.builder()
-                    .issuer(issuerConfig.url());
-
-            // Configure JWKS source
-            if (issuerConfig.jwks().isPresent()) {
-                JwtValidationConfig.HttpJwksLoaderConfig jwksConfig = issuerConfig.jwks().get();
-                builder.httpJwksLoaderConfig(
-                        HttpJwksLoaderConfig.builder()
-                                .url(jwksConfig.url())
-                                .refreshIntervalSeconds(jwksConfig.refreshIntervalSeconds())
-                                .requestTimeoutSeconds(jwksConfig.readTimeoutMs() / 1000) // Convert ms to seconds
-                                .build()
-                );
-            } else if (issuerConfig.publicKeyLocation().isPresent()) {
-                builder.jwksFilePath(issuerConfig.publicKeyLocation().get());
-            } else {
-                throw new IllegalStateException("Issuer " + issuerName +
-                        " has no JWKS configuration (jwks or publicKeyLocation)");
-            }
-
-            // Add audience if present in parser config
-            if (issuerConfig.parser().isPresent()) {
-                JwtValidationConfig.ParserConfig parserConfig = issuerConfig.parser().get();
-                if (parserConfig.audience().isPresent()) {
-                    builder.expectedAudience(parserConfig.audience().get());
-                }
-            }
-
-            result.add(builder.build());
-        }
-
-        return result;
-    }
 
     /**
      * Creates a ParserConfig from the configuration.

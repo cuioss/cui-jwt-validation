@@ -48,8 +48,17 @@ class CuiJwtProcessorTest {
                     .addClass(JwtValidationConfig.class))
             .withConfigurationResource("application-test.properties");
 
+    private final JwtValidationConfig jwtConfig;
+
+    /**
+     * Constructor for CuiJwtProcessorTest.
+     *
+     * @param jwtConfig the JWT validation configuration
+     */
     @Inject
-    JwtValidationConfig jwtConfig;
+    CuiJwtProcessorTest(JwtValidationConfig jwtConfig) {
+        this.jwtConfig = jwtConfig;
+    }
 
     /**
      * Test that verifies the CDI bean is properly registered and available.

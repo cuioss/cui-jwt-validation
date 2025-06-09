@@ -49,8 +49,17 @@ class CuiJwtIntegrationTest {
                     .addClasses(JwtValidationConfig.class))
             .withConfigurationResource("application-integration.properties");
 
+    private final JwtValidationConfig jwtConfig;
+
+    /**
+     * Constructor for CuiJwtIntegrationTest.
+     *
+     * @param jwtConfig the JWT validation configuration
+     */
     @Inject
-    JwtValidationConfig jwtConfig;
+    CuiJwtIntegrationTest(JwtValidationConfig jwtConfig) {
+        this.jwtConfig = jwtConfig;
+    }
 
     /**
      * Test that the extension correctly configures multiple issuers.
