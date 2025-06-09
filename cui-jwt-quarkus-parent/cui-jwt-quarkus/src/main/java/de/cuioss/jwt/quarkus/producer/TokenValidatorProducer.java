@@ -49,14 +49,22 @@ public class TokenValidatorProducer {
 
     private static final CuiLogger log = new CuiLogger(TokenValidatorProducer.class);
 
-    @Inject
-    @DefaultConfig
-    JwtValidationConfig jwtValidationConfig;
-
     @Getter
     private TokenValidator tokenValidator;
 
     private final SecurityEventCounter securityEventCounter = new SecurityEventCounter();
+
+    private final JwtValidationConfig jwtValidationConfig;
+
+    /**
+     * Constructor for TokenValidatorProducer.
+     *
+     * @param jwtValidationConfig the JWT validation configuration
+     */
+    @Inject
+    public TokenValidatorProducer(@DefaultConfig JwtValidationConfig jwtValidationConfig) {
+        this.jwtValidationConfig = jwtValidationConfig;
+    }
 
     /**
      * Initializes the TokenValidator at startup.
