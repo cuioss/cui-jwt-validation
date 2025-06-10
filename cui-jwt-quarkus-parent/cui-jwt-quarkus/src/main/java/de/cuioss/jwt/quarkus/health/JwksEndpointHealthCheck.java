@@ -19,6 +19,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import de.cuioss.jwt.quarkus.producer.TokenValidatorProducer;
 import de.cuioss.jwt.validation.IssuerConfig;
+import de.cuioss.jwt.validation.jwks.JwksType;
 import de.cuioss.jwt.validation.jwks.http.HttpJwksLoader;
 import de.cuioss.jwt.validation.jwks.http.HttpJwksLoaderConfig;
 import de.cuioss.tools.logging.CuiLogger;
@@ -44,13 +45,23 @@ import java.util.concurrent.TimeUnit;
 public class JwksEndpointHealthCheck implements HealthCheck {
 
     private static final CuiLogger LOGGER = new CuiLogger(JwksEndpointHealthCheck.class);
+    private static final String CONFIG_CACHE_SECONDS = "cui.jwt.health.jwks.cache-seconds";
+    private static final String CONFIG_TIMEOUT_SECONDS = "cui.jwt.health.jwks.timeout-seconds";
+    private static final String DEFAULT_CACHE_SECONDS = "30";
+    private static final String DEFAULT_TIMEOUT_SECONDS = "5";
+    private static final String HEALTHCHECK_NAME = "jwks-endpoints";
+    private static final String ERROR_NO_ISSUER_CONFIGS = "No issuer configurations found";
+    private static final String ERROR_NO_HTTP_JWKS = "No HTTP JWKS endpoints configured";
+    private static final String ERROR = "error";
+    private static final String STATUS_UP = "UP";
+    private static final String STATUS_DOWN = "DOWN";
 
     // Cache health check results to reduce endpoint load
     // Result is cached for 30 seconds by default
-    @ConfigProperty(name = "cui.jwt.health.jwks.cache-seconds", defaultValue = "30")
+    @ConfigProperty(name = CONFIG_CACHE_SECONDS, defaultValue = DEFAULT_CACHE_SECONDS)
     int cacheSeconds;
 
-    @ConfigProperty(name = "cui.jwt.health.jwks.timeout-seconds", defaultValue = "5")
+    @ConfigProperty(name = CONFIG_TIMEOUT_SECONDS, defaultValue = DEFAULT_TIMEOUT_SECONDS)
     int timeoutSeconds;
 
     @Inject
@@ -78,60 +89,122 @@ public class JwksEndpointHealthCheck implements HealthCheck {
 
     @Override
     public HealthCheckResponse call() {
-        var builder = HealthCheckResponse.named("jwks-endpoints").up();
         try {
             List<IssuerConfig> issuerConfigs = tokenValidatorProducer.getIssuerConfigs();
             if (issuerConfigs == null || issuerConfigs.isEmpty()) {
-                return HealthCheckResponse.named("jwks-endpoints")
-                        .down()
-                        .withData("error", "No issuer configurations found")
-                        .build();
+                return createErrorResponse(ERROR_NO_ISSUER_CONFIGS);
             }
-            boolean allEndpointsUp = true;
-            int checkedEndpoints = 0;
-            int i = 0;
-            for (IssuerConfig issuerConfig : issuerConfigs) {
-                String issuerUrl = issuerConfig.getIssuer();
-                String jwksType = null;
-                if (issuerConfig.getHttpJwksLoaderConfig() != null) {
-                    jwksType = "http";
-                } else if (issuerConfig.getJwksFilePath() != null) {
-                    jwksType = "file";
-                } else if (issuerConfig.getJwksContent() != null) {
-                    jwksType = "memory";
-                } else {
-                    jwksType = "none";
-                }
-                // Only check HTTP JWKS endpoints
-                if (!"http".equals(jwksType)) {
-                    i++;
-                    continue;
-                }
-                checkedEndpoints++;
-                String prefix = "issuer." + i + ".";
-                boolean up = checkJwksEndpointConnectivity(issuerConfig);
-                builder.withData(prefix + "url", issuerUrl);
-                builder.withData(prefix + "jwksType", jwksType);
-                builder.withData(prefix + "status", up ? "UP" : "DOWN");
-                if (!up) {
-                    allEndpointsUp = false;
-                }
-                i++;
-            }
-            builder.withData("checkedEndpoints", checkedEndpoints);
-            if (checkedEndpoints == 0) {
-                builder.down().withData("error", "No HTTP JWKS endpoints configured");
-            } else if (!allEndpointsUp) {
-                builder.down();
-            }
-            return builder.build();
+
+            return checkJwksEndpoints(issuerConfigs);
         } catch (Exception e) {
             LOGGER.warn(e, "Error checking JWKS endpoints: %s", e.getMessage());
-            return HealthCheckResponse.named("jwks-endpoints")
-                    .down()
-                    .withData("error", e.getMessage())
-                    .build();
+            return createErrorResponse(e.getMessage());
         }
+    }
+
+    /**
+     * Creates an error response with the given error message.
+     *
+     * @param errorMessage the error message
+     * @return the health check response
+     */
+    private HealthCheckResponse createErrorResponse(String errorMessage) {
+        return HealthCheckResponse.named(HEALTHCHECK_NAME)
+                .down()
+                .withData(ERROR, errorMessage)
+                .build();
+    }
+
+    /**
+     * Checks all JWKS endpoints in the given issuer configurations.
+     *
+     * @param issuerConfigs the issuer configurations
+     * @return the health check response
+     */
+    private HealthCheckResponse checkJwksEndpoints(List<IssuerConfig> issuerConfigs) {
+        boolean allEndpointsUp = true;
+        int checkedEndpoints = 0;
+        int i = 0;
+
+        // Create a response builder
+        var responseBuilder = HealthCheckResponse.named(HEALTHCHECK_NAME).up();
+
+        for (IssuerConfig issuerConfig : issuerConfigs) {
+            String jwksType = determineJwksType(issuerConfig);
+
+            // Only check HTTP JWKS endpoints
+            if (!JwksType.HTTP.getValue().equals(jwksType)) {
+                i++;
+                continue;
+            }
+
+            checkedEndpoints++;
+            String prefix = "issuer." + i + ".";
+            boolean up = checkJwksEndpointConnectivity(issuerConfig);
+
+            addEndpointData(responseBuilder, prefix, issuerConfig.getIssuer(), jwksType, up);
+
+            if (!up) {
+                allEndpointsUp = false;
+            }
+            i++;
+        }
+
+        responseBuilder.withData("checkedEndpoints", checkedEndpoints);
+        return finalizeHealthCheckResponse(responseBuilder, checkedEndpoints, allEndpointsUp);
+    }
+
+    /**
+     * Determines the JWKS type for the given issuer configuration.
+     *
+     * @param issuerConfig the issuer configuration
+     * @return the JWKS type
+     */
+    private String determineJwksType(IssuerConfig issuerConfig) {
+        if (issuerConfig.getHttpJwksLoaderConfig() != null) {
+            return JwksType.HTTP.getValue();
+        } else if (issuerConfig.getJwksFilePath() != null) {
+            return JwksType.FILE.getValue();
+        } else if (issuerConfig.getJwksContent() != null) {
+            return JwksType.MEMORY.getValue();
+        } else {
+            return JwksType.NONE.getValue();
+        }
+    }
+
+    /**
+     * Adds endpoint data to the health check response builder.
+     *
+     * @param builder the health check response builder
+     * @param prefix the prefix for the data
+     * @param issuerUrl the issuer URL
+     * @param jwksType the JWKS type
+     * @param up whether the endpoint is up
+     */
+    private void addEndpointData(org.eclipse.microprofile.health.HealthCheckResponseBuilder builder, String prefix,
+                                String issuerUrl, String jwksType, boolean up) {
+        builder.withData(prefix + "url", issuerUrl);
+        builder.withData(prefix + "jwksType", jwksType);
+        builder.withData(prefix + "status", up ? STATUS_UP : STATUS_DOWN);
+    }
+
+    /**
+     * Finalizes the health check response based on the checked endpoints and their status.
+     *
+     * @param builder the health check response builder
+     * @param checkedEndpoints the number of checked endpoints
+     * @param allEndpointsUp whether all endpoints are up
+     * @return the health check response
+     */
+    private HealthCheckResponse finalizeHealthCheckResponse(org.eclipse.microprofile.health.HealthCheckResponseBuilder builder,
+                                                         int checkedEndpoints,
+                                                         boolean allEndpointsUp) {
+        if (checkedEndpoints == 0) {
+            builder.down().withData(ERROR, ERROR_NO_HTTP_JWKS);
+        } else if (!allEndpointsUp) {
+            builder.down();
+        }
+        return builder.build();
     }
 
     /**

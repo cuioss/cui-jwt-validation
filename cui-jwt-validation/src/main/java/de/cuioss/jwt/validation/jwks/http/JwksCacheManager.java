@@ -174,7 +174,7 @@ class JwksCacheManager {
             return JWKSKeyLoader.builder()
                     .originalString(EMPTY_JWKS)
                     .securityEventCounter(securityEventCounter)
-                    .build();
+                    .build(); // Status will be automatically determined as ERROR for empty JWKS
         }
 
         LOGGER.debug(DEBUG.RESOLVING_KEY_LOADER.format(config.getHttpHandler().getUri().toString()));
@@ -294,5 +294,20 @@ class JwksCacheManager {
      */
     Optional<JWKSKeyLoader> getLastValidResult() {
         return Optional.ofNullable(lastValidResult);
+    }
+
+    /**
+     * Gets the current JWKSKeyLoader from cache if present, without triggering a load.
+     * This is used to check the current state without causing side effects.
+     *
+     * @return the current JWKSKeyLoader if present in cache, null otherwise
+     */
+    JWKSKeyLoader getCurrentLoader() {
+        // Check if HttpHandler has a valid URI
+        if (config.getHttpHandler().getUri() == null) {
+            return null;
+        }
+        
+        return jwksCache.getIfPresent(getCacheKey());
     }
 }
