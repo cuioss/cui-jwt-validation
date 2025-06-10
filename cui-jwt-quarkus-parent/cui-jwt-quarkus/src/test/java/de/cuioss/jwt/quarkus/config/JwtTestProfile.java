@@ -42,17 +42,17 @@ public class JwtTestProfile implements QuarkusTestProfile {
     @Override
     public Map<String, String> getConfigOverrides() {
         Map<String, String> config = new HashMap<>();
-        
+
         // Default issuer configuration
         config.put("cui.jwt.issuers.default.url", "https://example.com/auth");
         config.put("cui.jwt.issuers.default.enabled", "true");
         config.put("cui.jwt.issuers.default.public-key-location", "");  // Explicitly set to empty
-        
+
         // Keycloak issuer configuration
         config.put("cui.jwt.issuers.keycloak.url", "https://keycloak.example.com/auth/realms/master");
         config.put("cui.jwt.issuers.keycloak.enabled", "true");
         config.put("cui.jwt.issuers.keycloak.public-key-location", "classpath:keys/public_key.pem");
-        config.put("cui.jwt.issuers.keycloak.jwks.url", 
+        config.put("cui.jwt.issuers.keycloak.jwks.url",
                   "https://keycloak.example.com/auth/realms/master/protocol/openid-connect/certs");
         config.put("cui.jwt.issuers.keycloak.jwks.cache-ttl-seconds", "7200");
         config.put("cui.jwt.issuers.keycloak.jwks.refresh-interval-seconds", "600");
@@ -67,7 +67,21 @@ public class JwtTestProfile implements QuarkusTestProfile {
         config.put("cui.jwt.issuers.keycloak.parser.validate-expiration", "true");
         config.put("cui.jwt.issuers.keycloak.parser.validate-issued-at", "true");
         config.put("cui.jwt.issuers.keycloak.parser.allowed-algorithms", "RS256,ES256");
-        
+
+        // Well-known issuer configuration (using OpenID Connect Discovery)
+        config.put("cui.jwt.issuers.wellknown.url", "https://wellknown.example.com/auth/realms/master");
+        config.put("cui.jwt.issuers.wellknown.enabled", "true");
+        config.put("cui.jwt.issuers.wellknown.jwks.well-known-url",
+                  "https://wellknown.example.com/auth/realms/master/.well-known/openid-configuration");
+        config.put("cui.jwt.issuers.wellknown.jwks.cache-ttl-seconds", "3600");
+        config.put("cui.jwt.issuers.wellknown.jwks.refresh-interval-seconds", "300");
+        config.put("cui.jwt.issuers.wellknown.jwks.connection-timeout-ms", "5000");
+        config.put("cui.jwt.issuers.wellknown.jwks.read-timeout-ms", "5000");
+        config.put("cui.jwt.issuers.wellknown.jwks.max-retries", "3");
+        config.put("cui.jwt.issuers.wellknown.jwks.use-system-proxy", "false");
+        config.put("cui.jwt.issuers.wellknown.parser.audience", "well-known-app");
+        config.put("cui.jwt.issuers.wellknown.parser.leeway-seconds", "30");
+
         // Global parser configuration
         config.put("cui.jwt.parser.leeway-seconds", "30");
         config.put("cui.jwt.parser.max-token-size-bytes", "8192");
@@ -75,7 +89,7 @@ public class JwtTestProfile implements QuarkusTestProfile {
         config.put("cui.jwt.parser.validate-expiration", "true");
         config.put("cui.jwt.parser.validate-issued-at", "false");
         config.put("cui.jwt.parser.allowed-algorithms", "RS256,RS384,RS512,ES256,ES384,ES512");
-        
+
         return config;
     }
 }

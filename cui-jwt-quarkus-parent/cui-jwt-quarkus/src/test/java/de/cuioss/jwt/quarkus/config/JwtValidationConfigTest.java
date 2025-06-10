@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for {@link JwtValidationConfig}.
- * 
+ *
  * Note: Using @QuarkusTest to enable the full Quarkus CDI context for these tests.
  */
 @EnableTestLogger
@@ -66,6 +66,7 @@ class JwtValidationConfigTest {
 
     @Test
     @DisplayName("Should load keycloak configuration with custom values")
+    @SuppressWarnings("java:S5961") // owolff: Won't fix, this suffices
     void shouldLoadKeycloakConfig() {
         // Assert
         assertNotNull(jwtConfig);
@@ -81,7 +82,8 @@ class JwtValidationConfigTest {
         // Check JWKS config
         assertTrue(issuerConfig.jwks().isPresent());
         JwtValidationConfig.HttpJwksLoaderConfig jwksConfig = issuerConfig.jwks().get();
-        assertEquals("https://keycloak.example.com/auth/realms/master/protocol/openid-connect/certs", jwksConfig.url());
+        assertEquals(Optional.of("https://keycloak.example.com/auth/realms/master/protocol/openid-connect/certs"), jwksConfig.url());
+        assertEquals(Optional.empty(), jwksConfig.wellKnownUrl());
         assertEquals(7200, jwksConfig.cacheTtlSeconds());
         assertEquals(600, jwksConfig.refreshIntervalSeconds());
         assertEquals(3000, jwksConfig.connectionTimeoutMs());
@@ -99,5 +101,38 @@ class JwtValidationConfigTest {
         assertTrue(issuerParserConfig.validateExpiration());
         assertTrue(issuerParserConfig.validateIssuedAt());
         assertEquals("RS256,ES256", issuerParserConfig.allowedAlgorithms());
+    }
+
+    @Test
+    @DisplayName("Should load well-known configuration with OpenID Connect Discovery")
+    void shouldLoadWellKnownConfig() {
+        // Assert
+        assertNotNull(jwtConfig);
+        assertNotNull(jwtConfig.issuers());
+        assertTrue(jwtConfig.issuers().containsKey("wellknown"));
+
+        // Check issuer config
+        JwtValidationConfig.IssuerConfig issuerConfig = jwtConfig.issuers().get("wellknown");
+        assertEquals("https://wellknown.example.com/auth/realms/master", issuerConfig.url());
+        assertTrue(issuerConfig.enabled());
+
+        // Check JWKS config with well-known URL
+        assertTrue(issuerConfig.jwks().isPresent());
+        JwtValidationConfig.HttpJwksLoaderConfig jwksConfig = issuerConfig.jwks().get();
+        assertEquals(Optional.empty(), jwksConfig.url());
+        assertEquals(Optional.of("https://wellknown.example.com/auth/realms/master/.well-known/openid-configuration"),
+                    jwksConfig.wellKnownUrl());
+        assertEquals(3600, jwksConfig.cacheTtlSeconds());
+        assertEquals(300, jwksConfig.refreshIntervalSeconds());
+        assertEquals(5000, jwksConfig.connectionTimeoutMs());
+        assertEquals(5000, jwksConfig.readTimeoutMs());
+        assertEquals(3, jwksConfig.maxRetries());
+        assertFalse(jwksConfig.useSystemProxy());
+
+        // Check issuer-specific parser config
+        assertTrue(issuerConfig.parser().isPresent());
+        JwtValidationConfig.ParserConfig issuerParserConfig = issuerConfig.parser().get();
+        assertEquals(Optional.of("well-known-app"), issuerParserConfig.audience());
+        assertEquals(30, issuerParserConfig.leewaySeconds());
     }
 }

@@ -118,8 +118,13 @@ public class TestJwtValidationConfig {
     private HttpJwksLoaderConfig createTestJwksConfig() {
         return new HttpJwksLoaderConfig() {
             @Override
-            public String url() {
-                return "https://test-idp.example.com/auth/realms/test/protocol/openid-connect/certs";
+            public Optional<String> url() {
+                return Optional.of("https://test-idp.example.com/auth/realms/test/protocol/openid-connect/certs");
+            }
+
+            @Override
+            public Optional<String> wellKnownUrl() {
+                return Optional.empty();
             }
 
             @Override
