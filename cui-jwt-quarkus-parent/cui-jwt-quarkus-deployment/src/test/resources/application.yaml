@@ -32,3 +32,8 @@ cui:
       validateExpiration: true
       validateIssuedAt: false
       allowedAlgorithms: RS256,RS384,RS512,ES256,ES384,ES512
+    health:
+      enabled: true
+      jwks:
+        cacheSeconds: 30
+        timeoutSeconds: 5

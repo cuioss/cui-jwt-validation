@@ -92,6 +92,11 @@ public class JwtTestProfile implements QuarkusTestProfile {
         config.put("cui.jwt.parser.validate-issued-at", "false");
         config.put("cui.jwt.parser.allowed-algorithms", "RS256,RS384,RS512,ES256,ES384,ES512");
 
+        // Health check configuration
+        config.put("cui.jwt.health.enabled", "true");
+        config.put("cui.jwt.health.jwks.cache-seconds", "30");
+        config.put("cui.jwt.health.jwks.timeout-seconds", "5");
+
         return config;
     }
 }

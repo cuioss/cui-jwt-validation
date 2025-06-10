@@ -16,9 +16,7 @@
 package de.cuioss.jwt.quarkus.test.config;
 
 import de.cuioss.jwt.quarkus.config.JwtValidationConfig;
-import de.cuioss.jwt.quarkus.config.JwtValidationConfig.HttpJwksLoaderConfig;
-import de.cuioss.jwt.quarkus.config.JwtValidationConfig.IssuerConfig;
-import de.cuioss.jwt.quarkus.config.JwtValidationConfig.ParserConfig;
+import de.cuioss.jwt.quarkus.config.JwtValidationConfig.*;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 
@@ -53,6 +51,11 @@ public class TestJwtValidationConfig {
             @Override
             public ParserConfig parser() {
                 return createGlobalParserConfig();
+            }
+
+            @Override
+            public HealthConfig health() {
+                return createHealthConfig();
             }
         };
     }
@@ -233,6 +236,34 @@ public class TestJwtValidationConfig {
             @Override
             public String allowedAlgorithms() {
                 return "RS256,RS384,RS512,ES256,ES384,ES512";
+            }
+        };
+    }
+
+    private HealthConfig createHealthConfig() {
+        return new HealthConfig() {
+            @Override
+            public boolean enabled() {
+                return true;
+            }
+
+            @Override
+            public JwksHealthConfig jwks() {
+                return createJwksHealthConfig();
+            }
+        };
+    }
+
+    private JwksHealthConfig createJwksHealthConfig() {
+        return new JwksHealthConfig() {
+            @Override
+            public int cacheSeconds() {
+                return 30;
+            }
+
+            @Override
+            public int timeoutSeconds() {
+                return 5;
             }
         };
     }

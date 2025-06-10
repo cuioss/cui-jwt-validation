@@ -15,20 +15,19 @@
  */
 package de.cuioss.jwt.quarkus.metrics;
 
-import java.util.Collection;
-import java.util.Objects;
-
-import org.junit.jupiter.api.Test;
-
 import de.cuioss.jwt.validation.TokenValidator;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.jwt.validation.security.SecurityEventCounter.EventType;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.quarkus.test.junit.QuarkusTest;
-import jakarta.inject.Inject;
-import jakarta.enterprise.event.Event;
 import io.quarkus.runtime.StartupEvent;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.Test;
+
+import java.util.Collection;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 

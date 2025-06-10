@@ -15,8 +15,6 @@
  */
 package de.cuioss.jwt.quarkus.deployment;
 
-import de.cuioss.jwt.quarkus.config.JwtValidationConfig;
-import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
@@ -45,15 +43,6 @@ public class CuiJwtProcessor {
         return new FeatureBuildItem(FEATURE);
     }
 
-    /**
-     * Register the JWT validation configuration as a bean.
-     *
-     * @return A {@link AdditionalBeanBuildItem} for the JWT validation configuration
-     */
-    @BuildStep
-    AdditionalBeanBuildItem registerConfigMapping() {
-        return AdditionalBeanBuildItem.builder().addBeanClass(JwtValidationConfig.class).build();
-    }
 
     /**
      * Register the JWT validation configuration for reflection.
@@ -112,4 +101,8 @@ public class CuiJwtProcessor {
     RuntimeInitializedClassBuildItem runtimeInitializedClasses() {
         return new RuntimeInitializedClassBuildItem("de.cuioss.jwt.validation.jwks.http.HttpJwksLoader");
     }
+
+
+
+
 }

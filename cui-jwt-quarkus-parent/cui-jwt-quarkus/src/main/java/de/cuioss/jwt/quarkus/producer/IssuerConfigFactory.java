@@ -18,8 +18,8 @@ package de.cuioss.jwt.quarkus.producer;
 import de.cuioss.jwt.quarkus.config.JwtValidationConfig;
 import de.cuioss.jwt.validation.IssuerConfig;
 import de.cuioss.jwt.validation.jwks.http.HttpJwksLoaderConfig;
-import de.cuioss.jwt.validation.well_known.WellKnownHandler;
 import de.cuioss.jwt.validation.well_known.WellKnownDiscoveryException;
+import de.cuioss.jwt.validation.well_known.WellKnownHandler;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.experimental.UtilityClass;
 
@@ -48,7 +48,7 @@ class IssuerConfigFactory {
      * @throws IllegalStateException if an issuer has no JWKS configuration
      */
     @SuppressWarnings("java:S3655") // owolff: False Positive, isPresent is checked.
-    List<IssuerConfig> createIssuerConfigs(Map<String, JwtValidationConfig.IssuerConfig> issuersConfig) {
+    static List<IssuerConfig> createIssuerConfigs(Map<String, JwtValidationConfig.IssuerConfig> issuersConfig) {
         List<IssuerConfig> result = new ArrayList<>();
 
         for (Map.Entry<String, JwtValidationConfig.IssuerConfig> entry : issuersConfig.entrySet()) {
@@ -75,7 +75,7 @@ class IssuerConfigFactory {
      * @return an IssuerConfig instance
      * @throws IllegalStateException if the issuer has no JWKS configuration
      */
-    private IssuerConfig createSingleIssuerConfig(String issuerName, JwtValidationConfig.IssuerConfig issuerConfig) {
+    private static IssuerConfig createSingleIssuerConfig(String issuerName, JwtValidationConfig.IssuerConfig issuerConfig) {
         IssuerConfig.IssuerConfigBuilder builder = IssuerConfig.builder()
                 .issuer(issuerConfig.url());
 
@@ -96,7 +96,7 @@ class IssuerConfigFactory {
      * @param builder the IssuerConfig builder to configure
      * @throws IllegalStateException if the issuer has no JWKS configuration
      */
-    private void configureJwksSource(String issuerName, JwtValidationConfig.IssuerConfig issuerConfig,
+    private static void configureJwksSource(String issuerName, JwtValidationConfig.IssuerConfig issuerConfig,
             IssuerConfig.IssuerConfigBuilder builder) {
         if (issuerConfig.jwks().isPresent()) {
             JwtValidationConfig.HttpJwksLoaderConfig jwksConfig = issuerConfig.jwks().get();
@@ -122,7 +122,7 @@ class IssuerConfigFactory {
      * @param jwksBuilder the HttpJwksLoaderConfig builder to configure
      * @throws IllegalStateException if the issuer has no JWKS URL configuration
      */
-    private void configureJwksUrl(String issuerName, JwtValidationConfig.HttpJwksLoaderConfig jwksConfig,
+    private static void configureJwksUrl(String issuerName, JwtValidationConfig.HttpJwksLoaderConfig jwksConfig,
             HttpJwksLoaderConfig.HttpJwksLoaderConfigBuilder jwksBuilder) {
         if (jwksConfig.wellKnownUrl().isPresent()) {
             configureWellKnownUrl(issuerName, jwksConfig, jwksBuilder);
@@ -142,7 +142,7 @@ class IssuerConfigFactory {
      * @param jwksBuilder the HttpJwksLoaderConfig builder to configure
      * @throws IllegalStateException if the well-known URL fails to process and there is no direct URL fallback
      */
-    private void configureWellKnownUrl(String issuerName, JwtValidationConfig.HttpJwksLoaderConfig jwksConfig,
+    private static void configureWellKnownUrl(String issuerName, JwtValidationConfig.HttpJwksLoaderConfig jwksConfig,
             HttpJwksLoaderConfig.HttpJwksLoaderConfigBuilder jwksBuilder) {
         String wellKnownUrl = jwksConfig.wellKnownUrl().get();
         try {
@@ -170,7 +170,7 @@ class IssuerConfigFactory {
      * @param e the exception that occurred
      * @throws IllegalStateException if there is no direct URL fallback
      */
-    private void handleWellKnownDiscoveryFailure(String issuerName, JwtValidationConfig.HttpJwksLoaderConfig jwksConfig,
+    private static void handleWellKnownDiscoveryFailure(String issuerName, JwtValidationConfig.HttpJwksLoaderConfig jwksConfig,
             HttpJwksLoaderConfig.HttpJwksLoaderConfigBuilder jwksBuilder, String wellKnownUrl,
             WellKnownDiscoveryException e) {
         log.error(e, "Failed to process well-known URL: %s", wellKnownUrl);
@@ -191,7 +191,7 @@ class IssuerConfigFactory {
      * @param issuerConfig the issuer configuration
      * @param builder the IssuerConfig builder to configure
      */
-    private void configureAudience(JwtValidationConfig.IssuerConfig issuerConfig,
+    private static void configureAudience(JwtValidationConfig.IssuerConfig issuerConfig,
             IssuerConfig.IssuerConfigBuilder builder) {
         if (issuerConfig.parser().isPresent()) {
             JwtValidationConfig.ParserConfig parserConfig = issuerConfig.parser().get();

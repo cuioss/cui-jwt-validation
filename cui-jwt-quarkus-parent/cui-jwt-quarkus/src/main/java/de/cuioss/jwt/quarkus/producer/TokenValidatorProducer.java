@@ -52,6 +52,9 @@ public class TokenValidatorProducer {
 
     private final JwtValidationConfig jwtValidationConfig;
 
+    @Getter
+    private List<IssuerConfig> issuerConfigs;
+
     /**
      * Constructor for TokenValidatorProducer.
      *
@@ -74,7 +77,7 @@ public class TokenValidatorProducer {
         ParserConfig parserConfig = createParserConfig(jwtValidationConfig.parser());
 
         // Create issuer configs using the factory
-        List<IssuerConfig> issuerConfigs = IssuerConfigFactory.createIssuerConfigs(jwtValidationConfig.issuers());
+        issuerConfigs = IssuerConfigFactory.createIssuerConfigs(jwtValidationConfig.issuers());
 
         if (issuerConfigs.isEmpty()) {
             throw new IllegalStateException("No enabled issuers found in configuration");
@@ -101,7 +104,6 @@ public class TokenValidatorProducer {
     public TokenValidator produceTokenValidator() {
         return tokenValidator;
     }
-
 
     /**
      * Creates a ParserConfig from the configuration.
