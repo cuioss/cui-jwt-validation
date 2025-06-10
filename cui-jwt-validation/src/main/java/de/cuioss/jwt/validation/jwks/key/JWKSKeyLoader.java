@@ -82,7 +82,6 @@ public class JWKSKeyLoader implements JwksLoader {
     @Getter
     @NonNull
     private final SecurityEventCounter securityEventCounter;
-    @Getter
     @NonNull
     private final JwksType jwksType;
     @NonNull
