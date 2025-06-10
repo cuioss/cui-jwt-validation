@@ -46,7 +46,7 @@ public class JwtTestProfile implements QuarkusTestProfile {
         // Default issuer configuration
         config.put("cui.jwt.issuers.default.url", "https://example.com/auth");
         config.put("cui.jwt.issuers.default.enabled", "true");
-        config.put("cui.jwt.issuers.default.public-key-location", "");  // Explicitly set to empty
+        config.put("cui.jwt.issuers.default.public-key-location", "classpath:keys/public_key.pem");
 
         // Keycloak issuer configuration
         config.put("cui.jwt.issuers.keycloak.url", "https://keycloak.example.com/auth/realms/master");
@@ -73,6 +73,8 @@ public class JwtTestProfile implements QuarkusTestProfile {
         config.put("cui.jwt.issuers.wellknown.enabled", "true");
         config.put("cui.jwt.issuers.wellknown.jwks.well-known-url",
                   "https://wellknown.example.com/auth/realms/master/.well-known/openid-configuration");
+        config.put("cui.jwt.issuers.wellknown.jwks.url",
+                  "https://wellknown.example.com/auth/realms/master/protocol/openid-connect/certs"); // Fallback direct URL
         config.put("cui.jwt.issuers.wellknown.jwks.cache-ttl-seconds", "3600");
         config.put("cui.jwt.issuers.wellknown.jwks.refresh-interval-seconds", "300");
         config.put("cui.jwt.issuers.wellknown.jwks.connection-timeout-ms", "5000");

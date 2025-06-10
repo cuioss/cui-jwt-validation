@@ -35,6 +35,7 @@ import java.util.Map;
  * </p>
  */
 @UtilityClass
+@SuppressWarnings("java:S3655") // owolff: False Positive, isPresent is checked.
 class IssuerConfigFactory {
 
     private static final CuiLogger log = new CuiLogger(IssuerConfigFactory.class);

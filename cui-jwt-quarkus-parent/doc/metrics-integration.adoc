@@ -1,0 +1,59 @@
+= JWT Validation Metrics Documentation
+
+This document provides an overview of how the SecurityEvent metrics have been integrated with Micrometer in the Quarkus extension.
+
+== Implementation Overview
+
+The implementation integrates the SecurityEventCounter from the cui-jwt-validation module with Micrometer metrics in the cui-jwt-quarkus module. This allows applications using the extension to monitor JWT validation events in real-time.
+
+== Key Components
+
+=== JwtMetricsCollector
+
+The `JwtMetricsCollector` class is the central component responsible for:
+
+. Registering appropriate Micrometer metrics for JWT validation events
+. Collecting metrics from the SecurityEventCounter
+. Providing methods to record successful validations and timing data
+. Updating counters periodically to ensure accurate metrics
+
+=== TokenValidationMetrics &amp; TokenValidationMetricsInterceptor
+
+The `@TokenValidationMetrics` annotation and its interceptor implementation provide:
+
+. Timing data for token validation operations
+. Success/failure statistics for different token types
+. Automatic integration with the TokenValidator through CDI
+
+== Exposed Metrics
+
+|===
+|Metric Name |Type |Description |Tags 
+
+|`cui.jwt.validation.attempts` |Counter |Number of token validation attempts |issuer, token_type, result 
+|`cui.jwt.validation.errors` |Counter |Number of validation errors by type |issuer, event_type, category, result 
+|`cui.jwt.validation.duration` |Timer |Duration of token validation operations |issuer, token_type 
+|`cui.jwt.jwks.cache.size` |Gauge |Size of JWKS cache |issuer 
+|===
+
+== Usage
+
+The metrics are automatically collected when you use the `TokenValidator` provided by the extension. You only need to:
+
+. Include the `quarkus-micrometer` extension in your application
+. Optionally add a registry implementation like `quarkus-micrometer-registry-prometheus`
+
+== Example Prometheus Queries
+
+----
+# Success rate
+sum(cui_jwt_validation_attempts_total{result="success"}) / sum(cui_jwt_validation_attempts_total) * 100
+
+# Error rate by type
+sum(cui_jwt_validation_errors_total) by (event_type)
+
+# Validation duration (95th percentile)
+histogram_quantile(0.95, sum(rate(cui_jwt_validation_duration_seconds_bucket[5m])) by (le))
+----
+
+For more details, see the full documentation in `/cui-jwt-quarkus/src/main/resources/META-INF/jwt-validation-metrics.md`.

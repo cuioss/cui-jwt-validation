@@ -51,7 +51,7 @@ class JwtValidationConfigTest {
         JwtValidationConfig.IssuerConfig issuerConfig = jwtConfig.issuers().get("default");
         assertEquals("https://example.com/auth", issuerConfig.url());
         assertTrue(issuerConfig.enabled());
-        assertEquals(Optional.empty(), issuerConfig.publicKeyLocation());
+        assertEquals(Optional.of("classpath:keys/public_key.pem"), issuerConfig.publicKeyLocation());
         assertEquals(Optional.empty(), issuerConfig.jwks());
 
         JwtValidationConfig.ParserConfig parserConfig = jwtConfig.parser();
@@ -119,7 +119,8 @@ class JwtValidationConfigTest {
         // Check JWKS config with well-known URL
         assertTrue(issuerConfig.jwks().isPresent());
         JwtValidationConfig.HttpJwksLoaderConfig jwksConfig = issuerConfig.jwks().get();
-        assertEquals(Optional.empty(), jwksConfig.url());
+        assertEquals(Optional.of("https://wellknown.example.com/auth/realms/master/protocol/openid-connect/certs"), 
+                    jwksConfig.url());
         assertEquals(Optional.of("https://wellknown.example.com/auth/realms/master/.well-known/openid-configuration"),
                     jwksConfig.wellKnownUrl());
         assertEquals(3600, jwksConfig.cacheTtlSeconds());
