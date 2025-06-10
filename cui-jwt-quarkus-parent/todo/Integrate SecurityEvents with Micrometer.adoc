@@ -66,11 +66,11 @@ include::task-completion-process.adoc[leveloffset=+1]
 *3. Verify Documentation:*
 +
 --
-* [ ] Update all references in README.adoc
-* [ ] Update relevant documentation in doc/ directory
-* [ ] Check for outdated file paths or references
-* [ ] Ensure consistent naming across all documentation
-* [ ] Add examples for common use cases
+* [x] Update all references in README.adoc
+* [x] Update relevant documentation in doc/ directory
+* [x] Check for outdated file paths or references
+* [x] Ensure consistent naming across all documentation
+* [x] Add examples for common use cases
 --
 
 *4. Update Status:*

@@ -9,53 +9,60 @@ include::task-completion-process.adoc[leveloffset=+1]
 == Overview
 [ ] *Priority:* Medium
 
-*Description:* Create Quarkus health checks for JWT validation components:
+*Description:* Create Quarkus health checks for JWT validation components using SmallRye Health (MicroProfile Health 4.0):
 
 . Implement a health check for JWKS endpoint connectivity using Quarkus SmallRye Health
 +
 --
 * Check connectivity to each configured JWKS endpoint
-* Report detailed status information for each issuer
+* Provide binary UP/DOWN status for each issuer's JWKS endpoint
+* Include in readiness checks to prevent routing traffic when JWKS endpoints are unavailable
 --
 . Add a health check for token validation capabilities
 +
 --
 * Verify that TokenValidator is properly configured
-* Test with a simple validation operation
+* Include basic configuration validation without performing actual token validation
+* Ensure validation components are properly initialized
 --
-. Include relevant details in health check responses:
+. Organize health check information properly:
 +
 --
-* Issuer URL
-* Last successful refresh time
-* Number of cached keys
-* Connection status
+* Keep health check response data minimal and focused on health status
+* Reserve detailed state information for metrics (separate concern)
+* Follow MicroProfile Health 4.0 specification guidelines for response format
 --
 . Configure appropriate health check groups:
 +
 --
 * Readiness check for JWKS endpoint connectivity
-* Liveness check for TokenValidator functionality
+* Liveness check for TokenValidator component availability
+* Startup check for initial configuration validation
 --
-. Ensure health checks don't impact performance:
+. Follow Quarkus health check best practices:
 +
 --
-* Use caching to prevent excessive network calls
-* Implement circuit breaker pattern for failing endpoints
+* Use health check caching to prevent excessive network calls
+* Implement proper timeout handling for external endpoint checks
+* Follow circuit breaker pattern for failing endpoints
+* Ensure minimal impact on application performance
 --
 
-*Rationale:* Health checks provide visibility into the operational status of JWT validation components, which is crucial for containerized environments and Kubernetes deployments.
+*Rationale:* Health checks provide visibility into the operational status of JWT validation components, which is crucial for containerized environments and Kubernetes deployments. They ensure traffic is only routed to properly configured and connected instances.
 
 == Implementation Steps
 
-* [ ] Create JwksEndpointHealthCheck class implementing HealthCheck
-* [ ] Create TokenValidatorHealthCheck class implementing HealthCheck
-* [ ] Implement health check logic with proper error handling
-* [ ] Configure appropriate scopes (@ApplicationScoped) and groups (@Readiness, @Liveness)
-* [ ] Implement caching mechanism to prevent performance impact
-* [ ] Add unit tests for health checks with mock responses
+* [ ] Add quarkus-smallrye-health dependency to the extension module
+* [ ] Create JwksEndpointHealthCheck class implementing HealthCheck interface
+* [ ] Create TokenValidatorHealthCheck class implementing HealthCheck interface
+* [ ] Implement proper error handling with meaningful error messages
+* [ ] Configure appropriate scopes (@ApplicationScoped) and groups (@Readiness, @Liveness, @Startup)
+* [ ] Implement caching mechanism for health checks to prevent performance impact
+* [ ] Add proper timeout handling for external endpoint checks
+* [ ] Add unit tests with mock responses and simulated failure scenarios
 * [ ] Create integration test with actual health check endpoints
 * [ ] Document health check endpoints and response format with examples
+* [ ] Add health check configuration options (timeout values, check intervals)
 
 == Task Completion Checklist
 
@@ -66,25 +73,28 @@ include::task-completion-process.adoc[leveloffset=+1]
 * [ ] Check code against Quarkus and CUI standards
 * [ ] Ensure proper error handling and edge cases are covered
 * [ ] Verify compatibility with both JVM and native mode
+* [ ] Test with Kubernetes/OpenShift probes
 --
 
 *2. Write Tests:*
 +
 --
-* [ ] Write unit tests for all components
-* [ ] Create integration tests for real-world scenarios
-* [ ] Test with different configuration options
-* [ ] Verify error cases and edge conditions
+* [ ] Write unit tests for all health check components
+* [ ] Create integration tests with mocked endpoints
+* [ ] Test with different configuration options (timeout values, multiple issuers)
+* [ ] Verify error cases and edge conditions (network failures, slow responses)
+* [ ] Test with concurrent requests to ensure thread safety
 --
 
 *3. Verify Documentation:*
 +
 --
-* [ ] Update all references in README.adoc
-* [ ] Update relevant documentation in doc/ directory
-* [ ] Check for outdated file paths or references
+* [ ] Update README.adoc with health check documentation
+* [ ] Document all health check endpoints and expected responses
+* [ ] Add configuration documentation to quarkus-config-doc.adoc
+* [ ] Add examples of Kubernetes probe configuration
 * [ ] Ensure consistent naming across all documentation
-* [ ] Add examples for common use cases
+* [ ] Document metrics vs. health checks separation of concerns
 --
 
 *4. Update Status:*
@@ -113,3 +123,629 @@ include::task-completion-process.adoc[leveloffset=+1]
 * [ ] Use the task name as the commit message
 * [ ] Include any additional notes about implementation decisions in the commit description
 --
+
+== Sample Implementation
+
+=== Required Dependencies
+
+Add the SmallRye Health extension to the Quarkus extension module:
+
+[source,xml]
+----
+<dependency>
+    <groupId>io.quarkus</groupId>
+    <artifactId>quarkus-smallrye-health</artifactId>
+</dependency>
+----
+
+=== JwksEndpointHealthCheck Example
+
+[source,java]
+----
+/**
+ * Health check for JWKS endpoint connectivity.
+ * This class implements the SmallRye Health check interface to provide
+ * readiness status for JWT validation JWKS endpoints.
+ */
+@ApplicationScoped
+@Readiness // Marks this as a readiness check
+public class JwksEndpointHealthCheck implements HealthCheck {
+
+    private static final CuiLogger LOGGER = new CuiLogger(JwksEndpointHealthCheck.class);
+    
+    // Cache health check results to reduce endpoint load
+    // Result is cached for 30 seconds by default
+    @ConfigProperty(name = "cui.jwt.health.jwks.cache-seconds", defaultValue = "30")
+    int cacheSeconds;
+    
+    @ConfigProperty(name = "cui.jwt.health.jwks.timeout-seconds", defaultValue = "5")
+    int timeoutSeconds;
+    
+    @Inject
+    TokenValidatorProducer tokenValidatorProducer;
+    
+    // Cache for health check results
+    private final Cache<String, HealthCheckResponse> healthCheckCache;
+    
+    public JwksEndpointHealthCheck() {
+        this.healthCheckCache = Caffeine.newBuilder()
+                .expireAfterWrite(cacheSeconds, TimeUnit.SECONDS)
+                .build();
+    }
+
+    @Override
+    public HealthCheckResponse call() {
+        var builder = HealthCheckResponse.named("jwks-endpoints").up();
+        
+        try {
+            // Get the TokenValidator from the producer
+            TokenValidator tokenValidator = tokenValidatorProducer.getTokenValidator();
+            if (tokenValidator == null) {
+                return HealthCheckResponse.named("jwks-endpoints")
+                        .down()
+                        .withData("error", "TokenValidator not initialized")
+                        .build();
+            }
+            
+            // Check each issuer's JWKS endpoint
+            List<IssuerConfig> issuerConfigs = tokenValidator.getIssuerConfigs();
+            if (issuerConfigs.isEmpty()) {
+                return HealthCheckResponse.named("jwks-endpoints")
+                        .down()
+                        .withData("error", "No issuer configurations found")
+                        .build();
+            }
+            
+            boolean allEndpointsUp = true;
+            int checkedEndpoints = 0;
+            
+            for (IssuerConfig issuerConfig : issuerConfigs) {
+                String issuerUrl = issuerConfig.getIssuer();
+                
+                // Skip issuers without HTTP JWKS loaders
+                if (!issuerConfig.usesHttpJwksLoader()) {
+                    continue;
+                }
+                
+                checkedEndpoints++;
+                
+                // Try to get the cached health check result for this issuer
+                HealthCheckResponse cachedResponse = healthCheckCache.getIfPresent(issuerUrl);
+                if (cachedResponse != null) {
+                    if (cachedResponse.getStatus() == HealthCheckResponse.Status.DOWN) {
+                        allEndpointsUp = false;
+                    }
+                    // Merge the cached response data into the builder
+                    cachedResponse.getData().ifPresent(data -> 
+                        data.forEach((key, value) -> builder.withData(key, value)));
+                    continue;
+                }
+                
+                // Check JWKS endpoint connectivity with timeout
+                boolean endpointUp = checkJwksEndpointConnectivity(issuerConfig);
+                if (!endpointUp) {
+                    allEndpointsUp = false;
+                    builder.withData(issuerUrl + ".status", "DOWN");
+                } else {
+                    builder.withData(issuerUrl + ".status", "UP");
+                }
+            }
+            
+            // If no HTTP endpoints were checked, return UP
+            if (checkedEndpoints == 0) {
+                return builder.up().build();
+            }
+            
+            // Return overall status based on all endpoints
+            return allEndpointsUp ? builder.up().build() : builder.down().build();
+        } catch (Exception e) {
+            LOGGER.warn(e, "Error checking JWKS endpoints health: %s", e.getMessage());
+            return HealthCheckResponse.named("jwks-endpoints")
+                    .down()
+                    .withData("error", e.getMessage())
+                    .build();
+        }
+    }
+    
+    /**
+     * Checks the connectivity to a JWKS endpoint with timeout.
+     *
+     * @param issuerConfig the issuer configuration
+     * @return true if the endpoint is accessible, false otherwise
+     */
+    private boolean checkJwksEndpointConnectivity(IssuerConfig issuerConfig) {
+        try {
+            // Get the HTTP JWKS loader from the issuer config
+            Optional<HttpJwksLoader> jwksLoader = issuerConfig.getHttpJwksLoader();
+            if (jwksLoader.isEmpty()) {
+                return false;
+            }
+            
+            // Use a CompletableFuture with timeout to check connectivity
+            CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
+                try {
+                    // Try to get the key set, which will trigger a connection to the JWKS endpoint
+                    Set<String> keySet = jwksLoader.get().keySet();
+                    return !keySet.isEmpty();
+                } catch (Exception e) {
+                    LOGGER.debug(e, "Failed to connect to JWKS endpoint for issuer %s: %s", 
+                            issuerConfig.getIssuer(), e.getMessage());
+                    return false;
+                }
+            });
+            
+            // Apply timeout
+            return future.completeOnTimeout(false, timeoutSeconds, TimeUnit.SECONDS)
+                    .get();
+        } catch (Exception e) {
+            LOGGER.debug(e, "Error checking JWKS endpoint for issuer %s: %s", 
+                    issuerConfig.getIssuer(), e.getMessage());
+            return false;
+        }
+    }
+}
+----
+
+=== TokenValidatorHealthCheck Example
+
+[source,java]
+----
+/**
+ * Health check for TokenValidator functionality.
+ * This class implements the SmallRye Health check interface to provide
+ * liveness status for the JWT validation component.
+ */
+@ApplicationScoped
+@Liveness // Marks this as a liveness check
+public class TokenValidatorHealthCheck implements HealthCheck {
+
+    private static final CuiLogger LOGGER = new CuiLogger(TokenValidatorHealthCheck.class);
+    
+    @Inject
+    TokenValidatorProducer tokenValidatorProducer;
+
+    @Override
+    public HealthCheckResponse call() {
+        try {
+            // Get the TokenValidator from the producer
+            TokenValidator tokenValidator = tokenValidatorProducer.getTokenValidator();
+            
+            if (tokenValidator == null) {
+                return HealthCheckResponse.named("token-validator")
+                        .down()
+                        .withData("error", "TokenValidator not initialized")
+                        .build();
+            }
+            
+            // Check if TokenValidator has any issuer configurations
+            List<IssuerConfig> issuerConfigs = tokenValidator.getIssuerConfigs();
+            if (issuerConfigs.isEmpty()) {
+                return HealthCheckResponse.named("token-validator")
+                        .down()
+                        .withData("error", "No issuer configurations found")
+                        .build();
+            }
+            
+            // Verify that essential components are available
+            if (tokenValidator.getParserConfig() == null) {
+                return HealthCheckResponse.named("token-validator")
+                        .down()
+                        .withData("error", "Parser configuration is missing")
+                        .build();
+            }
+            
+            // No need to perform actual token validation here, just verify component availability
+            return HealthCheckResponse.named("token-validator")
+                    .up()
+                    .withData("issuers", issuerConfigs.size())
+                    .build();
+        } catch (Exception e) {
+            LOGGER.warn(e, "Error checking TokenValidator health: %s", e.getMessage());
+            return HealthCheckResponse.named("token-validator")
+                    .down()
+                    .withData("error", e.getMessage())
+                    .build();
+        }
+    }
+}
+----
+
+=== Configuration Properties
+
+Sample configuration properties for health checks:
+
+[source,properties]
+----
+# Health check configuration
+cui.jwt.health.jwks.cache-seconds=30
+cui.jwt.health.jwks.timeout-seconds=5
+----
+
+=== Kubernetes Probe Configuration Example
+
+Example of how to configure Kubernetes probes to use the health endpoints:
+
+[source,yaml]
+----
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-jwt-application
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          image: my-jwt-application:latest
+          livenessProbe:
+            httpGet:
+              path: /q/health/live
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /q/health/ready
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /q/health/started
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 10
+----
+
+== Health Checks vs. Metrics: Understanding the Difference
+
+When implementing health checks for JWT validation components, it's important to understand the distinction between health checks and metrics:
+
+=== Health Checks (MicroProfile Health)
+
+Health checks provide a binary UP/DOWN status that indicates whether a component or service is operational. They are primarily used by:
+
+* **Kubernetes/OpenShift probes** - To determine if a container should receive traffic (readiness) or be restarted (liveness)
+* **Load balancers** - To route traffic only to healthy instances
+* **Orchestration systems** - To make scheduling and scaling decisions
+
+Health checks should be:
+
+* **Binary** - The primary output is UP or DOWN
+* **Lightweight** - Quick to execute with minimal resource usage
+* **Focused** - Only check what's necessary to determine operational status
+* **Cached** - Results should be cached to prevent performance impact from frequent checks
+
+=== Metrics (MicroProfile Metrics)
+
+Metrics provide detailed numerical data about the internal state and performance of components. They are primarily used for:
+
+* **Monitoring dashboards** - To visualize system behavior over time
+* **Alerting systems** - To trigger alerts based on thresholds
+* **Performance analysis** - To identify bottlenecks and optimization opportunities
+* **Capacity planning** - To make informed scaling decisions
+
+Metrics should include:
+
+* **Counters** - Number of operations, errors, etc.
+* **Gauges** - Current values like cache size, connection pool usage
+* **Timers** - Duration of operations
+* **Histograms** - Distribution of values
+
+=== Appropriate Implementation Guidance
+
+For the JWT validation components:
+
+1. **Health Checks Should Include**:
+   * JWKS endpoint connectivity status (UP/DOWN)
+   * TokenValidator initialization status
+   * Basic configuration validation results
+
+2. **Metrics Should Include** (implement separately with MicroProfile Metrics):
+   * Number of cached keys per issuer
+   * Last refresh timestamp for JWKS data
+   * Token validation counts (success/failure)
+   * Validation performance metrics (response time)
+   * Error counts by category
+   * Cache hit/miss ratios
+
+This separation ensures that health checks remain focused on operational status while detailed monitoring data is provided through metrics.
+
+== Quarkus SmallRye Health Best Practices (2025)
+
+=== 1. Health Check Types
+
+Quarkus 3.23.0 (as used in this project) supports the MicroProfile Health 4.0 specification, which defines three types of health checks:
+
+1. **Liveness Checks** (`@Liveness`):
+   * Indicates whether the application is running and not deadlocked
+   * Failed liveness checks typically result in container restart
+   * Endpoint: `/q/health/live`
+
+2. **Readiness Checks** (`@Readiness`):
+   * Indicates whether the application is ready to serve requests
+   * Failed readiness checks result in traffic not being routed to the instance
+   * Endpoint: `/q/health/ready`
+
+3. **Startup Checks** (`@Startup`):
+   * Indicates whether the application has finished its initialization
+   * Used during application startup phase
+   * Endpoint: `/q/health/started`
+
+=== 2. Health Check Groups
+
+In addition to the standard types, Quarkus supports custom health check groups:
+
+[source,java]
+----
+@ApplicationScoped
+@HealthGroup("jwks")
+public class CustomJwksHealthCheck implements HealthCheck {
+    // Implementation
+}
+----
+
+Custom health groups are available at `/q/health/group/{group-name}`.
+
+=== 3. Reactive Health Checks
+
+For reactive applications, implement `ReactiveHealthCheck` instead of `HealthCheck`:
+
+[source,java]
+----
+@ApplicationScoped
+@Readiness
+public class ReactiveJwksHealthCheck implements ReactiveHealthCheck {
+    @Override
+    public Uni<HealthCheckResponse> call() {
+        return Uni.createFrom().item(() -> 
+            HealthCheckResponse.named("reactive-jwks").up().build());
+    }
+}
+----
+
+=== 4. Health Check Response Extensions
+
+Include useful data in health check responses using `withData()`:
+
+[source,java]
+----
+return HealthCheckResponse.named("jwks-endpoint")
+    .up()
+    .withData("issuer", "https://my-identity-provider.com")
+    .withData("keysAvailable", 3)
+    .build();
+----
+
+=== 5. Circuit Breaker Pattern
+
+Implement circuit breaker pattern to prevent cascading failures:
+
+[source,java]
+----
+// Field declarations
+private final CircuitBreakerPolicy circuitBreaker;
+
+// Constructor
+public JwksEndpointHealthCheck() {
+    this.circuitBreaker = CircuitBreakerPolicy.builder()
+        .withFailureThreshold(3)
+        .withSuccessThreshold(2)
+        .withTimeout(Duration.ofSeconds(30))
+        .build();
+}
+
+// Usage in health check
+boolean isEndpointUp = circuitBreaker.execute(() -> checkEndpoint(url));
+----
+
+=== 6. Caching Health Check Results
+
+Cache health check results to reduce load on external systems:
+
+[source,java]
+----
+// Use Caffeine cache with appropriate expiration
+private final Cache<String, HealthCheckResponse> healthCheckCache = Caffeine.newBuilder()
+    .expireAfterWrite(30, TimeUnit.SECONDS)
+    .build();
+
+// In health check call method
+HealthCheckResponse cachedResponse = healthCheckCache.getIfPresent(cacheKey);
+if (cachedResponse != null) {
+    return cachedResponse;
+}
+
+// Generate new response and cache it
+HealthCheckResponse response = generateHealthCheckResponse();
+healthCheckCache.put(cacheKey, response);
+return response;
+----
+
+=== 7. Native Image Considerations
+
+When running in native mode, health checks must adhere to GraalVM constraints:
+
+* Avoid reflection-based operations
+* Register classes for reflection when needed
+* Use Quarkus extension capabilities to handle native compilation
+
+=== 8. Monitoring Health Check Performance
+
+Monitor the performance impact of health checks:
+
+* Add timing metrics for health check execution
+* Log warnings when health checks exceed expected duration
+* Consider using async operations for time-consuming health checks
+
+=== 9. Testing Health Checks
+
+Test health checks thoroughly:
+
+* Unit test with mocked dependencies
+* Integration test with test containers for external dependencies
+* Simulate failure scenarios to ensure proper error handling
+* Test with concurrent requests to verify thread safety
+
+=== 10. Security Considerations
+
+Secure health check endpoints appropriately:
+
+* Consider requiring authentication for detailed health information
+* Use `quarkus.smallrye-health.auth.enabled=true` to enable authentication
+* Apply proper network policies to restrict access to health endpoints in production
+
+== Integration with Quarkus Extension Infrastructure
+
+=== Extension Integration Points
+
+To properly integrate health checks into the cui-jwt-quarkus extension, several integration points need to be considered:
+
+1. **Deployment-Time Integration**:
+   * Enhance `CuiJwtProcessor` in the deployment module to detect and register health checks
+   * Configure health check endpoints based on extension configuration
+
+2. **Runtime-Time Integration**:
+   * Provide health check implementations in the runtime module
+   * Inject necessary dependencies using CDI
+
+3. **Configuration Integration**:
+   * Add health check configuration properties to `JwtValidationConfig`
+   * Document configuration options in quarkus-config-doc.adoc
+
+=== Implementation in Deployment Module
+
+The deployment module should detect the presence of SmallRye Health and conditionally register health checks:
+
+[source,java]
+----
+@BuildStep
+FeatureBuildItem feature() {
+    return new FeatureBuildItem("cui-jwt");
+}
+
+@BuildStep
+@Record(ExecutionTime.RUNTIME_INIT)
+void registerHealthChecks(CuiJwtRecorder recorder,
+                         BeanContainerBuildItem beanContainer,
+                         BuildProducer<AdditionalBeanBuildItem> additionalBeans,
+                         BuildProducer<HealthBuildItem> health,
+                         Optional<HealthConfig> healthConfig) {
+    
+    // Only register health checks if SmallRye Health is present
+    if (healthConfig.isPresent()) {
+        // Register health check beans
+        additionalBeans.produce(AdditionalBeanBuildItem.unremovableOf(JwksEndpointHealthCheck.class));
+        additionalBeans.produce(AdditionalBeanBuildItem.unremovableOf(TokenValidatorHealthCheck.class));
+        
+        // Register health checks with SmallRye Health
+        health.produce(new HealthBuildItem("cui.jwt.health.jwks", 
+                recorder.createJwksEndpointHealthCheck(beanContainer.getValue())));
+        health.produce(new HealthBuildItem("cui.jwt.health.validator", 
+                recorder.createTokenValidatorHealthCheck(beanContainer.getValue())));
+    }
+}
+----
+
+=== Health Check Configuration
+
+Add configuration properties to `JwtValidationConfig`:
+
+[source,java]
+----
+@ConfigMapping(prefix = "cui.jwt")
+public interface JwtValidationConfig {
+    // Existing configuration...
+    
+    /**
+     * Health check configuration
+     */
+    HealthConfig health();
+    
+    /**
+     * Health check configuration properties.
+     */
+    interface HealthConfig {
+        /**
+         * Whether health checks are enabled.
+         * 
+         * @return true if health checks are enabled, false otherwise
+         */
+        @WithDefault("true")
+        boolean enabled();
+        
+        /**
+         * JWKS endpoint health check configuration
+         */
+        JwksHealthConfig jwks();
+        
+        /**
+         * JWKS endpoint health check configuration.
+         */
+        interface JwksHealthConfig {
+            /**
+             * Cache time in seconds for JWKS health check results.
+             * 
+             * @return cache time in seconds
+             */
+            @WithDefault("30")
+            int cacheSeconds();
+            
+            /**
+             * Timeout in seconds for JWKS endpoint connectivity checks.
+             * 
+             * @return timeout in seconds
+             */
+            @WithDefault("5")
+            int timeoutSeconds();
+        }
+    }
+}
+----
+
+=== Auto-Configuration Support
+
+Leverage Quarkus auto-configuration to automatically enable health checks when the smallrye-health extension is present:
+
+[source,properties]
+----
+# Auto-configuration in application.properties
+quarkus.cui-jwt.health.enabled=true
+quarkus.smallrye-health.ui.always-include=true
+----
+
+=== Extension Documentation
+
+Document the health check capabilities in the extension README:
+
+```asciidoc
+=== Health Checks
+
+The extension provides health checks for JWT validation components:
+
+1. **JWKS Endpoint Health Check**: Checks connectivity to configured JWKS endpoints
+   * Type: Readiness
+   * Endpoint: `/q/health/ready`
+
+2. **Token Validator Health Check**: Checks TokenValidator configuration
+   * Type: Liveness
+   * Endpoint: `/q/health/live`
+
+==== Configuration
+
+[source,properties]
+----
+# Enable/disable health checks
+cui.jwt.health.enabled=true
+
+# Configure JWKS endpoint health checks
+cui.jwt.health.jwks.cache-seconds=30
+cui.jwt.health.jwks.timeout-seconds=5
+----
+```

@@ -37,13 +37,335 @@ include::task-completion-process.adoc[leveloffset=+1]
 
 == Implementation Steps
 
-* [ ] Add quarkus-devui-extension dependency
-* [ ] Create Dev UI template files
-* [ ] Implement Dev UI endpoints
-* [ ] Add runtime information collectors
-* [ ] Create token debugging tools
-* [ ] Implement configuration suggestions
-* [ ] Test Dev UI integration
+. *Setup Development Environment*:
++
+--
+* [ ] Add quarkus-devui-extension dependency to pom.xml
+* [ ] Configure development profile for DevUI enablement
+* [ ] Verify DevUI base functionality
+--
+
+. *Design DevUI Components*:
++
+--
+* [ ] Design UI layout and navigation flow
+* [ ] Define required runtime data structures
+* [ ] Create wireframes for custom pages
+--
+
+. *Implement Core Components*:
++
+--
+* [ ] Create JWT validation status card with key metrics
+* [ ] Implement JWKS endpoint monitoring component
+* [ ] Build token structure visualizer
+* [ ] Develop validation result explainer component
+--
+
+. *Implement Backend Services*:
++
+--
+* [ ] Create DevUI build steps in deployment module
+* [ ] Implement JSON-RPC methods for runtime data
+* [ ] Add validation statistics collector
+* [ ] Develop configuration analyzer
+--
+
+. *Create Developer Tools*:
++
+--
+* [ ] Implement token validation testing tool
+* [ ] Create JWKS endpoint testing utility
+* [ ] Add configuration suggestion generator
+* [ ] Build token generator with templates
+--
+
+. *Testing and Refinement*:
++
+--
+* [ ] Create test scenarios for all components
+* [ ] Verify UI responsiveness and usability
+* [ ] Test with various token and key configurations
+* [ ] Validate error handling and edge cases
+--
+
+. *Documentation*:
++
+--
+* [ ] Add user documentation for DevUI features
+* [ ] Create developer documentation for extension
+* [ ] Include screenshots and usage examples
+--
+
+== Best Practices for DevUI Integration
+
+=== General DevUI Implementation Principles
+
+. *Development Mode Only*:
++
+--
+* Ensure all DevUI components run only in development mode using `@BuildStep(onlyIf = IsDevelopment.class)`
+* Never include DevUI-related code in production deployments
+--
+
+. *Card Organization*:
++
+--
+* Group related features and information in logical card pages
+* Use clear icons and labels for better visibility
+* Implement proper linking between cards and pages for smooth navigation
+--
+
+. *Content Types*:
++
+--
+* Use appropriate content display for different data types (JSON, YAML, HTML)
+* Consider using `.isJsonContent()`, `.isYamlContent()`, or `.isHtmlContent()` hints for proper rendering
+* For complex UIs, implement custom web components
+--
+
+. *Security Considerations*:
++
+--
+* Never expose sensitive information in DevUI
+* Implement proper validation for any developer input in testing tools
+* Clearly mark any test-only features
+--
+
+=== JWT-Specific Implementation Recommendations
+
+. *JWT Validation Status Page*:
++
+--
+* Implement visual status indicators for JWT validation state
+* Show configuration-based validation constraints
+* Display real-time validation statistics
+* Highlight common misconfiguration issues
+--
+
+. *JWKS Endpoint Monitoring*:
++
+--
+* Display JWKS endpoint connectivity status
+* Show key refresh statistics and timing
+* Implement manual refresh capability for testing
+* Visualize key structure and metadata
+--
+
+. *Token Debugging Tools*:
++
+--
+* Create token structure visualizer with color-coded claims
+* Implement validation result explainer with detailed error information
+* Provide JWT generation tools for testing with configurable claims
+* Allow saving and loading test tokens
+--
+
+=== Advanced Features
+
+. *Integration with Other DevUI Extensions*:
++
+--
+* Connect with Security DevUI for comprehensive security testing
+* Integrate with HTTP Client DevUI for testing secured endpoints
+* Link to Config DevUI for configuration validation
+* Add connections to Micrometer DevUI for validation metrics
+--
+
+. *Performance Monitoring*:
++
+--
+* Add performance metrics for JWT validation operations
+* Monitor key refresh latency and success rates
+* Track validation cache hit rates and efficiency
+* Display validation throughput statistics
+--
+
+. *Token Testing Scenarios*:
++
+--
+* Provide pre-configured token templates for common scenarios
+* Include tests for expired tokens, invalid signatures, and missing claims
+* Allow simulation of different issuers and key rotation scenarios
+* Support testing of multi-tenant configurations
+--
+
+. *Troubleshooting Tools*:
++
+--
+* Create validation decision tree visualization
+* Provide step-by-step token validation walkthrough
+* Implement configuration comparison with working templates
+* Add diagnostics for common JWT validation issues
+--
+
+=== Technical Implementation Guidance
+
+. *Adding Custom Card Pages*:
++
+--
+[source,java]
+----
+@BuildStep(onlyIf = IsDevelopment.class)
+public CardPageBuildItem buildJwtDevUICard(NonApplicationRootPathBuildItem nonApplicationRootPathBuildItem) {
+    CardPageBuildItem cardPageBuildItem = new CardPageBuildItem();
+    
+    // Add validation status page
+    cardPageBuildItem.addPage(Page.webComponentPageBuilder()
+        .icon("font-awesome-solid:check-circle")
+        .title("JWT Validation Status")
+        .componentLink("qwc-jwt-validation-status.js")
+        .staticLabel("View Status"));
+    
+    // Add JWKS monitoring page
+    cardPageBuildItem.addPage(Page.webComponentPageBuilder()
+        .icon("font-awesome-solid:key")
+        .title("JWKS Endpoint Status")
+        .componentLink("qwc-jwks-status.js")
+        .dynamicLabelJsonRPCMethodName("getJwksStatus"));
+    
+    // Add token debugging tools
+    cardPageBuildItem.addPage(Page.webComponentPageBuilder()
+        .icon("font-awesome-solid:bug")
+        .title("Token Debugging")
+        .componentLink("qwc-jwt-debugger.js"));
+    
+    return cardPageBuildItem;
+}
+----
+--
+
+. *Runtime Data Collection*:
++
+--
+* Use JSON-RPC methods to retrieve runtime data for DevUI components
+* Implement streaming updates for real-time metrics when appropriate
+* Cache expensive operations to avoid performance impact
+--
+
+. *Component Structure*:
++
+--
+* Create reusable web components using standard Web Component patterns
+* Structure components logically with clear separation of concerns
+* Implement responsive design for better usability
+--
+
+=== DevUI Extension Setup
+
+. *Dependencies*:
++
+--
+[source,xml]
+----
+<!-- In deployment module -->
+<dependency>
+    <groupId>io.quarkus</groupId>
+    <artifactId>quarkus-vertx-http-deployment</artifactId>
+</dependency>
+<dependency>
+    <groupId>io.quarkus</groupId>
+    <artifactId>quarkus-devui-deployment</artifactId>
+</dependency>
+
+<!-- In runtime module -->
+<dependency>
+    <groupId>io.quarkus</groupId>
+    <artifactId>quarkus-devui</artifactId>
+    <scope>runtime</scope>
+    <optional>true</optional>
+</dependency>
+----
+--
+
+. *Configuration Properties*:
++
+--
+[source,properties]
+----
+# Enable DevUI (enabled by default in dev mode)
+quarkus.dev-ui.enable=true
+
+# Customize the dev UI path if needed
+quarkus.dev-ui.path=/q/dev-ui
+
+# Enable CORS for DevUI if needed for testing
+quarkus.http.cors=true
+quarkus.http.cors.origins=http://localhost:8080
+----
+--
+
+. *Web Component Structure*:
++
+--
+[source,javascript]
+----
+// Example web component for JWT validation status
+export default class QwcJwtValidationStatus extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'open' });
+    
+    // Initialize component
+    this.shadowRoot.innerHTML = `
+      <style>
+        /* Component styles */
+        .status-card {
+          padding: 1rem;
+          border-radius: 4px;
+          background-color: var(--dev-ui-card-background-color);
+          margin-bottom: 1rem;
+        }
+        .status-indicator {
+          display: inline-block;
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          margin-right: 0.5rem;
+        }
+        .status-ok {
+          background-color: #4caf50;
+        }
+        .status-warning {
+          background-color: #ff9800;
+        }
+        .status-error {
+          background-color: #f44336;
+        }
+      </style>
+      
+      <div class="status-card">
+        <h3>JWT Validation Status</h3>
+        <div id="status-container">Loading...</div>
+      </div>
+    `;
+    
+    // Load data from backend
+    this.loadData();
+  }
+  
+  async loadData() {
+    try {
+      const data = await (await fetch('/q/dev-ui/cui-jwt/validation-status')).json();
+      this.renderStatus(data);
+    } catch (error) {
+      console.error('Error loading JWT validation status:', error);
+      this.showError();
+    }
+  }
+  
+  renderStatus(data) {
+    // Implementation details for rendering the status
+  }
+  
+  showError() {
+    // Error handling logic
+  }
+}
+
+customElements.define('qwc-jwt-validation-status', QwcJwtValidationStatus);
+----
+--
 
 == Task Completion Checklist
 
@@ -54,6 +376,8 @@ include::task-completion-process.adoc[leveloffset=+1]
 * [ ] Check code against Quarkus and CUI standards
 * [ ] Ensure proper error handling and edge cases are covered
 * [ ] Verify compatibility with both JVM and native mode
+* [ ] Test with latest Quarkus version (3.23+)
+* [ ] Validate responsive design works on different screen sizes
 --
 
 *2. Write Tests:*
@@ -63,6 +387,8 @@ include::task-completion-process.adoc[leveloffset=+1]
 * [ ] Create integration tests for real-world scenarios
 * [ ] Test with different configuration options
 * [ ] Verify error cases and edge conditions
+* [ ] Test with various JWT structures and JWKS endpoints
+* [ ] Validate JSON-RPC endpoints with mock requests
 --
 
 *3. Verify Documentation:*
@@ -73,6 +399,8 @@ include::task-completion-process.adoc[leveloffset=+1]
 * [ ] Check for outdated file paths or references
 * [ ] Ensure consistent naming across all documentation
 * [ ] Add examples for common use cases
+* [ ] Include screenshots of DevUI components
+* [ ] Document all available developer tools and their usage
 --
 
 *4. Update Status:*
