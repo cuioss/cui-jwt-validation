@@ -15,11 +15,12 @@
  */
 package de.cuioss.jwt.quarkus.producer;
 
+import de.cuioss.jwt.quarkus.config.JwtTestProfile;
 import de.cuioss.jwt.quarkus.config.JwtValidationConfig;
-import de.cuioss.jwt.quarkus.config.TestConfig;
 import de.cuioss.jwt.validation.TokenValidator;
 import de.cuioss.jwt.validation.exception.TokenValidationException;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
+import io.quarkus.test.junit.TestProfile;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,14 +32,14 @@ import static org.junit.jupiter.api.Assertions.*;
  * This test validates that the producer correctly creates a TokenValidator that can validate tokens.
  */
 @QuarkusIntegrationTest
+@TestProfile(JwtTestProfile.class)
 class NativeTokenValidatorProducerIT {
 
     @Inject
     TokenValidatorProducer producer;
 
     @Inject
-    @TestConfig
-    JwtValidationConfig testConfig;
+    JwtValidationConfig config;
 
     @Inject
     TokenValidator tokenValidator;
@@ -51,7 +52,7 @@ class NativeTokenValidatorProducerIT {
     void shouldInjectProducer() {
         // Assert
         assertNotNull(producer, "Producer should be injected");
-        assertNotNull(testConfig, "Test config should be injected");
+        assertNotNull(config, "Config should be injected");
         assertNotNull(tokenValidator, "TokenValidator should be injected");
     }
 

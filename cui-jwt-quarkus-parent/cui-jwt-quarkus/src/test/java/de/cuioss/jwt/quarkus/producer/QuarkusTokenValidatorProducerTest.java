@@ -15,11 +15,12 @@
  */
 package de.cuioss.jwt.quarkus.producer;
 
+import de.cuioss.jwt.quarkus.config.JwtTestProfile;
 import de.cuioss.jwt.quarkus.config.JwtValidationConfig;
-import de.cuioss.jwt.quarkus.config.TestConfig;
 import de.cuioss.jwt.validation.TokenValidator;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  * Basic tests for {@link TokenValidatorProducer} using Quarkus test framework.
  */
 @QuarkusTest
+@TestProfile(JwtTestProfile.class)
 @EnableTestLogger
 class QuarkusTokenValidatorProducerTest {
 
@@ -37,8 +39,7 @@ class QuarkusTokenValidatorProducerTest {
     TokenValidatorProducer producer;
 
     @Inject
-    @TestConfig
-    JwtValidationConfig testConfig;
+    JwtValidationConfig config;
 
     @Inject
     TokenValidator tokenValidator;
@@ -51,7 +52,7 @@ class QuarkusTokenValidatorProducerTest {
     void shouldInjectProducer() {
         // Assert
         assertNotNull(producer, "Producer should be injected");
-        assertNotNull(testConfig, "Test config should be injected");
+        assertNotNull(config, "Config should be injected");
         assertNotNull(tokenValidator, "TokenValidator should be injected");
     }
 }

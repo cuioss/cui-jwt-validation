@@ -15,7 +15,6 @@
  */
 package de.cuioss.jwt.quarkus.producer;
 
-import de.cuioss.jwt.quarkus.config.DefaultConfig;
 import de.cuioss.jwt.quarkus.config.JwtValidationConfig;
 import de.cuioss.jwt.validation.IssuerConfig;
 import de.cuioss.jwt.validation.ParserConfig;
@@ -59,7 +58,7 @@ public class TokenValidatorProducer {
      * @param jwtValidationConfig the JWT validation configuration
      */
     @Inject
-    public TokenValidatorProducer(@DefaultConfig JwtValidationConfig jwtValidationConfig) {
+    public TokenValidatorProducer(JwtValidationConfig jwtValidationConfig) {
         this.jwtValidationConfig = jwtValidationConfig;
     }
 

@@ -17,6 +17,7 @@ package de.cuioss.jwt.quarkus.config;
 
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,10 +34,10 @@ import static org.junit.jupiter.api.Assertions.*;
 @EnableTestLogger
 @DisplayName("Tests JwtValidationConfig")
 @QuarkusTest
+@TestProfile(JwtTestProfile.class)
 class JwtValidationConfigTest {
 
     @Inject
-    @TestConfig
     JwtValidationConfig jwtConfig;
 
     @Test
