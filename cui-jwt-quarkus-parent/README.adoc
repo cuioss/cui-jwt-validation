@@ -77,7 +77,7 @@ Each metric includes relevant tags for filtering:
 * `result` - The validation result (failure)
 * `category` - The category of event (structure, signature, semantic)
 
-For more details, see the link:doc/jwt-metrics-integration.adoc[JWT Metrics Integration Documentation].
+For more details, see the link:doc/metrics-integration.adoc[Metrics Integration Documentation].
 
 Example Prometheus query to check for signature verification failures:
 

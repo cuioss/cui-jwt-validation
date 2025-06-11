@@ -1,84 +1,60 @@
 # JWT Validation Metrics
 
-This document describes the metrics exposed by the cui-jwt-quarkus module for monitoring JWT token validation.
-
-## Metrics Overview
-
-All metrics are exposed through Micrometer and follow Micrometer naming conventions. The metrics are automatically collected when JWT tokens are validated using the `TokenValidator` and when security events are triggered.
-
-## Metric Naming
-
-All metrics are prefixed with `cui.jwt` to clearly identify them as part of the cui-jwt library.
+The cui-jwt-quarkus extension provides automatic metrics collection for JWT validation operations through Micrometer integration.
 
 ## Available Metrics
 
-### Token Validation Metrics
+| Metric Name | Type | Description | Tags |
+|-------------|------|-------------|------|
+| `cui.jwt.validation.errors` | Counter | Number of JWT validation errors by type | event_type, result, category |
 
-| Metric Name | Type | Description | Tags | Unit |
-|-------------|------|-------------|------|------|
-| `cui.jwt.validation.attempts` | Counter | Number of token validation attempts | issuer, token_type, result | attempts |
-| `cui.jwt.validation.errors` | Counter | Number of validation errors by type | issuer, event_type, category, result | errors |
-| `cui.jwt.validation.duration` | Timer | Duration of token validation operations | issuer, token_type | milliseconds |
-| `cui.jwt.jwks.cache.size` | Gauge | Size of JWKS cache | issuer | entries |
+## Metric Tags
 
-### Metric Tags
+- **event_type**: The specific type of validation error (e.g., TOKEN_EXPIRED, SIGNATURE_VALIDATION_FAILED)
+- **result**: Always "failure" for error metrics
+- **category**: Error category (STRUCTURE, SIGNATURE, SEMANTIC) when available
 
-Each metric includes relevant tags to enable filtering and drilling down:
+## Setup
 
-* `issuer`: The issuer URL (when available)
-* `event_type`: The type of security event (for error metrics)
-* `token_type`: The type of token (access, id, refresh)
-* `result`: The validation result (success, failure)
-* `category`: The category of event (structure, signature, semantic)
-
-## Example Prometheus Queries
-
-### Basic Queries
-
+1. Add the micrometer extension to your project:
+```xml
+<dependency>
+    <groupId>io.quarkus</groupId>
+    <artifactId>quarkus-micrometer</artifactId>
+</dependency>
 ```
-# Total validation attempts
-sum(cui_jwt_validation_attempts_total)
 
-# Success rate for token validation
-sum(cui_jwt_validation_attempts_total{result="success"}) / sum(cui_jwt_validation_attempts_total) * 100
+2. Optionally add a metrics registry:
+```xml
+<dependency>
+    <groupId>io.quarkus</groupId>
+    <artifactId>quarkus-micrometer-registry-prometheus</artifactId>
+</dependency>
+```
 
-# Error rate by issuer
-sum(cui_jwt_validation_errors_total) by (issuer)
+3. Metrics will be available at `/q/metrics`
+
+## Example Queries
+
+```promql
+# Total validation errors
+sum(cui_jwt_validation_errors_total)
 
 # Error rate by category
-sum(cui_jwt_validation_errors_total) by (category)
+rate(cui_jwt_validation_errors_total[5m]) by (category)
 
-# Validation duration (99th percentile)
-histogram_quantile(0.99, sum(rate(cui_jwt_validation_duration_seconds_bucket[5m])) by (le))
+# Signature verification failures
+cui_jwt_validation_errors_total{event_type="SIGNATURE_VALIDATION_FAILED"}
 ```
 
-### Alert Examples
+## Documentation
 
-```
-# Alert on high error rate
-alert: JwtValidationHighErrorRate
-expr: sum(rate(cui_jwt_validation_errors_total[5m])) / sum(rate(cui_jwt_validation_attempts_total[5m])) > 0.1
-for: 5m
-labels:
-  severity: warning
-annotations:
-  summary: "High JWT validation error rate"
-  description: "JWT validation error rate is above 10% for 5 minutes"
+For complete documentation including monitoring examples, alerting configurations, and Grafana dashboard setup, see:
 
-# Alert on signature verification failures (potential attack)
-alert: JwtSignatureVerificationFailures
-expr: rate(cui_jwt_validation_errors_total{event_type="SIGNATURE_VERIFICATION_FAILED"}[5m]) > 0
-for: 5m
-labels:
-  severity: critical
-annotations:
-  summary: "JWT signature verification failures detected"
-  description: "Potential attack: JWT tokens with invalid signatures are being processed"
-```
+- **Main Documentation**: `doc/metrics-integration.adoc`
+- **Grafana Dashboard**: `doc/jwt-metrics-grafana-dashboard.json`
 
-### Dashboard Examples
-
-A typical dashboard for JWT validation monitoring would include:
+The metrics are automatically collected when using the TokenValidator provided by the extension. No additional configuration is required beyond adding the micrometer extension.
 
 1. Overall validation success rate
 2. Error counts by category and type

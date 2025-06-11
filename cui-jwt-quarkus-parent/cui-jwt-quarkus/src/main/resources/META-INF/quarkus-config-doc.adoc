@@ -318,3 +318,67 @@ cui.jwt.issuers.auth0.jwks.maxRetries=3
 cui.jwt.issuers.auth0.parser.audience=your-api-identifier
 cui.jwt.issuers.auth0.parser.leewaySeconds=30
 ----
+
+== Metrics Integration
+
+The extension automatically provides metrics integration when the Quarkus Micrometer extension is present. No additional configuration is required for basic metrics collection.
+
+=== Prerequisites
+
+To enable metrics collection, add the following dependency to your project:
+
+[source,xml]
+----
+<dependency>
+    <groupId>io.quarkus</groupId>
+    <artifactId>quarkus-micrometer</artifactId>
+</dependency>
+----
+
+For Prometheus integration, also add:
+
+[source,xml]
+----
+<dependency>
+    <groupId>io.quarkus</groupId>
+    <artifactId>quarkus-micrometer-registry-prometheus</artifactId>
+</dependency>
+----
+
+=== Available Metrics
+
+The extension exposes the following metrics:
+
+|===
+|Metric Name |Type |Description |Tags
+
+|`cui.jwt.validation.errors` |Counter |Number of JWT validation errors by type |event_type, result, category
+|===
+
+=== Accessing Metrics
+
+Metrics are available at the standard Micrometer endpoint:
+
+* **Default endpoint**: `/q/metrics` (when using `quarkus-micrometer-registry-prometheus`)
+* **Micrometer endpoint**: `/q/micrometer` (general metrics endpoint)
+
+=== Configuration Options
+
+The metrics integration uses Quarkus Micrometer configuration options:
+
+[source,properties]
+----
+# Enable/disable metrics (default: true when micrometer extension is present)
+quarkus.micrometer.enabled=true
+
+# Prometheus registry configuration (when using prometheus registry)
+quarkus.micrometer.export.prometheus.enabled=true
+quarkus.micrometer.export.prometheus.path=/q/metrics
+----
+
+=== Documentation
+
+For detailed metrics documentation including monitoring examples, alerting configurations, and dashboard setup, see:
+
+* `doc/metrics-integration.adoc` - Complete metrics documentation
+* `doc/jwt-metrics-grafana-dashboard.json` - Pre-configured Grafana dashboard
