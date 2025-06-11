@@ -44,6 +44,7 @@ class QwcJwtValidationStatus extends LitElement {
       const response = await devui.jsonRPC.CuiJwtDevUI.getValidationStatus();
       this._validationStatus = response;
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error loading JWT validation status:', error);
       this._error = `Failed to load validation status: ${error.message}`;
     } finally {
@@ -129,7 +130,6 @@ class QwcJwtValidationStatus extends LitElement {
 
 describe('QwcJwtValidationStatus', () => {
   let component;
-  let container;
 
   beforeEach(async () => {
     // Reset all mocks
@@ -330,7 +330,6 @@ describe('QwcJwtValidationStatus', () => {
     });
 
     it('should clear interval on disconnection', () => {
-      const intervalId = component._refreshInterval;
       component.disconnectedCallback();
       expect(component._refreshInterval).toBeUndefined();
     });

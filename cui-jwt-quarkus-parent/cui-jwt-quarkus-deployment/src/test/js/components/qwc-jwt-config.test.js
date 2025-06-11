@@ -33,6 +33,7 @@ class QwcJwtConfig extends LitElement {
       const response = await devui.jsonRPC.CuiJwtDevUI.getConfiguration();
       this._configuration = response;
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error loading configuration:', error);
       this._error = `Failed to load configuration: ${error.message}`;
     } finally {

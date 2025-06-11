@@ -167,6 +167,7 @@ export class QwcJwksEndpoints extends LitElement {
       const response = await devui.jsonrpc.CuiJwtDevUI.getJwksStatus();
       this._jwksStatus = response;
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error loading JWKS status:', error);
       this._error = `Failed to load JWKS status: ${error.message}`;
     } finally {

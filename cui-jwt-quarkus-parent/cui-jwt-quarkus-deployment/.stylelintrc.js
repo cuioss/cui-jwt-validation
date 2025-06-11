@@ -15,9 +15,7 @@ module.exports = {
   
   rules: {
     // Indentation and formatting
-    indentation: 2,
-    'string-quotes': 'single',
-    'color-hex-case': 'lower',
+    // Note: indentation, string-quotes, color-hex-case are deprecated in newer versions
     'color-hex-length': 'short',
     
     // Property ordering

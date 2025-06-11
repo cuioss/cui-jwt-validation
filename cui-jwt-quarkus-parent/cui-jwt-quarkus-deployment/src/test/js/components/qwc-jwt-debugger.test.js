@@ -41,6 +41,7 @@ class QwcJwtDebugger extends LitElement {
       const response = await devui.jsonRPC.CuiJwtDevUI.validateToken(this._token);
       this._validationResult = response;
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error validating token:', error);
       this._error = `Failed to validate token: ${error.message}`;
     } finally {

@@ -136,6 +136,7 @@ export class QwcJwtValidationStatus extends LitElement {
       const response = await devui.jsonrpc.CuiJwtDevUI.getValidationStatus();
       this._validationStatus = response;
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error loading JWT validation status:', error);
       this._error = `Failed to load validation status: ${error.message}`;
     } finally {

@@ -212,6 +212,7 @@ export class QwcJwtConfig extends LitElement {
       this._configuration = config;
       this._healthInfo = health;
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error loading JWT configuration:', error);
       this._error = `Failed to load configuration: ${error.message}`;
     } finally {
@@ -234,6 +235,153 @@ export class QwcJwtConfig extends LitElement {
       return { text: 'empty', className: 'null' };
     }
     return { text: value.toString(), className: '' };
+  }
+
+  _renderGeneralConfiguration(config) {
+    return html`
+      <div class="config-section">
+        <h4 class="section-title">General Settings</h4>
+        <div class="config-grid">
+          <div class="config-item">
+            <div class="config-label">Enabled</div>
+            <div class="config-value ${this._formatValue(config.enabled).className}">
+              ${this._formatValue(config.enabled).text}
+            </div>
+          </div>
+          <div class="config-item">
+            <div class="config-label">Log Level</div>
+            <div class="config-value">${config.logLevel}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  _renderParserConfiguration(config) {
+    return html`
+      <div class="config-section">
+        <h4 class="section-title">Parser Configuration</h4>
+        <div class="config-grid">
+          <div class="config-item">
+            <div class="config-label">Max Token Size</div>
+            <div class="config-value">${config.parser.maxTokenSize} bytes</div>
+          </div>
+          <div class="config-item">
+            <div class="config-label">Clock Skew</div>
+            <div class="config-value">${config.parser.clockSkewSeconds} seconds</div>
+          </div>
+          <div class="config-item">
+            <div class="config-label">Require Expiration Time</div>
+            <div class="config-value ${this._formatValue(config.parser.requireExpirationTime).className}">
+              ${this._formatValue(config.parser.requireExpirationTime).text}
+            </div>
+          </div>
+          <div class="config-item">
+            <div class="config-label">Require Not Before Time</div>
+            <div class="config-value ${this._formatValue(config.parser.requireNotBeforeTime).className}">
+              ${this._formatValue(config.parser.requireNotBeforeTime).text}
+            </div>
+          </div>
+          <div class="config-item">
+            <div class="config-label">Require Issued At Time</div>
+            <div class="config-value ${this._formatValue(config.parser.requireIssuedAtTime).className}">
+              ${this._formatValue(config.parser.requireIssuedAtTime).text}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  _renderHttpConfiguration(config) {
+    return html`
+      <div class="config-section">
+        <h4 class="section-title">HTTP JWKS Loader Configuration</h4>
+        <div class="config-grid">
+          <div class="config-item">
+            <div class="config-label">Connect Timeout</div>
+            <div class="config-value">${config.httpJwksLoader.connectTimeoutSeconds} seconds</div>
+          </div>
+          <div class="config-item">
+            <div class="config-label">Read Timeout</div>
+            <div class="config-value">${config.httpJwksLoader.readTimeoutSeconds} seconds</div>
+          </div>
+          <div class="config-item">
+            <div class="config-label">Size Limit</div>
+            <div class="config-value">${config.httpJwksLoader.sizeLimit} bytes</div>
+          </div>
+          <div class="config-item">
+            <div class="config-label">Cache TTL</div>
+            <div class="config-value">${config.httpJwksLoader.cacheTtlSeconds} seconds</div>
+          </div>
+          <div class="config-item">
+            <div class="config-label">Cache Size</div>
+            <div class="config-value">${config.httpJwksLoader.cacheSize}</div>
+          </div>
+          <div class="config-item">
+            <div class="config-label">Background Refresh</div>
+            <div class="config-value ${this._formatValue(config.httpJwksLoader.backgroundRefreshEnabled).className}">
+              ${this._formatValue(config.httpJwksLoader.backgroundRefreshEnabled).text}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  _renderIssuersConfiguration(config) {
+    return html`
+      <div class="config-section">
+        <h4 class="section-title">Configured Issuers</h4>
+        ${config.issuers && Object.keys(config.issuers).length > 0
+          ? html`
+              <div class="issuers-section">
+                ${Object.entries(config.issuers).map(
+                  ([name, issuerConfig]) => html`
+                    <div class="issuer-card">
+                      <div class="issuer-name">${name}</div>
+                      <div class="config-grid">
+                        <div class="config-item">
+                          <div class="config-label">Issuer URI</div>
+                          <div class="config-value ${this._formatValue(issuerConfig.issuerUri).className}">
+                            ${this._formatValue(issuerConfig.issuerUri).text}
+                          </div>
+                        </div>
+                        <div class="config-item">
+                          <div class="config-label">JWKS URI</div>
+                          <div class="config-value ${this._formatValue(issuerConfig.jwksUri).className}">
+                            ${this._formatValue(issuerConfig.jwksUri).text}
+                          </div>
+                        </div>
+                        <div class="config-item">
+                          <div class="config-label">Audience</div>
+                          <div class="config-value ${this._formatValue(issuerConfig.audience).className}">
+                            ${this._formatValue(issuerConfig.audience).text}
+                          </div>
+                        </div>
+                        <div class="config-item">
+                          <div class="config-label">Public Key Location</div>
+                          <div class="config-value ${this._formatValue(issuerConfig.publicKeyLocation).className}">
+                            ${this._formatValue(issuerConfig.publicKeyLocation).text}
+                          </div>
+                        </div>
+                        <div class="config-item">
+                          <div class="config-label">Algorithm Preference</div>
+                          <div class="config-value">
+                            ${issuerConfig.algorithmPreference
+                              ? issuerConfig.algorithmPreference.join(', ')
+                              : 'default'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  `
+                )}
+              </div>
+            `
+          : html` <div class="no-issuers">No issuers configured. JWT validation will not be available.</div> `}
+      </div>
+    `;
   }
 
   render() {
@@ -277,143 +425,8 @@ export class QwcJwtConfig extends LitElement {
         </div>
 
         <div class="config-sections">
-          <!-- General Configuration -->
-          <div class="config-section">
-            <h4 class="section-title">General Settings</h4>
-            <div class="config-grid">
-              <div class="config-item">
-                <div class="config-label">Enabled</div>
-                <div class="config-value ${this._formatValue(config.enabled).className}">
-                  ${this._formatValue(config.enabled).text}
-                </div>
-              </div>
-              <div class="config-item">
-                <div class="config-label">Log Level</div>
-                <div class="config-value">${config.logLevel}</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Parser Configuration -->
-          <div class="config-section">
-            <h4 class="section-title">Parser Configuration</h4>
-            <div class="config-grid">
-              <div class="config-item">
-                <div class="config-label">Max Token Size</div>
-                <div class="config-value">${config.parser.maxTokenSize} bytes</div>
-              </div>
-              <div class="config-item">
-                <div class="config-label">Clock Skew</div>
-                <div class="config-value">${config.parser.clockSkewSeconds} seconds</div>
-              </div>
-              <div class="config-item">
-                <div class="config-label">Require Expiration Time</div>
-                <div class="config-value ${this._formatValue(config.parser.requireExpirationTime).className}">
-                  ${this._formatValue(config.parser.requireExpirationTime).text}
-                </div>
-              </div>
-              <div class="config-item">
-                <div class="config-label">Require Not Before Time</div>
-                <div class="config-value ${this._formatValue(config.parser.requireNotBeforeTime).className}">
-                  ${this._formatValue(config.parser.requireNotBeforeTime).text}
-                </div>
-              </div>
-              <div class="config-item">
-                <div class="config-label">Require Issued At Time</div>
-                <div class="config-value ${this._formatValue(config.parser.requireIssuedAtTime).className}">
-                  ${this._formatValue(config.parser.requireIssuedAtTime).text}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- HTTP JWKS Loader Configuration -->
-          <div class="config-section">
-            <h4 class="section-title">HTTP JWKS Loader Configuration</h4>
-            <div class="config-grid">
-              <div class="config-item">
-                <div class="config-label">Connect Timeout</div>
-                <div class="config-value">${config.httpJwksLoader.connectTimeoutSeconds} seconds</div>
-              </div>
-              <div class="config-item">
-                <div class="config-label">Read Timeout</div>
-                <div class="config-value">${config.httpJwksLoader.readTimeoutSeconds} seconds</div>
-              </div>
-              <div class="config-item">
-                <div class="config-label">Size Limit</div>
-                <div class="config-value">${config.httpJwksLoader.sizeLimit} bytes</div>
-              </div>
-              <div class="config-item">
-                <div class="config-label">Cache TTL</div>
-                <div class="config-value">${config.httpJwksLoader.cacheTtlSeconds} seconds</div>
-              </div>
-              <div class="config-item">
-                <div class="config-label">Cache Size</div>
-                <div class="config-value">${config.httpJwksLoader.cacheSize}</div>
-              </div>
-              <div class="config-item">
-                <div class="config-label">Background Refresh</div>
-                <div
-                  class="config-value ${this._formatValue(config.httpJwksLoader.backgroundRefreshEnabled).className}"
-                >
-                  ${this._formatValue(config.httpJwksLoader.backgroundRefreshEnabled).text}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Issuers Configuration -->
-          <div class="config-section">
-            <h4 class="section-title">Configured Issuers</h4>
-            ${config.issuers && Object.keys(config.issuers).length > 0
-              ? html`
-                  <div class="issuers-section">
-                    ${Object.entries(config.issuers).map(
-                      ([name, issuerConfig]) => html`
-                        <div class="issuer-card">
-                          <div class="issuer-name">${name}</div>
-                          <div class="config-grid">
-                            <div class="config-item">
-                              <div class="config-label">Issuer URI</div>
-                              <div class="config-value ${this._formatValue(issuerConfig.issuerUri).className}">
-                                ${this._formatValue(issuerConfig.issuerUri).text}
-                              </div>
-                            </div>
-                            <div class="config-item">
-                              <div class="config-label">JWKS URI</div>
-                              <div class="config-value ${this._formatValue(issuerConfig.jwksUri).className}">
-                                ${this._formatValue(issuerConfig.jwksUri).text}
-                              </div>
-                            </div>
-                            <div class="config-item">
-                              <div class="config-label">Audience</div>
-                              <div class="config-value ${this._formatValue(issuerConfig.audience).className}">
-                                ${this._formatValue(issuerConfig.audience).text}
-                              </div>
-                            </div>
-                            <div class="config-item">
-                              <div class="config-label">Public Key Location</div>
-                              <div class="config-value ${this._formatValue(issuerConfig.publicKeyLocation).className}">
-                                ${this._formatValue(issuerConfig.publicKeyLocation).text}
-                              </div>
-                            </div>
-                            <div class="config-item">
-                              <div class="config-label">Algorithm Preference</div>
-                              <div class="config-value">
-                                ${issuerConfig.algorithmPreference
-                                  ? issuerConfig.algorithmPreference.join(', ')
-                                  : 'default'}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      `
-                    )}
-                  </div>
-                `
-              : html` <div class="no-issuers">No issuers configured. JWT validation will not be available.</div> `}
-          </div>
-
+          ${this._renderGeneralConfiguration(config)} ${this._renderParserConfiguration(config)}
+          ${this._renderHttpConfiguration(config)} ${this._renderIssuersConfiguration(config)}
           ${health && health.issues && health.issues.length > 0
             ? html`
                 <div class="config-section">
