@@ -17,6 +17,7 @@
 
     <properties>
         <maven.jar.plugin.automatic.module.name>de.cuioss.jwt.quarkus</maven.jar.plugin.automatic.module.name>
+        <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
     <dependencies>
@@ -114,9 +115,40 @@
                     <useFile>false</useFile>
                     <trimStackTrace>false</trimStackTrace>
                     <enableAssertions>true</enableAssertions>
-                    <!-- Suppress JVM warnings -->
-                    <argLine>-XX:+IgnoreUnrecognizedVMOptions -Djava.awt.headless=true</argLine>
+                    <!-- Suppress JVM warnings and enable JaCoCo agent -->
+                    <argLine>-XX:+IgnoreUnrecognizedVMOptions -Djava.awt.headless=true @{jacoco.agent.argLine}</argLine>
                 </configuration>
+            </plugin>
+            <!-- Add JaCoCo for code coverage with Sonar -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>default-prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                        <configuration>
+                            <!-- Configure JaCoCo to work with Quarkus tests -->
+                            <includes>
+                                <include>de/cuioss/jwt/quarkus/**</include>
+                            </includes>
+                            <!-- Ensure JaCoCo agent is properly attached to Quarkus tests -->
+                            <append>true</append>
+                            <!-- Set property name to avoid conflicts with surefire -->
+                            <propertyName>jacoco.agent.argLine</propertyName>
+                            <!-- Ensure destination file is set -->
+                            <destFile>${project.build.directory}/jacoco.exec</destFile>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>default-report</id>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
