@@ -36,14 +36,30 @@ export class LitElement {
     this.shadowRoot = {
       innerHTML: '',
       querySelector: jest.fn((selector) => {
-        // Simple mock element
+        // Mock element with all necessary DOM methods
         return {
           tagName: 'DIV',
           textContent: '',
-          classList: { contains: jest.fn() },
-          click: jest.fn(),
+          value: '',
           disabled: false,
+          classList: {
+            contains: jest.fn(),
+            add: jest.fn(),
+            remove: jest.fn(),
+            toggle: jest.fn(),
+          },
+          click: jest.fn(),
+          focus: jest.fn(),
+          blur: jest.fn(),
+          dispatchEvent: jest.fn(),
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+          setAttribute: jest.fn(),
+          getAttribute: jest.fn(),
+          removeAttribute: jest.fn(),
           querySelectorAll: jest.fn(() => []),
+          querySelector: jest.fn(),
+          style: {},
         };
       }),
       querySelectorAll: jest.fn(() => []),

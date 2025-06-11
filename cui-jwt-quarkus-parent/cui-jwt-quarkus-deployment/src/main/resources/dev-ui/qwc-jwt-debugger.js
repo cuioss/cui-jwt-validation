@@ -4,8 +4,8 @@ import { devui } from 'devui';
 export class QwcJwtDebugger extends LitElement {
   static styles = css`
     .debugger-container {
-      padding: 1rem;
       max-width: 1200px;
+      padding: 1rem;
     }
 
     .debugger-title {
@@ -23,29 +23,29 @@ export class QwcJwtDebugger extends LitElement {
     }
 
     .input-label {
+      color: var(--lumo-primary-text-color);
       display: block;
       font-weight: 500;
       margin-bottom: 0.5rem;
-      color: var(--lumo-primary-text-color);
     }
 
     .token-input {
-      width: 100%;
-      min-height: 120px;
-      padding: 0.75rem;
+      background-color: var(--lumo-base-color);
       border: 1px solid var(--lumo-contrast-20pct);
       border-radius: 6px;
-      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-      font-size: 0.875rem;
-      resize: vertical;
-      background-color: var(--lumo-base-color);
       color: var(--lumo-primary-text-color);
+      font-family: Monaco, Menlo, 'Ubuntu Mono', monospace;
+      font-size: 0.875rem;
+      min-height: 120px;
+      padding: 0.75rem;
+      resize: vertical;
+      width: 100%;
     }
 
     .token-input:focus {
-      outline: none;
       border-color: var(--lumo-primary-color);
       box-shadow: 0 0 0 2px var(--lumo-primary-color-10pct);
+      outline: none;
     }
 
     .button-group {
@@ -55,12 +55,12 @@ export class QwcJwtDebugger extends LitElement {
     }
 
     .action-button {
-      padding: 0.75rem 1.5rem;
       border: none;
       border-radius: 6px;
-      font-size: 0.875rem;
       cursor: pointer;
+      font-size: 0.875rem;
       font-weight: 500;
+      padding: 0.75rem 1.5rem;
     }
 
     .validate-button {
@@ -80,8 +80,8 @@ export class QwcJwtDebugger extends LitElement {
 
     .clear-button {
       background-color: var(--lumo-contrast-10pct);
-      color: var(--lumo-primary-text-color);
       border: 1px solid var(--lumo-contrast-20pct);
+      color: var(--lumo-primary-text-color);
     }
 
     .clear-button:hover {
@@ -102,10 +102,10 @@ export class QwcJwtDebugger extends LitElement {
     }
 
     .result-card {
-      padding: 1rem;
-      border-radius: 8px;
       border: 1px solid var(--lumo-contrast-10pct);
+      border-radius: 8px;
       margin-bottom: 1rem;
+      padding: 1rem;
     }
 
     .result-success {
@@ -119,16 +119,16 @@ export class QwcJwtDebugger extends LitElement {
     }
 
     .result-header {
-      display: flex;
       align-items: center;
+      display: flex;
       margin-bottom: 1rem;
     }
 
     .result-icon {
-      width: 20px;
+      border-radius: 50%;
       height: 20px;
       margin-right: 0.5rem;
-      border-radius: 50%;
+      width: 20px;
     }
 
     .icon-success {
@@ -140,8 +140,8 @@ export class QwcJwtDebugger extends LitElement {
     }
 
     .result-title {
-      font-weight: 600;
       font-size: 1.1rem;
+      font-weight: 600;
       margin: 0;
     }
 
@@ -164,18 +164,18 @@ export class QwcJwtDebugger extends LitElement {
 
     .claims-container {
       background-color: var(--lumo-contrast-5pct);
+      border: 1px solid var(--lumo-contrast-10pct);
       border-radius: 6px;
       padding: 1rem;
-      border: 1px solid var(--lumo-contrast-10pct);
     }
 
     .claims-json {
-      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      color: var(--lumo-primary-text-color);
+      font-family: Monaco, Menlo, 'Ubuntu Mono', monospace;
       font-size: 0.875rem;
+      margin: 0;
       white-space: pre-wrap;
       word-break: break-all;
-      margin: 0;
-      color: var(--lumo-primary-text-color);
     }
 
     .error-message {
@@ -185,49 +185,50 @@ export class QwcJwtDebugger extends LitElement {
 
     .token-info {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       margin-bottom: 1rem;
     }
 
     .info-item {
-      padding: 0.75rem;
       background-color: var(--lumo-contrast-5pct);
-      border-radius: 6px;
       border: 1px solid var(--lumo-contrast-10pct);
+      border-radius: 6px;
+      padding: 0.75rem;
     }
 
     .info-label {
-      font-size: 0.875rem;
       color: var(--lumo-secondary-text-color);
+      font-size: 0.875rem;
       margin-bottom: 0.25rem;
     }
 
     .info-value {
-      font-weight: 600;
       color: var(--lumo-primary-text-color);
+      font-weight: 600;
     }
 
     .loading {
-      display: flex;
       align-items: center;
-      gap: 0.5rem;
       color: var(--lumo-secondary-text-color);
+      display: flex;
+      gap: 0.5rem;
     }
 
     .spinner {
-      width: 16px;
-      height: 16px;
-      border: 2px solid var(--lumo-contrast-20pct);
-      border-top: 2px solid var(--lumo-primary-color);
-      border-radius: 50%;
       animation: spin 1s linear infinite;
+      border: 2px solid var(--lumo-contrast-20pct);
+      border-radius: 50%;
+      border-top: 2px solid var(--lumo-primary-color);
+      height: 16px;
+      width: 16px;
     }
 
     @keyframes spin {
       0% {
         transform: rotate(0deg);
       }
+
       100% {
         transform: rotate(360deg);
       }

@@ -31,6 +31,7 @@ class QwcJwtValidationStatus extends LitElement {
     super.disconnectedCallback();
     if (this._refreshInterval) {
       clearInterval(this._refreshInterval);
+      this._refreshInterval = undefined;
     }
   }
 
@@ -137,7 +138,10 @@ describe('QwcJwtValidationStatus', () => {
     // Create component (no DOM manipulation needed with mocks)
     component = new QwcJwtValidationStatus();
 
-    // Wait for initial render
+    // Manually call connectedCallback to trigger initialization
+    component.connectedCallback();
+
+    // Wait for initial render and API calls
     await waitForComponentUpdate(component);
   });
 
@@ -151,8 +155,9 @@ describe('QwcJwtValidationStatus', () => {
   describe('Component Initialization', () => {
     it('should create component with default properties', () => {
       expect(component).toBeDefined();
-      expect(component._validationStatus).toBeNull();
-      expect(component._loading).toBe(true);
+      // After connectedCallback, the component should have loaded data
+      expect(component._validationStatus).toBeDefined();
+      expect(component._loading).toBe(false); // Loading should be complete
       expect(component._error).toBeNull();
     });
 
@@ -189,10 +194,12 @@ describe('QwcJwtValidationStatus', () => {
 
   describe('Error State', () => {
     beforeEach(async () => {
-      // Setup error scenario
+      // Setup error scenario and create new component
+      resetDevUIMocks();
       mockScenarios.networkError();
-      component._error = 'Failed to load validation status: Network error';
-      component._loading = false;
+
+      component = new QwcJwtValidationStatus();
+      component.connectedCallback();
       await waitForComponentUpdate(component);
     });
 

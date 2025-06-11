@@ -4,14 +4,14 @@ import { devui } from 'devui';
 export class QwcJwtConfig extends LitElement {
   static styles = css`
     .config-container {
-      padding: 1rem;
       max-width: 1200px;
+      padding: 1rem;
     }
 
     .config-header {
+      align-items: center;
       display: flex;
       justify-content: space-between;
-      align-items: center;
       margin-bottom: 1rem;
     }
 
@@ -22,13 +22,13 @@ export class QwcJwtConfig extends LitElement {
     }
 
     .refresh-button {
-      padding: 0.5rem 1rem;
+      background-color: var(--lumo-primary-color);
       border: none;
       border-radius: 4px;
-      background-color: var(--lumo-primary-color);
       color: var(--lumo-primary-contrast-color);
       cursor: pointer;
       font-size: 0.875rem;
+      padding: 0.5rem 1rem;
     }
 
     .refresh-button:hover {
@@ -41,45 +41,45 @@ export class QwcJwtConfig extends LitElement {
     }
 
     .config-section {
-      padding: 1rem;
-      border-radius: 8px;
       background-color: var(--lumo-base-color);
       border: 1px solid var(--lumo-contrast-10pct);
+      border-radius: 8px;
+      padding: 1rem;
     }
 
     .section-title {
-      font-weight: 600;
-      font-size: 1.1rem;
-      margin-bottom: 1rem;
-      color: var(--lumo-primary-text-color);
       border-bottom: 1px solid var(--lumo-contrast-10pct);
+      color: var(--lumo-primary-text-color);
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
       padding-bottom: 0.5rem;
     }
 
     .config-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     }
 
     .config-item {
-      padding: 0.75rem;
       background-color: var(--lumo-contrast-5pct);
-      border-radius: 6px;
       border: 1px solid var(--lumo-contrast-10pct);
+      border-radius: 6px;
+      padding: 0.75rem;
     }
 
     .config-label {
-      font-size: 0.875rem;
       color: var(--lumo-secondary-text-color);
-      margin-bottom: 0.25rem;
+      font-size: 0.875rem;
       font-weight: 500;
+      margin-bottom: 0.25rem;
     }
 
     .config-value {
-      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-      font-size: 0.875rem;
       color: var(--lumo-primary-text-color);
+      font-family: Monaco, Menlo, 'Ubuntu Mono', monospace;
+      font-size: 0.875rem;
       word-break: break-all;
     }
 
@@ -105,69 +105,69 @@ export class QwcJwtConfig extends LitElement {
     }
 
     .issuer-card {
-      margin-bottom: 1rem;
-      padding: 1rem;
-      border-radius: 6px;
       background-color: var(--lumo-contrast-5pct);
       border: 1px solid var(--lumo-contrast-10pct);
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      padding: 1rem;
     }
 
     .issuer-name {
-      font-weight: 600;
-      font-size: 1rem;
-      margin-bottom: 0.75rem;
       color: var(--lumo-primary-color);
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
     }
 
     .loading {
-      text-align: center;
-      padding: 2rem;
       color: var(--lumo-secondary-text-color);
+      padding: 2rem;
+      text-align: center;
     }
 
     .error {
-      color: var(--lumo-error-text-color);
       background-color: var(--lumo-error-color-10pct);
-      padding: 1rem;
-      border-radius: 6px;
       border: 1px solid var(--lumo-error-color-50pct);
+      border-radius: 6px;
+      color: var(--lumo-error-text-color);
+      padding: 1rem;
     }
 
     .no-issuers {
-      text-align: center;
-      padding: 2rem;
-      color: var(--lumo-secondary-text-color);
       background-color: var(--lumo-contrast-5pct);
-      border-radius: 6px;
       border: 1px solid var(--lumo-contrast-10pct);
+      border-radius: 6px;
+      color: var(--lumo-secondary-text-color);
+      padding: 2rem;
+      text-align: center;
     }
 
     .health-indicator {
-      display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.25rem 0.75rem;
       border-radius: 4px;
+      display: inline-flex;
       font-size: 0.875rem;
       font-weight: 500;
+      gap: 0.5rem;
+      padding: 0.25rem 0.75rem;
     }
 
     .health-healthy {
       background-color: var(--lumo-success-color-10pct);
-      color: var(--lumo-success-text-color);
       border: 1px solid var(--lumo-success-color-50pct);
+      color: var(--lumo-success-text-color);
     }
 
     .health-issues {
       background-color: var(--lumo-error-color-10pct);
-      color: var(--lumo-error-text-color);
       border: 1px solid var(--lumo-error-color-50pct);
+      color: var(--lumo-error-text-color);
     }
 
     .health-dot {
-      width: 8px;
-      height: 8px;
       border-radius: 50%;
+      height: 8px;
+      width: 8px;
     }
 
     .health-dot.healthy {

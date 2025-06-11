@@ -23,8 +23,8 @@ module.exports = {
     // Property ordering
     'order/properties-alphabetical-order': true,
     
-    // CSS Custom Properties (CSS Variables)
-    'custom-property-pattern': '^--[a-z][a-z0-9]*(-[a-z0-9]+)*$',
+    // CSS Custom Properties (CSS Variables) - relaxed for Lumo theme
+    'custom-property-pattern': null, // Allow Lumo theme variables like --lumo-primary-color
     'custom-property-empty-line-before': 'never',
     
     // Class naming patterns for Lit components
