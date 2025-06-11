@@ -49,7 +49,7 @@ public class TokenValidatorHealthCheck implements HealthCheck {
         }
 
         var issuerConfigMap = tokenValidator.getIssuerConfigMap();
-        if (issuerConfigMap == null || issuerConfigMap.isEmpty()) {
+        if (issuerConfigMap.isEmpty()) {
             return createErrorResponse(ERROR_NO_ISSUER_CONFIGS);
         }
 
