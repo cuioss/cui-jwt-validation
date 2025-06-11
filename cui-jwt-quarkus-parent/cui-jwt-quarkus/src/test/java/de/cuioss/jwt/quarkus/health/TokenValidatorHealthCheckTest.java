@@ -52,8 +52,7 @@ class TokenValidatorHealthCheckTest {
     void testHealthCheckBeanIsUpOrDown() {
         HealthCheckResponse response = healthCheck.call();
         assertNotNull(response, "HealthCheckResponse should not be null");
-        assertNotNull(response.getStatus(), "HealthCheckResponse status should not be null");
-        // Should be UP or DOWN, but not null
+        assertNotNull(response.getStatus(), "Health check status should not be null");
         assertTrue(response.getStatus() == HealthCheckResponse.Status.UP ||
                    response.getStatus() == HealthCheckResponse.Status.DOWN,
                    "Health check status should be either UP or DOWN");
