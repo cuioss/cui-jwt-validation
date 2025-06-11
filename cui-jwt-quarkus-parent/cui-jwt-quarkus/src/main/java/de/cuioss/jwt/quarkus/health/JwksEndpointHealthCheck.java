@@ -30,7 +30,6 @@ import org.eclipse.microprofile.health.HealthCheck;
 import org.eclipse.microprofile.health.HealthCheckResponse;
 import org.eclipse.microprofile.health.Readiness;
 
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -65,13 +64,8 @@ public class JwksEndpointHealthCheck implements HealthCheck {
 
     @Override
     public HealthCheckResponse call() {
-        try {
-            // Use cache to prevent excessive network calls
-            return healthCheckCache.get(HEALTHCHECK_NAME, k -> performHealthCheck());
-        } catch (Exception e) {
-            LOGGER.warn(e, "Error checking JWKS endpoints: %s", e.getMessage());
-            return createErrorResponse(e.getMessage());
-        }
+        // Use cache to prevent excessive network calls
+        return healthCheckCache.get(HEALTHCHECK_NAME, k -> performHealthCheck());
     }
 
     /**
@@ -85,7 +79,26 @@ public class JwksEndpointHealthCheck implements HealthCheck {
             return createErrorResponse(ERROR_NO_ISSUER_CONFIGS);
         }
 
-        return checkJwksEndpoints(issuerConfigMap);
+        var responseBuilder = HealthCheckResponse.named(HEALTHCHECK_NAME).up();
+        
+        var results = issuerConfigMap.entrySet().stream()
+            .map(entry -> EndpointResult.fromIssuerConfig(entry.getKey(), entry.getValue()))
+            .toList();
+        
+        // Add all endpoint data to response
+        for (int i = 0; i < results.size(); i++) {
+            results.get(i).addToResponse(responseBuilder, "issuer." + i + ".");
+        }
+        
+        // Set overall health status
+        boolean allUp = results.stream().allMatch(EndpointResult::isHealthy);
+        responseBuilder.withData("checkedEndpoints", results.size());
+        
+        if (!allUp) {
+            responseBuilder.down();
+        }
+        
+        return responseBuilder.build();
     }
 
     /**
@@ -101,19 +114,19 @@ public class JwksEndpointHealthCheck implements HealthCheck {
                 .build();
     }
 
-    /**
-     * Checks all JWKS endpoints in the given issuer configuration map.
-     *
-     * @param issuerConfigMap the issuer configuration map
-     * @return the health check response
-     */
-    private HealthCheckResponse checkJwksEndpoints(Map<String, IssuerConfig> issuerConfigMap) {
-        var responseBuilder = HealthCheckResponse.named(HEALTHCHECK_NAME).up();
+    
+    private record EndpointResult(String issuer, String jwksType, LoaderStatus status) {
         
-        var results = issuerConfigMap.entrySet().stream()
-            .map(entry -> {
-                String issuer = entry.getKey();
-                JwksLoader jwksLoader = entry.getValue().getJwksLoader();
+        /**
+         * Creates an EndpointResult from an issuer configuration.
+         *
+         * @param issuer the issuer name
+         * @param issuerConfig the issuer configuration
+         * @return the endpoint result
+         */
+        static EndpointResult fromIssuerConfig(String issuer, IssuerConfig issuerConfig) {
+            try {
+                JwksLoader jwksLoader = issuerConfig.getJwksLoader();
                 
                 if (jwksLoader == null) {
                     return new EndpointResult(issuer, JwksType.NONE.getValue(), LoaderStatus.ERROR);
@@ -123,32 +136,32 @@ public class JwksEndpointHealthCheck implements HealthCheck {
                 LOGGER.debug("JWKS loader status for issuer %s: %s", issuer, status);
                 
                 return new EndpointResult(issuer, jwksLoader.getJwksType().getValue(), status);
-            })
-            .toList();
+            } catch (Exception e) {
+                LOGGER.warn(e, "Error checking JWKS loader for issuer %s: %s", issuer, e.getMessage());
+                return new EndpointResult(issuer, JwksType.NONE.getValue(), LoaderStatus.ERROR);
+            }
+        }
         
-        // Add all endpoint data to response
-        for (int i = 0; i < results.size(); i++) {
-            var result = results.get(i);
-            String prefix = "issuer." + i + ".";
-            boolean up = result.status == LoaderStatus.OK;
-            
-            responseBuilder.withData(prefix + "url", result.issuer);
-            responseBuilder.withData(prefix + "jwksType", result.jwksType);
+        /**
+         * Adds this endpoint's data to the health check response builder.
+         *
+         * @param responseBuilder the response builder
+         * @param prefix the prefix for the data keys
+         */
+        void addToResponse(org.eclipse.microprofile.health.HealthCheckResponseBuilder responseBuilder, String prefix) {
+            boolean up = status == LoaderStatus.OK;
+            responseBuilder.withData(prefix + "url", issuer);
+            responseBuilder.withData(prefix + "jwksType", jwksType);
             responseBuilder.withData(prefix + "status", up ? STATUS_UP : STATUS_DOWN);
         }
         
-        // Set overall health status
-        boolean allUp = results.stream().allMatch(r -> r.status == LoaderStatus.OK);
-        responseBuilder.withData("checkedEndpoints", results.size());
-        
-        if (results.isEmpty()) {
-            responseBuilder.down().withData(ERROR, ERROR_NO_ISSUER_CONFIGS);
-        } else if (!allUp) {
-            responseBuilder.down();
+        /**
+         * Checks if this endpoint is healthy.
+         *
+         * @return true if the status is OK, false otherwise
+         */
+        boolean isHealthy() {
+            return status == LoaderStatus.OK;
         }
-        
-        return responseBuilder.build();
     }
-    
-    private record EndpointResult(String issuer, String jwksType, LoaderStatus status) {}
 }
