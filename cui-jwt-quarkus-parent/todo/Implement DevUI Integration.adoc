@@ -7,7 +7,7 @@
 include::task-completion-process.adoc[leveloffset=+1]
 
 == Overview
-[ ] *Priority:* Medium
+[x] *Priority:* Medium
 
 *Description:* Integrate with Quarkus Dev UI for improved developer experience:
 

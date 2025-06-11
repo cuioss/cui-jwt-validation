@@ -1,0 +1,102 @@
+{
+  "name": "cui-jwt-quarkus-devui",
+  "version": "1.0.0-SNAPSHOT",
+  "description": "DevUI components for CUI JWT Quarkus extension",
+  "private": true,
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:ci": "jest --ci --coverage --watchAll=false --passWithNoTests",
+    "lint": "npm run lint:js && npm run lint:style",
+    "lint:js": "eslint src/test/js/**/*.js src/main/resources/dev-ui/**/*.js",
+    "lint:js:fix": "eslint --fix src/test/js/**/*.js src/main/resources/dev-ui/**/*.js",
+    "lint:style": "stylelint src/main/resources/dev-ui/**/*.js",
+    "lint:style:fix": "stylelint --fix src/main/resources/dev-ui/**/*.js",
+    "lint:fix": "npm run lint:js:fix && npm run lint:style:fix",
+    "format": "prettier --write \"src/**/*.{js,json,md}\"",
+    "format:check": "prettier --check \"src/**/*.{js,json,md}\"",
+    "quality": "npm run lint && npm run format:check",
+    "quality:fix": "npm run lint:fix && npm run format"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.23.0",
+    "@babel/preset-env": "^7.23.0",
+    "@testing-library/jest-dom": "^6.1.0",
+    "babel-jest": "^29.7.0",
+    "eslint": "^8.50.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-import": "^2.28.0",
+    "eslint-plugin-jest": "^27.4.0",
+    "eslint-plugin-jsdoc": "^46.8.0",
+    "eslint-plugin-lit": "^1.10.1",
+    "eslint-plugin-prettier": "^5.0.0",
+    "eslint-plugin-unicorn": "^48.0.0",
+    "eslint-plugin-wc": "^2.0.4",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "lit": "^3.0.0",
+    "prettier": "^3.0.3",
+    "stylelint": "^15.10.3",
+    "stylelint-config-standard": "^34.0.0",
+    "stylelint-order": "^6.0.3",
+    "postcss-lit": "^1.0.0"
+  },
+  "jest": {
+    "testEnvironment": "jest-environment-jsdom",
+    "testMatch": [
+      "**/src/test/js/**/*.test.js"
+    ],
+    "moduleNameMapper": {
+      "^lit$": "<rootDir>/src/test/js/mocks/lit.js",
+      "^devui$": "<rootDir>/src/test/js/mocks/devui.js",
+      "^lit/directives/unsafe-html.js$": "<rootDir>/src/test/js/mocks/lit-directives.js"
+    },
+    "setupFiles": [
+      "<rootDir>/src/test/js/setup/jest.setup.js"
+    ],
+    "setupFilesAfterEnv": [
+      "<rootDir>/src/test/js/setup/jest.setup-dom.js"
+    ],
+    "collectCoverageFrom": [
+      "src/main/resources/dev-ui/**/*.js",
+      "!src/main/resources/dev-ui/**/*.min.js"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 0,
+        "functions": 0,
+        "lines": 0,
+        "statements": 0
+      }
+    },
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html"
+    ]
+  },
+  "babel": {
+    "presets": [
+      [
+        "@babel/preset-env",
+        {
+          "modules": "auto"
+        }
+      ]
+    ],
+    "env": {
+      "test": {
+        "presets": [
+          [
+            "@babel/preset-env",
+            {
+              "modules": "commonjs"
+            }
+          ]
+        ]
+      }
+    }
+  }
+}

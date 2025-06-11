@@ -19,6 +19,10 @@ import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
+import io.quarkus.deployment.IsDevelopment;
+import io.quarkus.devui.spi.JsonRPCProvidersBuildItem;
+import io.quarkus.devui.spi.page.CardPageBuildItem;
+import io.quarkus.devui.spi.page.Page;
 
 /**
  * Processor for the CUI JWT Quarkus extension.
@@ -102,7 +106,54 @@ public class CuiJwtProcessor {
         return new RuntimeInitializedClassBuildItem("de.cuioss.jwt.validation.jwks.http.HttpJwksLoader");
     }
 
+    /**
+     * Create DevUI card page for JWT validation monitoring and debugging.
+     *
+     * @return A {@link CardPageBuildItem} for the JWT DevUI card
+     */
+    @BuildStep(onlyIf = IsDevelopment.class)
+    CardPageBuildItem createJwtDevUICard() {
+        CardPageBuildItem cardPageBuildItem = new CardPageBuildItem();
+        
+        // JWT Validation Status page
+        cardPageBuildItem.addPage(Page.webComponentPageBuilder()
+            .icon("font-awesome-solid:shield-check")
+            .title("JWT Validation Status")
+            .componentLink("qwc-jwt-validation-status.js")
+            .staticLabel("View Status"));
+        
+        // JWKS Endpoint Monitoring page
+        cardPageBuildItem.addPage(Page.webComponentPageBuilder()
+            .icon("font-awesome-solid:key")
+            .title("JWKS Endpoints")
+            .componentLink("qwc-jwks-endpoints.js")
+            .dynamicLabelJsonRPCMethodName("getJwksStatus"));
+        
+        // Token Debugging Tools page
+        cardPageBuildItem.addPage(Page.webComponentPageBuilder()
+            .icon("font-awesome-solid:bug")
+            .title("Token Debugger")
+            .componentLink("qwc-jwt-debugger.js")
+            .staticLabel("Debug Tokens"));
+        
+        // Configuration Overview page
+        cardPageBuildItem.addPage(Page.webComponentPageBuilder()
+            .icon("font-awesome-solid:cog")
+            .title("Configuration")
+            .componentLink("qwc-jwt-config.js")
+            .staticLabel("View Config"));
+        
+        return cardPageBuildItem;
+    }
 
-
+    /**
+     * Register JSON-RPC providers for DevUI runtime data access.
+     *
+     * @return A {@link JsonRPCProvidersBuildItem} for JWT DevUI JSON-RPC methods
+     */
+    @BuildStep(onlyIf = IsDevelopment.class)
+    JsonRPCProvidersBuildItem createJwtDevUIJsonRPCService() {
+        return new JsonRPCProvidersBuildItem("CuiJwtDevUI", CuiJwtDevUIJsonRPCService.class);
+    }
 
 }
