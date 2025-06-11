@@ -15,8 +15,11 @@
  */
 package de.cuioss.jwt.quarkus.health;
 
-import de.cuioss.jwt.quarkus.producer.TokenValidatorProducer;
+import de.cuioss.jwt.validation.IssuerConfig;
 import de.cuioss.jwt.validation.TokenValidator;
+import de.cuioss.jwt.validation.jwks.JwksLoader;
+import de.cuioss.jwt.validation.jwks.JwksType;
+import de.cuioss.jwt.validation.jwks.LoaderStatus;
 import de.cuioss.tools.logging.CuiLogger;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -34,53 +37,105 @@ import org.eclipse.microprofile.health.Liveness;
 public class TokenValidatorHealthCheck implements HealthCheck {
 
     private static final CuiLogger LOGGER = new CuiLogger(TokenValidatorHealthCheck.class);
+    private static final String HEALTHCHECK_NAME = "jwt-validator";
+    private static final String ERROR_NO_ISSUER_CONFIGS = "No issuer configurations found";
+    private static final String ERROR = "error";
+    private static final String STATUS_UP = "UP";
+    private static final String STATUS_DOWN = "DOWN";
+
+    private final TokenValidator tokenValidator;
 
     @Inject
-    TokenValidatorProducer tokenValidatorProducer;
+    public TokenValidatorHealthCheck(TokenValidator tokenValidator) {
+        this.tokenValidator = tokenValidator;
+    }
 
     @Override
     public HealthCheckResponse call() {
-        try {
-            // Get the TokenValidator from the producer
-            TokenValidator tokenValidator = tokenValidatorProducer.getTokenValidator();
-            if (tokenValidator == null) {
-                return HealthCheckResponse.named("jwt-validator")
-                        .down()
-                        .withData("error", "TokenValidator not initialized")
-                        .build();
-            }
-            // Get issuer configs from the producer (not from TokenValidator)
-            var issuerConfigs = tokenValidatorProducer.getIssuerConfigs();
-            if (issuerConfigs == null || issuerConfigs.isEmpty()) {
-                return HealthCheckResponse.named("jwt-validator")
-                        .down()
-                        .withData("error", "No issuer configurations found")
-                        .build();
-            }
-            var builder = HealthCheckResponse.named("jwt-validator").up();
-            builder.withData("issuers.count", issuerConfigs.size());
-            int i = 0;
-            for (var config : issuerConfigs) {
-                String prefix = "issuer." + i + ".";
-                builder.withData(prefix + "issuer", config.getIssuer());
-                if (config.getHttpJwksLoaderConfig() != null) {
-                    builder.withData(prefix + "jwksType", "http");
-                } else if (config.getJwksFilePath() != null) {
-                    builder.withData(prefix + "jwksType", "file");
-                } else if (config.getJwksContent() != null) {
-                    builder.withData(prefix + "jwksType", "memory");
-                } else {
-                    builder.withData(prefix + "jwksType", "unknown");
+        var issuerConfigMap = tokenValidator.getIssuerConfigMap();
+        if (issuerConfigMap == null || issuerConfigMap.isEmpty()) {
+            return createErrorResponse(ERROR_NO_ISSUER_CONFIGS);
+        }
+
+        var responseBuilder = HealthCheckResponse.named(HEALTHCHECK_NAME).up();
+        
+        var results = issuerConfigMap.entrySet().stream()
+            .map(entry -> ValidatorResult.fromIssuerConfig(entry.getKey(), entry.getValue()))
+            .toList();
+        
+        // Add all validator data to response
+        for (int i = 0; i < results.size(); i++) {
+            results.get(i).addToResponse(responseBuilder, "issuer." + i + ".");
+        }
+        
+        // Set overall health status - for liveness check, be more lenient
+        // Only fail if all loaders are in ERROR state
+        boolean allErrors = results.stream().allMatch(result -> result.status() == LoaderStatus.ERROR);
+        responseBuilder.withData("checkedIssuers", results.size());
+        
+        if (allErrors && !results.isEmpty()) {
+            responseBuilder.down();
+        }
+        
+        return responseBuilder.build();
+    }
+
+    /**
+     * Creates an error response with the given error message.
+     *
+     * @param errorMessage the error message
+     * @return the health check response
+     */
+    private HealthCheckResponse createErrorResponse(String errorMessage) {
+        return HealthCheckResponse.named(HEALTHCHECK_NAME)
+                .down()
+                .withData(ERROR, errorMessage)
+                .build();
+    }
+
+    
+    private record ValidatorResult(String issuer, String jwksType, LoaderStatus status) {
+        
+        /**
+         * Creates a ValidatorResult from an issuer configuration.
+         *
+         * @param issuer the issuer name
+         * @param issuerConfig the issuer configuration
+         * @return the validator result
+         */
+        static ValidatorResult fromIssuerConfig(String issuer, IssuerConfig issuerConfig) {
+            try {
+                JwksLoader jwksLoader = issuerConfig.getJwksLoader();
+                
+                if (jwksLoader == null) {
+                    return new ValidatorResult(issuer, JwksType.NONE.getValue(), LoaderStatus.ERROR);
                 }
-                i++;
+                
+                LoaderStatus status = jwksLoader.getStatus();
+                LOGGER.debug("JWKS loader status for issuer %s: %s", issuer, status);
+                
+                return new ValidatorResult(issuer, jwksLoader.getJwksType().getValue(), status);
+            } catch (Exception e) {
+                LOGGER.warn(e, "Error checking JWKS loader for issuer %s: %s", issuer, e.getMessage());
+                return new ValidatorResult(issuer, JwksType.NONE.getValue(), LoaderStatus.ERROR);
             }
-            return builder.build();
-        } catch (Exception e) {
-            LOGGER.warn(e, "Error checking TokenValidator health: %s", e.getMessage());
-            return HealthCheckResponse.named("jwt-validator")
-                    .down()
-                    .withData("error", e.getMessage())
-                    .build();
+        }
+        
+        /**
+         * Adds this validator's data to the health check response builder.
+         *
+         * @param responseBuilder the response builder
+         * @param prefix the prefix for the data keys
+         */
+        void addToResponse(org.eclipse.microprofile.health.HealthCheckResponseBuilder responseBuilder, String prefix) {
+            String statusStr = switch (status) {
+                case OK -> STATUS_UP;
+                case ERROR -> STATUS_DOWN;
+                case UNDEFINED -> "UNDEFINED";
+            };
+            responseBuilder.withData(prefix + "issuer", issuer);
+            responseBuilder.withData(prefix + "jwksType", jwksType);
+            responseBuilder.withData(prefix + "status", statusStr);
         }
     }
 }
