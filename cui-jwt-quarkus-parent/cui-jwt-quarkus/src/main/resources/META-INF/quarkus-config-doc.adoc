@@ -183,6 +183,24 @@ Each issuer can have a JWKS (JSON Web Key Set) endpoint configuration. There are
 |Whether to use HTTP proxy settings from the system properties.
 |===
 
+== Health Check Configuration
+
+The extension provides MicroProfile Health checks for JWT validation components. These health checks are automatically enabled when the `quarkus-smallrye-health` extension is present.
+
+[cols="2,1,5"]
+|===
+|Property |Type |Description
+
+|cui.jwt.health.jwks.cache-seconds
+|int (default: 30)
+|The cache time-to-live in seconds for JWKS health check results. This prevents excessive network calls to JWKS endpoints during frequent health check evaluations.
+|===
+
+=== Health Check Endpoints
+
+* **JWKS Endpoint Health Check** (`jwks-endpoints`): Available at `/q/health/ready` - Checks connectivity to all configured JWKS endpoints
+* **Token Validator Health Check** (`jwt-validator`): Available at `/q/health/live` - Validates TokenValidator configuration and availability
+
 == Default Values Summary
 
 For quick reference, here are all the default values in one place:
@@ -229,6 +247,9 @@ For quick reference, here are all the default values in one place:
 
 |cui.jwt.issuers.<issuer-name>.jwks.useSystemProxy
 |false
+
+|cui.jwt.health.jwks.cache-seconds
+|30
 |===
 
 == Example Configuration
