@@ -65,6 +65,7 @@ The tasks have the following dependencies:
 * link:Implement Native Image Support.adoc[Task 6. Implement Native Image Support]
 * link:Implement DevUI Integration.adoc[Task 7. Implement DevUI Integration]
 * link:Create Extension Documentation.adoc[Task 8. Create Extension Documentation]
+* link:Create Integration Test Module.adoc[Task 9. Create Integration Test Module]
 
 == Task Completion Process
 
