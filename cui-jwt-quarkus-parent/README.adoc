@@ -128,6 +128,12 @@ The extension supports GraalVM Native Image compilation. More information can be
 
 link:doc/native-image-support.adoc[Native Image Support]
 
+=== Health Checks
+
+The extension provides MicroProfile Health checks for JWT validation components. For detailed information see:
+
+link:doc/health-checks.adoc[Health Checks Documentation]
+
 == Modules
 
 The project consists of the following modules:
