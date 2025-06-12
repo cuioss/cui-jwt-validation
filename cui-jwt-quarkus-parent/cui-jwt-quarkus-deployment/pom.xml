@@ -17,6 +17,17 @@
 
     <properties>
         <maven.jar.plugin.automatic.module.name>de.cuioss.jwt.quarkus.deployment</maven.jar.plugin.automatic.module.name>
+        <!-- Sonar configuration for JavaScript coverage -->
+        <sonar.javascript.lcov.reportPaths>target/coverage/lcov.info</sonar.javascript.lcov.reportPaths>
+        <sonar.coverage.exclusions>**/*.test.js,**/test/**/*,**/mocks/**/*</sonar.coverage.exclusions>
+        <sonar.javascript.file.suffixes>.js</sonar.javascript.file.suffixes>
+        
+        <!-- JavaScript-specific coverage thresholds -->
+        <sonar.javascript.coverage.reportPaths>target/coverage/lcov.info</sonar.javascript.coverage.reportPaths>
+        
+        <!-- Quality gate conditions for JavaScript files only -->
+        <!-- These settings apply only to JS files in src/main/resources/dev-ui/ -->
+        <sonar.qualitygate.wait>false</sonar.qualitygate.wait>
     </properties>
 
     <dependencies>
@@ -127,7 +138,7 @@
                         </goals>
                         <phase>test</phase>
                         <configuration>
-                            <arguments>run test:ci</arguments>
+                            <arguments>run test:ci-strict</arguments>
                         </configuration>
                     </execution>
                     <execution>
@@ -160,4 +171,35 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>sonar</id>
+            <properties>
+                <!-- JavaScript coverage targets - only branch coverage specified -->
+                <!-- Lines/statements/functions coverage uses default SonarQube thresholds -->
+                <sonar.javascript.coverage.overall_condition.branch>55</sonar.javascript.coverage.overall_condition.branch>
+                <sonar.javascript.coverage.new_condition.branch>55</sonar.javascript.coverage.new_condition.branch>
+                
+                <!-- Ensure JavaScript coverage is included in analysis -->
+                <sonar.language>js</sonar.language>
+                <sonar.sources>src/main/resources/dev-ui</sonar.sources>
+                <sonar.tests>src/test/js</sonar.tests>
+                <sonar.test.inclusions>**/*.test.js</sonar.test.inclusions>
+                
+                <!-- Coverage report paths -->
+                <sonar.javascript.lcov.reportPaths>target/coverage/lcov.info</sonar.javascript.lcov.reportPaths>
+                <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonarsource.scanner.maven</groupId>
+                        <artifactId>sonar-maven-plugin</artifactId>
+                        <version>3.10.0.2594</version>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

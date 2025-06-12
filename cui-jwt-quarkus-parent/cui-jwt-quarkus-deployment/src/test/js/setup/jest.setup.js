@@ -37,9 +37,12 @@ global.fetch = jest.fn(() =>
 );
 
 // Mock customElements registry for web components
+const definedElements = new Map();
 global.customElements = {
-  define: jest.fn(),
-  get: jest.fn(),
+  define: jest.fn((name, constructor) => {
+    definedElements.set(name, constructor);
+  }),
+  get: jest.fn((name) => definedElements.get(name)),
   whenDefined: jest.fn(() => Promise.resolve()),
 };
 

@@ -127,10 +127,51 @@ export const devui = {
 
 // Helper function to reset all mocks
 export const resetDevUIMocks = () => {
-  Object.values(devui.jsonRPC.CuiJwtDevUI).forEach((fn) => {
-    if (jest.isMockFunction(fn)) {
-      fn.mockClear();
+  // Reset JWT validation status service to default
+  devui.jsonRPC.CuiJwtDevUI.getValidationStatus.mockClear();
+  devui.jsonRPC.CuiJwtDevUI.getValidationStatus.mockResolvedValue({
+    enabled: false,
+    validatorPresent: false,
+    status: 'BUILD_TIME',
+    statusMessage: 'JWT validation status will be available at runtime',
+  });
+
+  // Reset other services to default
+  devui.jsonRPC.CuiJwtDevUI.getJwksStatus.mockClear();
+  devui.jsonRPC.CuiJwtDevUI.getJwksStatus.mockResolvedValue({
+    status: 'BUILD_TIME',
+    message: 'JWKS endpoint status will be available at runtime',
+  });
+
+  devui.jsonRPC.CuiJwtDevUI.getConfiguration.mockClear();
+  devui.jsonRPC.CuiJwtDevUI.getConfiguration.mockResolvedValue({
+    enabled: false,
+    healthEnabled: false,
+    buildTime: true,
+    message: 'Configuration details will be available at runtime',
+  });
+
+  devui.jsonRPC.CuiJwtDevUI.validateToken.mockClear();
+  devui.jsonRPC.CuiJwtDevUI.validateToken.mockImplementation((token) => {
+    if (!token || token.trim() === '') {
+      return Promise.resolve({
+        valid: false,
+        error: 'Token is empty or null',
+      });
     }
+    return Promise.resolve({
+      valid: false,
+      error: 'Token validation not available at build time',
+    });
+  });
+
+  devui.jsonRPC.CuiJwtDevUI.getHealthInfo.mockClear();
+  devui.jsonRPC.CuiJwtDevUI.getHealthInfo.mockResolvedValue({
+    configurationValid: true,
+    tokenValidatorAvailable: false,
+    securityCounterAvailable: false,
+    overallStatus: 'BUILD_TIME',
+    message: 'Health information will be available at runtime',
   });
 
   Object.values(devui.notifications).forEach((fn) => {
@@ -175,7 +216,8 @@ export const mockScenarios = {
       statusMessage: 'JWT validation is active and configured',
       securityEvents: {
         totalEvents: 150,
-        eventTypes: 3,
+        errorEvents: 10,
+        warningEvents: 25,
       },
     });
 

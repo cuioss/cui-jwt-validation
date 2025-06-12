@@ -7,7 +7,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:ci": "jest --ci --coverage --watchAll=false --passWithNoTests --testPathPattern=simple-component.test.js",
+    "test:ci": "jest --ci --coverage --watchAll=false --passWithNoTests",
+    "test:ci-strict": "jest --ci --coverage --watchAll=false --passWithNoTests --coverageThreshold='{\"global\":{\"branches\":55,\"functions\":80,\"lines\":80,\"statements\":80}}'",
     "lint": "npm run lint:js && npm run lint:style",
     "lint:js": "eslint src/test/js/**/*.js src/main/resources/dev-ui/**/*.js",
     "lint:js:fix": "eslint --fix src/test/js/**/*.js src/main/resources/dev-ui/**/*.js",
@@ -53,6 +54,12 @@
       "^devui$": "<rootDir>/src/test/js/mocks/devui.js",
       "^lit/directives/unsafe-html.js$": "<rootDir>/src/test/js/mocks/lit-directives.js"
     },
+    "transform": {
+      "^.+\\.js$": "babel-jest"
+    },
+    "transformIgnorePatterns": [
+      "node_modules/(?!(lit|@lit)/)"
+    ],
     "setupFiles": [
       "<rootDir>/src/test/js/setup/jest.setup.js"
     ],
@@ -63,19 +70,25 @@
       "src/main/resources/dev-ui/**/*.js",
       "!src/main/resources/dev-ui/**/*.min.js"
     ],
+    "coveragePathIgnorePatterns": [
+      "node_modules",
+      "src/test"
+    ],
     "coverageThreshold": {
       "global": {
-        "branches": 0,
-        "functions": 0,
-        "lines": 0,
-        "statements": 0
+        "branches": 55,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
       }
     },
     "coverageReporters": [
       "text",
       "lcov",
-      "html"
-    ]
+      "html",
+      "cobertura"
+    ],
+    "coverageDirectory": "target/coverage"
   },
   "babel": {
     "presets": [
@@ -92,7 +105,10 @@
           [
             "@babel/preset-env",
             {
-              "modules": "commonjs"
+              "modules": "commonjs",
+              "targets": {
+                "node": "current"
+              }
             }
           ]
         ]
