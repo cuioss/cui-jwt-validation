@@ -15,7 +15,7 @@ module.exports = {
     'plugin:unicorn/recommended',
     'plugin:security/recommended',
     'plugin:promise/recommended',
-    'plugin:@typescript-eslint/eslint-recommended',
+    'plugin:sonarjs/recommended',
     'plugin:prettier/recommended',
   ],
   
@@ -47,7 +47,6 @@ module.exports = {
     'no-unused-vars': 'error',
     'no-underscore-dangle': 'off', // Allow underscore for private properties in Lit components
     'no-param-reassign': 'off', // Allow for test setups
-    'no-promise-executor-return': 'off', // Allow for test utilities
     'prefer-const': 'error',
     'no-var': 'error',
     'arrow-spacing': 'error',
@@ -122,18 +121,7 @@ module.exports = {
     'promise/prefer-await-to-then': 'warn',
     'promise/prefer-await-to-callbacks': 'warn',
     
-    // SonarJS rules for code quality
-    'sonarjs/cognitive-complexity': ['warn', 15],
-    'sonarjs/no-duplicate-string': ['warn', { threshold: 5 }],
-    'sonarjs/no-identical-functions': 'error',
-    'sonarjs/no-collapsible-if': 'error',
-    'sonarjs/prefer-immediate-return': 'error',
-    'sonarjs/prefer-object-literal': 'error',
-    'sonarjs/prefer-single-boolean-return': 'error',
-    'sonarjs/no-small-switch': 'warn',
-    'sonarjs/no-redundant-boolean': 'error',
-    'sonarjs/no-unused-collection': 'error',
-    'sonarjs/no-useless-catch': 'error',
+    // SonarJS rules - using recommended defaults
     
     // Modern JavaScript features
     'prefer-destructuring': ['error', { array: false, object: true }],
@@ -200,7 +188,7 @@ module.exports = {
         'no-unused-expressions': 'off',
         'no-unused-vars': 'warn',
         'no-undef': 'off', // Jest globals handled by environment
-        // Relaxed rules for test files
+        // Relaxed SonarJS rules for test files
         'sonarjs/cognitive-complexity': 'off',
         'sonarjs/no-duplicate-string': 'off',
         'complexity': 'off',
@@ -251,7 +239,7 @@ module.exports = {
         'class-methods-use-this': 'off',
         'no-unused-vars': 'off',
         'max-lines-per-function': 'off',
-        // Additional relaxed rules for mock files
+        // Additional relaxed SonarJS rules for mock files
         'sonarjs/no-identical-functions': 'off',
         'sonarjs/cognitive-complexity': 'off',
         'security/detect-object-injection': 'off',
