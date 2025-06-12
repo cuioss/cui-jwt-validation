@@ -17,17 +17,16 @@
 
     <properties>
         <maven.jar.plugin.automatic.module.name>de.cuioss.jwt.quarkus.deployment</maven.jar.plugin.automatic.module.name>
+
         <!-- Sonar configuration for JavaScript coverage -->
         <sonar.javascript.lcov.reportPaths>target/coverage/lcov.info</sonar.javascript.lcov.reportPaths>
         <sonar.coverage.exclusions>**/*.test.js,**/test/**/*,**/mocks/**/*</sonar.coverage.exclusions>
         <sonar.javascript.file.suffixes>.js</sonar.javascript.file.suffixes>
-        
-        <!-- JavaScript-specific coverage thresholds -->
-        <sonar.javascript.coverage.reportPaths>target/coverage/lcov.info</sonar.javascript.coverage.reportPaths>
-        
-        <!-- Quality gate conditions for JavaScript files only -->
-        <!-- These settings apply only to JS files in src/main/resources/dev-ui/ -->
-        <sonar.qualitygate.wait>false</sonar.qualitygate.wait>
+        <sonar.javascript.coverage.overall_condition.branch>55</sonar.javascript.coverage.overall_condition.branch>
+        <sonar.javascript.coverage.new_condition.branch>55</sonar.javascript.coverage.new_condition.branch>
+
+        <!-- JaCoCo configuration for Java code coverage -->
+        <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
     <dependencies>
@@ -109,10 +108,10 @@
             <plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
-                <version>${frontend.maven.plugin.version}</version>
+                <version>1.15.1</version>
                 <configuration>
-                    <nodeVersion>${frontend.node.version}</nodeVersion>
-                    <npmVersion>${frontend.npm.version}</npmVersion>
+                    <nodeVersion>v20.12.2</nodeVersion>
+                    <npmVersion>10.5.0</npmVersion>
                     <installDirectory>target</installDirectory>
                 </configuration>
                 <executions>
@@ -165,41 +164,45 @@
                     <useFile>false</useFile>
                     <trimStackTrace>false</trimStackTrace>
                     <enableAssertions>true</enableAssertions>
-                    <!-- Suppress JVM warnings -->
-                    <argLine>-XX:+IgnoreUnrecognizedVMOptions -Djava.awt.headless=true</argLine>
+                    <!-- Suppress JVM warnings and enable JaCoCo agent -->
+                    <argLine>-XX:+IgnoreUnrecognizedVMOptions -Djava.awt.headless=true @{jacoco.agent.argLine}</argLine>
                 </configuration>
+            </plugin>
+            <!-- Add JaCoCo for code coverage with Sonar -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                        <configuration>
+                            <!-- Configure JaCoCo to work with Quarkus tests -->
+                            <includes>
+                                <include>de/cuioss/jwt/quarkus/deployment/**</include>
+                            </includes>
+                            <!-- Ensure JaCoCo agent is properly attached to Quarkus tests -->
+                            <append>true</append>
+                            <!-- Set property name to avoid conflicts with surefire -->
+                            <propertyName>jacoco.agent.argLine</propertyName>
+                            <!-- Ensure destination file is set -->
+                            <destFile>${project.build.directory}/jacoco.exec</destFile>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/site/jacoco</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
-
-    <profiles>
-        <profile>
-            <id>sonar</id>
-            <properties>
-                <!-- JavaScript coverage targets - only branch coverage specified -->
-                <!-- Lines/statements/functions coverage uses default SonarQube thresholds -->
-                <sonar.javascript.coverage.overall_condition.branch>55</sonar.javascript.coverage.overall_condition.branch>
-                <sonar.javascript.coverage.new_condition.branch>55</sonar.javascript.coverage.new_condition.branch>
-                
-                <!-- Ensure JavaScript coverage is included in analysis -->
-                <sonar.language>js</sonar.language>
-                <sonar.sources>src/main/resources/dev-ui</sonar.sources>
-                <sonar.tests>src/test/js</sonar.tests>
-                <sonar.test.inclusions>**/*.test.js</sonar.test.inclusions>
-                
-                <!-- Coverage report paths -->
-                <sonar.javascript.lcov.reportPaths>target/coverage/lcov.info</sonar.javascript.lcov.reportPaths>
-                <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.sonarsource.scanner.maven</groupId>
-                        <artifactId>sonar-maven-plugin</artifactId>
-                        <version>3.10.0.2594</version>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>
