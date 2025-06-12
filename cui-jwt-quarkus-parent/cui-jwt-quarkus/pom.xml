@@ -120,8 +120,8 @@
                     <useFile>false</useFile>
                     <trimStackTrace>false</trimStackTrace>
                     <enableAssertions>true</enableAssertions>
-                    <!-- Suppress JVM warnings and enable JaCoCo agent -->
-                    <argLine>-XX:+IgnoreUnrecognizedVMOptions -Djava.awt.headless=true @{jacoco.agent.argLine}</argLine>
+                    <!-- Suppress JVM warnings -->
+                    <argLine>-XX:+IgnoreUnrecognizedVMOptions -Djava.awt.headless=true</argLine>
                 </configuration>
             </plugin>
         </plugins>
