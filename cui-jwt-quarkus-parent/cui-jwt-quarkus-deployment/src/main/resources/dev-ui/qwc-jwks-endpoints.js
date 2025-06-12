@@ -8,26 +8,26 @@ export class QwcJwksEndpoints extends LitElement {
     }
 
     .jwks-header {
-      align-items: center;
       display: flex;
       justify-content: space-between;
+      align-items: center;
       margin-bottom: 1rem;
     }
 
     .jwks-title {
+      margin: 0;
       font-size: 1.2rem;
       font-weight: 600;
-      margin: 0;
     }
 
     .refresh-button {
-      background-color: var(--lumo-primary-color);
+      padding: 0.5rem 1rem;
       border: none;
       border-radius: 4px;
+      background-color: var(--lumo-primary-color);
       color: var(--lumo-primary-contrast-color);
-      cursor: pointer;
       font-size: 0.875rem;
-      padding: 0.5rem 1rem;
+      cursor: pointer;
     }
 
     .refresh-button:hover {
@@ -35,10 +35,10 @@ export class QwcJwksEndpoints extends LitElement {
     }
 
     .jwks-status {
-      border: 1px solid var(--lumo-contrast-10pct);
-      border-radius: 6px;
       margin-bottom: 1rem;
       padding: 1rem;
+      border: 1px solid var(--lumo-contrast-10pct);
+      border-radius: 6px;
     }
 
     .status-no-issuers {
@@ -59,35 +59,35 @@ export class QwcJwksEndpoints extends LitElement {
     }
 
     .issuer-card {
-      background-color: var(--lumo-base-color);
+      padding: 1rem;
       border: 1px solid var(--lumo-contrast-10pct);
       border-radius: 8px;
-      padding: 1rem;
+      background-color: var(--lumo-base-color);
     }
 
     .issuer-name {
+      margin-bottom: 0.5rem;
       color: var(--lumo-primary-text-color);
       font-size: 1.1rem;
       font-weight: 600;
-      margin-bottom: 0.5rem;
     }
 
     .issuer-details {
       display: grid;
-      gap: 0.75rem;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 0.75rem;
     }
 
     .detail-item {
-      background-color: var(--lumo-contrast-5pct);
-      border-radius: 4px;
       padding: 0.5rem;
+      border-radius: 4px;
+      background-color: var(--lumo-contrast-5pct);
     }
 
     .detail-label {
+      margin-bottom: 0.25rem;
       color: var(--lumo-secondary-text-color);
       font-size: 0.875rem;
-      margin-bottom: 0.25rem;
     }
 
     .detail-value {
@@ -103,15 +103,15 @@ export class QwcJwksEndpoints extends LitElement {
     }
 
     .loader-status {
-      align-items: center;
       display: flex;
+      align-items: center;
       gap: 0.5rem;
     }
 
     .status-indicator {
-      border-radius: 50%;
-      height: 12px;
       width: 12px;
+      height: 12px;
+      border-radius: 50%;
     }
 
     .status-unknown {
@@ -127,17 +127,17 @@ export class QwcJwksEndpoints extends LitElement {
     }
 
     .loading {
-      color: var(--lumo-secondary-text-color);
       padding: 2rem;
+      color: var(--lumo-secondary-text-color);
       text-align: center;
     }
 
     .error {
-      background-color: var(--lumo-error-color-10pct);
+      padding: 1rem;
       border: 1px solid var(--lumo-error-color-50pct);
       border-radius: 6px;
+      background-color: var(--lumo-error-color-10pct);
       color: var(--lumo-error-text-color);
-      padding: 1rem;
     }
   `;
 

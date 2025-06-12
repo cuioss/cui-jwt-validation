@@ -42,7 +42,7 @@ global.customElements = {
   define: jest.fn((name, constructor) => {
     definedElements.set(name, constructor);
   }),
-  get: jest.fn((name) => definedElements.get(name)),
+  get: jest.fn(name => definedElements.get(name)),
   whenDefined: jest.fn(() => Promise.resolve()),
 };
 

@@ -13,6 +13,9 @@ module.exports = {
     'plugin:wc/recommended',
     'plugin:jsdoc/recommended',
     'plugin:unicorn/recommended',
+    'plugin:security/recommended',
+    'plugin:promise/recommended',
+    'plugin:@typescript-eslint/eslint-recommended',
     'plugin:prettier/recommended',
   ],
   
@@ -28,7 +31,7 @@ module.exports = {
     sourceType: 'module',
   },
   
-  plugins: ['lit', 'wc', 'jsdoc', 'unicorn', 'prettier'],
+  plugins: ['lit', 'wc', 'jsdoc', 'unicorn', 'security', 'promise', 'sonarjs', 'prettier'],
   
   rules: {
     // Import/export rules
@@ -103,6 +106,79 @@ module.exports = {
     'unicorn/no-array-for-each': 'off', // Allow forEach for readability
     'unicorn/consistent-function-scoping': 'warn',
     
+    // Security rules
+    'security/detect-object-injection': 'warn',
+    'security/detect-eval-with-expression': 'error',
+    'security/detect-unsafe-regex': 'error',
+    'security/detect-buffer-noassert': 'error',
+    'security/detect-child-process': 'error',
+    
+    // Promise rules
+    'promise/always-return': 'error',
+    'promise/catch-or-return': 'error',
+    'promise/no-return-wrap': 'error',
+    'promise/param-names': 'error',
+    'promise/no-nesting': 'warn',
+    'promise/prefer-await-to-then': 'warn',
+    'promise/prefer-await-to-callbacks': 'warn',
+    
+    // SonarJS rules for code quality
+    'sonarjs/cognitive-complexity': ['warn', 15],
+    'sonarjs/no-duplicate-string': ['warn', { threshold: 5 }],
+    'sonarjs/no-identical-functions': 'error',
+    'sonarjs/no-collapsible-if': 'error',
+    'sonarjs/prefer-immediate-return': 'error',
+    'sonarjs/prefer-object-literal': 'error',
+    'sonarjs/prefer-single-boolean-return': 'error',
+    'sonarjs/no-small-switch': 'warn',
+    'sonarjs/no-redundant-boolean': 'error',
+    'sonarjs/no-unused-collection': 'error',
+    'sonarjs/no-useless-catch': 'error',
+    
+    // Modern JavaScript features
+    'prefer-destructuring': ['error', { array: false, object: true }],
+    'prefer-rest-params': 'error',
+    'prefer-spread': 'error',
+    'symbol-description': 'error',
+    'no-useless-computed-key': 'error',
+    'no-useless-rename': 'error',
+    'no-useless-return': 'error',
+    'no-void': 'error',
+    'no-with': 'error',
+    
+    // ES6+ features
+    'prefer-numeric-literals': 'error',
+    'prefer-object-spread': 'error',
+    'prefer-exponentiation-operator': 'error',
+    'prefer-regex-literals': 'error',
+    'prefer-promise-reject-errors': 'error',
+    
+    // Error handling
+    'no-throw-literal': 'error',
+    'no-return-await': 'error',
+    'require-await': 'warn',
+    'no-async-promise-executor': 'error',
+    'no-await-in-loop': 'warn',
+    'no-promise-executor-return': 'error',
+    
+    // Performance
+    'no-loop-func': 'error',
+    'no-extend-native': 'error',
+    'no-iterator': 'error',
+    'no-proto': 'error',
+    'no-script-url': 'error',
+    
+    // Maintainability
+    'complexity': ['warn', { max: 10 }],
+    'max-statements': ['warn', { max: 20 }],
+    'max-params': ['warn', { max: 5 }],
+    'max-nested-callbacks': ['error', { max: 4 }],
+    'no-magic-numbers': ['warn', { 
+      ignore: [-1, 0, 1, 2, 100, 200, 404, 500, 1000, 30000],
+      ignoreArrayIndexes: true,
+      ignoreDefaultValues: true 
+    }],
+    
     // Prettier integration
     'prettier/prettier': 'error',
   },
@@ -124,6 +200,20 @@ module.exports = {
         'no-unused-expressions': 'off',
         'no-unused-vars': 'warn',
         'no-undef': 'off', // Jest globals handled by environment
+        // Relaxed rules for test files
+        'sonarjs/cognitive-complexity': 'off',
+        'sonarjs/no-duplicate-string': 'off',
+        'complexity': 'off',
+        'max-statements': 'off',
+        'max-params': 'off',
+        'require-await': 'off',
+        'no-magic-numbers': 'off',
+        'security/detect-object-injection': 'off',
+        'promise/prefer-await-to-then': 'off',
+        'promise/always-return': 'off',
+        'no-promise-executor-return': 'off',
+        'arrow-parens': 'off', // Let Prettier handle this for test files
+        // Jest-specific rules
         'jest/expect-expect': [
           'error',
           {
@@ -161,6 +251,16 @@ module.exports = {
         'class-methods-use-this': 'off',
         'no-unused-vars': 'off',
         'max-lines-per-function': 'off',
+        // Additional relaxed rules for mock files
+        'sonarjs/no-identical-functions': 'off',
+        'sonarjs/cognitive-complexity': 'off',
+        'security/detect-object-injection': 'off',
+        'promise/prefer-await-to-then': 'off',
+        'promise/always-return': 'off',
+        'no-promise-executor-return': 'off',
+        'complexity': 'off',
+        'max-statements': 'off',
+        'arrow-parens': 'off', // Let Prettier handle this for mock files
       },
     },
   ],

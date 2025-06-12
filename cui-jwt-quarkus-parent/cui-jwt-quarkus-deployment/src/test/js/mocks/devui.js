@@ -46,7 +46,7 @@ export const devui = {
       ),
 
       // Mock token validation service
-      validateToken: jest.fn((token) => {
+      validateToken: jest.fn(token => {
         if (!token || token.trim() === '') {
           return Promise.resolve({
             valid: false,
@@ -107,9 +107,9 @@ export const devui = {
 
   // Mock utilities
   utils: {
-    formatBytes: jest.fn((bytes) => `${bytes} B`),
-    formatDuration: jest.fn((ms) => `${ms}ms`),
-    formatTimestamp: jest.fn((timestamp) => new Date(timestamp).toISOString()),
+    formatBytes: jest.fn(bytes => `${bytes} B`),
+    formatDuration: jest.fn(ms => `${ms}ms`),
+    formatTimestamp: jest.fn(timestamp => new Date(timestamp).toISOString()),
     copyToClipboard: jest.fn(() => Promise.resolve()),
     downloadFile: jest.fn(),
   },
@@ -152,7 +152,7 @@ export const resetDevUIMocks = () => {
   });
 
   devui.jsonRPC.CuiJwtDevUI.validateToken.mockClear();
-  devui.jsonRPC.CuiJwtDevUI.validateToken.mockImplementation((token) => {
+  devui.jsonRPC.CuiJwtDevUI.validateToken.mockImplementation(token => {
     if (!token || token.trim() === '') {
       return Promise.resolve({
         valid: false,
@@ -174,31 +174,31 @@ export const resetDevUIMocks = () => {
     message: 'Health information will be available at runtime',
   });
 
-  Object.values(devui.notifications).forEach((fn) => {
+  Object.values(devui.notifications).forEach(fn => {
     if (jest.isMockFunction(fn)) {
       fn.mockClear();
     }
   });
 
-  Object.values(devui.theme).forEach((fn) => {
+  Object.values(devui.theme).forEach(fn => {
     if (jest.isMockFunction(fn)) {
       fn.mockClear();
     }
   });
 
-  Object.values(devui.router).forEach((fn) => {
+  Object.values(devui.router).forEach(fn => {
     if (jest.isMockFunction(fn)) {
       fn.mockClear();
     }
   });
 
-  Object.values(devui.storage).forEach((fn) => {
+  Object.values(devui.storage).forEach(fn => {
     if (jest.isMockFunction(fn)) {
       fn.mockClear();
     }
   });
 
-  Object.values(devui.utils).forEach((fn) => {
+  Object.values(devui.utils).forEach(fn => {
     if (jest.isMockFunction(fn)) {
       fn.mockClear();
     }

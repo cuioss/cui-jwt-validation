@@ -9,26 +9,26 @@ export class QwcJwtConfig extends LitElement {
     }
 
     .config-header {
-      align-items: center;
       display: flex;
       justify-content: space-between;
+      align-items: center;
       margin-bottom: 1rem;
     }
 
     .config-title {
+      margin: 0;
       font-size: 1.2rem;
       font-weight: 600;
-      margin: 0;
     }
 
     .refresh-button {
-      background-color: var(--lumo-primary-color);
+      padding: 0.5rem 1rem;
       border: none;
       border-radius: 4px;
+      background-color: var(--lumo-primary-color);
       color: var(--lumo-primary-contrast-color);
-      cursor: pointer;
       font-size: 0.875rem;
-      padding: 0.5rem 1rem;
+      cursor: pointer;
     }
 
     .refresh-button:hover {
@@ -41,39 +41,39 @@ export class QwcJwtConfig extends LitElement {
     }
 
     .config-section {
-      background-color: var(--lumo-base-color);
+      padding: 1rem;
       border: 1px solid var(--lumo-contrast-10pct);
       border-radius: 8px;
-      padding: 1rem;
+      background-color: var(--lumo-base-color);
     }
 
     .section-title {
-      border-bottom: 1px solid var(--lumo-contrast-10pct);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
       color: var(--lumo-primary-text-color);
       font-size: 1.1rem;
       font-weight: 600;
-      margin-bottom: 1rem;
-      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--lumo-contrast-10pct);
     }
 
     .config-grid {
       display: grid;
-      gap: 1rem;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem;
     }
 
     .config-item {
-      background-color: var(--lumo-contrast-5pct);
+      padding: 0.75rem;
       border: 1px solid var(--lumo-contrast-10pct);
       border-radius: 6px;
-      padding: 0.75rem;
+      background-color: var(--lumo-contrast-5pct);
     }
 
     .config-label {
+      margin-bottom: 0.25rem;
       color: var(--lumo-secondary-text-color);
       font-size: 0.875rem;
       font-weight: 500;
-      margin-bottom: 0.25rem;
     }
 
     .config-value {
@@ -105,69 +105,69 @@ export class QwcJwtConfig extends LitElement {
     }
 
     .issuer-card {
-      background-color: var(--lumo-contrast-5pct);
-      border: 1px solid var(--lumo-contrast-10pct);
-      border-radius: 6px;
       margin-bottom: 1rem;
       padding: 1rem;
+      border: 1px solid var(--lumo-contrast-10pct);
+      border-radius: 6px;
+      background-color: var(--lumo-contrast-5pct);
     }
 
     .issuer-name {
+      margin-bottom: 0.75rem;
       color: var(--lumo-primary-color);
       font-size: 1rem;
       font-weight: 600;
-      margin-bottom: 0.75rem;
     }
 
     .loading {
-      color: var(--lumo-secondary-text-color);
       padding: 2rem;
+      color: var(--lumo-secondary-text-color);
       text-align: center;
     }
 
     .error {
-      background-color: var(--lumo-error-color-10pct);
+      padding: 1rem;
       border: 1px solid var(--lumo-error-color-50pct);
       border-radius: 6px;
+      background-color: var(--lumo-error-color-10pct);
       color: var(--lumo-error-text-color);
-      padding: 1rem;
     }
 
     .no-issuers {
-      background-color: var(--lumo-contrast-5pct);
+      padding: 2rem;
       border: 1px solid var(--lumo-contrast-10pct);
       border-radius: 6px;
+      background-color: var(--lumo-contrast-5pct);
       color: var(--lumo-secondary-text-color);
-      padding: 2rem;
       text-align: center;
     }
 
     .health-indicator {
-      align-items: center;
-      border-radius: 4px;
       display: inline-flex;
-      font-size: 0.875rem;
-      font-weight: 500;
+      align-items: center;
       gap: 0.5rem;
       padding: 0.25rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      font-weight: 500;
     }
 
     .health-healthy {
-      background-color: var(--lumo-success-color-10pct);
       border: 1px solid var(--lumo-success-color-50pct);
+      background-color: var(--lumo-success-color-10pct);
       color: var(--lumo-success-text-color);
     }
 
     .health-issues {
-      background-color: var(--lumo-error-color-10pct);
       border: 1px solid var(--lumo-error-color-50pct);
+      background-color: var(--lumo-error-color-10pct);
       color: var(--lumo-error-text-color);
     }
 
     .health-dot {
-      border-radius: 50%;
-      height: 8px;
       width: 8px;
+      height: 8px;
+      border-radius: 50%;
     }
 
     .health-dot.healthy {

@@ -118,7 +118,7 @@ class QwcJwksEndpoints extends LitElement {
           ? html`
               <div class="issuers-grid">
                 ${status.issuers.map(
-                  (issuer) => html`
+                  issuer => html`
                     <div class="issuer-card">
                       <div class="issuer-name">${issuer.name}</div>
 

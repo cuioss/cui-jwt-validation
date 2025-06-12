@@ -151,6 +151,16 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>npm-css-validate</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <phase>compile</phase>
+                        <configuration>
+                            <arguments>run validate:css</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>npm-lint-fix</id>
                         <goals>
                             <goal>npm</goal>

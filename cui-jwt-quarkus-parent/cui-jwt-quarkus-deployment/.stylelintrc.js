@@ -3,31 +3,116 @@
  * 
  * This configuration ensures consistent CSS styling within
  * Lit component template literals and CSS-in-JS constructs.
+ * Follows CUI CSS standards for modern CSS development.
  */
 
 module.exports = {
-  extends: ['stylelint-config-standard'],
+  extends: [
+    'stylelint-config-standard'
+  ],
   
-  plugins: ['stylelint-order'],
+  plugins: [
+    'stylelint-order',
+    'stylelint-declaration-strict-value'
+  ],
   
   // Custom syntax for CSS-in-JS
   customSyntax: 'postcss-lit',
   
   rules: {
-    // Indentation and formatting
-    // Note: indentation, string-quotes, color-hex-case are deprecated in newer versions
+    // Modern CSS formatting
     'color-hex-length': 'short',
     
-    // Property ordering
-    'order/properties-alphabetical-order': true,
+    // Logical property ordering (not alphabetical)
+    'order/properties-order': [
+      'content',
+      'display',
+      'position',
+      'top',
+      'right',
+      'bottom',
+      'left',
+      'z-index',
+      'flex',
+      'flex-grow',
+      'flex-shrink',
+      'flex-basis',
+      'flex-direction',
+      'flex-wrap',
+      'justify-content',
+      'align-items',
+      'align-content',
+      'align-self',
+      'grid',
+      'grid-template',
+      'grid-template-rows',
+      'grid-template-columns',
+      'grid-template-areas',
+      'grid-auto-rows',
+      'grid-auto-columns',
+      'grid-auto-flow',
+      'grid-gap',
+      'gap',
+      'width',
+      'min-width',
+      'max-width',
+      'height',
+      'min-height',
+      'max-height',
+      'margin',
+      'margin-top',
+      'margin-right',
+      'margin-bottom',
+      'margin-left',
+      'padding',
+      'padding-top',
+      'padding-right',
+      'padding-bottom',
+      'padding-left',
+      'border',
+      'border-radius',
+      'background',
+      'background-color',
+      'color',
+      'font',
+      'font-family',
+      'font-size',
+      'font-weight',
+      'line-height',
+      'text-align',
+      'opacity',
+      'transform',
+      'transition',
+      'animation'
+    ],
     
-    // CSS Custom Properties (CSS Variables) - relaxed for Lumo theme
-    'custom-property-pattern': null, // Allow Lumo theme variables like --lumo-primary-color
+    // CSS Custom Properties enforcement for design tokens
+    'scale-unlimited/declaration-strict-value': [
+      ['/color$/', 'fill', 'stroke', 'background-color'],
+      {
+        'ignoreValues': [
+          'currentColor',
+          'transparent',
+          'inherit',
+          'initial',
+          'unset',
+          // Allow Lumo theme variables
+          '/^var\\(--lumo-.+\\)$/',
+          // Allow component variables  
+          '/^var\\(--component-.+\\)$/'
+        ]
+      }
+    ],
+    
+    // CSS Custom Properties patterns
+    'custom-property-pattern': '^(lumo|component)-[a-z0-9]+(-[a-z0-9]+)*$',
     'custom-property-empty-line-before': 'never',
     
-    // Class naming patterns for Lit components
-    'selector-class-pattern': '^[a-z][a-z0-9]*(-[a-z0-9]+)*$',
+    // Modern selector patterns for Lit components
+    'selector-class-pattern': '^[a-z][a-z0-9]*(-[a-z0-9]+)*(__[a-z0-9]+(-[a-z0-9]+)*)?(--[a-z0-9]+(-[a-z0-9]+)*)?$',
     'selector-id-pattern': '^[a-z][a-z0-9]*(-[a-z0-9]+)*$',
+    'selector-max-compound-selectors': 4,
+    'selector-max-specificity': '0,4,0',
     
     // Box model and layout
     'declaration-property-unit-allowed-list': {
@@ -55,9 +140,34 @@ module.exports = {
     'selector-pseudo-class-no-unknown': [
       true,
       {
-        ignorePseudoClasses: ['host', 'host-context'],
+        ignorePseudoClasses: ['host', 'host-context', 'focus-visible'],
       },
     ],
+    
+    // Modern CSS features
+    'at-rule-no-unknown': [true, {
+      'ignoreAtRules': [
+        'supports',
+        'layer', 
+        'container',
+        'property'
+      ]
+    }],
+    
+    // Performance and maintainability
+    'max-nesting-depth': 3,
+    'selector-max-id': 0,
+    'selector-max-universal': 1,
+    'declaration-block-single-line-max-declarations': 1,
+    
+    // CSS quality rules
+    'declaration-property-value-no-unknown': true,
+    'function-no-unknown': true,
+    'media-feature-name-no-unknown': true,
+    'property-no-unknown': true,
+    'selector-pseudo-class-no-unknown': true,
+    'selector-pseudo-element-no-unknown': true,
+    'selector-type-no-unknown': true,
     
     // Performance and best practices
     'no-duplicate-selectors': true,

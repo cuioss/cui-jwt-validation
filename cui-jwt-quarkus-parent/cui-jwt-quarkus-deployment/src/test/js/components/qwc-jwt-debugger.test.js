@@ -188,7 +188,7 @@ describe('QwcJwtDebugger', () => {
     copyButton.className = 'copy-button';
     copyButton.disabled = true;
 
-    shadowRoot.querySelector = jest.fn((selector) => {
+    shadowRoot.querySelector = jest.fn(selector => {
       switch (selector) {
         case '#token-input': {
           return tokenInput;
@@ -363,7 +363,7 @@ describe('QwcJwtDebugger', () => {
     it('should show loading state during validation', async () => {
       // Setup delayed mock response
       let resolvePromise;
-      const delayedPromise = new Promise((resolve) => {
+      const delayedPromise = new Promise(resolve => {
         resolvePromise = resolve;
       });
       devui.jsonRPC.CuiJwtDevUI.validateToken.mockReturnValue(delayedPromise);
@@ -575,7 +575,7 @@ describe('QwcJwtDebugger', () => {
       tokenInput.className = 'token-input';
       tokenInput.value = '';
 
-      component.shadowRoot.querySelector = jest.fn((selector) => {
+      component.shadowRoot.querySelector = jest.fn(selector => {
         if (selector === '.token-input') {
           return tokenInput;
         }
@@ -641,7 +641,7 @@ describe('QwcJwtDebugger', () => {
 
       // Setup delayed promise to test validating state
       let resolvePromise;
-      const delayedPromise = new Promise((resolve) => {
+      const delayedPromise = new Promise(resolve => {
         resolvePromise = resolve;
       });
       devui.jsonRPC.CuiJwtDevUI.validateToken.mockReturnValue(delayedPromise);

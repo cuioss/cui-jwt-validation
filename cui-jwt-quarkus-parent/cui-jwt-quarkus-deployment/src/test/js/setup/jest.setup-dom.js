@@ -111,12 +111,12 @@ expect.extend({
 });
 
 // Utility function to wait for web component updates
-global.waitForComponentUpdate = async (component) => {
+global.waitForComponentUpdate = async component => {
   if (component.updateComplete) {
     await component.updateComplete;
   }
   // Additional wait for any async operations
-  await new Promise((resolve) => setTimeout(resolve, 0));
+  await new Promise(resolve => setTimeout(resolve, 0));
 };
 
 // Utility function to create and register a test component
@@ -135,7 +135,7 @@ global.createTestComponent = (tagName, componentClass) => {
 global.cleanupTestComponents = () => {
   // Remove all custom elements from document body
   const customElements = document.body.querySelectorAll('*');
-  customElements.forEach((element) => {
+  customElements.forEach(element => {
     if (element.tagName.includes('-')) {
       element.remove();
     }

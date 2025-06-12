@@ -35,7 +35,7 @@ export class LitElement {
     // Mock shadow DOM
     this.shadowRoot = {
       innerHTML: '',
-      querySelector: jest.fn((selector) => {
+      querySelector: jest.fn(selector => {
         // Mock element with all necessary DOM methods
         return {
           tagName: 'DIV',
@@ -187,7 +187,7 @@ export const property = (options = {}) => {
 export const state = () => property({ state: true });
 
 // Mock query decorator
-export const query = (selector) => {
+export const query = selector => {
   return (target, propertyKey) => {
     Object.defineProperty(target, propertyKey, {
       get() {
@@ -200,7 +200,7 @@ export const query = (selector) => {
 };
 
 // Mock queryAll decorator
-export const queryAll = (selector) => {
+export const queryAll = selector => {
   return (target, propertyKey) => {
     Object.defineProperty(target, propertyKey, {
       get() {

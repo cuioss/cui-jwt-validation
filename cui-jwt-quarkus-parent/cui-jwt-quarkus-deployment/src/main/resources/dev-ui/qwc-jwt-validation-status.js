@@ -4,25 +4,25 @@ import { devui } from 'devui';
 export class QwcJwtValidationStatus extends LitElement {
   static styles = css`
     .status-card {
-      background-color: var(--lumo-base-color);
-      border: 1px solid var(--lumo-contrast-10pct);
-      border-radius: 8px;
       margin-bottom: 1rem;
       padding: 1rem;
+      border: 1px solid var(--lumo-contrast-10pct);
+      border-radius: 8px;
+      background-color: var(--lumo-base-color);
     }
 
     .status-header {
-      align-items: center;
       display: flex;
+      align-items: center;
       margin-bottom: 1rem;
     }
 
     .status-indicator {
-      border-radius: 50%;
       display: inline-block;
+      width: 16px;
       height: 16px;
       margin-right: 0.5rem;
-      width: 16px;
+      border-radius: 50%;
     }
 
     .status-active {
@@ -36,33 +36,33 @@ export class QwcJwtValidationStatus extends LitElement {
     }
 
     .status-title {
+      margin: 0;
       font-size: 1.1rem;
       font-weight: 600;
-      margin: 0;
     }
 
     .status-message {
-      color: var(--lumo-secondary-text-color);
       margin-bottom: 1rem;
+      color: var(--lumo-secondary-text-color);
     }
 
     .metrics-grid {
       display: grid;
-      gap: 1rem;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
     }
 
     .metric-card {
-      background-color: var(--lumo-contrast-5pct);
+      padding: 0.75rem;
       border: 1px solid var(--lumo-contrast-10pct);
       border-radius: 6px;
-      padding: 0.75rem;
+      background-color: var(--lumo-contrast-5pct);
     }
 
     .metric-label {
+      margin-bottom: 0.25rem;
       color: var(--lumo-secondary-text-color);
       font-size: 0.875rem;
-      margin-bottom: 0.25rem;
     }
 
     .metric-value {
@@ -72,28 +72,28 @@ export class QwcJwtValidationStatus extends LitElement {
     }
 
     .loading {
-      color: var(--lumo-secondary-text-color);
       padding: 2rem;
+      color: var(--lumo-secondary-text-color);
       text-align: center;
     }
 
     .error {
-      background-color: var(--lumo-error-color-10pct);
+      padding: 1rem;
       border: 1px solid var(--lumo-error-color-50pct);
       border-radius: 6px;
+      background-color: var(--lumo-error-color-10pct);
       color: var(--lumo-error-text-color);
-      padding: 1rem;
     }
 
     .refresh-button {
-      background-color: var(--lumo-primary-color);
-      border: none;
-      border-radius: 4px;
-      color: var(--lumo-primary-contrast-color);
-      cursor: pointer;
-      font-size: 0.875rem;
       margin-top: 1rem;
       padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 4px;
+      background-color: var(--lumo-primary-color);
+      color: var(--lumo-primary-contrast-color);
+      font-size: 0.875rem;
+      cursor: pointer;
     }
 
     .refresh-button:hover {

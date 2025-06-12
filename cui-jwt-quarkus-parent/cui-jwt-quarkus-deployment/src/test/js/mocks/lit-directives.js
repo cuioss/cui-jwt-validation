@@ -6,7 +6,7 @@
  */
 
 // Mock unsafeHTML directive
-export const unsafeHTML = jest.fn((value) => {
+export const unsafeHTML = jest.fn(value => {
   // For testing purposes, just return the value as-is
   // In real Lit, this would sanitize and render HTML
   return value || '';
@@ -98,7 +98,7 @@ export const asyncReplace = jest.fn((asyncIterable, mapper) => {
 });
 
 // Mock cache directive
-export const cache = jest.fn((value) => value);
+export const cache = jest.fn(value => value);
 
 // Mock keyed directive
 export const keyed = jest.fn((key, value) => value);
@@ -107,10 +107,10 @@ export const keyed = jest.fn((key, value) => value);
 export const guard = jest.fn((dependencies, valueFn) => valueFn());
 
 // Mock live directive
-export const live = jest.fn((value) => value);
+export const live = jest.fn(value => value);
 
 // Mock ref directive
-export const ref = jest.fn((refOrCallback) => {
+export const ref = jest.fn(refOrCallback => {
   // Return a mock ref object
   return {
     value: null,
@@ -118,7 +118,7 @@ export const ref = jest.fn((refOrCallback) => {
 });
 
 // Mock classMap directive
-export const classMap = jest.fn((classInfo) => {
+export const classMap = jest.fn(classInfo => {
   if (!classInfo || typeof classInfo !== 'object') {
     return '';
   }
@@ -130,7 +130,7 @@ export const classMap = jest.fn((classInfo) => {
 });
 
 // Mock styleMap directive
-export const styleMap = jest.fn((styleInfo) => {
+export const styleMap = jest.fn(styleInfo => {
   if (!styleInfo || typeof styleInfo !== 'object') {
     return '';
   }
@@ -141,7 +141,7 @@ export const styleMap = jest.fn((styleInfo) => {
 });
 
 // Mock ifDefined directive
-export const ifDefined = jest.fn((value) => value ?? undefined);
+export const ifDefined = jest.fn(value => value ?? undefined);
 
 // Helper function to reset all directive mocks
 export const resetDirectiveMocks = () => {

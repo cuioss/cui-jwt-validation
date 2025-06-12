@@ -9,9 +9,9 @@ export class QwcJwtDebugger extends LitElement {
     }
 
     .debugger-title {
+      margin-bottom: 1rem;
       font-size: 1.2rem;
       font-weight: 600;
-      margin-bottom: 1rem;
     }
 
     .input-section {
@@ -23,23 +23,23 @@ export class QwcJwtDebugger extends LitElement {
     }
 
     .input-label {
-      color: var(--lumo-primary-text-color);
       display: block;
-      font-weight: 500;
       margin-bottom: 0.5rem;
+      color: var(--lumo-primary-text-color);
+      font-weight: 500;
     }
 
     .token-input {
-      background-color: var(--lumo-base-color);
+      width: 100%;
+      min-height: 120px;
+      padding: 0.75rem;
       border: 1px solid var(--lumo-contrast-20pct);
       border-radius: 6px;
+      background-color: var(--lumo-base-color);
       color: var(--lumo-primary-text-color);
       font-family: Monaco, Menlo, 'Ubuntu Mono', monospace;
       font-size: 0.875rem;
-      min-height: 120px;
-      padding: 0.75rem;
       resize: vertical;
-      width: 100%;
     }
 
     .token-input:focus {
@@ -55,12 +55,12 @@ export class QwcJwtDebugger extends LitElement {
     }
 
     .action-button {
+      padding: 0.75rem 1.5rem;
       border: none;
       border-radius: 6px;
-      cursor: pointer;
       font-size: 0.875rem;
       font-weight: 500;
-      padding: 0.75rem 1.5rem;
+      cursor: pointer;
     }
 
     .validate-button {
@@ -79,8 +79,8 @@ export class QwcJwtDebugger extends LitElement {
     }
 
     .clear-button {
-      background-color: var(--lumo-contrast-10pct);
       border: 1px solid var(--lumo-contrast-20pct);
+      background-color: var(--lumo-contrast-10pct);
       color: var(--lumo-primary-text-color);
     }
 
@@ -102,10 +102,10 @@ export class QwcJwtDebugger extends LitElement {
     }
 
     .result-card {
-      border: 1px solid var(--lumo-contrast-10pct);
-      border-radius: 8px;
       margin-bottom: 1rem;
       padding: 1rem;
+      border: 1px solid var(--lumo-contrast-10pct);
+      border-radius: 8px;
     }
 
     .result-success {
@@ -119,16 +119,16 @@ export class QwcJwtDebugger extends LitElement {
     }
 
     .result-header {
-      align-items: center;
       display: flex;
+      align-items: center;
       margin-bottom: 1rem;
     }
 
     .result-icon {
-      border-radius: 50%;
+      width: 20px;
       height: 20px;
       margin-right: 0.5rem;
-      width: 20px;
+      border-radius: 50%;
     }
 
     .icon-success {
@@ -140,9 +140,9 @@ export class QwcJwtDebugger extends LitElement {
     }
 
     .result-title {
+      margin: 0;
       font-size: 1.1rem;
       font-weight: 600;
-      margin: 0;
     }
 
     .result-title-success {
@@ -158,22 +158,22 @@ export class QwcJwtDebugger extends LitElement {
     }
 
     .claims-title {
-      font-weight: 600;
       margin-bottom: 0.5rem;
+      font-weight: 600;
     }
 
     .claims-container {
-      background-color: var(--lumo-contrast-5pct);
+      padding: 1rem;
       border: 1px solid var(--lumo-contrast-10pct);
       border-radius: 6px;
-      padding: 1rem;
+      background-color: var(--lumo-contrast-5pct);
     }
 
     .claims-json {
+      margin: 0;
       color: var(--lumo-primary-text-color);
       font-family: Monaco, Menlo, 'Ubuntu Mono', monospace;
       font-size: 0.875rem;
-      margin: 0;
       white-space: pre-wrap;
       word-break: break-all;
     }
@@ -185,22 +185,22 @@ export class QwcJwtDebugger extends LitElement {
 
     .token-info {
       display: grid;
-      gap: 1rem;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
       margin-bottom: 1rem;
     }
 
     .info-item {
-      background-color: var(--lumo-contrast-5pct);
+      padding: 0.75rem;
       border: 1px solid var(--lumo-contrast-10pct);
       border-radius: 6px;
-      padding: 0.75rem;
+      background-color: var(--lumo-contrast-5pct);
     }
 
     .info-label {
+      margin-bottom: 0.25rem;
       color: var(--lumo-secondary-text-color);
       font-size: 0.875rem;
-      margin-bottom: 0.25rem;
     }
 
     .info-value {
@@ -209,19 +209,19 @@ export class QwcJwtDebugger extends LitElement {
     }
 
     .loading {
-      align-items: center;
-      color: var(--lumo-secondary-text-color);
       display: flex;
+      align-items: center;
       gap: 0.5rem;
+      color: var(--lumo-secondary-text-color);
     }
 
     .spinner {
-      animation: spin 1s linear infinite;
+      width: 16px;
+      height: 16px;
       border: 2px solid var(--lumo-contrast-20pct);
       border-radius: 50%;
+      animation: spin 1s linear infinite;
       border-top: 2px solid var(--lumo-primary-color);
-      height: 16px;
-      width: 16px;
     }
 
     @keyframes spin {
