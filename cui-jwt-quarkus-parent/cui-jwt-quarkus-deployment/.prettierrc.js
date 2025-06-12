@@ -34,23 +34,8 @@ module.exports = {
   // Embedded language formatting
   embeddedLanguageFormatting: 'auto',
   
-  // File-specific overrides
+  // File-specific overrides - Only format JavaScript files
   overrides: [
-    {
-      files: '*.json',
-      options: {
-        printWidth: 80,
-        tabWidth: 2,
-      },
-    },
-    {
-      files: '*.md',
-      options: {
-        printWidth: 80,
-        proseWrap: 'always',
-        tabWidth: 2,
-      },
-    },
     {
       files: '*.js',
       options: {

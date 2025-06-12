@@ -15,8 +15,8 @@
     "lint:style": "stylelint src/main/resources/dev-ui/**/*.js",
     "lint:style:fix": "stylelint --fix src/main/resources/dev-ui/**/*.js",
     "lint:fix": "npm run lint:js:fix && npm run lint:style:fix",
-    "format": "prettier --write \"src/**/*.{js,json,md}\"",
-    "format:check": "prettier --check \"src/**/*.{js,json,md}\"",
+    "format": "prettier --write \"src/**/*.js\"",
+    "format:check": "prettier --check \"src/**/*.js\"",
     "quality": "npm run lint && npm run format:check",
     "quality:fix": "npm run lint:fix && npm run format"
   },

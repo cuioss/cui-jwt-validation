@@ -141,13 +141,23 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>npm-lint</id>
+                        <id>npm-format-check</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <phase>compile</phase>
+                        <configuration>
+                            <arguments>run format:check</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm-lint-fix</id>
                         <goals>
                             <goal>npm</goal>
                         </goals>
                         <phase>verify</phase>
                         <configuration>
-                            <arguments>run lint</arguments>
+                            <arguments>run lint:fix</arguments>
                         </configuration>
                     </execution>
                 </executions>
