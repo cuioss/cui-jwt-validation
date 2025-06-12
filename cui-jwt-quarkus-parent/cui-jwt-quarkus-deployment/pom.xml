@@ -186,6 +186,9 @@
                     <enableAssertions>true</enableAssertions>
                     <!-- Suppress JVM warnings and enable JaCoCo agent -->
                     <argLine>-XX:+IgnoreUnrecognizedVMOptions -Djava.awt.headless=true @{jacoco.agent.argLine}</argLine>
+                    <!-- Fix for "Surefire is going to kill self fork JVM" issue -->
+                    <forkedProcessTimeoutInSeconds>0</forkedProcessTimeoutInSeconds>
+                    <forkedProcessExitTimeoutInSeconds>60</forkedProcessExitTimeoutInSeconds>
                 </configuration>
             </plugin>
             <!-- Add JaCoCo for code coverage with Sonar -->

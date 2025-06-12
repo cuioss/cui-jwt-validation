@@ -35,10 +35,10 @@ module.exports = {
   // Embedded language formatting
   embeddedLanguageFormatting: 'auto',
   
-  // File-specific overrides
+  // File-specific overrides - JavaScript and CSS-in-JS only
   overrides: [
     {
-      files: ['*.js', '*.mjs'],
+      files: ['*.js'],
       options: {
         printWidth: 120,
         singleQuote: true,
@@ -75,41 +75,6 @@ module.exports = {
         // Test-specific formatting
         arrowParens: 'avoid',
         bracketSpacing: true,
-      },
-    },
-    {
-      files: ['*.json', '*.jsonc'],
-      options: {
-        printWidth: 80,
-        tabWidth: 2,
-        singleQuote: false,
-        trailingComma: 'none',
-      },
-    },
-    {
-      files: ['*.md', '*.mdx'],
-      options: {
-        printWidth: 80,
-        proseWrap: 'always',
-        singleQuote: false,
-        trailingComma: 'none',
-      },
-    },
-    {
-      files: ['*.css', '*.scss'],
-      options: {
-        parser: 'css',
-        printWidth: 80,
-        singleQuote: false, // Use double quotes in CSS
-        tabWidth: 2,
-      },
-    },
-    {
-      files: ['*.yml', '*.yaml'],
-      options: {
-        printWidth: 80,
-        singleQuote: true,
-        tabWidth: 2,
       },
     },
   ],

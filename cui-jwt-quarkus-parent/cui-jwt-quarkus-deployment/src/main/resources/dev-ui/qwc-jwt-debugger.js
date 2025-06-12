@@ -300,6 +300,102 @@ export class QwcJwtDebugger extends LitElement {
     return JSON.stringify(obj, null, 2);
   }
 
+  _getResultCardClass() {
+    if (this._validationResult.valid) {
+      return 'result-success';
+    }
+    return 'result-error';
+  }
+
+  _getResultIconClass() {
+    if (this._validationResult.valid) {
+      return 'icon-success';
+    }
+    return 'icon-error';
+  }
+
+  _getResultTitleClass() {
+    if (this._validationResult.valid) {
+      return 'result-title-success';
+    }
+    return 'result-title-error';
+  }
+
+  _getResultTitleText() {
+    if (this._validationResult.valid) {
+      return 'Token is Valid';
+    }
+    return 'Token is Invalid';
+  }
+
+  _renderValidationContent() {
+    if (this._validationResult.valid) {
+      const claimsContent = this._validationResult.claims
+        ? html`
+            <div class="claims-section">
+              <div class="claims-title">Token Claims</div>
+              <div class="claims-container">
+                <pre class="claims-json">${this._formatJson(this._validationResult.claims)}</pre>
+              </div>
+            </div>
+          `
+        : '';
+
+      return html`
+        <div class="token-info">
+          <div class="info-item">
+            <div class="info-label">Token Type</div>
+            <div class="info-value">${this._validationResult.tokenType || 'Unknown'}</div>
+          </div>
+        </div>
+        ${claimsContent}
+      `;
+    }
+    const detailsContent = this._validationResult.details
+      ? html`
+          <div style="margin-top: 1rem; color: var(--lumo-secondary-text-color); font-size: 0.875rem;">
+            ${this._validationResult.details}
+          </div>
+        `
+      : '';
+
+    return html`
+      <div class="error-message">${this._validationResult.error || 'Token validation failed'}</div>
+      ${detailsContent}
+    `;
+  }
+
+  _renderValidateButtonContent() {
+    if (this._validating) {
+      return html`
+        <span class="loading">
+          <div class="spinner"></div>
+          Validating...
+        </span>
+      `;
+    }
+    return 'Validate Token';
+  }
+
+  _renderResultsSection() {
+    if (!this._validationResult) {
+      return '';
+    }
+
+    return html`
+      <div class="results-section">
+        <div class="result-card ${this._getResultCardClass()}">
+          <div class="result-header">
+            <div class="result-icon ${this._getResultIconClass()}"></div>
+            <h4 class="result-title ${this._getResultTitleClass()}">${this._getResultTitleText()}</h4>
+          </div>
+
+          ${this._renderValidationContent()}
+        </div>
+      </div>
+    `;
+  }
+
   render() {
     return html`
       <div class="debugger-container">
@@ -321,14 +417,7 @@ export class QwcJwtDebugger extends LitElement {
               ?disabled="${this._validating}"
               @click="${this._validateToken}"
             >
-              ${this._validating
-                ? html`
-                    <span class="loading">
-                      <div class="spinner"></div>
-                      Validating...
-                    </span>
-                  `
-                : 'Validate Token'}
+              ${this._renderValidateButtonContent()}
             </button>
 
             <button class="action-button clear-button" @click="${this._clearToken}">Clear</button>
@@ -337,58 +426,7 @@ export class QwcJwtDebugger extends LitElement {
           </div>
         </div>
 
-        ${this._validationResult
-          ? html`
-              <div class="results-section">
-                <div class="result-card ${this._validationResult.valid ? 'result-success' : 'result-error'}">
-                  <div class="result-header">
-                    <div class="result-icon ${this._validationResult.valid ? 'icon-success' : 'icon-error'}"></div>
-                    <h4
-                      class="result-title ${this._validationResult.valid
-                        ? 'result-title-success'
-                        : 'result-title-error'}"
-                    >
-                      ${this._validationResult.valid ? 'Token is Valid' : 'Token is Invalid'}
-                    </h4>
-                  </div>
-
-                  ${this._validationResult.valid
-                    ? html`
-                        <div class="token-info">
-                          <div class="info-item">
-                            <div class="info-label">Token Type</div>
-                            <div class="info-value">${this._validationResult.tokenType || 'Unknown'}</div>
-                          </div>
-                        </div>
-
-                        ${this._validationResult.claims
-                          ? html`
-                              <div class="claims-section">
-                                <div class="claims-title">Token Claims</div>
-                                <div class="claims-container">
-                                  <pre class="claims-json">${this._formatJson(this._validationResult.claims)}</pre>
-                                </div>
-                              </div>
-                            `
-                          : ''}
-                      `
-                    : html`
-                        <div class="error-message">${this._validationResult.error || 'Token validation failed'}</div>
-
-                        ${this._validationResult.details
-                          ? html`
-                              <div
-                                style="margin-top: 1rem; color: var(--lumo-secondary-text-color); font-size: 0.875rem;"
-                              >
-                                ${this._validationResult.details}
-                              </div>
-                            `
-                          : ''}
-                      `}
-                </div>
-              </div>
-            `
-          : ''}
+        ${this._renderResultsSection()}
       </div>
     `;
   }

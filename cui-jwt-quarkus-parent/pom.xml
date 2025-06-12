@@ -23,7 +23,7 @@
     <properties>
         <maven.jar.plugin.automatic.module.name>de.cuioss.jwt.quarkus</maven.jar.plugin.automatic.module.name>
         <quarkus.version>3.23.0</quarkus.version>
-        
+
         <!--
         Logging configuration:
         - Use JBoss LogManager for tests (java.util.logging.manager=org.jboss.logmanager.LogManager)
@@ -111,6 +111,12 @@
             <artifactId>cui-test-juli-logger</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-jacoco</artifactId>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>

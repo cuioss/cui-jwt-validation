@@ -20,6 +20,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 
 /**
  * Unit tests for {@link CuiJwtDevUIJsonRPCService}.
@@ -65,21 +67,11 @@ class CuiJwtDevUIJsonRPCServiceTest {
         assertEquals("Configuration details will be available at runtime", result.get("message"));
     }
 
-    @Test
-    void validateToken_shouldReturnErrorForEmptyToken() {
+    @ParameterizedTest(name = "Should return error for {0} token")
+    @NullAndEmptySource
+    void validateToken_shouldReturnErrorForNullOrEmptyToken(String token) {
         // When
-        Map<String, Object> result = service.validateToken("");
-
-        // Then
-        assertNotNull(result);
-        assertFalse((Boolean) result.get("valid"));
-        assertEquals("Token is empty or null", result.get("error"));
-    }
-
-    @Test
-    void validateToken_shouldReturnErrorForNullToken() {
-        // When
-        Map<String, Object> result = service.validateToken(null);
+        Map<String, Object> result = service.validateToken(token);
 
         // Then
         assertNotNull(result);
