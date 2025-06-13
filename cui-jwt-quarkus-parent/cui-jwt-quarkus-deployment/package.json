@@ -101,8 +101,10 @@
       "<rootDir>/src/test/js/setup/jest.setup-dom.js"
     ],
     "collectCoverageFrom": [
-      "src/main/resources/dev-ui/**/*.js",
-      "!src/main/resources/dev-ui/**/*.min.js"
+      "src/test/js/**/*.js",
+      "!src/test/js/**/*.test.js",
+      "!src/test/js/mocks/**/*.js",
+      "!src/test/js/setup/**/*.js"
     ],
     "coveragePathIgnorePatterns": [
       "node_modules",
