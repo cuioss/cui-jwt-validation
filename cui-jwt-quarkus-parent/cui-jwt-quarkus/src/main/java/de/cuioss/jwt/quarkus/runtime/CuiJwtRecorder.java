@@ -15,55 +15,19 @@
  */
 package de.cuioss.jwt.quarkus.runtime;
 
-import de.cuioss.jwt.quarkus.health.JwksEndpointHealthCheck;
-import de.cuioss.jwt.quarkus.health.TokenValidatorHealthCheck;
-import io.quarkus.arc.runtime.BeanContainer;
 import io.quarkus.runtime.annotations.Recorder;
-
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * Recorder for the CUI JWT Quarkus extension.
  * <p>
- * This class handles runtime initialization tasks such as creating and
- * registering health checks.
+ * This class is currently empty as all runtime initialization is handled by CDI.
+ * Health checks are automatically discovered by Quarkus through their annotations
+ * ({@code @ApplicationScoped}, {@code @Readiness}, {@code @Liveness}).
+ * <p>
+ * If future runtime initialization is needed, methods can be added here and called
+ * from the deployment processor.
  */
 @Recorder
 public class CuiJwtRecorder {
-
-    /**
-     * Creates a {@link JwksEndpointHealthCheck} instance and initializes its cache.
-     *
-     * @param beanContainer the bean container
-     * @return a consumer that initializes the health check if enabled
-     */
-    public Consumer<Boolean> initializeJwksEndpointHealthCheck(BeanContainer beanContainer) {
-        return enabled -> {
-            if (enabled) {
-                // We don't need to initialize the cache here as it's done in the constructor
-                // and post-construct methods of the health check
-            }
-        };
-    }
-
-    /**
-     * Produces a function that gets the {@link JwksEndpointHealthCheck} for health reporting.
-     *
-     * @param beanContainer the bean container
-     * @return a function that returns a boolean indicating if the health check is enabled
-     */
-    public Function<Boolean, Boolean> produceJwksEndpointHealthCheck(BeanContainer beanContainer) {
-        return enabled -> enabled;
-    }
-
-    /**
-     * Produces a function that gets the {@link TokenValidatorHealthCheck} for health reporting.
-     *
-     * @param beanContainer the bean container
-     * @return a function that returns a boolean indicating if the health check is enabled
-     */
-    public Function<Boolean, Boolean> produceTokenValidatorHealthCheck(BeanContainer beanContainer) {
-        return enabled -> enabled;
-    }
+    // No initialization needed - all components are managed by CDI
 }

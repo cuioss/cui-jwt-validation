@@ -156,4 +156,6 @@ public class CuiJwtProcessor {
         return new JsonRPCProvidersBuildItem("CuiJwtDevUI", CuiJwtDevUIJsonRPCService.class);
     }
 
+    // Health checks are automatically discovered by Quarkus through their annotations
+    // (@ApplicationScoped, @Readiness, @Liveness), so no explicit registration is needed
 }
