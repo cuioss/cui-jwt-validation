@@ -86,8 +86,8 @@ class MetricsIntegrationTest {
 
             // Look for a counter with this event type
             boolean hasMetricForEventType = !meterRegistry.find("cui.jwt.validation.errors")
-                .tag("event_type", eventType.name())
-                .counters().isEmpty();
+                    .tag("event_type", eventType.name())
+                    .counters().isEmpty();
 
             assertTrue(hasMetricForEventType,
                     "Should have metrics registered for event type: " + eventType.name());

@@ -15,8 +15,8 @@
  */
 package de.cuioss.jwt.quarkus.deployment;
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * JSON-RPC service for CUI JWT DevUI.
@@ -29,6 +29,9 @@ import java.util.HashMap;
  */
 public class CuiJwtDevUIJsonRPCService {
 
+    public static final String BUILD_TIME = "BUILD_TIME";
+    public static final String MESSAGE = "message";
+
     /**
      * Get build-time JWT validation information.
      *
@@ -36,12 +39,12 @@ public class CuiJwtDevUIJsonRPCService {
      */
     public Map<String, Object> getValidationStatus() {
         Map<String, Object> status = new HashMap<>();
-        
+
         status.put("enabled", false);
         status.put("validatorPresent", false);
-        status.put("status", "BUILD_TIME");
+        status.put("status", BUILD_TIME);
         status.put("statusMessage", "JWT validation status will be available at runtime");
-        
+
         return status;
     }
 
@@ -52,10 +55,10 @@ public class CuiJwtDevUIJsonRPCService {
      */
     public Map<String, Object> getJwksStatus() {
         Map<String, Object> jwksInfo = new HashMap<>();
-        
-        jwksInfo.put("status", "BUILD_TIME");
-        jwksInfo.put("message", "JWKS endpoint status will be available at runtime");
-        
+
+        jwksInfo.put("status", BUILD_TIME);
+        jwksInfo.put(MESSAGE, "JWKS endpoint status will be available at runtime");
+
         return jwksInfo;
     }
 
@@ -66,12 +69,12 @@ public class CuiJwtDevUIJsonRPCService {
      */
     public Map<String, Object> getConfiguration() {
         Map<String, Object> config = new HashMap<>();
-        
+
         config.put("enabled", false);
         config.put("healthEnabled", false);
         config.put("buildTime", true);
-        config.put("message", "Configuration details will be available at runtime");
-        
+        config.put(MESSAGE, "Configuration details will be available at runtime");
+
         return config;
     }
 
@@ -83,16 +86,16 @@ public class CuiJwtDevUIJsonRPCService {
      */
     public Map<String, Object> validateToken(String token) {
         Map<String, Object> result = new HashMap<>();
-        
+
         if (token == null || token.trim().isEmpty()) {
             result.put("valid", false);
             result.put("error", "Token is empty or null");
             return result;
         }
-        
+
         result.put("valid", false);
         result.put("error", "Token validation not available at build time");
-        
+
         return result;
     }
 
@@ -103,13 +106,13 @@ public class CuiJwtDevUIJsonRPCService {
      */
     public Map<String, Object> getHealthInfo() {
         Map<String, Object> health = new HashMap<>();
-        
+
         health.put("configurationValid", true);
         health.put("tokenValidatorAvailable", false);
         health.put("securityCounterAvailable", false);
-        health.put("overallStatus", "BUILD_TIME");
-        health.put("message", "Health information will be available at runtime");
-        
+        health.put("overallStatus", BUILD_TIME);
+        health.put(MESSAGE, "Health information will be available at runtime");
+
         return health;
     }
 }

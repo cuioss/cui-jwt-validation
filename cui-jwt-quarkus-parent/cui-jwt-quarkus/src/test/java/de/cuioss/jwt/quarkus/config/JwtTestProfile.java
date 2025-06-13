@@ -53,7 +53,7 @@ public class JwtTestProfile implements QuarkusTestProfile {
         config.put("cui.jwt.issuers.keycloak.enabled", "true");
         config.put("cui.jwt.issuers.keycloak.public-key-location", "classpath:keys/public_key.pem");
         config.put("cui.jwt.issuers.keycloak.jwks.url",
-                  "https://keycloak.example.com/auth/realms/master/protocol/openid-connect/certs");
+                "https://keycloak.example.com/auth/realms/master/protocol/openid-connect/certs");
         config.put("cui.jwt.issuers.keycloak.jwks.cache-ttl-seconds", "7200");
         config.put("cui.jwt.issuers.keycloak.jwks.refresh-interval-seconds", "600");
         config.put("cui.jwt.issuers.keycloak.jwks.connection-timeout-ms", "3000");
@@ -72,9 +72,9 @@ public class JwtTestProfile implements QuarkusTestProfile {
         config.put("cui.jwt.issuers.wellknown.url", "https://wellknown.example.com/auth/realms/master");
         config.put("cui.jwt.issuers.wellknown.enabled", "true");
         config.put("cui.jwt.issuers.wellknown.jwks.well-known-url",
-                  "https://wellknown.example.com/auth/realms/master/.well-known/openid-configuration");
+                "https://wellknown.example.com/auth/realms/master/.well-known/openid-configuration");
         config.put("cui.jwt.issuers.wellknown.jwks.url",
-                  "https://wellknown.example.com/auth/realms/master/protocol/openid-connect/certs"); // Fallback direct URL
+                "https://wellknown.example.com/auth/realms/master/protocol/openid-connect/certs"); // Fallback direct URL
         config.put("cui.jwt.issuers.wellknown.jwks.cache-ttl-seconds", "3600");
         config.put("cui.jwt.issuers.wellknown.jwks.refresh-interval-seconds", "300");
         config.put("cui.jwt.issuers.wellknown.jwks.connection-timeout-ms", "5000");

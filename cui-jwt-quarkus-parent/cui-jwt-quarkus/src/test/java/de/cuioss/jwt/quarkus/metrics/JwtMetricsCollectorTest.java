@@ -87,10 +87,10 @@ class JwtMetricsCollectorTest {
 
         // Verify the metric exists with the correct tags
         boolean hasMetric = !registry.find("cui.jwt.validation.errors")
-            .tag("event_type", testEventType.name())
-            .tag("result", "failure")
-            .tag("category", "INVALID_SIGNATURE")
-            .counters().isEmpty();
+                .tag("event_type", testEventType.name())
+                .tag("result", "failure")
+                .tag("category", "INVALID_SIGNATURE")
+                .counters().isEmpty();
 
         assertTrue(hasMetric, "Should have metric for the event type");
     }

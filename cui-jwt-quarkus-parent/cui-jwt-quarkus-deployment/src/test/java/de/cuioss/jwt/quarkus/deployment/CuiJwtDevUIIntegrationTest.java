@@ -15,14 +15,13 @@
  */
 package de.cuioss.jwt.quarkus.deployment;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import io.quarkus.devui.spi.JsonRPCProvidersBuildItem;
+import io.quarkus.devui.spi.page.CardPageBuildItem;
+import io.quarkus.test.QuarkusUnitTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import io.quarkus.test.QuarkusUnitTest;
-import io.quarkus.devui.spi.page.CardPageBuildItem;
-import io.quarkus.devui.spi.JsonRPCProvidersBuildItem;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Integration test for CUI JWT DevUI components.
@@ -34,34 +33,34 @@ class CuiJwtDevUIIntegrationTest {
 
     @RegisterExtension
     static final QuarkusUnitTest config = new QuarkusUnitTest()
-            .withApplicationRoot((jar) -> jar
+            .withApplicationRoot(jar -> jar
                     .addClasses(CuiJwtProcessor.class, CuiJwtDevUIJsonRPCService.class))
             .overrideConfigKey("cui.jwt.enabled", "true")
             .overrideConfigKey("quarkus.dev", "true");
 
     @Test
-    void testDevUIComponentsRegistered() {
+    void devUIComponentsRegistered() {
         // This test verifies that the extension builds successfully
         // and that DevUI components are registered when in development mode
-        
+
         // Since this is a build-time test, we're primarily checking that
         // the extension builds without errors and doesn't fail during
         // the build process when DevUI dependencies are present
-        
+
         assertTrue(true, "DevUI extension built successfully");
     }
 
     @Test
-    void testDevUIBuildStepsExist() {
+    void devUIBuildStepsExist() {
         // Verify that the CuiJwtProcessor has the required DevUI build steps
         var processor = new CuiJwtProcessor();
-        
+
         // These methods should exist and be callable
         assertDoesNotThrow(() -> {
             CardPageBuildItem cardPage = processor.createJwtDevUICard();
             assertNotNull(cardPage, "DevUI card should be created");
         });
-        
+
         assertDoesNotThrow(() -> {
             JsonRPCProvidersBuildItem jsonRpcProviders = processor.createJwtDevUIJsonRPCService();
             assertNotNull(jsonRpcProviders, "JSON-RPC providers should be created");

@@ -51,41 +51,85 @@ class TokenValidatorHealthCheckTest {
         assertNotNull(response, "HealthCheckResponse should not be null");
         assertNotNull(response.getStatus(), "Health check status should not be null");
         assertTrue(response.getStatus() == HealthCheckResponse.Status.UP ||
-                   response.getStatus() == HealthCheckResponse.Status.DOWN,
-                   "Health check status should be either UP or DOWN");
+                response.getStatus() == HealthCheckResponse.Status.DOWN,
+                "Health check status should be either UP or DOWN");
     }
 
     @Test
     @DisplayName("Health check should have correct name")
     void testHealthCheckName() {
         HealthCheckResponse response = healthCheck.call();
-        assertEquals("jwt-validator", response.getName(), 
-                    "Health check should have correct name");
+        assertEquals("jwt-validator", response.getName(),
+                "Health check should have correct name");
     }
 
     @Test
     @DisplayName("Health check should include issuer count when available")
     void testHealthCheckDataWhenAvailable() {
         HealthCheckResponse response = healthCheck.call();
-        
+
         if (response.getStatus() == HealthCheckResponse.Status.UP) {
-            assertTrue(response.getData().isPresent(), 
-                      "Health check data should be present when UP");
-            
+            assertTrue(response.getData().isPresent(),
+                    "Health check data should be present when UP");
+
             Map<String, Object> data = response.getData().get();
-            assertTrue(data.containsKey("issuerCount"), 
-                      "Health check data should contain issuerCount");
-            
+            assertTrue(data.containsKey("issuerCount"),
+                    "Health check data should contain issuerCount");
+
             Object issuerCountValue = data.get("issuerCount");
             assertNotNull(issuerCountValue, "issuerCount should not be null");
-            
-            assertTrue(issuerCountValue instanceof Number, 
-                      "issuerCount should be a Number, but was: " + issuerCountValue.getClass().getSimpleName());
-            
-            int issuerCount = ((Number) issuerCountValue).intValue();
-            assertTrue(issuerCount > 0, 
-                      "issuerCount should be greater than 0 when UP, but was: " + issuerCount);
+
+            assertInstanceOf(Number.class, issuerCountValue, "issuerCount should be a Number, but was: " + issuerCountValue.getClass().getSimpleName());
+
+            int issuerCount = ((Number)issuerCountValue).intValue();
+            assertTrue(issuerCount > 0,
+                    "issuerCount should be greater than 0 when UP, but was: " + issuerCount);
         }
     }
 
+    @Test
+    @DisplayName("Health check should include error message when DOWN")
+    void testHealthCheckDataWhenDown() {
+        HealthCheckResponse response = healthCheck.call();
+
+        if (response.getStatus() == HealthCheckResponse.Status.DOWN) {
+            assertTrue(response.getData().isPresent(),
+                    "Health check data should be present when DOWN");
+
+            Map<String, Object> data = response.getData().get();
+
+            // The health check should have error info when DOWN
+            assertTrue(data.containsKey("error"),
+                    "Health check should contain error key when DOWN");
+
+            Object errorValue = data.get("error");
+            assertNotNull(errorValue, "error value should not be null");
+            assertInstanceOf(String.class, errorValue, "error should be a String, but was: " + errorValue.getClass().getSimpleName());
+
+            String errorMessage = (String)errorValue;
+            assertFalse(errorMessage.isEmpty(), "Error message should not be empty");
+        }
+    }
+
+    @Test
+    @DisplayName("Health check should handle edge cases gracefully")
+    void testHealthCheckEdgeCases() {
+        HealthCheckResponse response = healthCheck.call();
+
+        // Response should be valid regardless of TokenValidator state
+        assertNotNull(response, "Response should not be null");
+        assertNotNull(response.getStatus(), "Health check status should not be null");
+        assertTrue(response.getStatus() == HealthCheckResponse.Status.UP ||
+                response.getStatus() == HealthCheckResponse.Status.DOWN,
+                "Health check status should be either UP or DOWN");
+        assertEquals("jwt-validator", response.getName(),
+                "Health check should have correct name");
+
+        if (response.getData().isPresent()) {
+            Map<String, Object> data = response.getData().get();
+            // Should contain issuer count or error information
+            assertTrue(data.containsKey("issuerCount") || data.containsKey("error"),
+                    "Should contain either issuer count or error information");
+        }
+    }
 }

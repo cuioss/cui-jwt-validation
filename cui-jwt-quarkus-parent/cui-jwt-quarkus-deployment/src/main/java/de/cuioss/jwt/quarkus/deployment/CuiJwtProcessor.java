@@ -15,11 +15,11 @@
  */
 package de.cuioss.jwt.quarkus.deployment;
 
+import io.quarkus.deployment.IsDevelopment;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
-import io.quarkus.deployment.IsDevelopment;
 import io.quarkus.devui.spi.JsonRPCProvidersBuildItem;
 import io.quarkus.devui.spi.page.CardPageBuildItem;
 import io.quarkus.devui.spi.page.Page;
@@ -114,35 +114,35 @@ public class CuiJwtProcessor {
     @BuildStep(onlyIf = IsDevelopment.class)
     CardPageBuildItem createJwtDevUICard() {
         CardPageBuildItem cardPageBuildItem = new CardPageBuildItem();
-        
+
         // JWT Validation Status page
         cardPageBuildItem.addPage(Page.webComponentPageBuilder()
-            .icon("font-awesome-solid:shield-check")
-            .title("JWT Validation Status")
-            .componentLink("qwc-jwt-validation-status.js")
-            .staticLabel("View Status"));
-        
+                .icon("font-awesome-solid:shield-check")
+                .title("JWT Validation Status")
+                .componentLink("qwc-jwt-validation-status.js")
+                .staticLabel("View Status"));
+
         // JWKS Endpoint Monitoring page
         cardPageBuildItem.addPage(Page.webComponentPageBuilder()
-            .icon("font-awesome-solid:key")
-            .title("JWKS Endpoints")
-            .componentLink("qwc-jwks-endpoints.js")
-            .dynamicLabelJsonRPCMethodName("getJwksStatus"));
-        
+                .icon("font-awesome-solid:key")
+                .title("JWKS Endpoints")
+                .componentLink("qwc-jwks-endpoints.js")
+                .dynamicLabelJsonRPCMethodName("getJwksStatus"));
+
         // Token Debugging Tools page
         cardPageBuildItem.addPage(Page.webComponentPageBuilder()
-            .icon("font-awesome-solid:bug")
-            .title("Token Debugger")
-            .componentLink("qwc-jwt-debugger.js")
-            .staticLabel("Debug Tokens"));
-        
+                .icon("font-awesome-solid:bug")
+                .title("Token Debugger")
+                .componentLink("qwc-jwt-debugger.js")
+                .staticLabel("Debug Tokens"));
+
         // Configuration Overview page
         cardPageBuildItem.addPage(Page.webComponentPageBuilder()
-            .icon("font-awesome-solid:cog")
-            .title("Configuration")
-            .componentLink("qwc-jwt-config.js")
-            .staticLabel("View Config"));
-        
+                .icon("font-awesome-solid:cog")
+                .title("Configuration")
+                .componentLink("qwc-jwt-config.js")
+                .staticLabel("View Config"));
+
         return cardPageBuildItem;
     }
 

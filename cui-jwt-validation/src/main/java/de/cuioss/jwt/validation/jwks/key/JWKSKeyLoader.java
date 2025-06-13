@@ -18,9 +18,9 @@ package de.cuioss.jwt.validation.jwks.key;
 import de.cuioss.jwt.validation.JWTValidationLogMessages.ERROR;
 import de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
 import de.cuioss.jwt.validation.ParserConfig;
-import de.cuioss.jwt.validation.jwks.LoaderStatus;
 import de.cuioss.jwt.validation.jwks.JwksLoader;
 import de.cuioss.jwt.validation.jwks.JwksType;
+import de.cuioss.jwt.validation.jwks.LoaderStatus;
 import de.cuioss.jwt.validation.jwks.http.HttpJwksLoader;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.jwt.validation.security.SecurityEventCounter.EventType;
@@ -419,7 +419,7 @@ public class JWKSKeyLoader implements JwksLoader {
     public Set<String> keySet() {
         return keyInfoMap.keySet();
     }
-    
+
     /**
      * Gets the type of JWKS source used by this loader.
      *

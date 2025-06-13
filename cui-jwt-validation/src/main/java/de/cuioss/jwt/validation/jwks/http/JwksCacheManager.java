@@ -307,7 +307,7 @@ class JwksCacheManager {
         if (config.getHttpHandler().getUri() == null) {
             return null;
         }
-        
+
         return jwksCache.getIfPresent(getCacheKey());
     }
 }

@@ -18,9 +18,9 @@ package de.cuioss.jwt.validation.jwks.http;
 import de.cuioss.jwt.validation.JWTValidationLogMessages;
 import de.cuioss.jwt.validation.JWTValidationLogMessages.DEBUG;
 import de.cuioss.jwt.validation.JWTValidationLogMessages.WARN;
-import de.cuioss.jwt.validation.jwks.LoaderStatus;
 import de.cuioss.jwt.validation.jwks.JwksLoader;
 import de.cuioss.jwt.validation.jwks.JwksType;
+import de.cuioss.jwt.validation.jwks.LoaderStatus;
 import de.cuioss.jwt.validation.jwks.key.JWKSKeyLoader;
 import de.cuioss.jwt.validation.jwks.key.KeyInfo;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
@@ -92,7 +92,7 @@ public class HttpJwksLoader implements JwksLoader, AutoCloseable {
 
         LOGGER.debug(DEBUG.INITIALIZED_JWKS_LOADER.format(
                 config.getHttpHandler().getUri().toString(), config.getRefreshIntervalSeconds()));
-        
+
     }
 
     /**
@@ -254,7 +254,7 @@ public class HttpJwksLoader implements JwksLoader, AutoCloseable {
             // Delegate to the current loader's status
             return currentLoader.getStatus();
         }
-        
+
         // If no loader has been created yet, we're in UNDEFINED state
         return LoaderStatus.UNDEFINED;
     }

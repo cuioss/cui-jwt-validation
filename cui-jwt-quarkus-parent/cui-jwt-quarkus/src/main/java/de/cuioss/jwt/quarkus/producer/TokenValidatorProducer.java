@@ -125,7 +125,7 @@ public class TokenValidatorProducer {
         LOGGER.info("TokenValidator will use validateNotBefore=%s", parserConfig.validateNotBefore());
         LOGGER.info("TokenValidator will use leeway=%d seconds", parserConfig.leewaySeconds());
         parserConfig.audience().ifPresent(audience ->
-            LOGGER.info("TokenValidator will use expected audience=%s", audience));
+                LOGGER.info("TokenValidator will use expected audience=%s", audience));
         LOGGER.info("TokenValidator will use allowedAlgorithms=%s", parserConfig.allowedAlgorithms());
 
         return builder.build();

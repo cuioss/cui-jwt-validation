@@ -276,7 +276,7 @@ public interface JwtValidationConfig {
          */
         @WithDefault("true")
         boolean enabled();
-        
+
         /**
          * Configuration for JWKS endpoint health checks.
          *
@@ -298,7 +298,7 @@ public interface JwtValidationConfig {
          */
         @WithDefault("30")
         int cacheSeconds();
-        
+
         /**
          * The timeout in seconds for JWKS endpoint connectivity checks.
          *
