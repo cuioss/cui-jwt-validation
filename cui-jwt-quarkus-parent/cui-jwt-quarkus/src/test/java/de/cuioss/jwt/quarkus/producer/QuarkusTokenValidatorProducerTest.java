@@ -25,7 +25,7 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Basic tests for {@link TokenValidatorProducer} using Quarkus test framework.
@@ -54,5 +54,62 @@ class QuarkusTokenValidatorProducerTest {
         assertNotNull(producer, "Producer should be injected");
         assertNotNull(config, "Config should be injected");
         assertNotNull(tokenValidator, "TokenValidator should be injected");
+    }
+
+    /**
+     * Test that the TokenValidator is properly configured with the default issuer.
+     */
+    @Test
+    @DisplayName("Should configure TokenValidator with default issuer")
+    void shouldConfigureTokenValidatorWithDefaultIssuer() {
+        // Assert
+        assertNotNull(tokenValidator.getIssuerConfigMap(), "Issuer configs should not be null");
+        assertTrue(tokenValidator.getIssuerConfigMap().containsKey("https://example.com/auth"),
+                "TokenValidator should be configured with default issuer");
+
+        // No direct way to check if issuer is enabled in TokenValidator
+        // The fact that it's in the map means it's enabled and configured
+        assertNotNull(tokenValidator.getIssuerConfigMap().get("https://example.com/auth"),
+                "Default issuer should be present and enabled");
+    }
+
+    /**
+     * Test that the TokenValidator has the correct security event counter.
+     */
+    @Test
+    @DisplayName("Should have security event counter configured")
+    void shouldHaveSecurityEventCounter() {
+        // Assert
+        assertNotNull(tokenValidator.getSecurityEventCounter(),
+                "TokenValidator should have a security event counter");
+    }
+
+    /**
+     * Test that the TokenValidator rejects invalid tokens.
+     */
+    @Test
+    @DisplayName("Should reject invalid tokens")
+    void shouldRejectInvalidTokens() {
+        // Arrange
+        String invalidToken = "invalid.token.format";
+
+        // Act & Assert
+        assertThrows(Exception.class, () -> tokenValidator.createAccessToken(invalidToken),
+                "TokenValidator should reject invalid tokens");
+    }
+
+    /**
+     * Test that the producer uses the configuration correctly.
+     */
+    @Test
+    @DisplayName("Should use configuration correctly")
+    void shouldUseConfigurationCorrectly() {
+        // Assert
+        assertNotNull(config.issuers(), "Issuers configuration should not be null");
+        assertNotNull(config.parser(), "Parser configuration should not be null");
+
+        // Verify the producer uses the configuration
+        assertEquals(config.issuers().size(), tokenValidator.getIssuerConfigMap().size(),
+                "TokenValidator should have the same number of issuers as the configuration");
     }
 }

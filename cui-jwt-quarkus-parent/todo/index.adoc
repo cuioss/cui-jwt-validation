@@ -67,6 +67,7 @@ The tasks have the following dependencies:
 * link:Create Extension Documentation.adoc[Task 8. Create Extension Documentation]
 * link:Create Integration Test Module.adoc[Task 9. Create Integration Test Module]
 * link:Access DevUI Implementation.adoc[Task 10. Access DevUI Implementation]
+* link:unit-test-improvements.adoc[Task 11. Unit Test Improvements]
 
 == Task Completion Process
 

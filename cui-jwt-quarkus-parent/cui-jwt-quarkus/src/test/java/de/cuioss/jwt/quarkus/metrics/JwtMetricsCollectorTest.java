@@ -25,6 +25,7 @@ import io.quarkus.runtime.StartupEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
@@ -34,6 +35,16 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for {@link JwtMetricsCollector}.
+ * <p>
+ * This test class verifies that the metrics collector properly initializes and registers
+ * metrics for all security event types. It also tests that the collector correctly updates
+ * metrics when security events occur.
+ * <p>
+ * The tests cover:
+ * <ul>
+ *   <li>Initialization of metrics for all event types</li>
+ *   <li>Recording and updating metrics for security events</li>
+ * </ul>
  */
 @QuarkusTest
 class JwtMetricsCollectorTest {
@@ -51,6 +62,7 @@ class JwtMetricsCollectorTest {
     Event<StartupEvent> startupEvent;
 
     @Test
+    @DisplayName("Should initialize metrics for all event types")
     void shouldInitializeMetrics() {
         // Ensure collector is properly initialized
         assertNotNull(metricsCollector);
@@ -70,6 +82,7 @@ class JwtMetricsCollectorTest {
     }
 
     @Test
+    @DisplayName("Should record metrics for security events")
     void shouldHaveMetricsForSecurityEvents() {
         // Fire the startup event to ensure metrics are initialized
         startupEvent.fire(new StartupEvent());

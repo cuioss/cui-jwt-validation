@@ -24,6 +24,8 @@ import org.eclipse.microprofile.health.HealthCheckResponse;
 import org.eclipse.microprofile.health.Liveness;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.Map;
 
@@ -63,48 +65,54 @@ class TokenValidatorHealthCheckTest {
                 "Health check should have correct name");
     }
 
-    @Test
-    @DisplayName("Health check should include issuer count when available")
-    void testHealthCheckDataWhenAvailable() {
+    /**
+     * Parameterized test for health check status and data validation.
+     * Tests both UP and DOWN status scenarios.
+     *
+     * @param status the health check status to test
+     */
+    @ParameterizedTest(name = "Health check should include correct data when status is {0}")
+    @EnumSource(HealthCheckResponse.Status.class)
+    @DisplayName("Health check should include correct data for different statuses")
+    void testHealthCheckDataForStatus(HealthCheckResponse.Status status) {
         HealthCheckResponse response = healthCheck.call();
 
-        if (response.getStatus() == HealthCheckResponse.Status.UP) {
-            assertTrue(response.getData().isPresent(),
-                    "Health check data should be present when UP");
+        // Skip if the current status doesn't match the test parameter
+        if (response.getStatus() != status) {
+            // Test is not applicable for this status
+            return;
+        }
 
-            Map<String, Object> data = response.getData().get();
+        // Common assertions for all statuses
+        assertTrue(response.getData().isPresent(),
+                "Health check data should be present for status: " + status);
+
+        Map<String, Object> data = response.getData().get();
+
+        // Status-specific assertions
+        if (status == HealthCheckResponse.Status.UP) {
+            // UP status should have issuer count
             assertTrue(data.containsKey("issuerCount"),
-                    "Health check data should contain issuerCount");
+                    "Health check data should contain issuerCount when UP");
 
             Object issuerCountValue = data.get("issuerCount");
             assertNotNull(issuerCountValue, "issuerCount should not be null");
 
-            assertInstanceOf(Number.class, issuerCountValue, "issuerCount should be a Number, but was: " + issuerCountValue.getClass().getSimpleName());
+            assertInstanceOf(Number.class, issuerCountValue,
+                    "issuerCount should be a Number, but was: " + issuerCountValue.getClass().getSimpleName());
 
             int issuerCount = ((Number)issuerCountValue).intValue();
             assertTrue(issuerCount > 0,
                     "issuerCount should be greater than 0 when UP, but was: " + issuerCount);
-        }
-    }
-
-    @Test
-    @DisplayName("Health check should include error message when DOWN")
-    void testHealthCheckDataWhenDown() {
-        HealthCheckResponse response = healthCheck.call();
-
-        if (response.getStatus() == HealthCheckResponse.Status.DOWN) {
-            assertTrue(response.getData().isPresent(),
-                    "Health check data should be present when DOWN");
-
-            Map<String, Object> data = response.getData().get();
-
-            // The health check should have error info when DOWN
+        } else if (status == HealthCheckResponse.Status.DOWN) {
+            // DOWN status should have error information
             assertTrue(data.containsKey("error"),
                     "Health check should contain error key when DOWN");
 
             Object errorValue = data.get("error");
             assertNotNull(errorValue, "error value should not be null");
-            assertInstanceOf(String.class, errorValue, "error should be a String, but was: " + errorValue.getClass().getSimpleName());
+            assertInstanceOf(String.class, errorValue,
+                    "error should be a String, but was: " + errorValue.getClass().getSimpleName());
 
             String errorMessage = (String)errorValue;
             assertFalse(errorMessage.isEmpty(), "Error message should not be empty");

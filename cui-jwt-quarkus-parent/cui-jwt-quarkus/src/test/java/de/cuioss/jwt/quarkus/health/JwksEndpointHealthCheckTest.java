@@ -24,6 +24,8 @@ import org.eclipse.microprofile.health.HealthCheckResponse;
 import org.eclipse.microprofile.health.Readiness;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.Map;
 
@@ -63,24 +65,40 @@ class JwksEndpointHealthCheckTest {
                 "Health check should have correct name");
     }
 
-    @Test
-    @DisplayName("Health check should include endpoint data when UP")
-    void testHealthCheckDataWhenUp() {
+    /**
+     * Parameterized test for health check status and data validation.
+     * Tests both UP and DOWN status scenarios.
+     *
+     * @param status the health check status to test
+     */
+    @ParameterizedTest(name = "Health check should include correct data when status is {0}")
+    @EnumSource(HealthCheckResponse.Status.class)
+    @DisplayName("Health check should include correct data for different statuses")
+    void testHealthCheckDataForStatus(HealthCheckResponse.Status status) {
         HealthCheckResponse response = healthCheck.call();
 
-        if (response.getStatus() == HealthCheckResponse.Status.UP) {
-            assertTrue(response.getData().isPresent(),
-                    "Health check data should be present when UP");
+        // Skip if the current status doesn't match the test parameter
+        if (response.getStatus() != status) {
+            // Test is not applicable for this status
+            return;
+        }
 
-            Map<String, Object> data = response.getData().get();
+        // Common assertions for all statuses
+        assertTrue(response.getData().isPresent(),
+                "Health check data should be present for status: " + status);
+
+        Map<String, Object> data = response.getData().get();
+
+        // Status-specific assertions
+        if (status == HealthCheckResponse.Status.UP) {
+            // UP status should have endpoint count and issuer data
             assertTrue(data.containsKey("checkedEndpoints"),
-                    "Health check data should contain checkedEndpoints count");
+                    "Health check data should contain checkedEndpoints count when UP");
 
             Object endpointCountValue = data.get("checkedEndpoints");
             assertNotNull(endpointCountValue, "checkedEndpoints should not be null");
 
-            // Check if it's a Number (Integer, Long, etc.) rather than specifically Integer
-            assertTrue(endpointCountValue instanceof Number,
+            assertInstanceOf(Number.class, endpointCountValue,
                     "checkedEndpoints should be a Number, but was: " + endpointCountValue.getClass().getSimpleName());
 
             int endpointCount = ((Number)endpointCountValue).intValue();
@@ -90,23 +108,9 @@ class JwksEndpointHealthCheckTest {
             // Check for issuer-specific data
             boolean hasIssuerData = data.keySet().stream()
                     .anyMatch(key -> key.startsWith("issuer."));
-            assertTrue(hasIssuerData, "Should contain issuer-specific data");
-        }
-    }
-
-    @Test
-    @DisplayName("Health check should include error message when DOWN")
-    void testHealthCheckDataWhenDown() {
-        HealthCheckResponse response = healthCheck.call();
-
-        if (response.getStatus() == HealthCheckResponse.Status.DOWN) {
-            assertTrue(response.getData().isPresent(),
-                    "Health check data should be present when DOWN");
-
-            Map<String, Object> data = response.getData().get();
-
-            // The health check might have different data structures when DOWN
-            // It could have error info or endpoint-specific status info
+            assertTrue(hasIssuerData, "Should contain issuer-specific data when UP");
+        } else if (status == HealthCheckResponse.Status.DOWN) {
+            // DOWN status should have error information
             boolean hasErrorInfo = data.containsKey("error") ||
                     data.values().stream().anyMatch(value ->
                             value instanceof String s && s.contains("DOWN"));

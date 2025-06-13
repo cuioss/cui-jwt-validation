@@ -26,6 +26,11 @@ import io.quarkus.test.junit.TestProfile;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -93,5 +98,51 @@ class MetricsIntegrationTest {
             assertTrue(hasMetricForEventType,
                     "Should have metrics registered for event type: " + eventType.name());
         }
+    }
+
+    /**
+     * Provides different invalid token scenarios for testing.
+     * Each scenario includes:
+     * - A description of the test case
+     * - An invalid token string
+     * - The expected exception type
+     */
+    static Stream<Arguments> invalidTokenScenarios() {
+        return Stream.of(
+            // Empty token
+            Arguments.of("Empty token", "", de.cuioss.jwt.validation.exception.TokenValidationException.class),
+
+            // Malformed token (not enough segments)
+            Arguments.of("Malformed token (single segment)", "invalid", de.cuioss.jwt.validation.exception.TokenValidationException.class),
+
+            // Malformed token (only two segments)
+            Arguments.of("Malformed token (two segments)", "header.payload", de.cuioss.jwt.validation.exception.TokenValidationException.class),
+
+            // Invalid format (not Base64)
+            Arguments.of("Invalid format (not Base64)", "header.payload.signature", de.cuioss.jwt.validation.exception.TokenValidationException.class),
+
+            // Too long token
+            Arguments.of("Too long token", "a".repeat(10000) + ".payload.signature", de.cuioss.jwt.validation.exception.TokenValidationException.class)
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("invalidTokenScenarios")
+    @DisplayName("Should record metrics for different invalid token scenarios")
+    void shouldRecordMetricsForDifferentInvalidTokens(String description, String invalidToken, Class<? extends Exception> expectedException) {
+        // When - validate the token (will fail)
+        Exception thrownException = assertThrows(Exception.class, () -> {
+            tokenValidator.createAccessToken(invalidToken);
+        }, "Should throw an exception for invalid token: " + description);
+
+        // Then - verify the exception is of expected type or a subclass
+        assertTrue(expectedException.isAssignableFrom(thrownException.getClass()),
+                "Expected exception of type " + expectedException.getSimpleName() +
+                " but got " + thrownException.getClass().getSimpleName() +
+                " for scenario: " + description);
+
+        // Verify that error metrics were recorded
+        assertFalse(meterRegistry.find(JwtPropertyKeys.METRICS.VALIDATION_ERRORS).counters().isEmpty(),
+                "Error counters should be registered for scenario: " + description);
     }
 }

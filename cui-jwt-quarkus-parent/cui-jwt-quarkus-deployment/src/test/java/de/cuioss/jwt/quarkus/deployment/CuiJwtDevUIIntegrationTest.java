@@ -18,6 +18,7 @@ package de.cuioss.jwt.quarkus.deployment;
 import io.quarkus.devui.spi.JsonRPCProvidersBuildItem;
 import io.quarkus.devui.spi.page.CardPageBuildItem;
 import io.quarkus.test.QuarkusUnitTest;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -39,6 +40,7 @@ class CuiJwtDevUIIntegrationTest {
             .overrideConfigKey("quarkus.dev", "true");
 
     @Test
+    @DisplayName("Should register DevUI components successfully")
     void devUIComponentsRegistered() {
         // This test verifies that the extension builds successfully
         // and that DevUI components are registered when in development mode
@@ -51,6 +53,7 @@ class CuiJwtDevUIIntegrationTest {
     }
 
     @Test
+    @DisplayName("Should have required DevUI build steps in processor")
     void devUIBuildStepsExist() {
         // Verify that the CuiJwtProcessor has the required DevUI build steps
         var processor = new CuiJwtProcessor();

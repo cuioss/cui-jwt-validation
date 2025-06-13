@@ -21,6 +21,7 @@ import io.quarkus.test.QuarkusUnitTest;
 import jakarta.inject.Inject;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -65,6 +66,7 @@ class CuiJwtIntegrationTest {
      * Test that the extension correctly configures multiple issuers.
      */
     @Test
+    @DisplayName("Should configure multiple issuers correctly")
     void multipleIssuersConfiguration() {
         assertNotNull(jwtConfig, "JwtValidationConfig should be injected");
         assertNotNull(jwtConfig.issuers(), "Issuers should not be null");

@@ -21,6 +21,7 @@ import io.quarkus.test.QuarkusUnitTest;
 import jakarta.inject.Inject;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -66,6 +67,7 @@ class CuiJwtProcessorTest {
      * work correctly, as they are needed for the configuration to be available.
      */
     @Test
+    @DisplayName("Should have JWT configuration available and properly configured")
     void jwtConfigAvailable() {
         assertNotNull(jwtConfig, "JwtValidationConfig should be injected");
         assertNotNull(jwtConfig.issuers(), "Issuers should not be null");
