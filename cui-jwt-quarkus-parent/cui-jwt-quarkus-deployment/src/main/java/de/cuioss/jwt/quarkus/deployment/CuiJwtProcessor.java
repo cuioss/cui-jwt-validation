@@ -119,28 +119,28 @@ public class CuiJwtProcessor {
         cardPageBuildItem.addPage(Page.webComponentPageBuilder()
                 .icon("font-awesome-solid:shield-check")
                 .title("JWT Validation Status")
-                .componentLink("qwc-jwt-validation-status.js")
+                .componentLink("components/qwc-jwt-validation-status.js")
                 .staticLabel("View Status"));
 
         // JWKS Endpoint Monitoring page
         cardPageBuildItem.addPage(Page.webComponentPageBuilder()
                 .icon("font-awesome-solid:key")
                 .title("JWKS Endpoints")
-                .componentLink("qwc-jwks-endpoints.js")
+                .componentLink("components/qwc-jwks-endpoints.js")
                 .dynamicLabelJsonRPCMethodName("getJwksStatus"));
 
         // Token Debugging Tools page
         cardPageBuildItem.addPage(Page.webComponentPageBuilder()
                 .icon("font-awesome-solid:bug")
                 .title("Token Debugger")
-                .componentLink("qwc-jwt-debugger.js")
+                .componentLink("components/qwc-jwt-debugger.js")
                 .staticLabel("Debug Tokens"));
 
         // Configuration Overview page
         cardPageBuildItem.addPage(Page.webComponentPageBuilder()
                 .icon("font-awesome-solid:cog")
                 .title("Configuration")
-                .componentLink("qwc-jwt-config.js")
+                .componentLink("components/qwc-jwt-config.js")
                 .staticLabel("View Config"));
 
         return cardPageBuildItem;
