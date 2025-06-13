@@ -6,7 +6,7 @@
  * Follows CUI CSS and JavaScript formatting standards.
  */
 
-module.exports = {
+export default {
   // Basic formatting options
   printWidth: 120,
   tabWidth: 2,

@@ -2,6 +2,7 @@
   "name": "cui-jwt-quarkus-devui",
   "version": "1.0.0-SNAPSHOT",
   "description": "DevUI components for CUI JWT Quarkus extension",
+  "type": "module",
   "private": true,
   "scripts": {
     "test": "jest",

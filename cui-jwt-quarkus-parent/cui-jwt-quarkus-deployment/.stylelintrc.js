@@ -6,7 +6,7 @@
  * Follows CUI CSS standards for modern CSS development.
  */
 
-module.exports = {
+export default {
   extends: [
     'stylelint-config-standard'
   ],
@@ -95,17 +95,13 @@ module.exports = {
           'transparent',
           'inherit',
           'initial',
-          'unset',
-          // Allow Lumo theme variables
-          '/^var\\(--lumo-.+\\)$/',
-          // Allow component variables  
-          '/^var\\(--component-.+\\)$/'
+          'unset'
         ]
       }
     ],
     
     // CSS Custom Properties patterns
-    'custom-property-pattern': '^(lumo|component)-[a-z0-9]+(-[a-z0-9]+)*$',
+    'custom-property-pattern': '^[a-z][a-z0-9]*(-[a-z0-9]+)*$',
     'custom-property-empty-line-before': 'never',
     
     // Modern selector patterns for Lit components
@@ -164,8 +160,6 @@ module.exports = {
     'declaration-property-value-no-unknown': true,
     'function-no-unknown': true,
     'media-feature-name-no-unknown': true,
-    'property-no-unknown': true,
-    'selector-pseudo-class-no-unknown': true,
     'selector-pseudo-element-no-unknown': true,
     'selector-type-no-unknown': true,
     
@@ -174,18 +168,6 @@ module.exports = {
     'no-descending-specificity': null, // Disabled for CSS-in-JS components
     'declaration-block-no-redundant-longhand-properties': true,
     
-    // CSS Custom Properties for Vaadin/Lumo theming
-    'property-no-unknown': [
-      true,
-      {
-        ignoreProperties: [
-          // Vaadin/Lumo theme properties
-          '/^--lumo-.+/',
-          // Custom component properties
-          '/^--component-.+/',
-        ],
-      },
-    ],
     
     // Disable rules that conflict with CSS-in-JS
     'no-empty-source': null,
