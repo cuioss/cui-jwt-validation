@@ -1,39 +1,43 @@
-# Configuration for testing
+# Test configuration for Quarkus tests
+quarkus:
+  log:
+    level: INFO
+    console:
+      enable: true
+      format: "%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p [%c] (%t) %s%e%n"
+    category:
+      "de.cuioss.jwt":
+        level: DEBUG
+      "org.jboss.logmanager":
+        level: WARN
+  jacoco:
+    reuse-data-file: true
+
+# JWT configuration for testing
 cui:
   jwt:
     issuers:
       default:
-        url: https://example.com/auth
+        url: https://test-auth.example.com
         enabled: true
-      test:
-        url: https://test-idp.example.com/auth/realms/test
-        publicKeyLocation: classpath:keys/test_public_key.pem
+        public-key-location: classpath:keys/test_public_key.pem
+      test-issuer:
+        url: https://test-issuer.example.com
         enabled: true
         jwks:
-          url: https://test-idp.example.com/auth/realms/test/protocol/openid-connect/certs
-          cacheTtlSeconds: 3600
-          refreshIntervalSeconds: 300
-          connectionTimeoutMs: 2000
-          readTimeoutMs: 2000
-          maxRetries: 3
-          useSystemProxy: false
-        parser:
-          audience: test-app
-          leewaySeconds: 45
-          maxTokenSizeBytes: 4096
-          validateNotBefore: true
-          validateExpiration: true
-          validateIssuedAt: false
-          allowedAlgorithms: RS256,ES256
+          url: https://test-issuer.example.com/.well-known/jwks.json
+          refresh-interval-seconds: 300
+          read-timeout-ms: 5000
     parser:
-      leewaySeconds: 30
-      maxTokenSizeBytes: 8192
-      validateNotBefore: true
-      validateExpiration: true
-      validateIssuedAt: false
-      allowedAlgorithms: RS256,RS384,RS512,ES256,ES384,ES512
+      max-token-size-bytes: 8192
+      audience: test-audience
+      leeway-seconds: 30
+      validate-not-before: true
+      validate-expiration: true
+      validate-issued-at: false
+      allowed-algorithms: RS256,RS384,RS512,ES256,ES384,ES512
     health:
       enabled: true
       jwks:
-        cacheSeconds: 30
-        timeoutSeconds: 5
+        cache-seconds: 30
+        timeout-seconds: 5

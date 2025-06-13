@@ -185,7 +185,7 @@
                     <trimStackTrace>false</trimStackTrace>
                     <enableAssertions>true</enableAssertions>
                     <!-- Suppress JVM warnings -->
-                    <argLine>-XX:+IgnoreUnrecognizedVMOptions -Djava.awt.headless=true</argLine>
+                    <argLine>@{argLine} -XX:+IgnoreUnrecognizedVMOptions -Djava.awt.headless=true</argLine>
                     <!-- Fix for "Surefire is going to kill self fork JVM" issue -->
                     <forkedProcessTimeoutInSeconds>0</forkedProcessTimeoutInSeconds>
                     <forkedProcessExitTimeoutInSeconds>60</forkedProcessExitTimeoutInSeconds>
@@ -202,14 +202,12 @@
                             <goal>prepare-agent</goal>
                         </goals>
                         <configuration>
-                            <!-- Configure JaCoCo to work with Quarkus tests -->
+                            <!-- Configure JaCoCo to work with deployment tests -->
                             <includes>
                                 <include>de/cuioss/jwt/quarkus/deployment/**</include>
                             </includes>
-                            <!-- Ensure JaCoCo agent is properly attached to Quarkus tests -->
+                            <!-- Ensure JaCoCo agent is properly attached to tests -->
                             <append>true</append>
-                            <!-- Set property name to avoid conflicts with surefire -->
-                            <propertyName>jacoco.agent.argLine</propertyName>
                             <!-- Ensure destination file is set -->
                             <destFile>${project.build.directory}/jacoco.exec</destFile>
                         </configuration>
@@ -222,6 +220,10 @@
                         </goals>
                         <configuration>
                             <outputDirectory>${project.build.directory}/site/jacoco</outputDirectory>
+                            <formats>
+                                <format>XML</format>
+                                <format>HTML</format>
+                            </formats>
                         </configuration>
                     </execution>
                 </executions>
