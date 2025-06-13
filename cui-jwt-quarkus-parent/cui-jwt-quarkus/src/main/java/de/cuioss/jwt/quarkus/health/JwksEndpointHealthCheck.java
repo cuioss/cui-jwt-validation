@@ -17,6 +17,7 @@ package de.cuioss.jwt.quarkus.health;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import de.cuioss.jwt.quarkus.config.JwtPropertyKeys;
 import de.cuioss.jwt.validation.IssuerConfig;
 import de.cuioss.jwt.validation.TokenValidator;
 import de.cuioss.jwt.validation.jwks.JwksLoader;
@@ -42,7 +43,6 @@ import java.util.concurrent.TimeUnit;
 public class JwksEndpointHealthCheck implements HealthCheck {
 
     private static final CuiLogger LOGGER = new CuiLogger(JwksEndpointHealthCheck.class);
-    private static final String CONFIG_CACHE_SECONDS = "cui.jwt.health.jwks.cache-seconds";
     private static final String DEFAULT_CACHE_SECONDS = "30";
     private static final String HEALTHCHECK_NAME = "jwks-endpoints";
     private static final String ERROR_NO_ISSUER_CONFIGS = "No issuer configurations found";
@@ -55,7 +55,7 @@ public class JwksEndpointHealthCheck implements HealthCheck {
 
     @Inject
     public JwksEndpointHealthCheck(TokenValidator tokenValidator,
-            @ConfigProperty(name = CONFIG_CACHE_SECONDS, defaultValue = DEFAULT_CACHE_SECONDS) int cacheSeconds) {
+            @ConfigProperty(name = JwtPropertyKeys.HEALTH.JWKS.CACHE_SECONDS, defaultValue = DEFAULT_CACHE_SECONDS) int cacheSeconds) {
         this.tokenValidator = tokenValidator;
         this.healthCheckCache = Caffeine.newBuilder()
                 .expireAfterWrite(cacheSeconds, TimeUnit.SECONDS)

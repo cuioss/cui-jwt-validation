@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.quarkus.metrics;
 
+import de.cuioss.jwt.quarkus.config.JwtPropertyKeys;
 import de.cuioss.jwt.validation.TokenValidator;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
 import de.cuioss.jwt.validation.security.SecurityEventCounter.EventType;
@@ -55,7 +56,7 @@ class JwtMetricsCollectorTest {
         assertNotNull(metricsCollector);
 
         // Get counters from registry
-        Collection<Counter> counters = registry.find("cui.jwt.validation.errors").counters();
+        Collection<Counter> counters = registry.find(JwtPropertyKeys.METRICS.VALIDATION_ERRORS).counters();
 
         // Verify counters exist for all event types
         assertFalse(counters.isEmpty(), "Should have registered counters");
@@ -86,7 +87,7 @@ class JwtMetricsCollectorTest {
         metricsCollector.updateCounters();
 
         // Verify the metric exists with the correct tags
-        boolean hasMetric = !registry.find("cui.jwt.validation.errors")
+        boolean hasMetric = !registry.find(JwtPropertyKeys.METRICS.VALIDATION_ERRORS)
                 .tag("event_type", testEventType.name())
                 .tag("result", "failure")
                 .tag("category", "INVALID_SIGNATURE")

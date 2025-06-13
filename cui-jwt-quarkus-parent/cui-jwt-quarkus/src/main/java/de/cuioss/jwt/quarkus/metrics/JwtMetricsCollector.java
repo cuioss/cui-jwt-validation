@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.quarkus.metrics;
 
+import de.cuioss.jwt.quarkus.config.JwtPropertyKeys;
 import de.cuioss.jwt.validation.TokenValidator;
 import de.cuioss.jwt.validation.security.EventCategory;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
@@ -59,8 +60,7 @@ public class JwtMetricsCollector {
 
     private static final CuiLogger LOGGER = new CuiLogger(JwtMetricsCollector.class);
 
-    private static final String PREFIX = "cui.jwt.";
-    private static final String VALIDATION_ERRORS = PREFIX + "validation.errors";
+    private static final String VALIDATION_ERRORS = JwtPropertyKeys.METRICS.VALIDATION_ERRORS;
 
     private static final String TAG_EVENT_TYPE = "event_type";
     private static final String TAG_RESULT = "result";

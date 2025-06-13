@@ -15,6 +15,7 @@
  */
 package de.cuioss.jwt.quarkus.metrics;
 
+import de.cuioss.jwt.quarkus.config.JwtPropertyKeys;
 import de.cuioss.jwt.quarkus.config.JwtTestProfile;
 import de.cuioss.jwt.validation.TokenValidator;
 import de.cuioss.jwt.validation.security.SecurityEventCounter;
@@ -59,18 +60,18 @@ class MetricsIntegrationTest {
         }
 
         // Then - verify that error metrics were recorded
-        assertNotNull(meterRegistry.find("cui.jwt.validation.errors").counters(),
+        assertNotNull(meterRegistry.find(JwtPropertyKeys.METRICS.VALIDATION_ERRORS).counters(),
                 "Error counters should be registered");
 
         // Verify that at least one counter exists (we can't verify values reliably in tests)
-        assertFalse(meterRegistry.find("cui.jwt.validation.errors").counters().isEmpty(), "Error counters should be registered");
+        assertFalse(meterRegistry.find(JwtPropertyKeys.METRICS.VALIDATION_ERRORS).counters().isEmpty(), "Error counters should be registered");
     }
 
     @Test
     @DisplayName("Should register JWKs cache size metrics")
     void shouldRegisterJwksCacheSizeMetrics() {
         // Verify that JWKS cache size gauges are registered
-        assertNotNull(meterRegistry.find("cui.jwt.jwks.cache.size").gauges(),
+        assertNotNull(meterRegistry.find(JwtPropertyKeys.METRICS.JWKS_CACHE_SIZE).gauges(),
                 "JWKS cache size gauges should be registered");
     }
 
@@ -85,7 +86,7 @@ class MetricsIntegrationTest {
             }
 
             // Look for a counter with this event type
-            boolean hasMetricForEventType = !meterRegistry.find("cui.jwt.validation.errors")
+            boolean hasMetricForEventType = !meterRegistry.find(JwtPropertyKeys.METRICS.VALIDATION_ERRORS)
                     .tag("event_type", eventType.name())
                     .counters().isEmpty();
 
