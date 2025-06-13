@@ -35,7 +35,7 @@ export class LitElement {
     // Mock shadow DOM
     this.shadowRoot = {
       innerHTML: '',
-      querySelector: jest.fn(selector => {
+      querySelector: jest.fn(_selector => {
         // Mock element with all necessary DOM methods
         return {
           tagName: 'DIV',
@@ -88,7 +88,7 @@ export class LitElement {
     // Cleanup logic
   }
 
-  attributeChangedCallback(name, oldValue, newValue) {
+  attributeChangedCallback(_name, _oldValue, _newValue) {
     this._requestUpdate();
   }
 
@@ -98,6 +98,7 @@ export class LitElement {
       this._updatePromise = Promise.resolve().then(() => {
         this._updatePromise = null;
         this._performUpdate();
+        return true;
       });
     }
     return this._updatePromise;

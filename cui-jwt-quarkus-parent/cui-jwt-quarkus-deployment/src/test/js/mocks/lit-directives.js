@@ -20,7 +20,8 @@ export const repeat = jest.fn((items, keyFn, template) => {
 
   return items
     .map((item, index) => {
-      const key = keyFn ? keyFn(item, index) : index;
+      // Generate key for compatibility but don't use it in tests
+      if (keyFn) keyFn(item, index);
       return template(item, index);
     })
     .join('');
@@ -84,14 +85,14 @@ export const until = jest.fn((...values) => {
 });
 
 // Mock asyncAppend directive
-export const asyncAppend = jest.fn((asyncIterable, mapper) => {
+export const asyncAppend = jest.fn((_asyncIterable, _mapper) => {
   // For testing, just return empty string
   // Real implementation would handle async iteration
   return '';
 });
 
 // Mock asyncReplace directive
-export const asyncReplace = jest.fn((asyncIterable, mapper) => {
+export const asyncReplace = jest.fn((_asyncIterable, _mapper) => {
   // For testing, just return empty string
   // Real implementation would handle async iteration
   return '';
@@ -110,7 +111,7 @@ export const guard = jest.fn((dependencies, valueFn) => valueFn());
 export const live = jest.fn(value => value);
 
 // Mock ref directive
-export const ref = jest.fn(refOrCallback => {
+export const ref = jest.fn(_refOrCallback => {
   // Return a mock ref object
   return {
     value: null,
