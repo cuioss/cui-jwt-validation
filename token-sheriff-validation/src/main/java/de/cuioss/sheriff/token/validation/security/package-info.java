@@ -26,6 +26,7 @@
  * <ul>
  *   <li>{@link de.cuioss.sheriff.token.validation.security.SignatureAlgorithmPreferences} - Manages algorithm preferences for JWT signature validation</li>
  *   <li>{@link de.cuioss.sheriff.token.validation.security.JwkAlgorithmPreferences} - Manages algorithm preferences for JWK parsing</li>
+ *   <li>{@link de.cuioss.sheriff.token.validation.security.JwsAlgorithm} - The accepted JWS signing algorithms, defined once in security preference order</li>
  * </ul>
  * <p>
  * The classes in this package implement security best practices, including:

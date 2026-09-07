@@ -25,16 +25,42 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Signature;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test for {@link SignatureTemplateManager}.
+ * <p>
+ * {@link #getSignatureInstanceSupportedAlgorithms(String)} is the single suite covering every
+ * algorithm the manager pre-configures, asserting the exact JCA signature-algorithm name each one
+ * resolves to. It carries the coverage the per-family suites used to give: those asserted that a
+ * name merely contained {@code RSA} or {@code ECDSA}, which every wrong name in the same family
+ * also satisfies, so the family they proved was never the algorithm under test.
  *
  * @author Oliver Wolff
  */
 class SignatureTemplateManagerTest {
+
+    /**
+     * The JCA signature algorithm each JWA algorithm must resolve to, written out literally.
+     * <p>
+     * The manager composes these names from the {@code JwsAlgorithm} catalog, so an expectation
+     * derived from that catalog would agree with any composition it produces. Only a literal name
+     * can catch a rename, a widened family match, or a PS entry silently resolving to PKCS#1 v1.5.
+     */
+    private static final Map<String, String> EXPECTED_JCA_NAMES = Map.ofEntries(
+            Map.entry("ES512", "SHA512withECDSA"),
+            Map.entry("ES384", "SHA384withECDSA"),
+            Map.entry("ES256", "SHA256withECDSA"),
+            Map.entry("EdDSA", "EdDSA"),
+            Map.entry("PS512", "RSASSA-PSS"),
+            Map.entry("PS384", "RSASSA-PSS"),
+            Map.entry("PS256", "RSASSA-PSS"),
+            Map.entry("RS512", "SHA512withRSA"),
+            Map.entry("RS384", "SHA384withRSA"),
+            Map.entry("RS256", "SHA256withRSA"));
 
     private SignatureTemplateManager manager;
 
@@ -44,12 +70,27 @@ class SignatureTemplateManagerTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "PS256", "PS384", "PS512"})
+    @ValueSource(strings = {"ES512", "ES384", "ES256", "EdDSA", "PS512", "PS384", "PS256",
+            "RS512", "RS384", "RS256"})
     void getSignatureInstanceSupportedAlgorithms(String algorithm) {
         Signature signature = manager.getSignatureInstance(algorithm);
+
         assertNotNull(signature, "Signature should not be null for algorithm: " + algorithm);
-        assertTrue(signature.getAlgorithm().contains("RSA") || signature.getAlgorithm().contains("ECDSA"),
-                "Algorithm should be RSA or ECDSA based for: " + algorithm);
+        assertEquals(EXPECTED_JCA_NAMES.get(algorithm), signature.getAlgorithm(),
+                "JCA signature algorithm resolved for " + algorithm);
+    }
+
+    @Test
+    void ps256ResolvesToRsassaPssAndNeverToPkcs1() {
+        Signature signature = manager.getSignatureInstance("PS256");
+
+        assertAll("PS256 is RSASSA-PSS, not PKCS#1 v1.5",
+                () -> assertEquals("RSASSA-PSS", signature.getAlgorithm(),
+                        "PS256 must resolve to RSASSA-PSS"),
+                () -> assertFalse(signature.getAlgorithm().matches("SHA\\d+withRSA"),
+                        "PS256 must not resolve to a PKCS#1 v1.5 name — a SHA*withRSA instance would "
+                                + "produce a signature scheme the PS256 header does not describe, and a "
+                                + "'contains RSA' assertion accepts both"));
     }
 
     @Test
@@ -94,33 +135,6 @@ class SignatureTemplateManagerTest {
                 futures.toArray(new CompletableFuture[0]));
 
         assertDoesNotThrow(() -> allFutures.get(), "Concurrent access should not throw exceptions");
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"PS256", "PS384", "PS512"})
-    void pssAlgorithms(String algorithm) {
-        Signature signature = manager.getSignatureInstance(algorithm);
-        assertNotNull(signature, "PSS signature should not be null for algorithm: " + algorithm);
-        assertEquals("RSASSA-PSS", signature.getAlgorithm(),
-                "PSS algorithms should use RSASSA-PSS");
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"ES256", "ES384", "ES512"})
-    void ecdsaAlgorithms(String algorithm) {
-        Signature signature = manager.getSignatureInstance(algorithm);
-        assertNotNull(signature, "ECDSA signature should not be null for algorithm: " + algorithm);
-        assertTrue(signature.getAlgorithm().contains("ECDSA"),
-                "ECDSA algorithms should contain 'ECDSA' in name");
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"RS256", "RS384", "RS512"})
-    void rsaAlgorithms(String algorithm) {
-        Signature signature = manager.getSignatureInstance(algorithm);
-        assertNotNull(signature, "RSA signature should not be null for algorithm: " + algorithm);
-        assertTrue(signature.getAlgorithm().contains("RSA"),
-                "RSA algorithms should contain 'RSA' in name");
     }
 
     @Test

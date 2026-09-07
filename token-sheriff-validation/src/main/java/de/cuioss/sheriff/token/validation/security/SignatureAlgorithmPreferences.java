@@ -19,6 +19,7 @@ import de.cuioss.sheriff.token.validation.JWTValidationLogMessages;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.Getter;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -69,14 +70,17 @@ public class SignatureAlgorithmPreferences {
 
     /**
      * Gets the default list of preferred signature algorithms in order of preference.
+     * <p>
+     * The list is the {@link JwsAlgorithm} catalog in its declared order, which is the security
+     * preference order (most preferred first). Restating the names here would be a second copy of
+     * that order, free to drift from the catalog every consumer resolves against.
      *
      * @return the default list of preferred signature algorithms
      */
     private static List<String> getDefaultPreferredAlgorithms() {
         LOGGER.debug("Getting default preferred signature algorithms");
 
-        // Order algorithms by preference (most secure first)
-        return List.of("ES512", "ES384", "ES256", "EdDSA", "PS512", "PS384", "PS256", "RS512", "RS384", "RS256");
+        return Arrays.stream(JwsAlgorithm.values()).map(JwsAlgorithm::getJwaName).toList();
     }
 
     /**
