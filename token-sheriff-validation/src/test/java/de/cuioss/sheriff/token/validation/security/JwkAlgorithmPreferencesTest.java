@@ -17,7 +17,9 @@ package de.cuioss.sheriff.token.validation.security;
 
 import de.cuioss.test.juli.junit5.EnableTestLogger;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -104,13 +106,28 @@ class JwkAlgorithmPreferencesTest {
     void isSupportedWithInvalidAlgorithms() {
         JwkAlgorithmPreferences preferences = new JwkAlgorithmPreferences();
 
-        // Test unsupported algorithms
-        assertFalse(preferences.isSupported("HS256"));
-        assertFalse(preferences.isSupported("HS384"));
-        assertFalse(preferences.isSupported("HS512"));
-        assertFalse(preferences.isSupported("none"));
-        assertFalse(preferences.isSupported("unknown"));
-        assertFalse(preferences.isSupported("invalid"));
+        // Every member of the shared rejection list, plus two names that are simply not in the
+        // supported catalog. The rejection cases are derived so a member added to the shared list
+        // is exercised here without a second hand-maintained copy; the two non-members stay
+        // explicit because they are not part of that list and would otherwise go untested.
+        List<Executable> assertions = new ArrayList<>();
+        for (String rejected : RejectedAlgorithms.VALUES) {
+            assertions.add(() -> assertFalse(preferences.isSupported(rejected),
+                    "Rejected algorithm should not be supported for JWK parsing: " + rejected));
+        }
+        assertions.add(() -> assertFalse(preferences.isSupported("unknown"),
+                "An algorithm outside the supported catalog should not be supported: unknown"));
+        assertions.add(() -> assertFalse(preferences.isSupported("invalid"),
+                "An algorithm outside the supported catalog should not be supported: invalid"));
+
+        assertAll("no rejected or unknown algorithm is supported for JWK parsing", assertions);
+    }
+
+    @Test
+    void sharedRejectionListIsExercisedByTheInvalidAlgorithmCases() {
+        assertEquals(List.of("HS256", "HS384", "HS512", "none"), RejectedAlgorithms.VALUES,
+                "The rejection cases above are derived from this list, so emptying it would silently "
+                        + "reduce them to nothing");
     }
 
     @Test

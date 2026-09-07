@@ -46,11 +46,6 @@ public class SignatureAlgorithmPreferences {
     private final List<String> preferredAlgorithms;
 
     /**
-     * List of explicitly rejected algorithms for security reasons.
-     */
-    private static final List<String> REJECTED_ALGORITHMS = List.of("HS256", "HS384", "HS512", "none");
-
-    /**
      * Default constructor that initializes the preferred algorithms list with default values.
      */
     public SignatureAlgorithmPreferences() {
@@ -64,7 +59,7 @@ public class SignatureAlgorithmPreferences {
      */
     public SignatureAlgorithmPreferences(List<String> preferredAlgorithms) {
         for (String alg : preferredAlgorithms) {
-            if (REJECTED_ALGORITHMS.contains(alg)) {
+            if (RejectedAlgorithms.VALUES.contains(alg)) {
                 throw new IllegalArgumentException(
                         "Algorithm '%s' is in the rejected algorithms list and cannot be used as a preferred algorithm".formatted(alg));
             }
@@ -96,7 +91,7 @@ public class SignatureAlgorithmPreferences {
         }
 
         // Check if the algorithm is explicitly rejected
-        if (REJECTED_ALGORITHMS.contains(algorithm)) {
+        if (RejectedAlgorithms.VALUES.contains(algorithm)) {
             LOGGER.warn(JWTValidationLogMessages.WARN.ALGORITHM_REJECTED, algorithm);
             return false;
         }
