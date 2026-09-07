@@ -15,6 +15,7 @@
  */
 package de.cuioss.sheriff.token.client.dpop;
 
+import de.cuioss.sheriff.token.validation.security.JwsAlgorithm;
 import de.cuioss.sheriff.token.validation.util.JwkThumbprintUtil;
 import de.cuioss.test.generator.junit.EnableGeneratorController;
 import de.cuioss.test.juli.LogAsserts;
@@ -24,8 +25,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.Serial;
 import java.math.BigInteger;
@@ -49,6 +50,7 @@ import java.util.Base64;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -76,6 +78,9 @@ class DpopProofGeneratorTest {
 
     private static final Base64.Encoder BASE64_URL = Base64.getUrlEncoder().withoutPadding();
 
+    /** The proof-key types the generator classifies, over which the mismatch matrix is computed. */
+    private static final Set<String> KEY_TYPES = Set.of("RSA", "EC", "OKP");
+
     private KeyPair keyPair;
     private KeyPair ecKeyPair;
     private KeyPair okpKeyPair;
@@ -94,7 +99,7 @@ class DpopProofGeneratorTest {
     }
 
     @ParameterizedTest(name = "{0}")
-    @ValueSource(strings = {"RS256", "RS384", "RS512", "PS256", "ES256", "EdDSA"})
+    @MethodSource("supportedAlgorithms")
     @DisplayName("Should build a signed dpop+jwt proof carrying the htm/htu/jti/iat claims and embedded JWK")
     void shouldBuildSignedProof(String algorithm) {
         KeyPair proofKey = proofKeyFor(algorithm);
@@ -122,7 +127,7 @@ class DpopProofGeneratorTest {
     }
 
     @ParameterizedTest(name = "{0}")
-    @ValueSource(strings = {"RS256", "RS384", "RS512", "PS256", "ES256", "EdDSA"})
+    @MethodSource("supportedAlgorithms")
     @DisplayName("Should expose a stable jkt computed over the key type's canonical JWK members")
     void shouldExposeJktOverCanonicalMembers(String algorithm) {
         KeyPair proofKey = proofKeyFor(algorithm);
@@ -204,22 +209,24 @@ class DpopProofGeneratorTest {
     }
 
     @ParameterizedTest(name = "{0} with a {1} key")
-    @CsvSource({
-            "ES256, RSA",
-            "EdDSA, RSA",
-            "RS256, EC",
-            "PS256, EC",
-            "EdDSA, EC",
-            "RS256, OKP",
-            "PS256, OKP",
-            "ES256, OKP"
-    })
+    @MethodSource("algorithmKeyTypeMismatches")
     @DisplayName("Should reject an algorithm that does not match the proof-key type")
     void shouldRejectAlgorithmKeyTypeMismatch(String algorithm, String keyType) {
         KeyPair mismatchedKey = keyPairOfType(keyType);
 
         assertThrows(IllegalArgumentException.class, () -> new DpopProofGenerator(mismatchedKey, algorithm),
                 "%s must not be accepted with a %s proof key".formatted(algorithm, keyType));
+    }
+
+    @Test
+    @DisplayName("Should support exactly the six DPoP algorithms the derived suites are computed from")
+    void shouldSupportExactlyTheSixDpopAlgorithms() {
+        assertEquals(
+                Set.of(JwsAlgorithm.RS256, JwsAlgorithm.RS384, JwsAlgorithm.RS512,
+                        JwsAlgorithm.PS256, JwsAlgorithm.ES256, JwsAlgorithm.EDDSA),
+                DpopProofGenerator.SUPPORTED_ALGORITHMS,
+                "the DPoP-supported subset must stay exactly these six members — the suites above are "
+                        + "derived from it, so an emptied or widened subset would silently change their coverage");
     }
 
     @Test
@@ -265,6 +272,26 @@ class DpopProofGeneratorTest {
         assertAll("parameter guards",
                 () -> assertThrows(IllegalArgumentException.class, () -> proofGenerator.generateProof("  ", HTU)),
                 () -> assertThrows(IllegalArgumentException.class, () -> proofGenerator.generateProof(HTM, "  ")));
+    }
+
+    /**
+     * The algorithms the generator accepts, read from its declared subset so a subset change extends
+     * or narrows the derived suites rather than leaving them asserting a stale hand-written list.
+     */
+    static Stream<String> supportedAlgorithms() {
+        return DpopProofGenerator.SUPPORTED_ALGORITHMS.stream().map(JwsAlgorithm::getJwaName);
+    }
+
+    /**
+     * The full algorithm/key-type mismatch matrix: every supported algorithm paired with each proof-key
+     * type that is <em>not</em> the one it requires — the complement of the supported subset over
+     * {@link #KEY_TYPES}, which is 12 pairs for the six-member subset.
+     */
+    static Stream<Arguments> algorithmKeyTypeMismatches() {
+        return DpopProofGenerator.SUPPORTED_ALGORITHMS.stream()
+                .flatMap(algorithm -> KEY_TYPES.stream()
+                        .filter(keyType -> !keyType.equals(algorithm.getKeyType()))
+                        .map(keyType -> Arguments.of(algorithm.getJwaName(), keyType)));
     }
 
     private KeyPair proofKeyFor(String algorithm) {

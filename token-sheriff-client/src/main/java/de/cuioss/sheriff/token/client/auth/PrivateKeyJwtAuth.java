@@ -17,17 +17,20 @@ package de.cuioss.sheriff.token.client.auth;
 
 import de.cuioss.sheriff.token.client.config.ClientAuthMethod;
 import de.cuioss.sheriff.token.client.internal.JsonEscaper;
+import de.cuioss.sheriff.token.validation.security.JwsAlgorithm;
 
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.PrivateKey;
 import java.security.Signature;
-import java.security.spec.MGF1ParameterSpec;
 import java.security.spec.PSSParameterSpec;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -55,11 +58,21 @@ public class PrivateKeyJwtAuth implements ClientAuthentication {
     private static final long ASSERTION_LIFETIME_SECONDS = 60L;
     private static final Base64.Encoder BASE64_URL = Base64.getUrlEncoder().withoutPadding();
 
+    /**
+     * The {@link JwsAlgorithm} subset this authentication method accepts — the RSA and ECDSA
+     * families. The subset is declared here rather than inherited from the catalog wholesale
+     * because {@code EdDSA} is deliberately not offered for {@code private_key_jwt}.
+     */
+    static final Set<JwsAlgorithm> SUPPORTED_ALGORITHMS = EnumSet.of(
+            JwsAlgorithm.RS256, JwsAlgorithm.RS384, JwsAlgorithm.RS512,
+            JwsAlgorithm.PS256, JwsAlgorithm.PS384, JwsAlgorithm.PS512,
+            JwsAlgorithm.ES256, JwsAlgorithm.ES384, JwsAlgorithm.ES512);
+
     private final String clientId;
     private final String audience;
     private final PrivateKey privateKey;
     private final String keyId;
-    private final String jwtAlgorithm;
+    private final JwsAlgorithm algorithm;
     private final String jcaAlgorithm;
 
     /**
@@ -78,8 +91,9 @@ public class PrivateKeyJwtAuth implements ClientAuthentication {
         this.audience = Objects.requireNonNull(audience, "audience must not be null");
         this.privateKey = Objects.requireNonNull(privateKey, "privateKey must not be null");
         this.keyId = Objects.requireNonNull(keyId, "keyId must not be null");
-        this.jwtAlgorithm = Objects.requireNonNull(algorithm, "algorithm must not be null");
-        this.jcaAlgorithm = toJcaAlgorithm(algorithm);
+        Objects.requireNonNull(algorithm, "algorithm must not be null");
+        this.algorithm = requireSupportedAlgorithm(algorithm);
+        this.jcaAlgorithm = jcaSignatureAlgorithmOf(this.algorithm);
     }
 
     @Override
@@ -95,7 +109,7 @@ public class PrivateKeyJwtAuth implements ClientAuthentication {
 
     private String buildAssertion() {
         long now = Instant.now().getEpochSecond();
-        String header = "{\"alg\":\"" + jwtAlgorithm + "\",\"typ\":\"JWT\",\"kid\":\""
+        String header = "{\"alg\":\"" + algorithm.getJwaName() + "\",\"typ\":\"JWT\",\"kid\":\""
                 + JsonEscaper.escape(keyId) + "\"}";
         // audience is sourced from the AS's own discovery metadata (token endpoint URL); escape
         // every JSON control character per RFC 8259, not only quote/backslash.
@@ -111,10 +125,11 @@ public class PrivateKeyJwtAuth implements ClientAuthentication {
     private String sign(String signingInput) {
         try {
             Signature signature = Signature.getInstance(jcaAlgorithm);
-            if (jwtAlgorithm.startsWith("PS")) {
+            Optional<PSSParameterSpec> pssParameters = algorithm.getPssParameters();
+            if (pssParameters.isPresent()) {
                 // RSASSA-PSS requires explicit parameters: MGF1 over the same hash and a salt length
                 // equal to the digest length, per RFC 7518 §3.5.
-                signature.setParameter(pssParameterSpec(jwtAlgorithm));
+                signature.setParameter(pssParameters.get());
             }
             signature.initSign(privateKey);
             signature.update(signingInput.getBytes(StandardCharsets.UTF_8));
@@ -128,29 +143,34 @@ public class PrivateKeyJwtAuth implements ClientAuthentication {
         return BASE64_URL.encodeToString(json.getBytes(StandardCharsets.UTF_8));
     }
 
-    private static String toJcaAlgorithm(String jwtAlgorithm) {
-        return switch (jwtAlgorithm) {
-            case "RS256" -> "SHA256withRSA";
-            case "RS384" -> "SHA384withRSA";
-            case "RS512" -> "SHA512withRSA";
-            case "PS256", "PS384", "PS512" -> "RSASSA-PSS";
-            // JOSE ECDSA signatures are the raw R||S concatenation (IEEE P1363), not the JCA-default
-            // DER encoding, so the in-P1363-format variants are required (RFC 7518 §3.4).
-            case "ES256" -> "SHA256withECDSAinP1363Format";
-            case "ES384" -> "SHA384withECDSAinP1363Format";
-            case "ES512" -> "SHA512withECDSAinP1363Format";
-            default -> throw new IllegalArgumentException(
-                    "unsupported private_key_jwt signing algorithm: " + jwtAlgorithm);
-        };
+    /**
+     * Resolves a JWA {@code alg} name against the shared catalog and refuses anything outside
+     * {@link #SUPPORTED_ALGORITHMS} — the catalog also carries {@code EdDSA}, which this
+     * authentication method does not offer.
+     *
+     * @param algorithm the requested JWT signing algorithm
+     * @return the catalog entry for the algorithm
+     * @throws IllegalArgumentException if the algorithm is unknown to the catalog or outside the
+     *         supported subset
+     */
+    private static JwsAlgorithm requireSupportedAlgorithm(String algorithm) {
+        return JwsAlgorithm.fromJwaName(algorithm)
+                .filter(SUPPORTED_ALGORITHMS::contains)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "unsupported private_key_jwt signing algorithm: " + algorithm));
     }
 
-    private static PSSParameterSpec pssParameterSpec(String jwtAlgorithm) {
-        return switch (jwtAlgorithm) {
-            case "PS256" -> new PSSParameterSpec("SHA-256", "MGF1", MGF1ParameterSpec.SHA256, 32, 1);
-            case "PS384" -> new PSSParameterSpec("SHA-384", "MGF1", MGF1ParameterSpec.SHA384, 48, 1);
-            case "PS512" -> new PSSParameterSpec("SHA-512", "MGF1", MGF1ParameterSpec.SHA512, 64, 1);
-            default -> throw new IllegalArgumentException(
-                    "unsupported RSASSA-PSS signing algorithm: " + jwtAlgorithm);
-        };
+    /**
+     * Resolves the JCA signature-algorithm name to instantiate for a catalog entry. The catalog
+     * leaves the EC family's name open because JCA spells the same algorithm two ways; JOSE ECDSA
+     * signatures are the raw {@code R||S} concatenation (RFC 7518 §3.4), so this call site composes
+     * the in-P1363-format spelling.
+     *
+     * @param algorithm the catalog entry to resolve
+     * @return the JCA signature-algorithm name
+     */
+    private static String jcaSignatureAlgorithmOf(JwsAlgorithm algorithm) {
+        return algorithm.getJcaSignatureAlgorithm().orElseGet(
+                () -> algorithm.getDigest().orElseThrow().replace("-", "") + "withECDSAinP1363Format");
     }
 }

@@ -16,6 +16,7 @@
 package de.cuioss.sheriff.token.client.auth;
 
 import de.cuioss.sheriff.token.client.config.ClientAuthMethod;
+import de.cuioss.sheriff.token.validation.security.JwsAlgorithm;
 import de.cuioss.test.generator.Generators;
 import de.cuioss.test.generator.junit.EnableGeneratorController;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
@@ -23,7 +24,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
@@ -34,9 +35,14 @@ import java.security.Signature;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.MGF1ParameterSpec;
 import java.security.spec.PSSParameterSpec;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -132,7 +138,7 @@ class PrivateKeyJwtAuthTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"RS256", "RS384", "RS512"})
+    @MethodSource("rsaPkcs1Algorithms")
     @DisplayName("Should produce a signature that verifies against the client public key for each RSA algorithm")
     void shouldProduceVerifiableSignature(String algorithm) throws Exception {
         var auth = auth(Generators.letterStrings(5, 12).next(), "https://as.example.com/token",
@@ -149,7 +155,7 @@ class PrivateKeyJwtAuthTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"PS256", "PS384", "PS512"})
+    @MethodSource("pssAlgorithms")
     @DisplayName("Should produce a verifiable RSASSA-PSS signature for each PS algorithm (L9)")
     void shouldProduceVerifiablePssSignature(String algorithm) {
         var auth = auth(Generators.letterStrings(5, 12).next(), "https://as.example.com/token",
@@ -169,7 +175,7 @@ class PrivateKeyJwtAuthTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"ES256", "ES384", "ES512"})
+    @MethodSource("ecdsaAlgorithms")
     @DisplayName("Should produce a verifiable ECDSA (P1363) signature for each ES algorithm (L9)")
     void shouldProduceVerifiableEcdsaSignature(String algorithm) throws Exception {
         KeyPair ecKeyPair = ecKeyPair(algorithm);
@@ -188,6 +194,21 @@ class PrivateKeyJwtAuthTest {
                         "header must declare the ES algorithm"),
                 () -> assertTrue(verifyEcdsa(algorithm, ecKeyPair.getPublic(), signingInput, signature),
                         "the ECDSA (P1363) assertion signature must verify against the client public key"));
+    }
+
+    @Test
+    @DisplayName("Should cover every supported algorithm across the three derived family suites")
+    void shouldDeriveFamiliesCoveringEverySupportedAlgorithm() {
+        Set<String> derived = Stream.concat(Stream.concat(rsaPkcs1Algorithms(), pssAlgorithms()), ecdsaAlgorithms())
+                .collect(Collectors.toSet());
+
+        assertEquals(
+                PrivateKeyJwtAuth.SUPPORTED_ALGORITHMS.stream()
+                        .map(JwsAlgorithm::getJwaName)
+                        .collect(Collectors.toSet()),
+                derived,
+                "the three family suites are derived from the catalog, so they must cover exactly the "
+                        + "algorithms this class accepts — a smaller derived set silently shrinks coverage");
     }
 
     @Test
@@ -220,6 +241,31 @@ class PrivateKeyJwtAuthTest {
                 () -> assertThrows(NullPointerException.class,
                         () -> new PrivateKeyJwtAuth(clientId, audience, key, keyId, null)));
     }
+
+    /** The RSASSA-PKCS1-v1_5 family, read off the catalog: an RSA algorithm carrying no PSS parameters. */
+    static Stream<String> rsaPkcs1Algorithms() {
+        return catalogFamily(algorithm -> "RSA".equals(algorithm.getKeyType())
+                && algorithm.getPssParameters().isEmpty());
+    }
+
+    /** The RSASSA-PSS family, read off the catalog: exactly the algorithms that carry PSS parameters. */
+    static Stream<String> pssAlgorithms() {
+        return catalogFamily(algorithm -> algorithm.getPssParameters().isPresent());
+    }
+
+    /** The ECDSA family, read off the catalog by its required key type. */
+    static Stream<String> ecdsaAlgorithms() {
+        return catalogFamily(algorithm -> "EC".equals(algorithm.getKeyType()));
+    }
+
+    private static Stream<String> catalogFamily(Predicate<JwsAlgorithm> member) {
+        return Arrays.stream(JwsAlgorithm.values()).filter(member).map(JwsAlgorithm::getJwaName);
+    }
+
+    // The verify / verifyPss / verifyEcdsa / pssSpec helpers below are DELIBERATELY hand-written and
+    // independent of the shared JwsAlgorithm catalog: they are this suite's verification oracle, and
+    // deriving them from the same catalog the production code reads would make every signature
+    // assertion tautological. Do not "deduplicate" them against the catalog.
 
     private static boolean verify(String jwtAlgorithm, PublicKey publicKey, String signingInput, byte[] signature)
             throws Exception {
