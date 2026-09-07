@@ -513,11 +513,12 @@ A coverage rule that matches nothing is not an error. JaCoCo evaluates it agains
 declared in a profile the CI lane never activates behaves identically. The two failures are
 independent, so proving one says nothing about the other — a gate is proven twice or not at all.
 
-The proof is a *matched negative control*: suppress the test class that covers a gated class, run
-the lane the gate is supposed to run in, and confirm the build fails naming the *expected
-fully-qualified class name*. Naming it is the load-bearing part. A failure that names some other
-class proves a different rule fired; a failure that names no class proves only that something
-broke. Without the name, a passing negative control is consistent with the gate being vacuous.
+The proof is a *matched negative control*: suppress every test execution that contributes coverage
+to the target fully-qualified class name, run the lane the gate is supposed to run in, and confirm
+the build fails naming the *expected fully-qualified class name*. Naming it is the load-bearing
+part. A failure that names some other class proves a different rule fired; a failure that names no
+class proves only that something broke. Without the name, a passing negative control is consistent
+with the gate being vacuous.
 
 [NOTE]
 .Maintainer note — editing a gate's `<includes>`
@@ -528,8 +529,10 @@ class is `Outer.Inner`, never `Outer$Inner`. JaCoCo matches an `<element>CLASS</
 against the dotted qualified name, and an entry that matches *nothing* is **not** an error — the
 rule is simply never evaluated and `jacoco:check` reports `All coverage checks have been met.` The
 failure mode of a typo here is therefore a *false green* that silently reopens the blind spot the
-gate closes. After editing the list, confirm the gate still fires by suppressing the relevant test
-class for one run.
+gate closes. After editing the list, confirm the gate still fires by suppressing every test
+execution that contributes coverage to the entry for one run — several test classes commonly share
+one production class, and suppressing only one of them can leave it above threshold, which reports
+the same green as a gate that does not fire.
 ====
 
 === Clean before every coverage run that will be reasoned about
