@@ -140,6 +140,6 @@ available only by asserting something untrue.
 * `token-sheriff-validation` — `de.cuioss.sheriff.token.validation.security.JwsAlgorithm`,
   the catalog itself, and `RejectedAlgorithms`, the companion single definition of the
   algorithms that must never be accepted.
-* `doc/client/specification/test-strategy.adoc` § Signal integrity — the project practice
-  that governs the derivation rule stated above, including the requirement that a check be
-  shown to discriminate before its verdict is trusted.
+* xref:../client/specification/test-strategy.adoc#_signal_integrity[Signal integrity] — the
+  project practice that governs the derivation rule stated above, including the requirement
+  that a check be shown to discriminate before its verdict is trusted.
