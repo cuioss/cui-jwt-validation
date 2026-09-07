@@ -15,11 +15,11 @@
  */
 package de.cuioss.sheriff.token.validation.pipeline;
 
+import de.cuioss.sheriff.token.validation.security.JwsAlgorithm;
 import de.cuioss.sheriff.token.validation.security.SignatureAlgorithmPreferences;
 import de.cuioss.tools.logging.CuiLogger;
 
 import java.security.*;
-import java.security.spec.MGF1ParameterSpec;
 import java.security.spec.PSSParameterSpec;
 import java.util.HashMap;
 import java.util.Map;
@@ -53,7 +53,6 @@ import java.util.Map;
 public final class SignatureTemplateManager {
 
     private static final CuiLogger LOGGER = new CuiLogger(SignatureTemplateManager.class);
-    private static final String RSASSA_PSS = "RSASSA-PSS";
 
     /**
      * Cache for Signature template instances to improve performance.
@@ -133,34 +132,30 @@ public final class SignatureTemplateManager {
      * @throws IllegalArgumentException if the algorithm is not recognized
      */
     private SignatureTemplate createSignatureTemplate(String algorithm) {
-        String jdkAlgorithm;
-        PSSParameterSpec pssParams = null;
+        JwsAlgorithm catalogEntry = JwsAlgorithm.fromJwaName(algorithm)
+                .orElseThrow(() -> new IllegalArgumentException("Unsupported algorithm: " + algorithm));
 
-        switch (algorithm) {
-            case "RS256" -> jdkAlgorithm = "SHA256withRSA";
-            case "RS384" -> jdkAlgorithm = "SHA384withRSA";
-            case "RS512" -> jdkAlgorithm = "SHA512withRSA";
-            case "ES256" -> jdkAlgorithm = "SHA256withECDSA";
-            case "ES384" -> jdkAlgorithm = "SHA384withECDSA";
-            case "ES512" -> jdkAlgorithm = "SHA512withECDSA";
-            case "EdDSA" -> jdkAlgorithm = "EdDSA";
-            case "PS256" -> {
-                jdkAlgorithm = RSASSA_PSS;
-                pssParams = new PSSParameterSpec("SHA-256", "MGF1", MGF1ParameterSpec.SHA256, 32, 1);
-            }
-            case "PS384" -> {
-                jdkAlgorithm = RSASSA_PSS;
-                pssParams = new PSSParameterSpec("SHA-384", "MGF1", MGF1ParameterSpec.SHA384, 48, 1);
-            }
-            case "PS512" -> {
-                jdkAlgorithm = RSASSA_PSS;
-                pssParams = new PSSParameterSpec("SHA-512", "MGF1", MGF1ParameterSpec.SHA512, 64, 1);
-            }
-            default -> throw new IllegalArgumentException("Unsupported algorithm: " + algorithm);
-        }
+        String jdkAlgorithm = jcaSignatureAlgorithmOf(catalogEntry);
+        PSSParameterSpec pssParams = catalogEntry.getPssParameters().orElse(null);
 
         LOGGER.debug("Created signature template for algorithm: %s -> %s", algorithm, jdkAlgorithm);
         return new SignatureTemplate(jdkAlgorithm, pssParams);
+    }
+
+    /**
+     * Resolves the JCA signature-algorithm name to instantiate for a catalog entry.
+     * <p>
+     * The catalog leaves the EC family's name open because JCA spells the same algorithm two ways:
+     * {@code SHA256withECDSA} produces ASN.1/DER and {@code SHA256withECDSAinP1363Format} produces
+     * the JOSE R||S concatenation. This manager verifies DER — {@code TokenSignatureValidator}
+     * converts the JOSE form before calling it — so it composes the DER spelling.
+     *
+     * @param catalogEntry the catalog entry to resolve
+     * @return the JCA signature-algorithm name
+     */
+    private static String jcaSignatureAlgorithmOf(JwsAlgorithm catalogEntry) {
+        return catalogEntry.getJcaSignatureAlgorithm().orElseGet(
+                () -> catalogEntry.getDigest().orElseThrow().replace("-", "") + "withECDSA");
     }
 
     /**

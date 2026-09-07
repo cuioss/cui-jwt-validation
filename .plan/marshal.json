@@ -274,28 +274,48 @@
       "optionals": []
     },
     "general-dev": {
-      "bundle": "plan-marshall"
+      "bundle": "plan-marshall",
+      "always_on": true
     },
     "documentation": {
       "bundle": "pm-documents",
       "workflow_skill_extensions": {
         "triage": "pm-documents:ext-triage-docs"
-      }
+      },
+      "file_globs": [
+        "**/*.adoc",
+        "**/*.md"
+      ]
     },
     "javascript": {
       "bundle": "pm-dev-frontend",
       "workflow_skill_extensions": {
         "triage": "pm-dev-frontend:ext-triage-js"
-      }
+      },
+      "file_globs": [
+        "**/*.js",
+        "**/*.mjs",
+        "**/*.ts",
+        "**/*.css",
+        "**/package.json"
+      ]
     },
     "java": {
       "bundle": "pm-dev-java",
       "workflow_skill_extensions": {
         "triage": "pm-dev-java:ext-triage-java"
-      }
+      },
+      "file_globs": [
+        "**/*.java",
+        "**/pom.xml"
+      ]
     },
     "java-cui": {
-      "bundle": "pm-dev-java-cui"
+      "bundle": "pm-dev-java-cui",
+      "file_globs": [
+        "**/*.java",
+        "**/pom.xml"
+      ]
     },
     "active_profiles": [
       "implementation",

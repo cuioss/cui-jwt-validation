@@ -24,6 +24,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -44,6 +45,19 @@ import static org.junit.jupiter.api.Assertions.*;
 @EnableGeneratorController
 @DisplayName("Tests SignatureAlgorithmPreferences")
 class SignatureAlgorithmPreferencesTest {
+
+    /**
+     * Feeds the rejection cases from the shared definition both preference classes gate on, so a
+     * member added there is exercised here without a second hand-maintained copy. The list's exact
+     * membership is pinned separately by
+     * {@link IsSupportedTests#shouldRejectExactlyTheInsecureSymmetricAlgorithmsAndNone()} — without
+     * that, emptying the shared list would silently reduce this test to zero invocations.
+     *
+     * @return the shared rejection list
+     */
+    static List<String> rejectedAlgorithms() {
+        return RejectedAlgorithms.VALUES;
+    }
 
     @Nested
     @DisplayName("Constructor Tests")
@@ -109,9 +123,16 @@ class SignatureAlgorithmPreferencesTest {
             assertTrue(preferences.isSupported(algorithm), "Algorithm " + algorithm + " should be supported");
         }
 
+        @Test
+        @DisplayName("Reject exactly the insecure symmetric algorithms and none")
+        void shouldRejectExactlyTheInsecureSymmetricAlgorithmsAndNone() {
+            assertEquals(RejectedAlgorithms.VALUES, List.of("HS256", "HS384", "HS512", "none"),
+                    "The shared rejection list is the contract both preference classes gate on");
+        }
+
         @ParameterizedTest
         @DisplayName("Return false for rejected algorithms")
-        @ValueSource(strings = {"HS256", "HS384", "HS512", "none"})
+        @MethodSource("de.cuioss.sheriff.token.validation.security.SignatureAlgorithmPreferencesTest#rejectedAlgorithms")
         void shouldReturnFalseForRejected(String algorithm) {
             var preferences = new SignatureAlgorithmPreferences();
             assertFalse(preferences.isSupported(algorithm), "Algorithm " + algorithm + " should be rejected");

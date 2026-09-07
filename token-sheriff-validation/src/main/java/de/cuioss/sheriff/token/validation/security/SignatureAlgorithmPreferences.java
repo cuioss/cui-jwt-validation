@@ -19,6 +19,7 @@ import de.cuioss.sheriff.token.validation.JWTValidationLogMessages;
 import de.cuioss.tools.logging.CuiLogger;
 import lombok.Getter;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -46,11 +47,6 @@ public class SignatureAlgorithmPreferences {
     private final List<String> preferredAlgorithms;
 
     /**
-     * List of explicitly rejected algorithms for security reasons.
-     */
-    private static final List<String> REJECTED_ALGORITHMS = List.of("HS256", "HS384", "HS512", "none");
-
-    /**
      * Default constructor that initializes the preferred algorithms list with default values.
      */
     public SignatureAlgorithmPreferences() {
@@ -64,7 +60,7 @@ public class SignatureAlgorithmPreferences {
      */
     public SignatureAlgorithmPreferences(List<String> preferredAlgorithms) {
         for (String alg : preferredAlgorithms) {
-            if (REJECTED_ALGORITHMS.contains(alg)) {
+            if (RejectedAlgorithms.VALUES.contains(alg)) {
                 throw new IllegalArgumentException(
                         "Algorithm '%s' is in the rejected algorithms list and cannot be used as a preferred algorithm".formatted(alg));
             }
@@ -74,14 +70,17 @@ public class SignatureAlgorithmPreferences {
 
     /**
      * Gets the default list of preferred signature algorithms in order of preference.
+     * <p>
+     * The list is the {@link JwsAlgorithm} catalog in its declared order, which is the security
+     * preference order (most preferred first). Restating the names here would be a second copy of
+     * that order, free to drift from the catalog every consumer resolves against.
      *
      * @return the default list of preferred signature algorithms
      */
     private static List<String> getDefaultPreferredAlgorithms() {
         LOGGER.debug("Getting default preferred signature algorithms");
 
-        // Order algorithms by preference (most secure first)
-        return List.of("ES512", "ES384", "ES256", "EdDSA", "PS512", "PS384", "PS256", "RS512", "RS384", "RS256");
+        return Arrays.stream(JwsAlgorithm.values()).map(JwsAlgorithm::getJwaName).toList();
     }
 
     /**
@@ -96,7 +95,7 @@ public class SignatureAlgorithmPreferences {
         }
 
         // Check if the algorithm is explicitly rejected
-        if (REJECTED_ALGORITHMS.contains(algorithm)) {
+        if (RejectedAlgorithms.VALUES.contains(algorithm)) {
             LOGGER.warn(JWTValidationLogMessages.WARN.ALGORITHM_REJECTED, algorithm);
             return false;
         }

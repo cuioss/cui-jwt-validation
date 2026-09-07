@@ -489,18 +489,53 @@ module-wide instruments remain the SonarCloud new-code gate and the opt-in `-Pco
 rule; other classes in the module carry their own, lower coverage and are out of this gate's scope
 by design.
 
+The discipline for keeping these gates honest — and for keeping every other check in this
+repository honest — is <<_signal_integrity>>.
+
+== [[_signal_integrity]] Signal integrity: prove the check discriminates before trusting its verdict
+
+*This section applies to every module in this repository*, not only the client engine. It is
+placed here because the coverage gates above are where the discipline was first written down, but
+nothing in it is client-specific: a validation-module gate, a Quarkus-module assertion and a
+benchmarking check are all held to it.
+
+A green check is evidence only if it could have been red. A check that cannot fail — because its
+rule resolved to nothing, because it never bound into the lane that ran, because it measured a
+stale artifact, because it could not reach a verdict at all, or because it asserts a property the
+wrong value also satisfies — reports the same green as a check that genuinely passed, and no
+reader can tell the two apart. The four rules below are one statement of that principle: *before
+a check's verdict is trusted, the check must be shown to discriminate.*
+
+=== A coverage gate is proven twice: that its rule resolves, and that it bound into the running lane
+
+A coverage rule that matches nothing is not an error. JaCoCo evaluates it against no class, and
+`jacoco:check` reports `All coverage checks have been met.` A rule that resolves perfectly but is
+declared in a profile the CI lane never activates behaves identically. The two failures are
+independent, so proving one says nothing about the other — a gate is proven twice or not at all.
+
+The proof is a *matched negative control*: suppress every test execution that contributes coverage
+to the target fully-qualified class name, run the lane the gate is supposed to run in, and confirm
+the build fails naming the *expected fully-qualified class name*. Naming it is the load-bearing
+part. A failure that names some other class proves a different rule fired; a failure that names no
+class proves only that something broke. Without the name, a passing negative control is consistent
+with the gate being vacuous.
+
 [NOTE]
-.Maintainer note — editing the gate's `<includes>`
+.Maintainer note — editing a gate's `<includes>`
 ====
 Write each entry as the *dotted* fully-qualified class name
 (`de.cuioss.sheriff.token.client.flow.RefreshFlow`), never the VM/internal slash form. A nested
 class is `Outer.Inner`, never `Outer$Inner`. JaCoCo matches an `<element>CLASS</element>` rule
 against the dotted qualified name, and an entry that matches *nothing* is **not** an error — the
 rule is simply never evaluated and `jacoco:check` reports `All coverage checks have been met.` The
-failure mode of a typo here is therefore a *false green* that silently reopens the blind spot this
-gate closes. After editing the list, confirm the gate still fires by suppressing the relevant test
-class for one run.
+failure mode of a typo here is therefore a *false green* that silently reopens the blind spot the
+gate closes. After editing the list, confirm the gate still fires by suppressing every test
+execution that contributes coverage to the entry for one run — several test classes commonly share
+one production class, and suppressing only one of them can leave it above threshold, which reports
+the same green as a gate that does not fire.
 ====
+
+=== Clean before every coverage run that will be reasoned about
 
 [IMPORTANT]
 .Always measure with `clean`
@@ -510,8 +545,56 @@ without `clean` silently merges earlier runs and reports stale, inflated numbers
 measurement — and every negative control — must start from `clean`.
 ====
 
+The append default is what makes this a rule rather than hygiene: a negative control run without
+`clean` inherits the covered lines of the run that preceded it, so the suppressed test's coverage
+is still in the file and the gate stays green. The control then "proves" the gate is vacuous when
+in fact the measurement was.
+
+=== "Could not reach a verdict" and "reached a failing verdict" are different outcomes
+
+A check that times out, is killed, or throws before it can evaluate anything has produced *no
+verdict*. Collapsing that into a failing verdict is wrong in one direction — it reports a defect
+that was never observed — and collapsing it into a passing verdict is wrong in the other, and far
+worse: it ships an unexamined change under a green mark.
+
+Code that runs a check therefore *aborts explicitly on no-verdict* rather than falling through to
+either answer, and says which of the two states it is in. The abort must not swallow the cause:
+a non-timeout exception is *rethrown*, because "the check could not run" and "the check crashed
+for a reason worth reading" are themselves different outcomes. Only the timeout — the one case
+where there is genuinely nothing to report but the absence — is converted into the no-verdict
+abort.
+
+=== Assert identity and exactness, not a proxy property or mere presence
+
+An assertion states which value is correct. A proxy property — "it resolves", "it is non-empty",
+"it starts with the right prefix", "it contains the expected entry" — states something the
+correct value happens to satisfy, and so does an unknown number of wrong ones.
+
+This rule prevents two failure shapes, and they are the two an expectation can drift into:
+
+* *Silent addition.* A membership or presence check accepts an enlarged set. A registration
+  added to a shipped contract, an algorithm added to an accepted catalog, a permission added to a
+  granted set — each passes a "the expected entries are present" assertion untouched, so the
+  surface grows without review. Exact set equality is what makes an addition fail; the failure
+  message names the symmetric difference *in both directions*, so an addition and an omission are
+  distinguishable at the point of failure rather than after a re-run.
+* *Substitution behind a proxy.* A value is replaced by a different one that satisfies the same
+  proxy property — a class renamed to another resolvable class, a flag widened to a different
+  legal flag, an identifier swapped for another well-formed identifier. The proxy assertion cannot
+  see the substitution, because the property it checks was never the contract.
+
+*Corollary — a derivation may add cases, never remove them.* Deriving an expectation from the
+thing under test makes the assertion agree with that thing unconditionally: it can no longer
+disagree, and an emptied source reduces the derived cases to none while the suite stays green.
+Derivation is still the right tool where the cases would otherwise be a second hand-maintained
+copy that drifts — but it is only safe when the derived source's *own exact membership* is pinned
+separately by a literal. Derive to keep the cases in step with the source; pin the source so the
+derivation cannot quietly empty.
+
 == See also
 
+* <<_signal_integrity>> — the project-wide rule set every coverage gate and assertion in this
+  repository is held to
 * xref:retrieval-flow.adoc[Retrieval & flow specification] — the mechanics under test
 * xref:step-up-and-logout.adoc[Step-up & logout specification]
 * xref:token-handling.adoc[Token-handling specification]

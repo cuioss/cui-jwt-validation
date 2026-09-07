@@ -17,6 +17,7 @@ package de.cuioss.sheriff.token.client.dpop;
 
 import de.cuioss.sheriff.token.client.internal.ClientLogMessages;
 import de.cuioss.sheriff.token.client.internal.JsonEscaper;
+import de.cuioss.sheriff.token.validation.security.JwsAlgorithm;
 import de.cuioss.sheriff.token.validation.util.EcdsaSignatureFormatConverter;
 import de.cuioss.sheriff.token.validation.util.JwkThumbprintUtil;
 import de.cuioss.tools.logging.CuiLogger;
@@ -36,15 +37,17 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.ECParameterSpec;
 import java.security.spec.EdECPoint;
-import java.security.spec.MGF1ParameterSpec;
 import java.security.spec.PSSParameterSpec;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -103,8 +106,6 @@ public class DpopProofGenerator {
     private static final String KTY_OKP = "OKP";
     private static final String CRV_P256 = "P-256";
     private static final String CRV_ED25519 = "Ed25519";
-    private static final String ALG_PS256 = "PS256";
-    private static final String ALG_ES256 = "ES256";
 
     /** JCA standard name of curve P-256, the only curve an EC proof key may use. */
     private static final String CURVE_SECP256R1 = "secp256r1";
@@ -124,20 +125,21 @@ public class DpopProofGenerator {
     private static final int ED25519_KEY_BYTES = 32;
 
     /**
-     * The proof-key type ({@code kty}) each supported signing algorithm requires. Consulted at
-     * construction time so an algorithm/key mismatch fails fast instead of surfacing from the JCA
-     * layer at the first {@code sign()} call.
+     * The {@link JwsAlgorithm} subset this generator accepts. The shared catalog is deliberately
+     * wider than DPoP: admitting {@code ES384} / {@code ES512} would reach this class's P-256-only
+     * JWK builder, and {@code PS384} / {@code PS512} are outside the matrix documented on the type,
+     * so the subset is declared here rather than inherited from the catalog wholesale.
      */
-    private static final Map<String, String> ALGORITHM_KEY_TYPES = Map.of(
-            "RS256", KTY_RSA,
-            "RS384", KTY_RSA,
-            "RS512", KTY_RSA,
-            ALG_PS256, KTY_RSA,
-            ALG_ES256, KTY_EC,
-            "EdDSA", KTY_OKP);
+    static final Set<JwsAlgorithm> SUPPORTED_ALGORITHMS = EnumSet.of(
+            JwsAlgorithm.RS256,
+            JwsAlgorithm.RS384,
+            JwsAlgorithm.RS512,
+            JwsAlgorithm.PS256,
+            JwsAlgorithm.ES256,
+            JwsAlgorithm.EDDSA);
 
     private final KeyPair keyPair;
-    private final String jwtAlgorithm;
+    private final JwsAlgorithm algorithm;
     private final String jcaAlgorithm;
     private final String jwkJson;
     private final String jkt;
@@ -180,12 +182,13 @@ public class DpopProofGenerator {
      */
     public DpopProofGenerator(KeyPair keyPair, String algorithm, Supplier<String> jtiSource) {
         this.keyPair = Objects.requireNonNull(keyPair, "keyPair must not be null");
-        this.jwtAlgorithm = Objects.requireNonNull(algorithm, "algorithm must not be null");
+        Objects.requireNonNull(algorithm, "algorithm must not be null");
         this.jtiSource = Objects.requireNonNull(jtiSource, "jtiSource must not be null");
-        this.jcaAlgorithm = toJcaAlgorithm(algorithm);
+        this.algorithm = requireSupportedAlgorithm(algorithm);
+        this.jcaAlgorithm = jcaSignatureAlgorithmOf(this.algorithm);
         // One JWK map feeds both the header 'jwk' and the cnf.jkt thumbprint, so a proof can never
         // advertise a key whose thumbprint does not match the embedded JWK.
-        Map<String, Object> jwk = buildJwk(keyPair.getPublic(), algorithm);
+        Map<String, Object> jwk = buildJwk(keyPair.getPublic(), this.algorithm);
         this.jwkJson = JwkThumbprintUtil.canonicalJson(jwk);
         this.jkt = JwkThumbprintUtil.computeThumbprint(jwk);
     }
@@ -195,12 +198,12 @@ public class DpopProofGenerator {
      * canonical JWK members for its key type.
      *
      * @param publicKey the proof key's public key
-     * @param algorithm the requested JWT signing algorithm
+     * @param algorithm the requested signing algorithm's catalog entry
      * @return the JWK members required for this key type by RFC 7638
      * @throws IllegalArgumentException if the key type or curve is unsupported, or the algorithm does
      *         not match the key type
      */
-    private static Map<String, Object> buildJwk(PublicKey publicKey, String algorithm) {
+    private static Map<String, Object> buildJwk(PublicKey publicKey, JwsAlgorithm algorithm) {
         if (publicKey instanceof RSAPublicKey rsaKey) {
             requireKeyTypeMatches(algorithm, KTY_RSA);
             return Map.of(
@@ -278,19 +281,49 @@ public class DpopProofGenerator {
     }
 
     /**
+     * Resolves a JWA {@code alg} name against the shared catalog and refuses anything outside
+     * {@link #SUPPORTED_ALGORITHMS} — the catalog admits algorithms this generator cannot serve.
+     *
+     * @param algorithm the requested JWT signing algorithm
+     * @return the catalog entry for the algorithm
+     * @throws IllegalArgumentException if the algorithm is unknown to the catalog or outside the
+     *         DPoP-supported subset
+     */
+    private static JwsAlgorithm requireSupportedAlgorithm(String algorithm) {
+        return JwsAlgorithm.fromJwaName(algorithm)
+                .filter(SUPPORTED_ALGORITHMS::contains)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "unsupported DPoP signing algorithm: " + algorithm));
+    }
+
+    /**
+     * Resolves the JCA signature-algorithm name to instantiate for a catalog entry. The catalog
+     * leaves the EC family's name open because JCA spells the same algorithm two ways; this
+     * generator signs in ASN.1/DER and converts to the JOSE {@code R||S} form afterwards, so it
+     * composes the DER spelling.
+     *
+     * @param algorithm the catalog entry to resolve
+     * @return the JCA signature-algorithm name
+     */
+    private static String jcaSignatureAlgorithmOf(JwsAlgorithm algorithm) {
+        return algorithm.getJcaSignatureAlgorithm().orElseGet(
+                () -> algorithm.getDigest().orElseThrow().replace("-", "") + "withECDSA");
+    }
+
+    /**
      * Fails fast when the requested signing algorithm does not match the proof key's type — for
      * example {@code ES256} with an RSA pair, or {@code RS256} with an EC pair.
      *
-     * @param algorithm     the requested JWT signing algorithm
+     * @param algorithm     the requested signing algorithm's catalog entry
      * @param actualKeyType the {@code kty} of the supplied proof key
      * @throws IllegalArgumentException if the algorithm requires a different key type
      */
-    private static void requireKeyTypeMatches(String algorithm, String actualKeyType) {
-        String requiredKeyType = ALGORITHM_KEY_TYPES.get(algorithm);
+    private static void requireKeyTypeMatches(JwsAlgorithm algorithm, String actualKeyType) {
+        String requiredKeyType = algorithm.getKeyType();
         if (!actualKeyType.equals(requiredKeyType)) {
             throw new IllegalArgumentException(
                     "DPoP signing algorithm %s requires a %s proof key, but the key pair is %s".formatted(
-                            algorithm, requiredKeyType, actualKeyType));
+                            algorithm.getJwaName(), requiredKeyType, actualKeyType));
         }
     }
 
@@ -338,7 +371,8 @@ public class DpopProofGenerator {
                     "DPoP proof 'jti' reuse detected; refusing to emit a replayable proof");
         }
         long now = Instant.now().getEpochSecond();
-        String header = "{\"typ\":\"" + DPOP_TYP + "\",\"alg\":\"" + jwtAlgorithm + "\",\"jwk\":" + jwkJson + "}";
+        String header = "{\"typ\":\"" + DPOP_TYP + "\",\"alg\":\"" + algorithm.getJwaName()
+                + "\",\"jwk\":" + jwkJson + "}";
         // htu is the request URI, sourced from the AS's own discovery metadata; strip its query and
         // fragment (RFC 9449 §4.2) then escape every JSON control character per RFC 8259.
         StringBuilder payload = new StringBuilder("{\"jti\":\"").append(JsonEscaper.escape(jti))
@@ -398,16 +432,18 @@ public class DpopProofGenerator {
     private String sign(String signingInput) {
         try {
             Signature signature = Signature.getInstance(jcaAlgorithm);
-            if (ALG_PS256.equals(jwtAlgorithm)) {
-                // The JCA RSASSA-PSS instance carries no defaults — PS256's parameters are explicit.
-                signature.setParameter(new PSSParameterSpec("SHA-256", "MGF1", MGF1ParameterSpec.SHA256, 32, 1));
+            Optional<PSSParameterSpec> pssParameters = algorithm.getPssParameters();
+            if (pssParameters.isPresent()) {
+                // The JCA RSASSA-PSS instance carries no defaults — the parameters are explicit.
+                signature.setParameter(pssParameters.get());
             }
             signature.initSign(keyPair.getPrivate());
             signature.update(signingInput.getBytes(StandardCharsets.UTF_8));
             byte[] rawSignature = signature.sign();
-            if (ALG_ES256.equals(jwtAlgorithm)) {
+            if (algorithm == JwsAlgorithm.ES256) {
                 // SHA256withECDSA emits ASN.1/DER; JOSE requires the IEEE P1363 R||S concatenation.
-                rawSignature = EcdsaSignatureFormatConverter.toJoseSignature(rawSignature, ALG_ES256);
+                rawSignature = EcdsaSignatureFormatConverter.toJoseSignature(
+                        rawSignature, algorithm.getJwaName());
             }
             return BASE64_URL.encodeToString(rawSignature);
         } catch (GeneralSecurityException e) {
@@ -496,19 +532,5 @@ public class DpopProofGenerator {
 
     private static String encode(String json) {
         return BASE64_URL.encodeToString(json.getBytes(StandardCharsets.UTF_8));
-    }
-
-    private static String toJcaAlgorithm(String jwtAlgorithm) {
-        return switch (jwtAlgorithm) {
-            case "RS256" -> "SHA256withRSA";
-            case "RS384" -> "SHA384withRSA";
-            case "RS512" -> "SHA512withRSA";
-            case ALG_PS256 -> "RSASSA-PSS";
-            case ALG_ES256 -> "SHA256withECDSA";
-            // The JCA signature algorithm name for EdDSA over curve Ed25519 is the curve name itself,
-            // so the JWK 'crv' constant is the single definition of that string.
-            case "EdDSA" -> CRV_ED25519;
-            default -> throw new IllegalArgumentException("unsupported DPoP signing algorithm: " + jwtAlgorithm);
-        };
     }
 }
