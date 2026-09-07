@@ -61,8 +61,6 @@ class NativeImageMetadataTest {
     private static final String ALL_DECLARED_METHODS = "allDeclaredMethods";
     private static final String ALL_DECLARED_FIELDS = "allDeclaredFields";
     private static final String ALL_DECLARED_CONSTRUCTORS = "allDeclaredConstructors";
-    private static final List<String> REFLECTION_FLAG_ATTRIBUTES =
-            List.of(ALL_DECLARED_METHODS, ALL_DECLARED_FIELDS, ALL_DECLARED_CONSTRUCTORS);
 
     private static final Set<String> METHODS_ONLY = Set.of(ALL_DECLARED_METHODS);
     private static final Set<String> CONSTRUCTORS_ONLY = Set.of(ALL_DECLARED_CONSTRUCTORS);
@@ -241,15 +239,29 @@ class NativeImageMetadataTest {
         return names;
     }
 
+    /**
+     * Reads the reflection flags each entry actually enables, discovered from the file rather than
+     * looked up against a fixed list of attribute names.
+     * <p>
+     * Every attribute except {@code name} whose value is boolean {@code true} counts. Discovering
+     * them is what lets the caller catch a widened flag it has never heard of: an entry that adds
+     * {@code "allPublicMethods": true} surfaces as an unexpected member of that type's declared set
+     * and fails the comparison against {@link #EXPECTED_REFLECTION_FLAGS}, where iterating a fixed
+     * list of the three known attributes would have ignored it and reported green.
+     * <p>
+     * A flag written as an explicit {@code false} is deliberately not collected: it enables nothing
+     * and enlarges no surface, so treating it as declared would fail the build over a no-op.
+     */
     private static Map<String, Set<String>> declaredReflectionFlags() {
         JsonArray entries = readReflectConfig();
         Map<String, Set<String>> flagsByName = new LinkedHashMap<>();
         for (JsonValue entry : entries) {
             JsonObject object = entry.asJsonObject();
             Set<String> enabledFlags = new TreeSet<>();
-            for (String attribute : REFLECTION_FLAG_ATTRIBUTES) {
-                if (object.getBoolean(attribute, false)) {
-                    enabledFlags.add(attribute);
+            for (Map.Entry<String, JsonValue> attribute : object.entrySet()) {
+                if (!NAME_ATTRIBUTE.equals(attribute.getKey())
+                        && attribute.getValue().getValueType() == JsonValue.ValueType.TRUE) {
+                    enabledFlags.add(attribute.getKey());
                 }
             }
             flagsByName.put(object.getString(NAME_ATTRIBUTE), enabledFlags);
