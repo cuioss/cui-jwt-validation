@@ -59,6 +59,7 @@ import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -191,6 +192,65 @@ class AuthorizationCodeFlowTest {
                         "the secret PKCE verifier must be redeemed at the token endpoint"),
                 () -> assertNotNull(request.getHeaders().get("Authorization"),
                         "client authentication must decorate the token request"));
+    }
+
+    @Test
+    @DisplayName("exchange() should carry the refresh token the authorization server issued")
+    void shouldCarryIssuedRefreshToken(URIBuilder uriBuilder) {
+        var config = config();
+        var context = FlowContext.create(REDIRECT_URI);
+        String refreshToken = Generators.letterStrings(20, 40).next();
+        idHolder.withClaim("nonce", ClaimValue.forPlainString(context.nonce()));
+        moduleDispatcher.respondWith(TokenDispatcher.tokenResponse(accessHolder.getRawToken(), refreshToken,
+                idHolder.getRawToken(), 300));
+        var callback = new CallbackParameters(Generators.letterStrings(20, 40).next(), context.state(), null, null, null);
+
+        AuthorizationCodeFlow.AuthenticationResult result =
+                flow(config).exchange(metadataWithTokenEndpoint(uriBuilder), context, callback, auth(config));
+
+        assertEquals(refreshToken, result.refreshToken(),
+                "the refresh token the AS returned must be carried through the exchange verbatim");
+    }
+
+    @Test
+    @DisplayName("exchange() should return normally with a null refresh token when the authorization server issued none")
+    void shouldTolerateAbsentRefreshToken(URIBuilder uriBuilder) {
+        var config = config();
+        var context = FlowContext.create(REDIRECT_URI);
+        idHolder.withClaim("nonce", ClaimValue.forPlainString(context.nonce()));
+        moduleDispatcher.respondWith(TokenDispatcher.tokenResponse(accessHolder.getRawToken(), null,
+                idHolder.getRawToken(), 300));
+        var callback = new CallbackParameters(Generators.letterStrings(20, 40).next(), context.state(), null, null, null);
+
+        AuthorizationCodeFlow.AuthenticationResult result =
+                flow(config).exchange(metadataWithTokenEndpoint(uriBuilder), context, callback, auth(config));
+
+        assertAll("absent refresh token",
+                () -> assertNull(result.refreshToken(), "an AS that issues no refresh token yields null"),
+                () -> assertNotNull(result.accessToken(),
+                        "the absence of a refresh token must not be treated as an exchange failure"));
+    }
+
+    @Test
+    @DisplayName("AuthenticationResult.toString() should never emit the live refresh-token value")
+    void shouldRedactRefreshTokenInToString(URIBuilder uriBuilder) {
+        var config = config();
+        var context = FlowContext.create(REDIRECT_URI);
+        String refreshToken = Generators.letterStrings(20, 40).next();
+        idHolder.withClaim("nonce", ClaimValue.forPlainString(context.nonce()));
+        moduleDispatcher.respondWith(TokenDispatcher.tokenResponse(accessHolder.getRawToken(), refreshToken,
+                idHolder.getRawToken(), 300));
+        var callback = new CallbackParameters(Generators.letterStrings(20, 40).next(), context.state(), null, null, null);
+
+        String rendered = flow(config)
+                .exchange(metadataWithTokenEndpoint(uriBuilder), context, callback, auth(config))
+                .toString();
+
+        assertAll("redacted rendering",
+                () -> assertFalse(rendered.contains(refreshToken),
+                        "toString() must not leak the live refresh token"),
+                () -> assertTrue(rendered.contains("refreshToken=<redacted>"),
+                        "a present refresh token must render as redacted"));
     }
 
     @Test
@@ -436,18 +496,23 @@ class AuthorizationCodeFlowTest {
     }
 
     @Test
-    @DisplayName("AuthenticationResult should preserve its tokens and reject nulls")
+    @DisplayName("AuthenticationResult should preserve its tokens, accept an absent refresh token, and reject nulls")
     void authenticationResultContract() {
         AccessTokenContent access = accessHolder.asAccessTokenContent();
         IdTokenContent id = idHolder.asIdTokenContent();
-        var result = new AuthorizationCodeFlow.AuthenticationResult(access, id);
+        String refreshToken = Generators.letterStrings(20, 40).next();
+        var result = new AuthorizationCodeFlow.AuthenticationResult(access, id, refreshToken);
 
         assertAll("authentication result record",
                 () -> assertSame(access, result.accessToken(), "the access token must be preserved"),
                 () -> assertSame(id, result.idToken(), "the ID token must be preserved"),
+                () -> assertEquals(refreshToken, result.refreshToken(),
+                        "the refresh token must be preserved verbatim"),
+                () -> assertNull(new AuthorizationCodeFlow.AuthenticationResult(access, id, null).refreshToken(),
+                        "an absent refresh token is a normal outcome and must build without throwing"),
                 () -> assertThrows(NullPointerException.class,
-                        () -> new AuthorizationCodeFlow.AuthenticationResult(null, id)),
+                        () -> new AuthorizationCodeFlow.AuthenticationResult(null, id, refreshToken)),
                 () -> assertThrows(NullPointerException.class,
-                        () -> new AuthorizationCodeFlow.AuthenticationResult(access, null)));
+                        () -> new AuthorizationCodeFlow.AuthenticationResult(access, null, refreshToken)));
     }
 }
