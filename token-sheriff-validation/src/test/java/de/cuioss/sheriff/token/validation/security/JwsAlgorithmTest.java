@@ -22,11 +22,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.security.spec.PSSParameterSpec;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -49,7 +45,7 @@ class JwsAlgorithmTest {
      * assertions in their own right, not gaps.
      */
     private record ExpectedAlgorithm(String jwaName, String keyType, String digest,
-            String jcaSignatureAlgorithm, String pssDigest, int pssSaltLengthBytes) {
+    String jcaSignatureAlgorithm, String pssDigest, int pssSaltLengthBytes) {
     }
 
     /**
