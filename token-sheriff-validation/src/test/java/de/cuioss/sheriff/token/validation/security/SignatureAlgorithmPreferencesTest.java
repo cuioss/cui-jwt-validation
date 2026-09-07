@@ -126,7 +126,7 @@ class SignatureAlgorithmPreferencesTest {
         @Test
         @DisplayName("Reject exactly the insecure symmetric algorithms and none")
         void shouldRejectExactlyTheInsecureSymmetricAlgorithmsAndNone() {
-            assertEquals(List.of("HS256", "HS384", "HS512", "none"), RejectedAlgorithms.VALUES,
+            assertEquals(RejectedAlgorithms.VALUES, List.of("HS256", "HS384", "HS512", "none"),
                     "The shared rejection list is the contract both preference classes gate on");
         }
 

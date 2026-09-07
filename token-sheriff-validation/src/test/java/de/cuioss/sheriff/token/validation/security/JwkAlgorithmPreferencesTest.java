@@ -125,7 +125,7 @@ class JwkAlgorithmPreferencesTest {
 
     @Test
     void sharedRejectionListIsExercisedByTheInvalidAlgorithmCases() {
-        assertEquals(List.of("HS256", "HS384", "HS512", "none"), RejectedAlgorithms.VALUES,
+        assertEquals(RejectedAlgorithms.VALUES, List.of("HS256", "HS384", "HS512", "none"),
                 "The rejection cases above are derived from this list, so emptying it would silently "
                         + "reduce them to nothing");
     }
