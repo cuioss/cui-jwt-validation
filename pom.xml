@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>de.cuioss</groupId>
-        <artifactId>cui-java-parent</artifactId>
+        <artifactId>cui-quarkus-parent</artifactId>
         <version>1.7.0</version>
         <relativePath />
     </parent>
@@ -46,7 +46,6 @@
 
     <properties>
         <maven.compiler.release>21</maven.compiler.release>
-        <version.quarkus>3.39.2</version.quarkus>
         <frontend.node.version>v22.22.0</frontend.node.version>
         <frontend.npm.version>10.9.2</frontend.npm.version>
     </properties>
