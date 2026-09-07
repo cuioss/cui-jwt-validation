@@ -28,8 +28,11 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -42,6 +45,11 @@ import static org.junit.jupiter.api.Assertions.*;
  * names, it can silently rot when a listed type is renamed, moved or deleted. This test resolves
  * every listed name against the module's own classpath so such a drift fails the build here rather
  * than at native-image build time in a downstream consumer.
+ * <p>
+ * The shipped contract is additionally pinned exactly: the registered type names and the reflection
+ * flags each type declares are written out literally in {@link #EXPECTED_REFLECTION_FLAGS} and
+ * compared against the file. A presence check alone would accept a silently added registration or a
+ * silently widened reflection flag, both of which enlarge the native-image surface without review.
  *
  * @author Oliver Wolff
  */
@@ -56,6 +64,69 @@ class NativeImageMetadataTest {
     private static final String RUNTIME_INITIALIZED_CLASS =
             "de.cuioss.sheriff.token.validation.jwks.http.HttpJwksLoader";
     private static final String NAME_ATTRIBUTE = "name";
+    private static final String ALL_DECLARED_METHODS = "allDeclaredMethods";
+    private static final String ALL_DECLARED_FIELDS = "allDeclaredFields";
+    private static final String ALL_DECLARED_CONSTRUCTORS = "allDeclaredConstructors";
+    private static final List<String> REFLECTION_FLAG_ATTRIBUTES =
+            List.of(ALL_DECLARED_METHODS, ALL_DECLARED_FIELDS, ALL_DECLARED_CONSTRUCTORS);
+
+    private static final Set<String> METHODS_ONLY = Set.of(ALL_DECLARED_METHODS);
+    private static final Set<String> CONSTRUCTORS_ONLY = Set.of(ALL_DECLARED_CONSTRUCTORS);
+    private static final Set<String> METHODS_AND_CONSTRUCTORS =
+            Set.of(ALL_DECLARED_METHODS, ALL_DECLARED_CONSTRUCTORS);
+    private static final Set<String> METHODS_FIELDS_AND_CONSTRUCTORS =
+            Set.of(ALL_DECLARED_METHODS, ALL_DECLARED_FIELDS, ALL_DECLARED_CONSTRUCTORS);
+
+    /**
+     * The reflection contract the core module ships, written out literally.
+     * <p>
+     * The key set is the exact set of registered type names; each value is the exact set of
+     * reflection flags that type enables. Both are the assertion, so neither may be derived from
+     * {@code reflect-config.json} — a value read back out of the file under test would agree with
+     * it unconditionally and pin nothing.
+     */
+    private static final Map<String, Set<String>> EXPECTED_REFLECTION_FLAGS = Map.ofEntries(
+            Map.entry("de.cuioss.sheriff.token.validation.TokenValidator", METHODS_AND_CONSTRUCTORS),
+            Map.entry("de.cuioss.sheriff.token.validation.IssuerConfigCache", METHODS_AND_CONSTRUCTORS),
+            Map.entry("de.cuioss.sheriff.token.commons.events.SecurityEventCounter", METHODS_AND_CONSTRUCTORS),
+            Map.entry("de.cuioss.sheriff.token.validation.IssuerConfig", METHODS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.commons.transport.ParserConfig", METHODS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.commons.transport.HttpJwksLoaderConfig", METHODS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.validation.pipeline.NonValidatingJwtParser", CONSTRUCTORS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.validation.pipeline.validator.TokenSignatureValidator", CONSTRUCTORS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.validation.pipeline.validator.TokenHeaderValidator", CONSTRUCTORS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.validation.pipeline.validator.TokenClaimValidator", CONSTRUCTORS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.validation.pipeline.TokenBuilder", CONSTRUCTORS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.validation.pipeline.DecodedJwt", CONSTRUCTORS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.validation.jwks.http.HttpJwksLoader", CONSTRUCTORS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.validation.jwks.key.JWKSKeyLoader", CONSTRUCTORS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.validation.jwks.key.KeyInfo", CONSTRUCTORS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.validation.jwks.parser.JwksParser", CONSTRUCTORS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.validation.security.SignatureAlgorithmPreferences", CONSTRUCTORS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.validation.security.JwkAlgorithmPreferences", CONSTRUCTORS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.validation.jwe.JweDecryptor", CONSTRUCTORS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.validation.jwe.JweDecryptionConfig", CONSTRUCTORS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.validation.jwe.JweAlgorithmPreferences", CONSTRUCTORS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.validation.domain.token.AccessTokenContent", METHODS_FIELDS_AND_CONSTRUCTORS),
+            Map.entry("de.cuioss.sheriff.token.validation.domain.token.IdTokenContent", METHODS_FIELDS_AND_CONSTRUCTORS),
+            Map.entry("de.cuioss.sheriff.token.validation.domain.token.UnvalidatedRefreshToken", METHODS_FIELDS_AND_CONSTRUCTORS),
+            Map.entry("de.cuioss.sheriff.token.validation.domain.token.TokenContent", METHODS_FIELDS_AND_CONSTRUCTORS),
+            Map.entry("de.cuioss.sheriff.token.validation.domain.token.BaseTokenContent", METHODS_FIELDS_AND_CONSTRUCTORS),
+            Map.entry("de.cuioss.sheriff.token.validation.domain.token.MinimalTokenContent", METHODS_FIELDS_AND_CONSTRUCTORS),
+            Map.entry("de.cuioss.sheriff.token.validation.domain.claim.ClaimValue", METHODS_FIELDS_AND_CONSTRUCTORS),
+            Map.entry("de.cuioss.sheriff.token.validation.domain.claim.ClaimName", METHODS_FIELDS_AND_CONSTRUCTORS),
+            Map.entry("de.cuioss.sheriff.token.validation.domain.claim.ClaimValueType", METHODS_FIELDS_AND_CONSTRUCTORS),
+            Map.entry("de.cuioss.sheriff.token.validation.domain.claim.mapper.IdentityMapper", CONSTRUCTORS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.validation.domain.claim.mapper.JsonCollectionMapper", CONSTRUCTORS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.validation.domain.claim.mapper.KeycloakDefaultGroupsMapper", CONSTRUCTORS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.validation.domain.claim.mapper.KeycloakDefaultRolesMapper", CONSTRUCTORS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.validation.domain.claim.mapper.OffsetDateTimeMapper", CONSTRUCTORS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.validation.domain.claim.mapper.ScopeMapper", CONSTRUCTORS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.validation.domain.claim.mapper.StringSplitterMapper", CONSTRUCTORS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.commons.transport._WellKnownResult_DslJsonConverter", CONSTRUCTORS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.commons.transport._Jwks_DslJsonConverter", CONSTRUCTORS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.commons.transport._JwkKey_DslJsonConverter", CONSTRUCTORS_ONLY),
+            Map.entry("de.cuioss.sheriff.token.validation.json._JwtHeader_DslJsonConverter", CONSTRUCTORS_ONLY));
 
     @Nested
     @DisplayName("reflect-config.json")
@@ -119,6 +190,37 @@ class NativeImageMetadataTest {
             assertEquals(distinctNames.size(), names.size(),
                     "reflect-config.json should not declare the same name twice: " + names);
         }
+
+        @Test
+        @DisplayName("Should register exactly the expected set of names")
+        void shouldRegisterExactlyTheExpectedSetOfNames() {
+            Set<String> registered = new TreeSet<>(registeredNames());
+
+            Set<String> missing = new TreeSet<>(EXPECTED_REFLECTION_FLAGS.keySet());
+            missing.removeAll(registered);
+            Set<String> unexpected = new TreeSet<>(registered);
+            unexpected.removeAll(EXPECTED_REFLECTION_FLAGS.keySet());
+
+            assertAll("reflect-config.json registers exactly the expected names",
+                    () -> assertTrue(missing.isEmpty(),
+                            "Expected names absent from reflect-config.json: " + missing),
+                    () -> assertTrue(unexpected.isEmpty(),
+                            "Names registered in reflect-config.json but not expected: " + unexpected));
+        }
+
+        @Test
+        @DisplayName("Should declare the expected reflection flags for every registered name")
+        void shouldDeclareTheExpectedReflectionFlagsForEveryRegisteredName() {
+            Map<String, Set<String>> declared = declaredReflectionFlags();
+
+            List<Executable> assertions = new ArrayList<>(EXPECTED_REFLECTION_FLAGS.size());
+            for (Map.Entry<String, Set<String>> expected : EXPECTED_REFLECTION_FLAGS.entrySet()) {
+                assertions.add(() -> assertEquals(new TreeSet<>(expected.getValue()),
+                        declared.get(expected.getKey()),
+                        "Reflection flags should match the expected contract for " + expected.getKey()));
+            }
+            assertAll("every registered name declares its expected reflection flags", assertions);
+        }
     }
 
     @Nested
@@ -143,6 +245,22 @@ class NativeImageMetadataTest {
             names.add(entry.asJsonObject().getString(NAME_ATTRIBUTE));
         }
         return names;
+    }
+
+    private static Map<String, Set<String>> declaredReflectionFlags() {
+        JsonArray entries = readReflectConfig();
+        Map<String, Set<String>> flagsByName = new LinkedHashMap<>();
+        for (JsonValue entry : entries) {
+            JsonObject object = entry.asJsonObject();
+            Set<String> enabledFlags = new TreeSet<>();
+            for (String attribute : REFLECTION_FLAG_ATTRIBUTES) {
+                if (object.getBoolean(attribute, false)) {
+                    enabledFlags.add(attribute);
+                }
+            }
+            flagsByName.put(object.getString(NAME_ATTRIBUTE), enabledFlags);
+        }
+        return flagsByName;
     }
 
     private static JsonArray readReflectConfig() {
