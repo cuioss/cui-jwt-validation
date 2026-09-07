@@ -45,25 +45,44 @@ import java.util.Optional;
 public enum JwsAlgorithm {
 
     /** ECDSA using P-521 and SHA-512. */
-    ES512("ES512", "EC", "SHA-512", null, null, 0),
+    ES512("ES512", "EC", Jca.SHA_512, null, null, 0),
     /** ECDSA using P-384 and SHA-384. */
-    ES384("ES384", "EC", "SHA-384", null, null, 0),
+    ES384("ES384", "EC", Jca.SHA_384, null, null, 0),
     /** ECDSA using P-256 and SHA-256. */
-    ES256("ES256", "EC", "SHA-256", null, null, 0),
+    ES256("ES256", "EC", Jca.SHA_256, null, null, 0),
     /** EdDSA over curve Ed25519; the digest is fixed by the curve rather than selected. */
     EDDSA("EdDSA", "OKP", null, "EdDSA", null, 0),
     /** RSASSA-PSS using SHA-512 and MGF1 with SHA-512. */
-    PS512("PS512", "RSA", "SHA-512", "RSASSA-PSS", MGF1ParameterSpec.SHA512, 64),
+    PS512("PS512", "RSA", Jca.SHA_512, Jca.RSASSA_PSS, MGF1ParameterSpec.SHA512, 64),
     /** RSASSA-PSS using SHA-384 and MGF1 with SHA-384. */
-    PS384("PS384", "RSA", "SHA-384", "RSASSA-PSS", MGF1ParameterSpec.SHA384, 48),
+    PS384("PS384", "RSA", Jca.SHA_384, Jca.RSASSA_PSS, MGF1ParameterSpec.SHA384, 48),
     /** RSASSA-PSS using SHA-256 and MGF1 with SHA-256. */
-    PS256("PS256", "RSA", "SHA-256", "RSASSA-PSS", MGF1ParameterSpec.SHA256, 32),
+    PS256("PS256", "RSA", Jca.SHA_256, Jca.RSASSA_PSS, MGF1ParameterSpec.SHA256, 32),
     /** RSASSA-PKCS1-v1_5 using SHA-512. */
-    RS512("RS512", "RSA", "SHA-512", "SHA512withRSA", null, 0),
+    RS512("RS512", "RSA", Jca.SHA_512, "SHA512withRSA", null, 0),
     /** RSASSA-PKCS1-v1_5 using SHA-384. */
-    RS384("RS384", "RSA", "SHA-384", "SHA384withRSA", null, 0),
+    RS384("RS384", "RSA", Jca.SHA_384, "SHA384withRSA", null, 0),
     /** RSASSA-PKCS1-v1_5 using SHA-256. */
-    RS256("RS256", "RSA", "SHA-256", "SHA256withRSA", null, 0);
+    RS256("RS256", "RSA", Jca.SHA_256, "SHA256withRSA", null, 0);
+
+    /**
+     * The JCA names shared by several constants above, held in a nested type because an enum
+     * constant's arguments cannot refer to a field of the enum itself by simple name.
+     * <p>
+     * They are named rather than repeated because this is a security catalog: a digest mistyped in
+     * one of nine positions would still compile and would silently select a different algorithm, so
+     * every constant that means SHA-256 refers to one name instead of spelling it again.
+     */
+    private static final class Jca {
+
+        private static final String SHA_512 = "SHA-512";
+        private static final String SHA_384 = "SHA-384";
+        private static final String SHA_256 = "SHA-256";
+        private static final String RSASSA_PSS = "RSASSA-PSS";
+
+        private Jca() {
+        }
+    }
 
     private final String jwaName;
     private final String keyType;
