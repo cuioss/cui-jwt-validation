@@ -7,7 +7,7 @@
 // Progressive-disclosure metadata block (see manage-adr SKILL.md → "ADR Template
 // Structure"). Read by `manage-adr.py scan` so a caller can assess an ADR's
 // relevance without reading the full file. List fields are comma-separated.
-// summary: Signing-algorithm facts are defined once in a JwsAlgorithm catalog in the validation module and every consumer derives from it; the EC family's JCA name is deliberately left per-consumer because JOSE and java.security.Signature diverge on ECDSA wire format.
+// summary: Signing-algorithm facts are defined once in a JwsAlgorithm catalog in the validation module and every signing consumer derives from it; the EC family's JCA name is left per-consumer because JOSE and java.security.Signature diverge on ECDSA wire format, and JWK admission stays an independent list because it governs accepted key material rather than signing.
 // tags: jws, algorithm-catalog, single-source-of-truth, signature, dpop
 // affects: token-sheriff-validation, token-sheriff-client
 // supersedes:
@@ -51,10 +51,19 @@ wrong for one of them, or must not store that string at all.
 == Decision
 
 Signing-algorithm facts are defined once, in a `JwsAlgorithm` catalog in the core
-validation module, and every consumer derives from it — including consumers in the
-client module, across the module boundary. The catalog is the sole definition of key
-type, digest, and, where the value is genuinely single-valued, the JCA signature
-algorithm name and PSS parameters.
+validation module, and every consumer *that signs or verifies a signature* derives from
+it — including consumers in the client module, across the module boundary. The catalog
+is the sole definition of key type, digest, and, where the value is genuinely
+single-valued, the JCA signature algorithm name and PSS parameters.
+
+The scope of that claim is deliberately the signing path, and the boundary is
+load-bearing. JWK *admission* — which key material a JWKS endpoint may offer — is a
+separate question from which algorithms this system will sign or verify with, and it is
+governed by its own independent list. Coupling the two would mean that adding a signing
+algorithm silently widened what key material is accepted from a remote endpoint, which
+is a security-relevant change no one asked for. A consumer that decides admission is
+therefore *not* a derived consumer of this catalog, and must not be made one on the
+grounds that both lists name algorithms.
 
 The EC family is a deliberate and permanent exception. For EC entries the catalog
 exposes only the single-valued facts and does *not* supply a JCA signature algorithm
@@ -74,22 +83,24 @@ production code used, or the assertion is tautological.
 
 === Positive
 
-One edit updates every consumer. The algorithm preference lists and the signing paths
-are coupled by construction rather than by separately-maintained lists that happen to
-agree. Adding an algorithm is a single change with a single place to get wrong, and
-consumers that fail to handle it fail visibly rather than diverging quietly.
+One edit updates every signing consumer. The signature-algorithm preference list and the
+signing paths are coupled by construction rather than by separately-maintained lists
+that happen to agree. Adding an algorithm is a single change with a single place to get
+wrong, and signing consumers that fail to handle it fail visibly rather than diverging
+quietly.
 
-The remaining per-consumer decision — the EC wire format — is now the *only* place a
-consumer states an algorithm fact of its own, which makes it conspicuous and reviewable
-rather than lost among five other hand-maintained copies.
+Two per-consumer decisions remain, and both are deliberate rather than residual: the EC
+wire format, and JWK admission. Each is now the *only* place its consumer states an
+algorithm fact of its own, which makes both conspicuous and reviewable rather than lost
+among several hand-maintained copies.
 
 === Negative
 
-The blast radius of a wrong entry is now total. Previously a mistake in one copy
-affected one site; now it reaches every consumer simultaneously. The catalog's
-correctness is therefore load-bearing in a way no individual copy was, and it warrants
-assertions that pin each entry's values explicitly rather than deriving them from the
-catalog under test.
+The blast radius of a wrong entry is now the whole signing path. Previously a mistake in
+one copy affected one site; now it reaches every signing consumer simultaneously. The
+catalog's correctness is therefore load-bearing in a way no individual copy was, and it
+warrants assertions that pin each entry's values explicitly rather than deriving them
+from the catalog under test.
 
 A maintainer must know that the catalog is deliberately incomplete for EC. Someone who
 reads it as a total description of JCA behaviour, and "completes" it by collapsing the
