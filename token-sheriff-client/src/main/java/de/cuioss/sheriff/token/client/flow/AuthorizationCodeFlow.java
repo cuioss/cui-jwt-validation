@@ -171,7 +171,8 @@ public class AuthorizationCodeFlow {
      * @param callback             the parsed callback parameters; must not be {@code null}
      * @param clientAuthentication the client authentication strategy to present; must not be
      *                             {@code null}
-     * @return the validated access token and ID token
+     * @return the validated access token and ID token, together with the refresh token the
+     *         authorization server issued alongside them (or {@code null} when it issued none)
      * @throws de.cuioss.sheriff.token.commons.error.TransportException if the token request fails
      * @throws de.cuioss.sheriff.token.validation.exception.TokenValidationException if a token fails
      *         validation
@@ -224,7 +225,9 @@ public class AuthorizationCodeFlow {
                 tokenResponse.accessToken);
         LOGGER.debug("Completed authorization_code exchange for client '%s'", configuration.getClientId());
 
-        return new AuthenticationResult(accessToken, idToken);
+        // The refresh token is opaque to this client and is carried through verbatim: it is a
+        // pass-through of whatever the AS returned, never validated or normalized here.
+        return new AuthenticationResult(accessToken, idToken, tokenResponse.refreshToken);
     }
 
     /**
@@ -246,20 +249,51 @@ public class AuthorizationCodeFlow {
     }
 
     /**
-     * The validated tokens produced by a successful {@code authorization_code} exchange.
+     * The validated tokens produced by a successful {@code authorization_code} exchange, together
+     * with the refresh token the authorization server issued alongside them (when it issued one).
      *
-     * @param accessToken the validated access token content
-     * @param idToken     the validated, nonce-bound ID token content
+     * @param accessToken  the validated access token content
+     * @param idToken      the validated, nonce-bound ID token content
+     * @param refreshToken the raw {@code refresh_token} the authorization server returned, or
+     *                     {@code null} when it issued none. The asymmetry with the other two
+     *                     components is deliberate: {@code accessToken} and {@code idToken} are
+     *                     validated products the exchange cannot succeed without, so they are
+     *                     null-checked, whereas an authorization server legitimately grants no
+     *                     refresh token at all — {@code null} here is a normal outcome, not an
+     *                     error. The value is a pass-through of whatever the AS returned rather
+     *                     than a revocation target, so it is carried unmodified and is not
+     *                     blank-rejected either
      */
-    public record AuthenticationResult(AccessTokenContent accessToken, IdTokenContent idToken) {
+    public record AuthenticationResult(AccessTokenContent accessToken, IdTokenContent idToken,
+    @Nullable String refreshToken) {
 
         /**
-         * @param accessToken the validated access token content; must not be {@code null}
-         * @param idToken     the validated ID token content; must not be {@code null}
+         * @param accessToken  the validated access token content; must not be {@code null}
+         * @param idToken      the validated ID token content; must not be {@code null}
+         * @param refreshToken the raw refresh token, or {@code null} when the AS issued none;
+         *                     deliberately unvalidated (see the component documentation)
          */
         public AuthenticationResult {
             Objects.requireNonNull(accessToken, "accessToken must not be null");
             Objects.requireNonNull(idToken, "idToken must not be null");
+        }
+
+        /**
+         * Renders the result without exposing live refresh-token material: the refresh token is a
+         * usable credential, so a stray {@code toString()} in a log statement, exception message or
+         * debugger dump must not leak it (H8, matching
+         * {@link RefreshRedemption#toString()} and
+         * {@link de.cuioss.sheriff.token.client.token.RotationResult#toString()}). Only its
+         * presence is shown; {@code accessToken} and {@code idToken} render by their own
+         * {@code toString()}, exactly as the generated record accessor would.
+         *
+         * @return a string representation carrying no live refresh-token material
+         */
+        @Override
+        public String toString() {
+            return "AuthenticationResult[accessToken=" + accessToken
+                    + ", idToken=" + idToken
+                    + ", refreshToken=" + (refreshToken == null ? "null" : "<redacted>") + "]";
         }
     }
 }
