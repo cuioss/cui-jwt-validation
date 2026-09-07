@@ -222,9 +222,9 @@ class DpopProofGeneratorTest {
     @DisplayName("Should support exactly the six DPoP algorithms the derived suites are computed from")
     void shouldSupportExactlyTheSixDpopAlgorithms() {
         assertEquals(
+                DpopProofGenerator.SUPPORTED_ALGORITHMS,
                 Set.of(JwsAlgorithm.RS256, JwsAlgorithm.RS384, JwsAlgorithm.RS512,
                         JwsAlgorithm.PS256, JwsAlgorithm.ES256, JwsAlgorithm.EDDSA),
-                DpopProofGenerator.SUPPORTED_ALGORITHMS,
                 "the DPoP-supported subset must stay exactly these six members — the suites above are "
                         + "derived from it, so an emptied or widened subset would silently change their coverage");
     }
