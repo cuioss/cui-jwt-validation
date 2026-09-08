@@ -39,7 +39,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 
-import java.io.IOException;
 import java.net.ServerSocket;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -255,7 +254,7 @@ class RefreshFailureClassificationTest {
 
     @Test
     @DisplayName("Should classify an unreachable port as pre-redemption, leaving the presented token in use")
-    void shouldClassifyAnUnreachablePortAsPreRedemption() throws IOException {
+    void shouldClassifyAnUnreachablePortAsPreRedemption() throws Exception {
         int closedPort;
         try (ServerSocket probe = new ServerSocket(0)) {
             closedPort = probe.getLocalPort();
