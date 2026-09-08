@@ -61,6 +61,18 @@ import static org.junit.jupiter.api.Assertions.*;
  * {@link RedeemedRefreshFailure} is reachable only <em>after</em> a {@code 2xx} — the
  * {@code RedeemedValidationRefusalException}, {@code RedeemedScopeRefusalException} and
  * {@code RedeemedResponseException} paths — which this path never reaches.
+ *
+ * <h2>Family-wide revocation on reuse detection</h2>
+ * Detecting the reuse of an already-redeemed refresh token revokes the <em>whole</em> refresh-token
+ * family, not only the credential that was replayed: the rotated replacement is refused as well, so the
+ * session is gone. That is the response RFC 6749 section 10.4 prescribes when a server detects refresh
+ * token replay, and the rule the OAuth 2.0 Security BCP section 4.14.2 states for rotation with reuse
+ * detection.
+ * <p>
+ * The first real run of this spec against the live {@code single-use-refresh} realm falsified the
+ * opposite premise it previously asserted — that the rotated replacement stayed usable once the
+ * superseded one had been refused. Keycloak refused the rotated replacement with HTTP 400 as well
+ * (q-gate finding 3a0c92, recorded alongside plan finding e3a91e below).
  * <p>
  * <strong>Recorded exposure (plan finding e3a91e, against {@code token-sheriff-client}).</strong> The
  * consequence is that on this path the engine cannot distinguish a credential the server has burned from
@@ -129,28 +141,27 @@ class RefreshSingleUseSpecIT extends BaseIntegrationTest {
     }
 
     @Test
-    @DisplayName("Should keep the rotated token usable after the superseded one was refused")
-    void shouldLeaveTheRotatedTokenUsableAfterTheRefusal() {
+    void shouldRevokeTheWholeFamilyOnReuseDetection() {
         String initialRefreshToken =
                 TestRealm.createSingleUseRefreshRealm().obtainValidToken().refreshToken();
         assertNotNull(initialRefreshToken, "the single-use realm must issue an initial refresh token");
 
         String rotatedRefreshToken = refreshFlow.refresh(metadata, initialRefreshToken).refreshToken();
-        assertThrows(TransportException.class,
+
+        TransportException reuseRefusal = assertThrows(TransportException.class,
                 () -> refreshFlow.refresh(metadata, initialRefreshToken),
                 "the superseded token must be refused");
-
-        // The refusal above concerns only the superseded credential. If it had disturbed the session,
-        // the rotated token would be dead too — which is the failure mode this asserts against.
-        RotationResult second = assertDoesNotThrow(
+        TransportException familyRefusal = assertThrows(TransportException.class,
                 () -> refreshFlow.refresh(metadata, rotatedRefreshToken),
-                "refusing the superseded token must not invalidate the credential that replaced it");
+                "reuse detection must revoke the whole refresh-token family, so the rotated "
+                        + "replacement must be refused too rather than continuing the chain");
 
-        assertAll("the rotation chain continues past the refusal",
-                () -> assertTrue(second.rotated(), "the rotated token must itself redeem and rotate"),
-                () -> assertNotEquals(rotatedRefreshToken, second.refreshToken(),
-                        "each redemption must yield a further, distinct refresh token"),
-                () -> assertFalse(second.accessToken().getRawToken().isBlank(),
-                        "the continued rotation must carry a validated access token"));
+        assertAll("no member of the revoked family redeems, so the session is gone",
+                () -> assertTrue(reuseRefusal.getMessage().contains("400"),
+                        "the reuse refusal must report the authorization server's 400 status, was: "
+                                + reuseRefusal.getMessage()),
+                () -> assertTrue(familyRefusal.getMessage().contains("400"),
+                        "the family-wide revocation must report the authorization server's 400 status, "
+                                + "was: " + familyRefusal.getMessage()));
     }
 }
