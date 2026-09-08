@@ -88,6 +88,20 @@ public class TestRealm {
     private static final String JWE_CLIENT_ID = "jwe-client";
     private static final String JWE_CLIENT_SECRET = "jwe-secret";
 
+    // Client-engine realm constants — the realm whose frontendUrl is the externally reachable base, so
+    // the client-engine specs can resolve their endpoints from a real discovery round trip. It mirrors
+    // the integration realm's clients; only the advertised authority differs.
+    private static final String CLIENT_ENGINE_REALM_ID = "client-engine";
+
+    /** {@code client-jwt} client of the client-engine realm; authenticates by signed assertion, not by secret. */
+    private static final String PRIVATE_KEY_JWT_CLIENT_ID = "private-key-jwt-client";
+
+    // Single-use refresh realm constants — realm-scoped because revokeRefreshToken and
+    // refreshTokenMaxReuse are realm settings in Keycloak, not per-client ones.
+    private static final String SINGLE_USE_REALM_ID = "single-use-refresh";
+    private static final String SINGLE_USE_CLIENT_ID = "single-use-client";
+    private static final String SINGLE_USE_CLIENT_SECRET = "single-use-secret";
+
     // Benchmark realm constants
     private static final String BENCHMARK_REALM_ID = "benchmark";
     private static final String BENCHMARK_CLIENT_ID = "benchmark-client";
@@ -209,6 +223,22 @@ public class TestRealm {
         return Set.copyOf(capabilities);
     }
 
+    /**
+     * Returns the provider's realm identifier, for callers that must name the realm on an
+     * out-of-band API such as the Keycloak admin endpoint.
+     */
+    public String getRealmIdentifier() {
+        return realmIdentifier;
+    }
+
+    /**
+     * Returns the client this realm acquires as, for callers that must name the client on an
+     * out-of-band API such as the Keycloak admin endpoint.
+     */
+    public String getClientId() {
+        return clientId;
+    }
+
     // === Factory methods ===
 
     public static TestRealm createIntegrationRealm() {
@@ -232,19 +262,6 @@ public class TestRealm {
     }
 
     /**
-     * Refresh testing — uses {@code refresh-fast-client} in the integration realm
-     * with {@code access.token.lifespan=35}, so a freshly issued access token becomes
-     * proactively refresh-eligible within seconds of issue.
-     */
-    public static TestRealm createFastRefreshRealm() {
-        return new TestRealm(
-                INTEGRATION_REALM_ID, REFRESH_FAST_CLIENT_ID, REFRESH_FAST_CLIENT_SECRET,
-                INTEGRATION_USERNAME, INTEGRATION_PASSWORD,
-                KEYCLOAK_BASE_URL, TOKEN_ENDPOINT_TEMPLATE.formatted(INTEGRATION_REALM_ID),
-                "Keycloak", KEYCLOAK_CAPABILITIES);
-    }
-
-    /**
      * JWE testing — uses {@code jwe-client} in the integration realm
      * with encrypted ID token response configured.
      */
@@ -253,6 +270,76 @@ public class TestRealm {
                 INTEGRATION_REALM_ID, JWE_CLIENT_ID, JWE_CLIENT_SECRET,
                 INTEGRATION_USERNAME, INTEGRATION_PASSWORD,
                 KEYCLOAK_BASE_URL, TOKEN_ENDPOINT_TEMPLATE.formatted(INTEGRATION_REALM_ID),
+                "Keycloak", KEYCLOAK_CAPABILITIES);
+    }
+
+    /**
+     * Client-engine counterpart of {@link #createIntegrationRealm()}.
+     * <p>
+     * Same client and user, but in the {@code client-engine} realm, whose {@code frontendUrl} is the
+     * externally reachable base — so a spec acquiring here can drive the refresh leg against endpoints
+     * resolved from the realm's own discovery document rather than from hand-maintained constants.
+     */
+    public static TestRealm createClientEngineRealm() {
+        return new TestRealm(
+                CLIENT_ENGINE_REALM_ID, INTEGRATION_CLIENT_ID, INTEGRATION_CLIENT_SECRET,
+                INTEGRATION_USERNAME, INTEGRATION_PASSWORD,
+                KEYCLOAK_BASE_URL, TOKEN_ENDPOINT_TEMPLATE.formatted(CLIENT_ENGINE_REALM_ID),
+                "Keycloak", KEYCLOAK_CAPABILITIES);
+    }
+
+    /** Client-engine counterpart of {@link #createDpopRealm()}. */
+    public static TestRealm createClientEngineDpopRealm() {
+        return new TestRealm(
+                CLIENT_ENGINE_REALM_ID, DPOP_CLIENT_ID, DPOP_CLIENT_SECRET,
+                INTEGRATION_USERNAME, INTEGRATION_PASSWORD,
+                KEYCLOAK_BASE_URL, TOKEN_ENDPOINT_TEMPLATE.formatted(CLIENT_ENGINE_REALM_ID),
+                "Keycloak", KEYCLOAK_CAPABILITIES);
+    }
+
+    /**
+     * Refresh testing — uses {@code refresh-fast-client} in the client-engine realm
+     * with {@code access.token.lifespan=35}, so a freshly issued access token becomes
+     * proactively refresh-eligible within seconds of issue.
+     */
+    public static TestRealm createClientEngineFastRefreshRealm() {
+        return new TestRealm(
+                CLIENT_ENGINE_REALM_ID, REFRESH_FAST_CLIENT_ID, REFRESH_FAST_CLIENT_SECRET,
+                INTEGRATION_USERNAME, INTEGRATION_PASSWORD,
+                KEYCLOAK_BASE_URL, TOKEN_ENDPOINT_TEMPLATE.formatted(CLIENT_ENGINE_REALM_ID),
+                "Keycloak", KEYCLOAK_CAPABILITIES);
+    }
+
+    /**
+     * Client-engine {@code private-key-jwt-client}, which authenticates with a signed client assertion
+     * and therefore has no shared secret.
+     * <p>
+     * This instance names the realm and client for a spec that registers assertion key material and
+     * drives its own acquisition; it deliberately carries a {@code null} secret, so the shared
+     * secret-posting acquisition methods refuse it rather than posting a bogus credential — see
+     * {@link #requireSharedSecret()}.
+     */
+    public static TestRealm createClientEnginePrivateKeyJwtRealm() {
+        return new TestRealm(
+                CLIENT_ENGINE_REALM_ID, PRIVATE_KEY_JWT_CLIENT_ID, null,
+                INTEGRATION_USERNAME, INTEGRATION_PASSWORD,
+                KEYCLOAK_BASE_URL, TOKEN_ENDPOINT_TEMPLATE.formatted(CLIENT_ENGINE_REALM_ID),
+                "Keycloak", KEYCLOAK_CAPABILITIES);
+    }
+
+    /**
+     * Realm that enforces single-use refresh tokens: {@code revokeRefreshToken=true} with
+     * {@code refreshTokenMaxReuse=0}, so the authorization server refuses a token it has already
+     * redeemed.
+     * <p>
+     * Separate from the client-engine realm because both settings are realm-scoped in Keycloak —
+     * enabling them there would change the posture every other client-engine spec relies on.
+     */
+    public static TestRealm createSingleUseRefreshRealm() {
+        return new TestRealm(
+                SINGLE_USE_REALM_ID, SINGLE_USE_CLIENT_ID, SINGLE_USE_CLIENT_SECRET,
+                INTEGRATION_USERNAME, INTEGRATION_PASSWORD,
+                KEYCLOAK_BASE_URL, TOKEN_ENDPOINT_TEMPLATE.formatted(SINGLE_USE_REALM_ID),
                 "Keycloak", KEYCLOAK_CAPABILITIES);
     }
 
@@ -342,6 +429,7 @@ public class TestRealm {
      * Obtains a valid token with specific scopes.
      */
     public TokenResponse obtainValidTokenWithScopes(String scopes) {
+        requireSharedSecret();
         RequestSpecification request = given()
                 .baseUri(baseUrl)
                 .contentType("application/x-www-form-urlencoded")
@@ -407,6 +495,7 @@ public class TestRealm {
                     "DPoP token acquisition requires PASSWORD grant type, but " + this
                             + " uses " + grantType);
         }
+        requireSharedSecret();
 
         String tokenUrl = baseUrl + tokenEndpoint;
         String dpopProof = dpopHelper.createTokenEndpointProof(tokenUrl);
@@ -444,6 +533,23 @@ public class TestRealm {
     @Override
     public String toString() {
         return providerName + "/" + realmIdentifier;
+    }
+
+    /**
+     * Refuses an acquisition that would post a {@code client_secret} for a client that has none.
+     * <p>
+     * Without this the request would carry a literal {@code "null"} secret and the authorization server
+     * would answer {@code invalid_client}, which reads as a realm misconfiguration rather than as the
+     * fixture misuse it is: a {@code client-jwt} client authenticates with a signed assertion, so its
+     * acquisition belongs to the spec that owns the assertion key, not to this shared helper.
+     *
+     * @throws IllegalStateException if this realm carries no shared secret
+     */
+    private void requireSharedSecret() {
+        if (clientSecret == null) {
+            throw new IllegalStateException(this + " authenticates with a signed client assertion and has "
+                    + "no shared secret; acquire through the spec that owns the assertion key instead.");
+        }
     }
 
     private void validateToken(String token, String tokenType) {

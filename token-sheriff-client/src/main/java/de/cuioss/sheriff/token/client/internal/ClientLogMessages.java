@@ -181,6 +181,19 @@ public final class ClientLogMessages {
                 .identifier(113)
                 .template("Refresh response for session '%s' was unusable after the authorization server accepted the request; rotation is unrecoverable, so the presented token is presumed burned and the store and rotation family are cleared without revocation")
                 .build();
+
+        /**
+         * The authorization server refused the refresh request with {@code invalid_grant}, declaring
+         * the presented refresh token invalid without ever redeeming it. Nothing was rotated, so no
+         * successor exists and no revocation is attempted — the presented token is precisely what the
+         * server just refused. The session is nonetheless cleared fail-closed, because a credential the
+         * server has declared dead is not revived by a retry.
+         */
+        public static final LogRecord REFRESH_CREDENTIAL_REJECTED_QUARANTINE = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(114)
+                .template("Authorization server rejected the refresh token for session '%s' as invalid; nothing was redeemed, so the store and rotation family are cleared without revocation")
+                .build();
     }
 
     /**

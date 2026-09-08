@@ -15,6 +15,7 @@
  */
 package de.cuioss.sheriff.token.client.flow;
 
+import de.cuioss.sheriff.token.client.flow.RefreshFailureClassification.Kind;
 import de.cuioss.sheriff.token.commons.error.ClientProtocolException;
 import de.cuioss.sheriff.token.commons.error.TransportException;
 import de.cuioss.sheriff.token.commons.events.SecurityEventCounter;
@@ -30,7 +31,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -48,9 +48,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Two properties are load-bearing here and neither is visible from the wired tier. First, the carriers
  * must remain assignable to the exception types {@link RefreshFlow#refresh} has always documented, so
  * making the redemption state travel on the exception is not a breaking contract change for any
- * existing {@code catch}. Second, {@link RefreshFlow#redemptionOf(Throwable)} must classify a failure
- * that carries nothing as pre-redemption — the case where quarantining would destroy a working session
- * over a transient network fault.
+ * existing {@code catch}. Second, {@link RefreshFlow#classify(Throwable)} must sort a failure that
+ * carries nothing into the right one of the two unredeemed dispositions — pre-redemption, where
+ * quarantining would destroy a working session over a transient network fault, and credential-rejected,
+ * where preserving it would leave the caller holding a credential the server has declared dead.
  */
 @EnableGeneratorController
 @DisplayName("Post-redemption refusals carry their redemption state without changing the thrown type")
@@ -107,26 +108,49 @@ class RedeemedRefreshFailureTest {
     }
 
     @Test
-    @DisplayName("Should classify a carried refusal, an unparseable 2xx, and a pre-redemption failure distinctly")
+    @DisplayName("Should classify a carried refusal, an unparseable 2xx, a rejected credential, and a pre-redemption failure distinctly")
     void shouldClassifyEveryFailureShape() {
         String successor = Generators.letterStrings(20, 40).next();
 
-        Optional<RefreshRedemption> carried = RefreshFlow.redemptionOf(
+        RefreshFailureClassification carried = RefreshFlow.classify(
                 new RedeemedScopeRefusalException("refused", RefreshRedemption.rotated(successor)));
-        Optional<RefreshRedemption> unparseable = RefreshFlow.redemptionOf(
+        RefreshFailureClassification unparseable = RefreshFlow.classify(
                 new RedeemedResponseException("Empty token endpoint response"));
-        Optional<RefreshRedemption> preRedemption = RefreshFlow.redemptionOf(
+        RefreshFailureClassification rejected = RefreshFlow.classify(
+                new CredentialRejectedException("Token endpoint rejected the presented credential with HTTP 400"));
+        RefreshFailureClassification preRedemption = RefreshFlow.classify(
                 new TransportException("connection refused"));
 
-        assertAll("the absence of a redemption is the discriminator that must not be collapsed",
-                () -> assertEquals(successor, carried.orElseThrow().rotatedRefreshToken()),
-                () -> assertTrue(unparseable.orElseThrow().presentedTokenBurned(),
+        assertAll("the three dispositions must stay distinct — collapsing any pair inverts a decision",
+                () -> assertEquals(Kind.REDEEMED, carried.kind()),
+                () -> assertEquals(successor, carried.redemption().rotatedRefreshToken()),
+                () -> assertEquals(Kind.REDEEMED, unparseable.kind()),
+                () -> assertTrue(unparseable.redemption().presentedTokenBurned(),
                         "an unparseable 2xx fails closed on a presumed rotation"),
-                () -> assertNull(unparseable.orElseThrow().rotatedRefreshToken(),
+                () -> assertNull(unparseable.redemption().rotatedRefreshToken(),
                         "with no successor invented to revoke"),
-                () -> assertTrue(preRedemption.isEmpty(),
-                        "a transient fault must not be mistaken for a burned credential"),
-                () -> assertThrows(NullPointerException.class, () -> RefreshFlow.redemptionOf(null)));
+                () -> assertEquals(Kind.CREDENTIAL_REJECTED, rejected.kind(),
+                        "a credential the server declared dead is neither redeemed nor merely transient"),
+                () -> assertNull(rejected.redemption(),
+                        "nothing was rotated, so there is no successor to revoke"),
+                () -> assertEquals(Kind.PRE_REDEMPTION, preRedemption.kind(),
+                        "a transient fault must not be mistaken for a burned or a rejected credential"),
+                () -> assertNull(preRedemption.redemption()),
+                () -> assertThrows(NullPointerException.class, () -> RefreshFlow.classify(null)));
+    }
+
+    @Test
+    @DisplayName("Should keep the credential-rejected carrier assignable to TransportException and free of AS state")
+    void shouldPreserveTheCredentialRejectedContract() {
+        var carrier = new CredentialRejectedException(
+                "Token endpoint rejected the presented credential with HTTP 400 (RFC 6749 §5.2 'invalid_grant')");
+
+        assertAll("existing catch (TransportException) blocks must keep holding",
+                () -> assertInstanceOf(TransportException.class, carrier),
+                () -> assertFalse(carrier instanceof RedeemedRefreshFailure,
+                        "nothing was redeemed, so it must not carry a redemption"),
+                () -> assertTrue(carrier.getMessage().contains("400"),
+                        "the observed status is the one detail the message reports"));
     }
 
     @Test

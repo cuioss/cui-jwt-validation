@@ -111,7 +111,7 @@ class RefreshConstraintLifecycleSpecIT extends BaseIntegrationTest {
         StoredToken stored = storeBoundSession(sessionId);
 
         RotationResult rotation =
-                dpopRefreshFlow.refresh(RefreshEngineSupport.providerMetadata(), stored.refreshToken());
+                dpopRefreshFlow.refresh(RefreshEngineSupport.discoveredProviderMetadata(), stored.refreshToken());
         ConstraintBinding confirmedBinding = confirmedBindingOf(rotation.accessToken().getRawToken())
                 .orElse(null);
 
@@ -140,7 +140,7 @@ class RefreshConstraintLifecycleSpecIT extends BaseIntegrationTest {
         storeBoundSession(sessionId);
 
         IllegalStateException refusal = assertThrows(IllegalStateException.class,
-                () -> manager.refresh(sessionId, RefreshEngineSupport.providerMetadata(), dpopRefreshFlow,
+                () -> manager.refresh(sessionId, RefreshEngineSupport.discoveredProviderMetadata(), dpopRefreshFlow,
                         new RevocationClient(configuration), idBridge,
                         RefreshEngineSupport.clientAuthentication(configuration)),
                 "the plain-bearer coordinator must fail closed on a sender-constrained bundle");
@@ -157,7 +157,7 @@ class RefreshConstraintLifecycleSpecIT extends BaseIntegrationTest {
                         "the refused rotation must quarantine the session: neither the refreshed material "
                                 + "nor the pre-refresh bundle the AS has already burned may survive it"),
                 () -> assertEquals(Optional.empty(),
-                        manager.refresh(sessionId, RefreshEngineSupport.providerMetadata(), dpopRefreshFlow,
+                        manager.refresh(sessionId, RefreshEngineSupport.discoveredProviderMetadata(), dpopRefreshFlow,
                                 new RevocationClient(configuration), idBridge,
                                 RefreshEngineSupport.clientAuthentication(configuration)),
                         "the quarantined session must hold nothing refreshable — the caller has to "
@@ -173,7 +173,7 @@ class RefreshConstraintLifecycleSpecIT extends BaseIntegrationTest {
      */
     private StoredToken storeBoundSession(String sessionId) {
         TestRealm.TokenResponse acquired =
-                TestRealm.createDpopRealm().obtainDpopBoundToken(new DpopProofHelper(proofKey));
+                TestRealm.createClientEngineDpopRealm().obtainDpopBoundToken(new DpopProofHelper(proofKey));
         assertNotNull(acquired.refreshToken(), "the DPoP-bound acquisition must issue a refresh token");
         assertEquals(Optional.of(acquiredBinding), confirmedBindingOf(acquired.accessToken()),
                 "the acquisition must yield a token genuinely bound to the test-owned proof key");

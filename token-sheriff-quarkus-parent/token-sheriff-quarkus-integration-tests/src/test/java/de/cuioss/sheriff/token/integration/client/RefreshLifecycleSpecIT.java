@@ -179,7 +179,7 @@ class RefreshLifecycleSpecIT extends BaseIntegrationTest {
      * @return the stored bundle, with the expiry derived from the provider's {@code expires_in}
      */
     private static StoredToken acquireBundle() {
-        TestRealm.TokenResponse acquired = TestRealm.createFastRefreshRealm().obtainValidToken();
+        TestRealm.TokenResponse acquired = TestRealm.createClientEngineFastRefreshRealm().obtainValidToken();
         assertNotNull(acquired.refreshToken(), "the fast-expiry client must issue a refresh token");
         assertNotNull(acquired.expiresInSeconds(), "Keycloak must report the access-token lifetime");
         return new StoredToken(acquired.accessToken(), acquired.refreshToken(), acquired.idToken(),
@@ -187,7 +187,7 @@ class RefreshLifecycleSpecIT extends BaseIntegrationTest {
     }
 
     private Optional<StoredToken> refreshSession(String sessionId) {
-        return refreshSession(sessionId, RefreshEngineSupport.providerMetadata());
+        return refreshSession(sessionId, RefreshEngineSupport.discoveredProviderMetadata());
     }
 
     private Optional<StoredToken> refreshSession(String sessionId, ProviderMetadata metadata) {
@@ -204,8 +204,8 @@ class RefreshLifecycleSpecIT extends BaseIntegrationTest {
      * @return metadata carrying the working token endpoint and a failing revocation endpoint
      */
     private static ProviderMetadata unreachableRevocation() {
-        ProviderMetadata metadata = RefreshEngineSupport.providerMetadata();
-        metadata.revocationEndpoint = RefreshEngineSupport.REVOCATION_ENDPOINT + "-does-not-exist";
+        ProviderMetadata metadata = RefreshEngineSupport.discoveredProviderMetadata();
+        metadata.revocationEndpoint = metadata.revocationEndpoint + "-does-not-exist";
         return metadata;
     }
 

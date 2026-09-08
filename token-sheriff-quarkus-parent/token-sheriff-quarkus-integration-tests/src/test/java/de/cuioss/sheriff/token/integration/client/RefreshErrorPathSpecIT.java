@@ -75,7 +75,7 @@ class RefreshErrorPathSpecIT extends BaseIntegrationTest {
     @DisplayName("Should surface an unknown refresh token as a typed engine failure")
     void shouldSurfaceUnknownRefreshTokenAsTypedFailure() {
         TransportException failure = assertThrows(TransportException.class,
-                () -> refreshFlow.refresh(RefreshEngineSupport.providerMetadata(), UNKNOWN_REFRESH_TOKEN),
+                () -> refreshFlow.refresh(RefreshEngineSupport.discoveredProviderMetadata(), UNKNOWN_REFRESH_TOKEN),
                 "an unknown refresh token must be refused, never turned into a RotationResult");
 
         assertAll("typed refusal of an unknown refresh token",
@@ -90,15 +90,16 @@ class RefreshErrorPathSpecIT extends BaseIntegrationTest {
     @Test
     @DisplayName("Should surface a revoked refresh token as a typed engine failure")
     void shouldSurfaceRevokedRefreshTokenAsTypedFailure() {
-        TestRealm.TokenResponse acquired = TestRealm.createFastRefreshRealm().obtainValidToken();
+        TestRealm.TokenResponse acquired = TestRealm.createClientEngineFastRefreshRealm().obtainValidToken();
         assertNotNull(acquired.refreshToken(), "the fast-expiry client must issue a refresh token");
 
-        new RevocationClient(configuration).revoke(RefreshEngineSupport.REVOCATION_ENDPOINT,
+        new RevocationClient(configuration).revoke(
+                RefreshEngineSupport.discoveredProviderMetadata().revocationEndpoint,
                 acquired.refreshToken(), "refresh_token",
                 RefreshEngineSupport.clientAuthentication(configuration));
 
         TransportException failure = assertThrows(TransportException.class,
-                () -> refreshFlow.refresh(RefreshEngineSupport.providerMetadata(), acquired.refreshToken()),
+                () -> refreshFlow.refresh(RefreshEngineSupport.discoveredProviderMetadata(), acquired.refreshToken()),
                 "a refresh token revoked through the production RevocationClient must no longer redeem");
 
         assertAll("typed refusal of a revoked refresh token",
@@ -115,7 +116,7 @@ class RefreshErrorPathSpecIT extends BaseIntegrationTest {
      * {@link RefreshFlow} surface, with no {@code TokenLifecycleManager} above it.
      * <p>
      * <strong>This documents an authorization-server configuration property, not an engine guarantee.</strong>
-     * The {@code integration} realm sets neither {@code revokeRefreshToken} nor
+     * The {@code client-engine} realm sets neither {@code revokeRefreshToken} nor
      * {@code refreshTokenMaxReuse}, so Keycloak accepts a token it has already rotated away from. The
      * client-side defence against exactly this is {@code RefreshTokenFamily}, driven by
      * {@code TokenLifecycleManager} — it is pinned by
@@ -126,16 +127,16 @@ class RefreshErrorPathSpecIT extends BaseIntegrationTest {
     @Test
     @DisplayName("Should record that the realm accepts a superseded refresh token replayed through RefreshFlow")
     void shouldRecordThatTheRealmAcceptsASupersededRefreshToken() {
-        TestRealm.TokenResponse acquired = TestRealm.createFastRefreshRealm().obtainValidToken();
+        TestRealm.TokenResponse acquired = TestRealm.createClientEngineFastRefreshRealm().obtainValidToken();
         assertNotNull(acquired.refreshToken(), "the fast-expiry client must issue a refresh token");
 
         RotationResult first =
-                refreshFlow.refresh(RefreshEngineSupport.providerMetadata(), acquired.refreshToken());
+                refreshFlow.refresh(RefreshEngineSupport.discoveredProviderMetadata(), acquired.refreshToken());
         assertTrue(first.rotated(),
                 "the first redemption must rotate, so the presented token is genuinely superseded");
 
         RotationResult replay =
-                refreshFlow.refresh(RefreshEngineSupport.providerMetadata(), acquired.refreshToken());
+                refreshFlow.refresh(RefreshEngineSupport.discoveredProviderMetadata(), acquired.refreshToken());
 
         assertAll("superseded-token replay is accepted by this realm",
                 () -> assertNotEquals(first.refreshToken(), replay.refreshToken(),

@@ -67,11 +67,12 @@ import static org.junit.jupiter.api.Assertions.*;
  * registration cannot be masked by a stale inline key — the {@code private_key_jwt} tests would fail
  * with {@code invalid_client} instead of silently passing against the wrong key.
  *
- * <h2>The {@code private_key_jwt} audience trap</h2>
- * The assertion audience must be {@link RefreshEngineSupport#INTERNAL_TOKEN_ENDPOINT} — the endpoint URL
- * the realm derives from its own {@code frontendUrl} — even though the request is sent to the
- * externally reachable {@link RefreshEngineSupport#TOKEN_ENDPOINT}. Audiencing the assertion at the
- * URL actually connected to is rejected with {@code invalid_client / Invalid token audience}.
+ * <h2>The {@code private_key_jwt} assertion audience</h2>
+ * Keycloak matches the assertion's {@code aud} against the endpoint URL it derives from its own
+ * {@code frontendUrl}. In the {@code client-engine} realm that URL is the one the request is actually
+ * sent to, so the assertion is audienced at the discovery-resolved
+ * {@code token_endpoint} — the single URL that is both advertised and connected to. No second,
+ * unreachable audience has to be reconciled here.
  */
 @DisplayName("RefreshFlow client authentication against real Keycloak")
 class RefreshClientAuthSpecIT extends BaseIntegrationTest {
@@ -79,7 +80,10 @@ class RefreshClientAuthSpecIT extends BaseIntegrationTest {
     private static final String FAST_CLIENT_ID = "refresh-fast-client";
     private static final String FAST_CLIENT_SECRET = "refresh-fast-secret";
 
-    private static final String PRIVATE_KEY_JWT_CLIENT_ID = "private-key-jwt-client";
+    /** Names the realm and the {@code client-jwt} client the assertion key is registered on. */
+    private static final TestRealm PRIVATE_KEY_JWT_REALM = TestRealm.createClientEnginePrivateKeyJwtRealm();
+
+    private static final String PRIVATE_KEY_JWT_CLIENT_ID = PRIVATE_KEY_JWT_REALM.getClientId();
 
     /** {@code kid} this fixture registers the generated public key under. */
     private static final String PRIVATE_KEY_JWT_KEY_ID = "private-key-jwt-test-key";
@@ -87,7 +91,7 @@ class RefreshClientAuthSpecIT extends BaseIntegrationTest {
     private static final String PRIVATE_KEY_JWT_ALGORITHM = "RS256";
 
     /** Realm the {@code private_key_jwt} client lives in. */
-    private static final String REALM = "integration";
+    private static final String REALM = PRIVATE_KEY_JWT_REALM.getRealmIdentifier();
 
     /** RSA key size for the generated assertion signing key. */
     private static final int PRIVATE_KEY_JWT_KEY_SIZE = 2048;
@@ -117,7 +121,7 @@ class RefreshClientAuthSpecIT extends BaseIntegrationTest {
     @Test
     @DisplayName("Should refresh with client_secret_post client authentication")
     void shouldRefreshWithClientSecretPost() {
-        TestRealm.TokenResponse acquired = TestRealm.createFastRefreshRealm().obtainValidToken();
+        TestRealm.TokenResponse acquired = TestRealm.createClientEngineFastRefreshRealm().obtainValidToken();
         assertNotNull(acquired.refreshToken(), "the fast-expiry client must issue a refresh token");
 
         ClientConfiguration configuration = RefreshEngineSupport.clientConfiguration(
@@ -127,13 +131,13 @@ class RefreshClientAuthSpecIT extends BaseIntegrationTest {
                 accessBridge(), postAuth);
 
         RotationResult rotation =
-                refreshFlow.refresh(RefreshEngineSupport.providerMetadata(), acquired.refreshToken());
+                refreshFlow.refresh(RefreshEngineSupport.discoveredProviderMetadata(), acquired.refreshToken());
 
         assertAll("client_secret_post refresh",
                 () -> assertTrue(rotation.rotated(), "the AS must accept the body-carried credentials"),
                 () -> assertNotEquals(acquired.refreshToken(), rotation.refreshToken(),
                         "the rotated refresh token must differ from the redeemed one"),
-                () -> assertEquals(KeycloakUrlSupport.INTERNAL_ISSUER, rotation.accessToken().getIssuer(),
+                () -> assertEquals(RefreshEngineSupport.ISSUER, rotation.accessToken().getIssuer(),
                         "the validated access token must carry the realm's issuer identity"));
     }
 
@@ -149,13 +153,13 @@ class RefreshClientAuthSpecIT extends BaseIntegrationTest {
                 RefreshEngineSupport.refreshFlow(configuration, accessBridge(), assertionAuth);
 
         RotationResult rotation =
-                refreshFlow.refresh(RefreshEngineSupport.providerMetadata(), acquiredRefreshToken);
+                refreshFlow.refresh(RefreshEngineSupport.discoveredProviderMetadata(), acquiredRefreshToken);
 
         assertAll("private_key_jwt refresh",
                 () -> assertTrue(rotation.rotated(), "the AS must accept the signed client assertion"),
                 () -> assertNotEquals(acquiredRefreshToken, rotation.refreshToken(),
                         "the rotated refresh token must differ from the redeemed one"),
-                () -> assertEquals(KeycloakUrlSupport.INTERNAL_ISSUER, rotation.accessToken().getIssuer(),
+                () -> assertEquals(RefreshEngineSupport.ISSUER, rotation.accessToken().getIssuer(),
                         "the validated access token must carry the realm's issuer identity"),
                 () -> assertTrue(rotation.accessToken().getSubject().isPresent(),
                         "the validated access token must be subject bound"));
@@ -167,7 +171,7 @@ class RefreshClientAuthSpecIT extends BaseIntegrationTest {
         ClientConfiguration configuration = RefreshEngineSupport.clientConfiguration(
                 PRIVATE_KEY_JWT_CLIENT_ID, null, ClientAuthMethod.PRIVATE_KEY_JWT);
         ClientAuthentication assertionAuth = privateKeyJwtAuth();
-        ProviderMetadata metadata = RefreshEngineSupport.providerMetadata();
+        ProviderMetadata metadata = RefreshEngineSupport.discoveredProviderMetadata();
         // The realm genuinely advertises both, verified against its live discovery document; the
         // selector must therefore have a real choice to make rather than a single candidate.
         metadata.tokenEndpointAuthMethodsSupported =
@@ -215,18 +219,26 @@ class RefreshClientAuthSpecIT extends BaseIntegrationTest {
         clientAuthentication.decorate(form, headers);
 
         TokenResponse acquired = new TokenEndpointClient(configuration)
-                .requestToken(RefreshEngineSupport.TOKEN_ENDPOINT, form, headers);
+                .requestToken(discoveredTokenEndpoint(), form, headers);
         assertNotNull(acquired.refreshToken, "the acquisition must issue a refresh token to redeem");
         return acquired.refreshToken;
     }
 
     /**
      * @return {@code private_key_jwt} authentication over the run-generated signing key registered by
-     *         {@link #registerAssertionSigningKey()}, audienced at the realm's own (internal) token
-     *         endpoint — see the class-level audience note
+     *         {@link #registerAssertionSigningKey()}, audienced at the realm's discovery-advertised
+     *         token endpoint — see the class-level audience note
      */
     private static PrivateKeyJwtAuth privateKeyJwtAuth() {
-        return new PrivateKeyJwtAuth(PRIVATE_KEY_JWT_CLIENT_ID, RefreshEngineSupport.INTERNAL_TOKEN_ENDPOINT,
+        return new PrivateKeyJwtAuth(PRIVATE_KEY_JWT_CLIENT_ID, discoveredTokenEndpoint(),
                 assertionSigningKey.getPrivate(), PRIVATE_KEY_JWT_KEY_ID, PRIVATE_KEY_JWT_ALGORITHM);
+    }
+
+    /**
+     * @return the token endpoint the realm advertises in its discovery document — the URL the request is
+     *         sent to and, equally, the audience Keycloak matches the client assertion against
+     */
+    private static String discoveredTokenEndpoint() {
+        return RefreshEngineSupport.discoveredProviderMetadata().tokenEndpoint;
     }
 }

@@ -28,10 +28,14 @@ import java.util.Objects;
  * closed after a <em>post-redemption</em> refusal has no result to inspect. This value is the
  * separate signal: {@link RefreshFlow} resolves it as soon as the token endpoint has answered and
  * carries it on every refusal raised thereafter ({@link RedeemedRefreshFailure}), which
- * {@link RefreshFlow#redemptionOf(Throwable)} reads back. Its absence is therefore just as meaningful
- * as its presence: a failure carrying none means the request failed <em>before</em> the authorization
- * server processed it (connection failure, DNS failure, non-success HTTP status), so the presented
- * refresh token is still valid and the session must not be quarantined.
+ * {@link RefreshFlow#classify(Throwable)} reads back as
+ * {@link RefreshFailureClassification.Kind#REDEEMED}. Its absence means the request failed
+ * <em>before</em> the authorization server processed it, which {@code classify} splits into two: a
+ * {@link RefreshFailureClassification.Kind#PRE_REDEMPTION} failure (connection failure, DNS failure,
+ * {@code 5xx}), where the presented refresh token is still valid and the session must not be
+ * quarantined; and {@link RefreshFailureClassification.Kind#CREDENTIAL_REJECTED}, where the server
+ * declared the presented token invalid without redeeming it — no redemption state exists because
+ * nothing was redeemed, yet the session must still be cleared.
  * <p>
  * Three states are distinguished, and the third is not a variant of the first two:
  * <ul>

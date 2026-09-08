@@ -20,7 +20,7 @@ Integration tests for the Token-Sheriff Quarkus extensions with native container
 
 * Native container testing with production-like behavior
 * HTTPS with self-signed certificates
-* Keycloak integration with two test realms
+* Keycloak integration with four test realms
 * Multi-IDP testing with Dex (via Docker Compose profile)
 * Health check and metrics validation
 * Automated build and test scripts
@@ -173,7 +173,9 @@ token-sheriff-quarkus-integration-tests/
 │       ├── health-check.sh
 │       └── keycloak/
 │           ├── benchmark-realm.json
-│           └── integration-realm.json
+│           ├── client-engine-realm.json
+│           ├── integration-realm.json
+│           └── single-use-refresh-realm.json
 ├── src/test/java/de/cuioss/sheriff/token/integration/
 │   ├── BaseIntegrationTest.java
 │   ├── TestConstants.java
@@ -238,7 +240,7 @@ Tests use `@ParameterizedTest` with `@MethodSource` to run against multiple OIDC
 
 === Keycloak Realms
 
-The integration tests use **two Keycloak realms** to validate different JWT configuration patterns:
+The integration tests use **four Keycloak realms** to validate different JWT configuration patterns:
 
 ==== Benchmark Realm (Well-Known Discovery)
 
@@ -268,7 +270,38 @@ sheriff.token.issuers.integration.issuer-identifier=https://keycloak:8443/realms
 sheriff.token.issuers.integration.jwks.http.url=https://keycloak:8443/realms/integration/protocol/openid-connect/certs
 ----
 
-Both realms are automatically imported into Keycloak during container startup via the `docker-compose.yml` configuration.
+==== Client-Engine Realm (Discovery-Resolved Endpoints)
+
+* **Realm**: `client-engine`
+* **Clients**: `integration-client` / `integration-secret`, `dpop-client` / `dpop-secret`, `refresh-fast-client` / `refresh-fast-secret` (35 s access tokens), `private-key-jwt-client` (signed client assertion, no shared secret)
+* **User**: `integration-user` / `integration-password`
+* **Configuration**: `frontendUrl` is `https://localhost:1443` — the base the test JVM actually reaches
+* **Purpose**: Lets the client-engine refresh specs resolve their endpoints from a real `/.well-known/openid-configuration` round trip through the production `DiscoveryResolver`
+
+Because this realm advertises the externally reachable authority, its issuer identity and its endpoint
+authority coincide. The `integration` realm cannot serve this purpose: it advertises the Docker-internal
+`https://keycloak:8443`, so a discovery round trip against it would resolve endpoints unreachable from
+the test JVM.
+
+[source,properties]
+----
+sheriff.token.issuers.client-engine.issuer-identifier=https://localhost:1443/realms/client-engine
+sheriff.token.issuers.client-engine.jwks.http.well-known-url=https://localhost:1443/realms/client-engine/.well-known/openid-configuration
+----
+
+==== Single-Use Refresh Realm (AS-Enforced Rotation)
+
+* **Realm**: `single-use-refresh`
+* **Client**: `single-use-client` / `single-use-secret` (confidential client)
+* **User**: `integration-user` / `integration-password`
+* **Configuration**: `revokeRefreshToken: true` with `refreshTokenMaxReuse: 0`; `frontendUrl` is `https://localhost:1443`
+* **Purpose**: Serves `RefreshSingleUseSpecIT`, which drives the engine against a server that revokes a refresh token on redemption and refuses any later presentation of it
+
+Both settings are realm-scoped in Keycloak, which is why this is a realm of its own rather than another
+client in `client-engine`: enabling them there would change the posture every other client-engine spec
+relies on — notably `RefreshErrorPathSpecIT`, which records the opposite, permissive property.
+
+All four realms are automatically imported into Keycloak during container startup via the `docker-compose.yml` configuration.
 
 === URL Adaptation for Docker Networking
 
@@ -282,7 +315,9 @@ The integration tests use HTTPS throughout with proper certificate validation:
 
 ==== Current Configuration
 
-Both realms use consistent HTTPS configuration:
+All four realms use consistent HTTPS configuration. The benchmark and integration realms advertise the
+Docker-internal authority; the client-engine and single-use-refresh realms advertise the externally
+reachable one, which is what makes their endpoints discoverable from the test JVM:
 
 [source,properties]
 ----
@@ -293,12 +328,20 @@ sheriff.token.issuers.keycloak.jwks.http.well-known-url=https://keycloak:8443/re
 # Integration realm with direct JWKS URL
 sheriff.token.issuers.integration.issuer-identifier=https://keycloak:8443/realms/integration
 sheriff.token.issuers.integration.jwks.http.url=https://keycloak:8443/realms/integration/protocol/openid-connect/certs
+
+# Client-engine realm, advertised on the externally reachable base so the test JVM can discover it
+sheriff.token.issuers.client-engine.issuer-identifier=https://localhost:1443/realms/client-engine
+sheriff.token.issuers.client-engine.jwks.http.well-known-url=https://localhost:1443/realms/client-engine/.well-known/openid-configuration
+
+# Single-use refresh realm, likewise externally advertised; revokes a refresh token on redemption
+sheriff.token.issuers.single-use-refresh.issuer-identifier=https://localhost:1443/realms/single-use-refresh
+sheriff.token.issuers.single-use-refresh.jwks.http.well-known-url=https://localhost:1443/realms/single-use-refresh/.well-known/openid-configuration
 ----
 
 ==== Key Points
 
 1. **HTTPS enforcement**: All communication uses HTTPS with certificate validation
-2. **Consistent internal URLs**: All issuer identifiers and JWKS URLs use internal Docker hostname
+2. **Authority per realm**: The benchmark and integration realms use the internal Docker hostname for issuer identifiers and JWKS URLs; the client-engine and single-use-refresh realms use the external `localhost:1443` base, so their discovery documents advertise endpoints the test JVM can connect to
 3. **Certificate trust**: Application trusts Keycloak certificates via configured truststore
 4. **Token validation**: JWT issuer claims match the configured issuer identifiers
 

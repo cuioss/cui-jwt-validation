@@ -19,6 +19,34 @@
     <properties>
         <maven.jar.plugin.automatic.module.name>de.cuioss.sheriff.token.client</maven.jar.plugin.automatic.module.name>
         <version.dsl.json>2.0.2</version.dsl.json>
+        <!-- Make this module's integration tier obey -DskipTests.
+
+             Failsafe 3.6.0 ignores -DskipTests. On the snapshot-deploy lane (which passes -DskipTests)
+             Surefire reported "Tests are skipped" while Failsafe still ran WiredFlowNegativePathIT, wrote a
+             target/jacoco.exec covering almost none of the refresh path, and the refresh-path-coverage-check
+             below then failed on that sparse-but-non-zero data. The gate was graded on POISONED coverage,
+             not muted by absent coverage — which is why the all-zero reasoning further down still holds.
+
+             skipITs is wired to skipTests as POM PROPERTIES, deliberately NOT inside the Failsafe
+             <configuration> block. A CLI user property overrides a POM property but LOSES to plugin
+             <configuration>, so the property form is the only one that keeps all three lanes correct:
+               - deploy lane (-DskipTests=true): skipITs interpolates to true, Failsafe skips, no test JVM
+                 starts, no jacoco.exec is written, and both jacoco checks skip on legitimately absent data,
+                 exactly as token-sheriff-validation and token-sheriff-parent already do in that same run;
+               - -DskipITs=true on the command line: the CLI value still wins over this property, so that
+                 escape hatch stays live. It is load-bearing in this project precisely BECAUSE Failsafe
+                 ignores -DskipTests — putting skipITs in <configuration> would have traded one broken
+                 lever for another;
+               - CI test lanes (`verify -Dmaven.compiler.release=21|25`, neither flag passed): skipTests
+                 stays false, skipITs interpolates to false, WiredFlowNegativePathIT runs, gate fully
+                 enforced.
+
+             The <skipTests>false</skipTests> default is required, not decorative: without it ${skipTests}
+             would not resolve, and an unresolved literal is not a boolean. Verify the resolution with
+             `mvn help:effective-pom`, or by observing Failsafe's skip decision in a `clean verify
+             -DskipTests` run — not by assertion. -->
+        <skipTests>false</skipTests>
+        <skipITs>${skipTests}</skipITs>
     </properties>
 
     <dependencyManagement>
@@ -232,12 +260,39 @@
                      repository cannot hand a -P flag.
 
                      Why element=CLASS and not BUNDLE: the module-wide BUNDLE rule inherited from
-                     cui-java-parent (-Pcoverage; element=BUNDLE, gating both INSTRUCTION >= 0.80 and
-                     BRANCH >= 0.80) cannot see a refresh-path regression. At the
-                     time this gate was written the bundle carried ~29 branches of slack above 0.80 while the
-                     entire refresh path was ~29 covered branches, so a TOTAL refresh-path coverage wipeout
-                     still landed above the bundle floor and passed. The blind spot is granularity, not
-                     threshold — hence a per-class rule scoped to the refresh-path classes listed below.
+                     cui-java-parent (-Pcoverage; element=BUNDLE, COVEREDRATIO gating INSTRUCTION >= 0.80
+                     AND BRANCH >= 0.80 — both floors read off cui-java-parent-1.7.2.pom lines 413-425)
+                     cannot see a single-class refresh-path regression.
+
+                     The numbers below are stated so the next reader can RE-DERIVE them rather than trust
+                     them. Measured 2026-09-08 from token-sheriff-client/target/site/jacoco/jacoco.xml on
+                     this branch (cui-quarkus-parent 1.7.2 / cui-java-parent 1.7.2). Bundle counters:
+                       INSTRUCTION  7279 covered / 7689 total = 0.9467
+                       BRANCH        590 covered /  670 total = 0.8806
+                     Slack is how much COVERED code may vanish before the bundle floor is breached,
+                     i.e. covered - ceil(floor x total):
+                       INSTRUCTION  7279 - ceil(0.80 x 7689) = 7279 - 6152 = 1127 covered instructions
+                       BRANCH        590 - ceil(0.80 x  670) =  590 -  536 =   54 covered branches
+                     Re-measure both lines whenever this comment is touched; they are a snapshot, not a
+                     constant, and the floors must be re-read from the parent rather than copied from here.
+
+                     The 11 classes listed below hold 800 covered instructions and 83 covered branches
+                     between them. So a TOTAL refresh-path wipeout is caught by the bundle rule on BRANCH
+                     (83 > 54) and missed entirely on INSTRUCTION (800 < 1127). An earlier form of this
+                     comment justified the per-class rule by claiming a total wipeout passed the bundle
+                     outright; on the measurement above that claim is half expired, and it is no longer the
+                     reason this gate earns its keep.
+
+                     The live justification is the SINGLE-CLASS case. flow.RefreshFlow alone carries 322
+                     covered instructions and 35 of its 36 covered branches. 322 < 1127 and 35 < 54, so
+                     deleting every test that covers RefreshFlow passes the inherited bundle gate SILENTLY
+                     on BOTH limits. The blind spot is granularity, not threshold — hence a per-class rule
+                     scoped to the refresh-path classes listed below.
+
+                     Note on flow.CredentialRejectedException: it measures 4 INSTRUCTION and 0 BRANCH, so
+                     its BRANCH limit cannot bind — the same all-zero reasoning used below to exclude
+                     RedeemedRefreshFailure. Its INSTRUCTION limit does bind, so the entry is thin but not
+                     vacuous. Only a negative control shows that; a green build never can.
 
                      Why the include entries are dotted FQCNs: jacoco matches an element=CLASS rule against
                      JavaNames.getQualifiedClassName(vmName), i.e. the DOTTED name (nested classes render as
@@ -275,7 +330,16 @@
                      as `…flow.Refresh*` / `…flow.Redeemed*`, which are incomplete — they miss
                      token.RotationResult, token.RefreshTokenFamily, lifecycle.RefreshScheduler and
                      lifecycle.InMemoryTokenStore, all of which are on the refresh path but named and
-                     packaged outside that shape. Nine explicit dotted FQCNs, no wildcards.
+                     packaged outside that shape. Eleven explicit dotted FQCNs, no wildcards.
+
+                     Why token.TokenErrorResponse is deliberately NOT in the list, even though the
+                     credential-rejected classification parses through it: adding it would make "Token"
+                     a guarded first camel-word in the token package, and leg (b) of the guard would
+                     then demand flow.TokenEndpointClient, token.TokenResponse and
+                     lifecycle.TokenLifecycleManager here as well — three large classes pulled under
+                     BRANCH >= 0.80 / INSTRUCTION >= 0.90 as a side effect of a four-line DTO. The
+                     classification decision the gate cares about lives in flow.RefreshFailureClassification
+                     and flow.CredentialRejectedException, both of which ARE listed.
 
                      A hand-maintained list is only safe because it is guarded.
                      RefreshPathCoverageGuardTest fails the build on BOTH drift directions: (a) an INERT
@@ -304,6 +368,8 @@
                                     <includes>
                                         <include>de.cuioss.sheriff.token.client.flow.RefreshFlow</include>
                                         <include>de.cuioss.sheriff.token.client.flow.RefreshRedemption</include>
+                                        <include>de.cuioss.sheriff.token.client.flow.RefreshFailureClassification</include>
+                                        <include>de.cuioss.sheriff.token.client.flow.CredentialRejectedException</include>
                                         <include>de.cuioss.sheriff.token.client.flow.RedeemedResponseException</include>
                                         <include>de.cuioss.sheriff.token.client.flow.RedeemedScopeRefusalException</include>
                                         <include>de.cuioss.sheriff.token.client.flow.RedeemedValidationRefusalException</include>

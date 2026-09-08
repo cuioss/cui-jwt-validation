@@ -24,6 +24,7 @@ import de.cuioss.sheriff.token.client.dpop.SenderConstraint;
 import de.cuioss.sheriff.token.client.internal.BackChannelHttp;
 import de.cuioss.sheriff.token.client.internal.FormEncoder;
 import de.cuioss.sheriff.token.client.internal.LogSanitizer;
+import de.cuioss.sheriff.token.client.token.TokenErrorResponse;
 import de.cuioss.sheriff.token.client.token.TokenResponse;
 import de.cuioss.sheriff.token.commons.error.TransportException;
 import de.cuioss.sheriff.token.commons.transport.ParserConfig;
@@ -48,6 +49,14 @@ import java.util.Optional;
  * JSON response into a {@link TokenResponse}. It adds no transport hardening of its own — TLS/SSRF
  * posture is inherited from {@code HttpHandler}. Client authentication is decorated onto the request
  * by the caller (headers and/or form parameters); this class is auth-agnostic transport only.
+ * <p>
+ * <strong>The pre-redemption guarantee holds by construction, not by a guard.</strong> A connection
+ * failure, a DNS failure, an SSRF-blocked target or an interrupt throws out of
+ * {@code BackChannelHttp.validatedHandler} or {@code send} before any {@link HttpResponse} exists, so
+ * such a failure can never reach the status check below and can never be classified as a rejected
+ * credential. Only a response the server actually produced is ever classified. Preserve that ordering:
+ * a transient network fault reported as a dead credential is exactly the inversion the classification
+ * exists to prevent.
  *
  * @since 1.0
  * @author Oliver Wolff
@@ -61,6 +70,12 @@ public class TokenEndpointClient {
     private static final String HTTP_POST = "POST";
     private static final String DPOP_NONCE_HEADER = "DPoP-Nonce";
     private static final String FAILURE_CONTEXT = "Token endpoint request failed";
+
+    /**
+     * The single RFC 6749 §5.2 error code this client treats as the authorization server declaring the
+     * presented credential dead. It is an allow-list of one: see {@link #credentialRejected}.
+     */
+    private static final String ERROR_INVALID_GRANT = "invalid_grant";
 
     private final DslJson<Object> dslJson;
     private final int maxContentSize;
@@ -88,8 +103,10 @@ public class TokenEndpointClient {
      * @param requestHeaders   additional request headers (e.g. an {@code Authorization} header)
      * @return the normalized token response
      * @throws TransportException if the request fails or the response is not successful; the
-     *         {@link RedeemedResponseException} subtype when the response was successful but its body
-     *         could not be parsed — see {@link #requestToken(String, Map, Map, SenderConstraint)}
+     *         {@link CredentialRejectedException} subtype when the authorization server declared the
+     *         presented credential invalid, and the {@link RedeemedResponseException} subtype when the
+     *         response was successful but its body could not be parsed — see
+     *         {@link #requestToken(String, Map, Map, SenderConstraint)}
      */
     public TokenResponse requestToken(String tokenEndpoint,
             Map<String, String> formParameters,
@@ -117,9 +134,12 @@ public class TokenEndpointClient {
      * @return the normalized token response
      * @throws TransportException if the request fails or the response is not successful (after a
      *         nonce retry where applicable) — in both cases the authorization server never consumed
-     *         the presented grant. A body that cannot be parsed <em>after</em> a success status is
-     *         signalled by the {@link RedeemedResponseException} subtype instead, because by then the
-     *         server has already redeemed the grant and a caller may need to fail closed
+     *         the presented grant. Two narrower subtypes carry the distinctions a caller may need to
+     *         fail closed on: {@link CredentialRejectedException} when the non-success status is a
+     *         {@code 4xx} whose RFC 6749 §5.2 body names {@code invalid_grant}, so the server declared
+     *         the presented credential dead without redeeming it; and
+     *         {@link RedeemedResponseException} when the body cannot be parsed <em>after</em> a success
+     *         status, because by then the server has already redeemed the grant
      */
     public TokenResponse requestToken(String tokenEndpoint,
             Map<String, String> formParameters,
@@ -143,10 +163,68 @@ public class TokenEndpointClient {
             }
         }
         if (!HttpStatusFamily.isSuccess(response.statusCode())) {
+            if (credentialRejected(response)) {
+                // The detail message is composed from the observed status and fixed text only: no part
+                // of the AS-controlled error body is interpolated into it (CWE-117), which is what
+                // keeps this exception free of AS-controlled state.
+                throw new CredentialRejectedException(
+                        "Token endpoint rejected the presented credential with HTTP "
+                                + response.statusCode() + " (RFC 6749 §5.2 'invalid_grant')");
+            }
             throw new TransportException(
                     "Token endpoint returned unexpected HTTP status " + response.statusCode());
         }
         return parse(response.body());
+    }
+
+    /**
+     * Whether the authorization server attributed this refusal to the presented credential itself.
+     * <p>
+     * The predicate is an <strong>allow-list of exactly one error code</strong>: the status is a client
+     * error ({@code 4xx}) AND the body parses as an RFC 6749 §5.2 error response AND its {@code error}
+     * member is exactly {@value #ERROR_INVALID_GRANT}. Everything else — an unparseable body, an absent
+     * body, a body with no {@code error} member, an oversize body, an unrecognized code, and any
+     * {@code 5xx} even when it carries an {@code invalid_grant} body — answers {@code false} and is
+     * reported as an ordinary transport failure.
+     * <p>
+     * The asymmetry is deliberate and the fail-safe direction is to preserve the session. Reporting a
+     * transient fault as a dead credential destroys a working session; reporting a dead credential as a
+     * transient fault merely delays the discovery until the next refresh. A {@code 5xx} is the server
+     * saying it failed, not that this credential is bad, so the {@code error} body it happens to carry
+     * is not evidence about the credential.
+     */
+    private boolean credentialRejected(HttpResponse<String> response) {
+        if (!HttpStatusFamily.isClientError(response.statusCode())) {
+            return false;
+        }
+        return ERROR_INVALID_GRANT.equals(errorCode(response.body()));
+    }
+
+    /**
+     * @return the RFC 6749 §5.2 {@code error} code of an error response body, or {@code null} when the
+     *         body is absent, blank, larger than the configured payload bound, unparseable, or carries
+     *         no {@code error} member. Every one of those is an "unknown", never a match — the
+     *         allow-list above only ever fires on a positively recognized code
+     */
+    @Nullable
+    private String errorCode(@Nullable String body) {
+        if (body == null || body.isBlank()) {
+            return null;
+        }
+        byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
+        if (bytes.length > maxContentSize) {
+            return null;
+        }
+        try {
+            TokenErrorResponse errorResponse = dslJson.deserialize(TokenErrorResponse.class, bytes, bytes.length);
+            return errorResponse == null ? null : errorResponse.error;
+        } catch (IOException e) {
+            // The parse-error message can echo an AS-controlled JSON fragment; sanitize it (CWE-117)
+            // before it reaches the log appender, matching the success-path parse() site.
+            LOGGER.debug("Failed to parse token endpoint error response: %s",
+                    LogSanitizer.sanitize(e.getMessage()));
+            return null;
+        }
     }
 
     /**

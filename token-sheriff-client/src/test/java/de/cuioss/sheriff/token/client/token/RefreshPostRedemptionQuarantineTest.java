@@ -37,6 +37,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
@@ -64,10 +65,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *       token is presumed burned and the session cleared without inventing a token to revoke.</li>
  * </ul>
  * <p>
- * The matched negative control is what proves the distinction survived: a failure raised
- * <em>before</em> redemption leaves the stored bundle intact. Without it, an implementation that
- * quarantines on every refresh failure — destroying a working session over a transient network fault —
- * would look identical to a correct one.
+ * A fourth positive case sits outside that group and is not a redemption at all: an HTTP 400 whose
+ * RFC 6749 §5.2 body names {@code invalid_grant}. The authorization server refused the presented
+ * refresh token as invalid without ever processing the grant, so nothing was rotated and there is no
+ * successor — yet the credential is dead, so the session is cleared without a revocation.
+ * <p>
+ * The matched negative control is what proves the distinctions survived: a failure the server neither
+ * redeemed nor attributed to the credential leaves the stored bundle intact. Without it, an
+ * implementation that quarantines on every refresh failure — destroying a working session over a
+ * transient network fault — would look identical to a correct one. The control is deliberately widened
+ * to every neighbouring shape of the one-code allow-list: a {@code 5xx} carrying an
+ * {@code invalid_grant} body, recognized-but-different codes, an unparseable body, and an absent body.
  * <p>
  * Held in its own class rather than folded into {@link RefreshAdversarialTest}, per the
  * {@link RefreshTestSupport} precedent of splitting the wired refresh contract by behaviour cluster
@@ -186,10 +194,9 @@ class RefreshPostRedemptionQuarantineTest extends RefreshTestSupport {
                 "cleared without revocation");
     }
 
-    @ParameterizedTest(name = "HTTP {0}")
-    @ValueSource(ints = {400, 500})
-    @DisplayName("Should leave the stored bundle intact when the server never redeemed the presented token")
-    void shouldKeepStoredBundleWhenRequestFailsBeforeRedemption(int status, URIBuilder uriBuilder) {
+    @Test
+    @DisplayName("Should clear the session without revoking when the server rejects the credential as invalid_grant")
+    void shouldClearSessionWhenCredentialIsRejected(URIBuilder uriBuilder) {
         ClientConfiguration config = config();
         ProviderMetadata metadata = metadata(uriBuilder);
         RefreshFlow flow = refreshFlow(config);
@@ -199,10 +206,57 @@ class RefreshPostRedemptionQuarantineTest extends RefreshTestSupport {
         String rt1 = Generators.letterStrings(20, 40).next();
         manager.store(session, bearerBundle(rt1, null));
 
-        // The matched negative control. A non-success status means the AS refused the request outright,
-        // so rt1 was never redeemed and is still usable: quarantining here would destroy a working
-        // session over a transient fault, which is exactly the over-correction this control detects.
-        getModuleDispatcher().respondWith(status, "{\"error\":\"invalid_grant\"}");
+        // HTTP 400 whose RFC 6749 §5.2 body names invalid_grant: the AS looked at rt1 and declared it
+        // dead — expired, revoked, or already single-use redeemed. Nothing was redeemed and nothing was
+        // rotated, so there is no successor, but keeping the session would leave the caller holding a
+        // credential no retry revives. This is the third classification state, distinct from both the
+        // redeemed cases above and the transient-fault controls below.
+        getModuleDispatcher().respondWith(400, "{\"error\":\"invalid_grant\"}");
+        var clientAuth = clientAuth(config);
+
+        assertThrows(TransportException.class,
+                () -> manager.refresh(session, metadata, flow, revocationClient, idBridge, clientAuth));
+
+        assertAll("a rejected credential is cleared, but nothing is revoked",
+                () -> assertTrue(manager.get(session).isEmpty(),
+                        "the session must not keep a refresh token the AS has declared invalid"),
+                () -> assertFalse(revocationClient.revokedAny(),
+                        "no successor exists, and the presented token is what the AS just refused"));
+        LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN,
+                "rejected the refresh token");
+    }
+
+    @ParameterizedTest(name = "HTTP {0}, body={1}")
+    @CsvSource(delimiter = '|', value = {
+            // A 5xx is the server reporting its OWN failure, so the error body it happens to carry is
+            // not evidence about the credential — not even when that body says invalid_grant.
+            "500 | {\"error\":\"invalid_grant\"}",
+            // Recognized RFC 6749 §5.2 codes outside the one-code allow-list: the refusal is attributed
+            // to the client registration and to a missing DPoP nonce respectively, not to the token.
+            "400 | {\"error\":\"invalid_client\"}",
+            "400 | {\"error\":\"use_dpop_nonce\"}",
+            // No usable error code at all: an unparseable body and an absent body are both "unknown",
+            // and unknown must never be read as a match.
+            "400 | { not json",
+            "400 | "})
+    @DisplayName("Should leave the stored bundle intact when the server never redeemed and never rejected the token")
+    void shouldKeepStoredBundleWhenRequestFailsBeforeRedemption(int status, String body,
+            URIBuilder uriBuilder) {
+        ClientConfiguration config = config();
+        ProviderMetadata metadata = metadata(uriBuilder);
+        RefreshFlow flow = refreshFlow(config);
+        var revocationClient = new RecordingRevocationClient(config);
+        TokenLifecycleManager manager = manager();
+        String session = Generators.letterStrings(10, 20).next();
+        String rt1 = Generators.letterStrings(20, 40).next();
+        manager.store(session, bearerBundle(rt1, null));
+
+        // The matched negative control for BOTH quarantine paths. A non-success status the AS did not
+        // attribute to the presented credential means rt1 was never redeemed and was never refused, so
+        // it is still usable: clearing here would destroy a working session over a transient fault,
+        // which is exactly the over-correction this control detects. The credential-rejected allow-list
+        // is one code wide precisely so these shapes cannot reach it.
+        getModuleDispatcher().respondWith(status, body == null ? "" : body);
         var clientAuth = clientAuth(config);
 
         assertThrows(TransportException.class,
