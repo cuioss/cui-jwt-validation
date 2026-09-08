@@ -43,6 +43,17 @@ invocation. Activate the profiles and narrow to the module that the claim is act
   by field while fields the child omits stay inherited from the parent. Reusing an id therefore
   partially overrides the inherited entry rather than adding a second channel. Never reuse a
   super-POM reserved id such as `central` for an additive channel.
+- **Before believing a build assertion enforces anything, check its phase against the phase of
+  every mutating execution it is meant to police.** An assertion must not run after a mutation it
+  polices: the mutation would have already normalised the tree, so the assertion inspects its own
+  fixture and cannot fail by construction. A green exit code then proves nothing, and a clean tree
+  observed afterwards is evidence that the mutation ran — not that the gate enforces anything.
+  Resolving the phase is not optional guesswork: **an `<execution>` with no declared `<phase>`
+  takes its goal's default phase from the plugin descriptor**, which no POM in this repository
+  shows. Read the descriptor (`./mvnw help:describe -Dplugin=<groupId>:<artifactId> -Ddetail`) or
+  the plugin's documentation; never assume "no phase" means "not bound". This is exactly how
+  `rewrite:run` (descriptor default `process-test-classes`) silently preceded the `verify`-phase
+  `rewrite:dryRun` assertion that was supposed to police it.
 - **Before adopting an unreleased snapshot version-property pin**, enumerate every artifact that
   property governs — the main jar and every classifier — and verify each one's actual contents from
   the remote repository rather than a possibly-warm `~/.m2`. Compare class counts against the last
@@ -133,6 +144,9 @@ Mandatory for 3+ similar test variants. Common annotations:
    ```
    - Fix ALL errors and warnings (mandatory)
    - Address OpenRewrite markers (see section below)
+   - This is a **verify gate, not a formatter** — it never rewrites your files. When it reds on a
+     formatting or license-header finding, apply the pass explicitly with
+     `./mvnw -Ppre-commit license:format rewrite:run`, then re-run the gate.
 
 2. **Final verification**:
    ```bash
@@ -264,20 +278,33 @@ suppression of a *different* recipe (`CuiLoggerStandardsRecipe`, at the two `%n`
 placement. That result speaks to the **placement mechanism** only. It says nothing about whether
 `InvalidExceptionUsageRecipe` honours the same placements.
 
-#### The gate now fails loud
+#### `-Ppre-commit` is a non-mutating verify gate
 
-`-Ppre-commit` no longer exits `0` after rewriting your files. Two non-mutating post-conditions run
-in the `verify` phase, after the mutating executions and in the same reactor pass:
+`-Ppre-commit` does not rewrite your files any more, and it fails loud when it would have to.
+
+The profile inherited from `cui-java-parent` binds two mutating executions — `format-license-headers`
+(`license:format`, phase `process-sources`) and `rewrite` (`rewrite:run`, no declared phase, so the
+descriptor default `process-test-classes`). Both ran *before* the `verify`-phase assertions meant to
+police them, so those assertions inspected an already-rewritten tree and could not fail by
+construction. The root `pom.xml` now overrides both executions **by id** with `<phase>none</phase>`,
+which unbinds them. What remains in `verify` is only the two non-mutating post-conditions:
 `license:check` (`assert-license-headers-unchanged`) and `rewrite:dryRun` with
-`failOnDryRunResults=true` (`assert-no-rewrite-changes`). If the gate would still change a file,
-the build fails and names it.
+`failOnDryRunResults=true` (`assert-no-rewrite-changes`). If the gate would change a file, the build
+fails and names it.
 
-So a green `-Ppre-commit` run is now a genuine clean-tree signal, and manually grepping for markers
-afterwards is a second line of defence rather than the only one. A red assertion is reporting a
-real mutation: fix the source, suppress at the site with a recorded rationale, or — only when
-neither is possible — add an `<exclusions>` entry to the local `pre-commit` profile in the root
-`pom.xml`. Never relax the assertions, and never redeclare `activeRecipes` locally: the parent's
-recipe list is the single source of truth.
+To **apply** the formatting pass the gate no longer performs, run it explicitly:
+
+```bash
+./mvnw -Ppre-commit license:format rewrite:run
+```
+
+So a red `-Ppre-commit` run is now a genuine signal — and it is a signal the gate has been
+demonstrated to produce: for both halves, a deliberate mutation was introduced, the gate exited
+non-zero, the mutation was reverted, and the gate exited zero. A red assertion is reporting a real
+mutation: fix the source, run the explicit format command above, suppress at the site with a
+recorded rationale, or — only when none of those is possible — add an `<exclusions>` entry to the
+local `pre-commit` profile in the root `pom.xml`. Never relax the assertions, and never redeclare
+`activeRecipes` locally: the parent's recipe list is the single source of truth.
 
 ## Pre-1.0 Project Rules
 
