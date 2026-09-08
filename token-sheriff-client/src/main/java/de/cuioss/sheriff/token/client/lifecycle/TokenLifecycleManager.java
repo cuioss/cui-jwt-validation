@@ -411,40 +411,14 @@ public class TokenLifecycleManager {
             return Optional.empty();
         }
 
-        // A refusal raised INSIDE the exchange reaches the caller before any RotationResult exists, so
-        // rotation cannot be read off a result here. RefreshFlow.classify is the single place the three
-        // situations are told apart, and the switch below has NO default arm on purpose: a fourth Kind
-        // added later is a compile error here rather than a silent fall-through to the
-        // session-preserving default, which is the failure mode this dispatch exists to close.
         RotationResult rotation;
         try {
             rotation = refreshFlow.refresh(metadata, presentedRefreshToken);
         } catch (TokenSheriffException refusedExchange) {
-            RefreshFailureClassification classification = RefreshFlow.classify(refusedExchange);
-            switch (classification.kind()) {
-                case REDEEMED -> {
-                    // The server consumed the grant. Only a redemption that BURNED the presented token
-                    // quarantines: a redeemed-but-not-rotated exchange (RFC 6749 §6 permits omitting a
-                    // new refresh token) leaves the presented token usable.
-                    RefreshRedemption redemption = Objects.requireNonNull(classification.redemption(),
-                            "a REDEEMED classification carries the redemption it was raised under");
-                    if (redemption.presentedTokenBurned()) {
-                        quarantineRedeemedRefresh(sessionId, metadata, redemption, revocationClient,
-                                clientAuthentication);
-                    }
-                }
-                // The server never redeemed anything, so there is no successor — but it declared the
-                // presented token invalid, so keeping the session would leave the caller holding a dead
-                // credential no retry revives.
-                case CREDENTIAL_REJECTED -> quarantineRejectedCredential(sessionId, metadata,
-                        revocationClient, clientAuthentication);
-                // The request never reached the point where the server processed it (connection
-                // failure, DNS failure, 5xx), so the presented refresh token is still valid. Clearing
-                // the session here would destroy a working one over a transient fault.
-                case PRE_REDEMPTION -> LOGGER.debug(
-                        "Refresh refused before the authorization server processed the grant; "
-                                + "leaving the session intact");
-            }
+            handleRefusedExchange(refusedExchange, sessionId, metadata, revocationClient,
+                    clientAuthentication);
+            // The rethrow stays at the call site: doRefresh's callers rely on the refusal propagating
+            // out of the exchange unchanged, and the helper only decides the session disposition.
             throw refusedExchange;
         }
 
@@ -504,6 +478,56 @@ public class TokenLifecycleManager {
                         clientAuthentication);
             }
             throw rejected;
+        }
+    }
+
+    /**
+     * Decides what a refusal raised <em>inside</em> the token exchange does to the session.
+     * <p>
+     * A refusal raised INSIDE the exchange reaches the caller before any {@code RotationResult} exists,
+     * so rotation cannot be read off a result here. {@link RefreshFlow#classify} is the single place the
+     * three situations are told apart, and the switch below has NO default arm on purpose: it is an
+     * enhanced (arrow-syntax) switch statement over an enum type (JLS SE21 §14.11.1), so the compiler
+     * already requires exhaustive case coverage — a fourth {@code Kind} added later is a compile error
+     * here rather than a silent fall-through to the session-preserving default, which is the failure
+     * mode this dispatch exists to close.
+     * <p>
+     * This method decides the disposition only; it never rethrows. The refusal is rethrown by the caller
+     * so the control-flow contract {@code doRefresh}'s callers rely on stays unchanged.
+     *
+     * @param refusedExchange      the refusal the exchange raised; never {@code null}
+     * @param sessionId            the session whose disposition is being decided; never {@code null}
+     * @param metadata             the provider metadata used for any revocation call; never {@code null}
+     * @param revocationClient     the client used for best-effort revocation; never {@code null}
+     * @param clientAuthentication the authentication presented on a revocation call; never {@code null}
+     */
+    private void handleRefusedExchange(TokenSheriffException refusedExchange, String sessionId,
+            ProviderMetadata metadata, RevocationClient revocationClient,
+            ClientAuthentication clientAuthentication) {
+        RefreshFailureClassification classification = RefreshFlow.classify(refusedExchange);
+        switch (classification.kind()) {
+            case REDEEMED -> {
+                // The server consumed the grant. Only a redemption that BURNED the presented token
+                // quarantines: a redeemed-but-not-rotated exchange (RFC 6749 §6 permits omitting a
+                // new refresh token) leaves the presented token usable.
+                RefreshRedemption redemption = Objects.requireNonNull(classification.redemption(),
+                        "a REDEEMED classification carries the redemption it was raised under");
+                if (redemption.presentedTokenBurned()) {
+                    quarantineRedeemedRefresh(sessionId, metadata, redemption, revocationClient,
+                            clientAuthentication);
+                }
+            }
+            // The server never redeemed anything, so there is no successor — but it declared the
+            // presented token invalid, so keeping the session would leave the caller holding a dead
+            // credential no retry revives.
+            case CREDENTIAL_REJECTED -> quarantineRejectedCredential(sessionId, metadata,
+                    revocationClient, clientAuthentication);
+            // The request never reached the point where the server processed it (connection
+            // failure, DNS failure, 5xx), so the presented refresh token is still valid. Clearing
+            // the session here would destroy a working one over a transient fault.
+            case PRE_REDEMPTION -> LOGGER.debug(
+                    "Refresh refused before the authorization server processed the grant; "
+                            + "leaving the session intact");
         }
     }
 

@@ -282,8 +282,10 @@ class RefreshFailureClassificationTest {
         String refusedEndpoint = tokenEndpoint(uriBuilder) + "/../../etc/passwd";
 
         var client = new TokenEndpointClient(config());
+        Map<String, String> form = refreshForm();
+        Map<String, String> headers = Map.of();
         TransportException thrown = assertThrows(TransportException.class,
-                () -> client.requestToken(refusedEndpoint, refreshForm(), Map.of(), null));
+                () -> client.requestToken(refusedEndpoint, form, headers, null));
 
         assertAll("a target the egress control refused was never presented to the server",
                 () -> assertEquals(Kind.PRE_REDEMPTION, RefreshFlow.classify(thrown).kind()),
