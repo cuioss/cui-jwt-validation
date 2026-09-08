@@ -39,7 +39,9 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.*;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Assembles the <em>production</em> client engine against the running Keycloak container, so an
@@ -87,6 +89,23 @@ final class RefreshEngineSupport {
 
     /** Shared secret of {@link #DISCOVERY_CLIENT_ID}. */
     private static final String DISCOVERY_CLIENT_SECRET = "integration-secret";
+
+    /**
+     * Realm that enforces single-use refresh tokens ({@code revokeRefreshToken=true},
+     * {@code refreshTokenMaxReuse=0}). Realm-scoped in Keycloak, hence a realm of its own rather than a
+     * client in {@link #REALM}.
+     */
+    static final String SINGLE_USE_REALM = "single-use-refresh";
+
+    /** Issuer the {@code single-use-refresh} realm advertises; also its {@code .well-known} prefix. */
+    static final String SINGLE_USE_ISSUER =
+            KeycloakUrlSupport.EXTERNAL_BASE + "/realms/" + SINGLE_USE_REALM;
+
+    /** The single confidential client of {@link #SINGLE_USE_REALM}. */
+    static final String SINGLE_USE_CLIENT_ID = "single-use-client";
+
+    /** Shared secret of {@link #SINGLE_USE_CLIENT_ID}. */
+    static final String SINGLE_USE_CLIENT_SECRET = "single-use-secret";
 
     /** DPoP proof signing algorithm the container advertises and the tests use. */
     static final String DPOP_SIGNING_ALGORITHM = "RS256";
@@ -159,8 +178,32 @@ final class RefreshEngineSupport {
      */
     static ClientConfiguration clientConfiguration(String clientId, @Nullable String clientSecret,
             ClientAuthMethod authMethod) {
+        return clientConfiguration(ISSUER, clientId, clientSecret, authMethod);
+    }
+
+    /**
+     * @param clientId     the client of the {@code single-use-refresh} realm
+     * @param clientSecret the client's shared secret
+     * @return a {@code client_secret_basic} configuration bound to the single-use realm's issuer
+     */
+    static ClientConfiguration singleUseClientConfiguration(String clientId, String clientSecret) {
+        return clientConfiguration(SINGLE_USE_ISSUER, clientId, clientSecret,
+                ClientAuthMethod.CLIENT_SECRET_BASIC);
+    }
+
+    /**
+     * The one place a {@link ClientConfiguration} is built, for every realm this support addresses.
+     *
+     * @param issuer       the realm's issuer identity, which is also the discovery prefix
+     * @param clientId     the realm client to authenticate as
+     * @param clientSecret the client's shared secret, or {@code null} for the key-based methods
+     * @param authMethod   the client-authentication method the configuration declares
+     * @return the configuration, carrying the chain-validating trust material
+     */
+    private static ClientConfiguration clientConfiguration(String issuer, String clientId,
+            @Nullable String clientSecret, ClientAuthMethod authMethod) {
         return ClientConfiguration.builder()
-                .issuer(ISSUER)
+                .issuer(issuer)
                 .clientId(clientId)
                 .clientSecret(clientSecret)
                 .authMethod(authMethod)
@@ -176,8 +219,8 @@ final class RefreshEngineSupport {
      * production {@link DiscoveryResolver}. Every endpoint the flows address therefore comes from the
      * authorization server rather than from a constant maintained alongside it.
      * <p>
-     * The document is fetched once per JVM (see {@link DiscoveredMetadata}) — a discovery round trip per
-     * call would add a network hop to every leg of every spec without changing the answer. A
+     * The document is fetched once per JVM per realm (see {@link #DISCOVERED}) — a discovery round trip
+     * per call would add a network hop to every leg of every spec without changing the answer. A
      * {@code TransportException} from the resolver is allowed to propagate: a realm this fixture cannot
      * discover is a setup failure that must fail the run, never something to fall back from.
      * <p>
@@ -186,27 +229,41 @@ final class RefreshEngineSupport {
      * pinned {@code token_endpoint_auth_methods_supported}); handing out the shared cached document would
      * let one such adjustment leak into every later test in the JVM.
      *
-     * @return a private copy of the realm's discovered metadata
+     * @return a private copy of the {@code client-engine} realm's discovered metadata
      */
     static ProviderMetadata discoveredProviderMetadata() {
-        return copyOf(DiscoveredMetadata.DOCUMENT);
+        return discoveredProviderMetadata(ISSUER, DISCOVERY_CLIENT_ID, DISCOVERY_CLIENT_SECRET);
     }
 
     /**
-     * Holds the once-per-JVM discovery result. The initialization-on-demand holder idiom defers the
-     * round trip until the first spec asks for metadata and lets the JVM guarantee it happens exactly
-     * once, with no locking of our own.
+     * @return a private copy of the {@code single-use-refresh} realm's discovered metadata, resolved
+     *         through the same mechanism as {@link #discoveredProviderMetadata()}
      */
-    private static final class DiscoveredMetadata {
+    static ProviderMetadata singleUseProviderMetadata() {
+        return discoveredProviderMetadata(SINGLE_USE_ISSUER, SINGLE_USE_CLIENT_ID,
+                SINGLE_USE_CLIENT_SECRET);
+    }
 
-        /** The realm's discovery document, fetched through the production resolver. */
-        static final ProviderMetadata DOCUMENT =
-                new DiscoveryResolver(clientConfiguration(DISCOVERY_CLIENT_ID, DISCOVERY_CLIENT_SECRET))
-                        .resolve();
+    /**
+     * Discovery documents already resolved, keyed by issuer — one entry per realm this support
+     * addresses. A failed resolution stores nothing, so a later call retries rather than serving a
+     * cached failure.
+     */
+    private static final Map<String, ProviderMetadata> DISCOVERED = new ConcurrentHashMap<>();
 
-        private DiscoveredMetadata() {
-            // holder
-        }
+    /**
+     * The one discovery mechanism, shared by every realm.
+     *
+     * @param issuer       the realm's issuer, which is both the cache key and the discovery prefix
+     * @param clientId     the client the round trip is configured under
+     * @param clientSecret that client's shared secret
+     * @return a private copy of the realm's discovered metadata
+     */
+    private static ProviderMetadata discoveredProviderMetadata(String issuer, String clientId,
+            String clientSecret) {
+        return copyOf(DISCOVERED.computeIfAbsent(issuer, key -> new DiscoveryResolver(
+                clientConfiguration(key, clientId, clientSecret, ClientAuthMethod.CLIENT_SECRET_BASIC))
+                .resolve()));
     }
 
     /**
@@ -244,14 +301,33 @@ final class RefreshEngineSupport {
      * @return a validator that fetches the realm's JWKS over the chain-validated loopback endpoint
      */
     static TokenValidator tokenValidator() {
+        return tokenValidator(ISSUER, discoveredProviderMetadata().jwksUri);
+    }
+
+    /**
+     * @return a validator for the {@code single-use-refresh} realm, over that realm's own
+     *         discovery-advertised JWKS endpoint
+     */
+    static TokenValidator singleUseTokenValidator() {
+        return tokenValidator(SINGLE_USE_ISSUER, singleUseProviderMetadata().jwksUri);
+    }
+
+    /**
+     * The one validator assembly, shared by every realm.
+     *
+     * @param issuer  the issuer identity tokens of this realm must carry
+     * @param jwksUri the realm's discovery-advertised JWKS endpoint
+     * @return a validator that fetches that JWKS over the chain-validated loopback endpoint
+     */
+    private static TokenValidator tokenValidator(String issuer, String jwksUri) {
         HttpJwksLoaderConfig jwksConfig = HttpJwksLoaderConfig.builder()
-                .jwksUrl(discoveredProviderMetadata().jwksUri)
-                .issuerIdentifier(ISSUER)
+                .jwksUrl(jwksUri)
+                .issuerIdentifier(issuer)
                 .sslContext(chainValidatingSslContext())
                 .allowLoopbackEgress(true)
                 .build();
         IssuerConfig issuerConfig = IssuerConfig.builder()
-                .issuerIdentifier(ISSUER)
+                .issuerIdentifier(issuer)
                 .audienceValidationDisabled(true)
                 .claimSubOptional(false)
                 .httpJwksLoaderConfig(jwksConfig)

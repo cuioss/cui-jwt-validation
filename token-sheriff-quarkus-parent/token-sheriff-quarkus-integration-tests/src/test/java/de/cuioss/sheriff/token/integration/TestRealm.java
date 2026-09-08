@@ -96,6 +96,12 @@ public class TestRealm {
     /** {@code client-jwt} client of the client-engine realm; authenticates by signed assertion, not by secret. */
     private static final String PRIVATE_KEY_JWT_CLIENT_ID = "private-key-jwt-client";
 
+    // Single-use refresh realm constants — realm-scoped because revokeRefreshToken and
+    // refreshTokenMaxReuse are realm settings in Keycloak, not per-client ones.
+    private static final String SINGLE_USE_REALM_ID = "single-use-refresh";
+    private static final String SINGLE_USE_CLIENT_ID = "single-use-client";
+    private static final String SINGLE_USE_CLIENT_SECRET = "single-use-secret";
+
     // Benchmark realm constants
     private static final String BENCHMARK_REALM_ID = "benchmark";
     private static final String BENCHMARK_CLIENT_ID = "benchmark-client";
@@ -327,6 +333,22 @@ public class TestRealm {
                 CLIENT_ENGINE_REALM_ID, PRIVATE_KEY_JWT_CLIENT_ID, null,
                 INTEGRATION_USERNAME, INTEGRATION_PASSWORD,
                 KEYCLOAK_BASE_URL, TOKEN_ENDPOINT_TEMPLATE.formatted(CLIENT_ENGINE_REALM_ID),
+                "Keycloak", KEYCLOAK_CAPABILITIES);
+    }
+
+    /**
+     * Realm that enforces single-use refresh tokens: {@code revokeRefreshToken=true} with
+     * {@code refreshTokenMaxReuse=0}, so the authorization server refuses a token it has already
+     * redeemed.
+     * <p>
+     * Separate from the client-engine realm because both settings are realm-scoped in Keycloak —
+     * enabling them there would change the posture every other client-engine spec relies on.
+     */
+    public static TestRealm createSingleUseRefreshRealm() {
+        return new TestRealm(
+                SINGLE_USE_REALM_ID, SINGLE_USE_CLIENT_ID, SINGLE_USE_CLIENT_SECRET,
+                INTEGRATION_USERNAME, INTEGRATION_PASSWORD,
+                KEYCLOAK_BASE_URL, TOKEN_ENDPOINT_TEMPLATE.formatted(SINGLE_USE_REALM_ID),
                 "Keycloak", KEYCLOAK_CAPABILITIES);
     }
 
