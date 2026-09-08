@@ -31,11 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -173,10 +169,10 @@ class RefreshConcurrentRedemptionSpecIT extends BaseIntegrationTest {
         for (Future<Outcome> future : futures) {
             try {
                 outcomes.add(future.get(COMPLETION_BUDGET.toSeconds(), TimeUnit.SECONDS));
-            } catch (java.util.concurrent.TimeoutException e) {
+            } catch (TimeoutException e) {
                 throw new AssertionError("a concurrent redemption never terminated within "
                         + COMPLETION_BUDGET, e);
-            } catch (java.util.concurrent.ExecutionException e) {
+            } catch (ExecutionException e) {
                 throw new AssertionError("a concurrent redemption failed outside the engine", e.getCause());
             }
         }
