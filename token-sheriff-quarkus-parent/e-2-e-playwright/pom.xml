@@ -31,14 +31,6 @@
         <dependency-check.skip>true</dependency-check.skip>
         <skip.openrewrite>true</skip.openrewrite>
 
-        <!-- Node/npm versions -->
-        <node.version>v22.22.0</node.version>
-        <npm.version>10.9.2</npm.version>
-
-        <!-- Frontend Maven Plugin version -->
-        <frontend-maven-plugin.version>2.0.2</frontend-maven-plugin.version>
-        <maven.exec.plugin.version>3.6.3</maven.exec.plugin.version>
-
         <!-- Playwright test skip control -->
         <skipPlaywrightTests>true</skipPlaywrightTests>
 
@@ -59,7 +51,7 @@
             <plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
-                <version>${frontend-maven-plugin.version}</version>
+                <version>${version.frontend-maven-plugin}</version>
                 <executions>
                     <execution>
                         <id>install-node-and-npm</id>
@@ -68,8 +60,8 @@
                         </goals>
                         <phase>initialize</phase>
                         <configuration>
-                            <nodeVersion>${node.version}</nodeVersion>
-                            <npmVersion>${npm.version}</npmVersion>
+                            <nodeVersion>${frontend.node.version}</nodeVersion>
+                            <npmVersion>${frontend.npm.version}</npmVersion>
                         </configuration>
                     </execution>
                     <execution>
@@ -109,7 +101,7 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>exec-maven-plugin</artifactId>
-                        <version>${maven.exec.plugin.version}</version>
+                        <version>${exec.maven.plugin.version}</version>
                         <executions>
                             <!-- Safety-net: stop any leftover containers -->
                             <execution>
