@@ -262,19 +262,6 @@ public class TestRealm {
     }
 
     /**
-     * Refresh testing — uses {@code refresh-fast-client} in the integration realm
-     * with {@code access.token.lifespan=35}, so a freshly issued access token becomes
-     * proactively refresh-eligible within seconds of issue.
-     */
-    public static TestRealm createFastRefreshRealm() {
-        return new TestRealm(
-                INTEGRATION_REALM_ID, REFRESH_FAST_CLIENT_ID, REFRESH_FAST_CLIENT_SECRET,
-                INTEGRATION_USERNAME, INTEGRATION_PASSWORD,
-                KEYCLOAK_BASE_URL, TOKEN_ENDPOINT_TEMPLATE.formatted(INTEGRATION_REALM_ID),
-                "Keycloak", KEYCLOAK_CAPABILITIES);
-    }
-
-    /**
      * JWE testing — uses {@code jwe-client} in the integration realm
      * with encrypted ID token response configured.
      */
@@ -310,7 +297,11 @@ public class TestRealm {
                 "Keycloak", KEYCLOAK_CAPABILITIES);
     }
 
-    /** Client-engine counterpart of {@link #createFastRefreshRealm()}. */
+    /**
+     * Refresh testing — uses {@code refresh-fast-client} in the client-engine realm
+     * with {@code access.token.lifespan=35}, so a freshly issued access token becomes
+     * proactively refresh-eligible within seconds of issue.
+     */
     public static TestRealm createClientEngineFastRefreshRealm() {
         return new TestRealm(
                 CLIENT_ENGINE_REALM_ID, REFRESH_FAST_CLIENT_ID, REFRESH_FAST_CLIENT_SECRET,
