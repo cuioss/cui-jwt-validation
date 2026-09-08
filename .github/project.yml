@@ -13,6 +13,18 @@ maven-build:
   maven-profiles-snapshot: 'release-snapshot,javadoc'
   maven-profiles-release: 'release,javadoc'
   npm-cache: true
+  # The 30-minute default was not enough: every snapshot deploy since 2026-09-04 has been
+  # cancelled at the cap, so no snapshot has been published since build 47 — including the
+  # one carrying the AuthenticationResult refresh-token fix (4e1e88db), which built green
+  # and then failed to publish. Run 34170313141 last logged at 09:11:34 in the npm phase
+  # and was killed at 09:40:02 with the java process still alive, i.e. it was still working
+  # rather than deadlocked. The deploy runs the release-snapshot,javadoc profiles, so it
+  # carries a full javadoc generation plus the Sonatype upload, both of which are quiet for
+  # long stretches. 60 gives that headroom while staying far below the 360 maximum.
+  # This is a bound, not a licence to hang: if a deploy is cancelled at 60 with the same
+  # silent gap, treat the stall itself as the defect and diagnose it rather than raising
+  # this again.
+  snapshot-deploy-timeout: 60
 
 sonar:
   project-key: cuioss_TokenSheriff
