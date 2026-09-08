@@ -28,12 +28,19 @@ package de.cuioss.sheriff.token.client.flow;
  * closes that gap without a second, competing entry point into the flow: {@code refresh} stays the one
  * overridable method, so a subclass that intercepts it stays on the production path.
  * <p>
- * <strong>Absence is as meaningful as presence.</strong> A failure raised <em>before</em> the server
- * processed the request — a connection failure, a DNS failure, an SSRF-blocked target, or a non-success
- * HTTP status — does not implement this interface. That absence is what stops a transient network fault
- * from being mistaken for a burned credential and destroying a working session. Callers must classify
- * through {@link RefreshFlow#redemptionOf(Throwable)} rather than by listing exception types, so the
- * unparseable-{@code 2xx} case ({@link RedeemedResponseException}) is classified with the rest.
+ * <strong>Absence is as meaningful as presence — but it is not one state.</strong> A failure raised
+ * <em>before</em> the server processed the request — a connection failure, a DNS failure, an
+ * SSRF-blocked target, or a non-success HTTP status — does not implement this interface. That absence
+ * is what stops a transient network fault from being mistaken for a burned credential and destroying a
+ * working session. It does not, however, mean the presented token is necessarily alive: one shape
+ * inside it, a {@code 4xx} whose RFC 6749 §5.2 body names {@code invalid_grant}, is the server
+ * declaring this credential dead without ever redeeming it, and is carried by
+ * {@link CredentialRejectedException}. Callers must therefore classify through
+ * {@link RefreshFlow#classify(Throwable)} rather than by listing exception types, so all three
+ * situations — {@link RefreshFailureClassification.Kind#PRE_REDEMPTION},
+ * {@link RefreshFailureClassification.Kind#CREDENTIAL_REJECTED} and
+ * {@link RefreshFailureClassification.Kind#REDEEMED}, the last of which folds in the
+ * unparseable-success case ({@link RedeemedResponseException}) — are decided in one place.
  *
  * @since 1.0
  * @author Oliver Wolff

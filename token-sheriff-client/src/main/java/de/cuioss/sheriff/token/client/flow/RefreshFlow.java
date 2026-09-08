@@ -37,7 +37,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -69,8 +68,17 @@ import java.util.Set;
  * be determined at all. A caller holding a session cannot tell from the exception type alone whether
  * the token it still has stored is alive or dead, so each of those refusals <em>carries</em> the
  * {@link RefreshRedemption} it was raised under ({@link RedeemedRefreshFailure}), and
- * {@link #redemptionOf(Throwable)} reads it back. A failure raised before that point carries none,
- * which is what keeps a transient network fault from being mistaken for a burned credential.
+ * {@link #classify(Throwable)} reads it back.
+ * <p>
+ * A failure raised before that point carries no redemption, and {@code classify} splits that region in
+ * two rather than collapsing it. Most of it is
+ * {@link RefreshFailureClassification.Kind#PRE_REDEMPTION} — a connection failure, a DNS failure, an
+ * SSRF-blocked target, a {@code 5xx} — where the presented token is untouched, which is what keeps a
+ * transient network fault from being mistaken for a burned credential. The exception is a {@code 4xx}
+ * the authorization server attributed to the credential itself (RFC 6749 §5.2 {@code invalid_grant}),
+ * raised as {@link CredentialRejectedException} and classified
+ * {@link RefreshFailureClassification.Kind#CREDENTIAL_REJECTED}: nothing was redeemed and there is no
+ * successor, but the credential is dead and no retry will revive it.
  * <p>
  * The signal rides on the exception rather than on a separate observer argument deliberately:
  * {@link #refresh(ProviderMetadata, String)} stays the one overridable entry point on this
@@ -156,7 +164,10 @@ public class RefreshFlow {
      *         next, the raw refreshed ID token (when the AS issued one) for the lifecycle
      *         consistency check (OIDC Core §12.2), and the granted scope with its reconciliation
      *         outcome
-     * @throws de.cuioss.sheriff.token.commons.error.TransportException if the token request fails
+     * @throws de.cuioss.sheriff.token.commons.error.TransportException if the token request fails —
+     *         thrown as the {@link CredentialRejectedException} subtype when the authorization server
+     *         declared the presented refresh token invalid (RFC 6749 §5.2 {@code invalid_grant} on a
+     *         {@code 4xx})
      * @throws de.cuioss.sheriff.token.validation.exception.TokenValidationException if the returned
      *         token fails validation
      * @throws ClientProtocolException if the granted scope is broader than the requested scope and
@@ -184,8 +195,9 @@ public class RefreshFlow {
 
         // A failure raised here that is NOT a RedeemedResponseException happened BEFORE the server
         // processed the request (connection failure, DNS failure, SSRF-blocked target, non-2xx), so it
-        // carries no redemption state and the presented token is left in use. It is deliberately not
-        // caught: redemptionOf classifies it as pre-redemption by its type alone.
+        // carries no redemption state and the presented token is left in use — except for the one
+        // non-2xx shape the server attributed to the credential itself, raised as
+        // CredentialRejectedException. It is deliberately not caught: classify sorts both by type alone.
         TokenResponse tokenResponse = tokenEndpointClient.requestToken(tokenEndpoint, form, headers,
                 senderConstraint);
 
@@ -215,33 +227,42 @@ public class RefreshFlow {
     }
 
     /**
-     * Classifies a failure raised by {@link #refresh(ProviderMetadata, String)} as having happened
-     * after the authorization server redeemed the presented refresh token, or before it.
+     * Classifies a failure raised by {@link #refresh(ProviderMetadata, String)} into the three
+     * situations a caller owes a different disposition — see {@link RefreshFailureClassification}.
      * <p>
-     * This is the single place the pre-/post-redemption distinction is decided, and callers must use it
-     * rather than enumerate exception types: it folds in the one redeemed case that predates this
-     * mechanism and carries no state of its own — {@link RedeemedResponseException}, a {@code 2xx}
-     * whose body could not be parsed, where no {@link de.cuioss.sheriff.token.client.token.TokenResponse}
-     * is ever constructed and rotation is therefore not computable even in principle. That case maps to
-     * {@link RefreshRedemption#rotationUnknown()} and fails closed on a presumed rotation with no
-     * successor to revoke.
+     * This is the single place the distinction is decided, and callers must use it rather than
+     * enumerate exception types. It folds in the two cases that carry no state of their own:
+     * {@link RedeemedResponseException}, a success status whose body could not be parsed, where no
+     * {@link de.cuioss.sheriff.token.client.token.TokenResponse} is ever constructed and rotation is
+     * therefore not computable even in principle — mapped to {@link RefreshRedemption#rotationUnknown()}
+     * so the presented token is presumed burned with no successor to revoke; and
+     * {@link CredentialRejectedException}, a {@code 4xx} the authorization server attributed to the
+     * presented credential itself, which redeemed nothing but leaves the credential dead.
      * <p>
-     * An empty result means the request never reached redemption, so the presented refresh token is
-     * untouched and still valid. Treating that as a redemption would destroy a working session over a
-     * transient network fault.
+     * {@link RefreshFailureClassification.Kind#PRE_REDEMPTION} means the request never reached the
+     * point where the server processed the grant, so the presented refresh token is untouched and still
+     * valid. Treating that as a redemption would destroy a working session over a transient network
+     * fault; treating it as a rejected credential would do the same.
+     * <p>
+     * {@link RedeemedRefreshFailure} is tested first because it is an interface: a future refusal type
+     * that both implements it and extends one of the named classes must be classified by the state it
+     * carries, not by its class.
      *
      * @param failure the failure {@code refresh} raised; must not be {@code null}
-     * @return the redemption state, or {@link Optional#empty()} when the failure predates redemption
+     * @return the classification; never {@code null}
      */
-    public static Optional<RefreshRedemption> redemptionOf(Throwable failure) {
+    public static RefreshFailureClassification classify(Throwable failure) {
         Objects.requireNonNull(failure, "failure must not be null");
         if (failure instanceof RedeemedRefreshFailure redeemed) {
-            return Optional.of(redeemed.redemption());
+            return RefreshFailureClassification.redeemed(redeemed.redemption());
         }
         if (failure instanceof RedeemedResponseException) {
-            return Optional.of(RefreshRedemption.rotationUnknown());
+            return RefreshFailureClassification.redeemed(RefreshRedemption.rotationUnknown());
         }
-        return Optional.empty();
+        if (failure instanceof CredentialRejectedException) {
+            return RefreshFailureClassification.credentialRejected();
+        }
+        return RefreshFailureClassification.preRedemption();
     }
 
     /**

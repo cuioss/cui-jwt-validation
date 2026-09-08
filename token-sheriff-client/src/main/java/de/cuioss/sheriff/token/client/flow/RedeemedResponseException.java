@@ -32,8 +32,16 @@ import java.io.Serial;
  * by then have been rotated and burned server-side, and because no {@code TokenResponse} is ever
  * constructed on this path, whether it was rotated is not computable from the client at all. Callers
  * that must fail closed therefore treat this exception as <strong>presumed redeemed</strong> — see
- * {@link RefreshFlow#redemptionOf(Throwable)}, which maps it to
+ * {@link RefreshFlow#classify(Throwable)}, which maps it to
+ * {@link RefreshFailureClassification.Kind#REDEEMED} carrying
  * {@link RefreshRedemption#rotationUnknown()}.
+ * <p>
+ * "Before the {@code 2xx}" is itself two situations, and only one of them leaves the credential alive:
+ * a {@code 4xx} the server attributed to the credential (RFC 6749 §5.2 {@code invalid_grant}) is
+ * carried by the sibling {@link CredentialRejectedException} and classified
+ * {@link RefreshFailureClassification.Kind#CREDENTIAL_REJECTED} — nothing was redeemed, so there is no
+ * successor, but the credential is dead. Everything else there is
+ * {@link RefreshFailureClassification.Kind#PRE_REDEMPTION}.
  * <p>
  * It extends {@link TransportException} so every existing caller and every documented
  * {@code @throws TransportException} contract keeps holding unchanged; only a caller that needs the

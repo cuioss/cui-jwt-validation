@@ -17,7 +17,9 @@ package de.cuioss.sheriff.token.integration.client;
 
 import de.cuioss.sheriff.token.client.config.ClientConfiguration;
 import de.cuioss.sheriff.token.client.discovery.ProviderMetadata;
+import de.cuioss.sheriff.token.client.flow.CredentialRejectedException;
 import de.cuioss.sheriff.token.client.flow.RedeemedRefreshFailure;
+import de.cuioss.sheriff.token.client.flow.RefreshFailureClassification;
 import de.cuioss.sheriff.token.client.flow.RefreshFlow;
 import de.cuioss.sheriff.token.client.token.RotationResult;
 import de.cuioss.sheriff.token.client.token.TokenValidationBridge;
@@ -27,8 +29,6 @@ import de.cuioss.sheriff.token.integration.TestRealm;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -48,19 +48,26 @@ import static org.junit.jupiter.api.Assertions.*;
  * <strong>not</strong> run under. Without this spec the engine is only ever observed against a permissive
  * server.
  *
- * <h2>What the reuse attempt proves — and the exposure it records</h2>
+ * <h2>What the reuse attempt proves</h2>
  * The authorization server refuses the second presentation with HTTP 400 {@code invalid_grant}. That
  * refusal is raised by {@code TokenEndpointClient} at the {@code requestToken} call, i.e. on a
  * non-success status, which is <em>before</em> the flow has any redemption state to attach. Per
  * {@link RedeemedRefreshFailure}'s own contract, a failure raised before the server processed the
- * request — a connection failure, a DNS failure, an SSRF-blocked target, or a non-success HTTP status —
- * deliberately does not implement that interface, and {@link RefreshFlow#refresh} says the same at that
- * call site. {@link RefreshFlow#redemptionOf(Throwable)} therefore returns {@link Optional#empty()} and
- * the engine leaves the presented token in use rather than quarantining the session.
+ * request deliberately does not implement that interface, so nothing is redeemed here and there is no
+ * successor to revoke.
+ * <p>
+ * Nothing redeemed is nonetheless not the same as nothing wrong. {@link RefreshFlow#classify(Throwable)}
+ * reports this refusal as {@link RefreshFailureClassification.Kind#CREDENTIAL_REJECTED} — the
+ * authorization server looked at the presented refresh token and declared it invalid, which no retry
+ * will revive — and it is carried by the {@link CredentialRejectedException} subtype of
+ * {@code TransportException}. That is what separates it from
+ * {@link RefreshFailureClassification.Kind#PRE_REDEMPTION}, where a connection failure, a DNS failure
+ * or a {@code 5xx} leaves the presented token untouched and the session must be kept.
  * <p>
  * {@link RedeemedRefreshFailure} is reachable only <em>after</em> a {@code 2xx} — the
  * {@code RedeemedValidationRefusalException}, {@code RedeemedScopeRefusalException} and
- * {@code RedeemedResponseException} paths — which this path never reaches.
+ * {@code RedeemedResponseException} paths — which this path never reaches, which is why the
+ * classification carries no redemption.
  *
  * <h2>Family-wide revocation on reuse detection</h2>
  * Detecting the reuse of an already-redeemed refresh token revokes the <em>whole</em> refresh-token
@@ -74,13 +81,13 @@ import static org.junit.jupiter.api.Assertions.*;
  * superseded one had been refused. Keycloak refused the rotated replacement with HTTP 400 as well
  * (q-gate finding 3a0c92, recorded alongside plan finding e3a91e below).
  * <p>
- * <strong>Recorded exposure (plan finding e3a91e, against {@code token-sheriff-client}).</strong> The
- * consequence is that on this path the engine cannot distinguish a credential the server has burned from
- * a transient fault: both surface as a non-redemption failure, and a caller that keeps the session alive
- * is holding a dead credential. That absence is a deliberate design choice — it is what stops a network
- * blip from destroying a working session — but under a single-use server it errs the other way. This
- * spec pins the behaviour as it stands and records the exposure; it changes no production code under
- * {@code token-sheriff-client/}.
+ * <strong>Closed exposure (plan finding e3a91e, q-gate finding 3a0c92).</strong> This spec originally
+ * recorded an exposure rather than a defence: the engine collapsed "the server burned this credential"
+ * and "a transient fault" into one non-redemption verdict, so a caller that kept the session alive was
+ * holding a dead credential. ADR-0010 closed that by splitting the pre-redemption region in two, and
+ * the assertions below now pin the credential-rejected verdict this realm produces. The fail-safe
+ * direction is unchanged: only the single RFC 6749 §5.2 code {@code invalid_grant} on a {@code 4xx}
+ * reaches the new verdict, so a network blip still cannot destroy a working session.
  */
 @DisplayName("RefreshFlow against a single-use-enforcing Keycloak realm")
 class RefreshSingleUseSpecIT extends BaseIntegrationTest {
@@ -124,17 +131,23 @@ class RefreshSingleUseSpecIT extends BaseIntegrationTest {
                 () -> refreshFlow.refresh(metadata, initialRefreshToken),
                 "a single-use realm must refuse a refresh token it has already redeemed");
 
-        assertAll("the refusal is a pre-redemption failure, and is reported as one",
+        RefreshFailureClassification classification = RefreshFlow.classify(refusal);
+        assertAll("the refusal redeemed nothing, yet is reported as a dead credential",
                 () -> assertTrue(refusal.getMessage().contains("400"),
                         "the refusal must report the authorization server's 400 status, was: "
                                 + refusal.getMessage()),
+                () -> assertInstanceOf(CredentialRejectedException.class, refusal,
+                        "a 400 whose RFC 6749 §5.2 body names invalid_grant is the credential-rejected "
+                                + "carrier, not a plain transport failure"),
                 () -> assertFalse(refusal instanceof RedeemedRefreshFailure,
                         "a non-success HTTP status is raised before any redemption state exists, so it "
                                 + "must not implement RedeemedRefreshFailure"),
-                () -> assertEquals(Optional.empty(), RefreshFlow.redemptionOf(refusal),
-                        "redemptionOf must classify the refusal as predating redemption — the engine "
-                                + "cannot tell a burned credential from a transient fault here "
-                                + "(plan finding e3a91e)"),
+                () -> assertEquals(RefreshFailureClassification.Kind.CREDENTIAL_REJECTED,
+                        classification.kind(),
+                        "classify must separate a credential the server declared dead from a transient "
+                                + "fault (plan finding e3a91e, closed by ADR-0010)"),
+                () -> assertNull(classification.redemption(),
+                        "nothing was redeemed, so no successor exists to revoke"),
                 () -> assertTrue(RefreshEngineSupport.productionFrame(refusal).isPresent(),
                         "the refusal must be raised from a " + RefreshEngineSupport.PRODUCTION_PACKAGE
                                 + "* frame, not from transport code outside the engine"));

@@ -275,7 +275,16 @@
                      as `…flow.Refresh*` / `…flow.Redeemed*`, which are incomplete — they miss
                      token.RotationResult, token.RefreshTokenFamily, lifecycle.RefreshScheduler and
                      lifecycle.InMemoryTokenStore, all of which are on the refresh path but named and
-                     packaged outside that shape. Nine explicit dotted FQCNs, no wildcards.
+                     packaged outside that shape. Eleven explicit dotted FQCNs, no wildcards.
+
+                     Why token.TokenErrorResponse is deliberately NOT in the list, even though the
+                     credential-rejected classification parses through it: adding it would make "Token"
+                     a guarded first camel-word in the token package, and leg (b) of the guard would
+                     then demand flow.TokenEndpointClient, token.TokenResponse and
+                     lifecycle.TokenLifecycleManager here as well — three large classes pulled under
+                     BRANCH >= 0.80 / INSTRUCTION >= 0.90 as a side effect of a four-line DTO. The
+                     classification decision the gate cares about lives in flow.RefreshFailureClassification
+                     and flow.CredentialRejectedException, both of which ARE listed.
 
                      A hand-maintained list is only safe because it is guarded.
                      RefreshPathCoverageGuardTest fails the build on BOTH drift directions: (a) an INERT
@@ -304,6 +313,8 @@
                                     <includes>
                                         <include>de.cuioss.sheriff.token.client.flow.RefreshFlow</include>
                                         <include>de.cuioss.sheriff.token.client.flow.RefreshRedemption</include>
+                                        <include>de.cuioss.sheriff.token.client.flow.RefreshFailureClassification</include>
+                                        <include>de.cuioss.sheriff.token.client.flow.CredentialRejectedException</include>
                                         <include>de.cuioss.sheriff.token.client.flow.RedeemedResponseException</include>
                                         <include>de.cuioss.sheriff.token.client.flow.RedeemedScopeRefusalException</include>
                                         <include>de.cuioss.sheriff.token.client.flow.RedeemedValidationRefusalException</include>

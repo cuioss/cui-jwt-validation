@@ -18,6 +18,7 @@ package de.cuioss.sheriff.token.client.lifecycle;
 import de.cuioss.sheriff.token.client.auth.ClientAuthentication;
 import de.cuioss.sheriff.token.client.discovery.ProviderMetadata;
 import de.cuioss.sheriff.token.client.dpop.ConstraintBinding;
+import de.cuioss.sheriff.token.client.flow.RefreshFailureClassification;
 import de.cuioss.sheriff.token.client.flow.RefreshFlow;
 import de.cuioss.sheriff.token.client.flow.RefreshRedemption;
 import de.cuioss.sheriff.token.client.internal.ClientLogMessages;
@@ -77,15 +78,25 @@ import java.util.concurrent.ConcurrentMap;
  * freshly issued access token fails client-side validation, the granted scope is broader than
  * requested under the opt-in strict posture, or the successful response cannot be parsed at all — and
  * every one of those reaches {@link #refresh} before any {@link RotationResult} exists, so rotation
- * cannot be read off a result. The discriminator is instead the
- * {@link de.cuioss.sheriff.token.client.flow.RefreshRedemption} the flow carries on every refusal it
- * raises once the server has answered, read back through
- * {@link RefreshFlow#redemptionOf(Throwable)}: present means the presented token was redeemed and the
- * session is quarantined, absent means the request never reached redemption — a connection failure, a DNS failure, a non-success
- * status — so the presented token is still valid and the session is deliberately left intact rather
- * than destroyed over a transient fault. An unparseable success response is the one redeemed case
- * where rotation is not computable at all; it is presumed rotated and cleared, without inventing a
- * successor to revoke.
+ * cannot be read off a result. The discriminator is instead
+ * {@link RefreshFlow#classify(Throwable)}, which sorts every refusal into one of three dispositions
+ * this class dispatches on with no default arm:
+ * <ul>
+ *   <li>{@link RefreshFailureClassification.Kind#REDEEMED} — the server consumed the grant. The
+ *       carried {@link de.cuioss.sheriff.token.client.flow.RefreshRedemption} says whether the
+ *       presented token was burned; when it was, the session is quarantined and the known successor
+ *       revoked. An unparseable success response is the one redeemed case where rotation is not
+ *       computable at all; it is presumed rotated and cleared, without inventing a successor to
+ *       revoke.</li>
+ *   <li>{@link RefreshFailureClassification.Kind#CREDENTIAL_REJECTED} — the server declared the
+ *       presented refresh token invalid (RFC 6749 §5.2 {@code invalid_grant}) without redeeming it.
+ *       The session is cleared, but no revocation is attempted: there is no successor, and the
+ *       presented token is exactly what the server just refused.</li>
+ *   <li>{@link RefreshFailureClassification.Kind#PRE_REDEMPTION} — the request never reached
+ *       redemption (a connection failure, a DNS failure, a {@code 5xx}), so the presented token is
+ *       still valid and the session is deliberately left intact rather than destroyed over a transient
+ *       fault.</li>
+ * </ul>
  * <p>
  * <strong>Logout is fail-closed with no stale-read window.</strong> {@link #revokeAndClear} performs a
  * single atomic take-and-clear via {@link TokenStore#remove(String)}: after it returns, the session's
@@ -400,22 +411,40 @@ public class TokenLifecycleManager {
             return Optional.empty();
         }
 
-        // A refusal raised INSIDE the exchange — client-side access-token validation, the strict
-        // scope-reconciliation refusal, or a 2xx response whose body cannot be parsed — reaches the
-        // caller before any RotationResult exists, so rotation cannot be read off a result here. Every
-        // such refusal instead CARRIES the redemption state it was raised under, which
-        // RefreshFlow.redemptionOf reads back. Its ABSENCE is the discriminator that must not be
-        // collapsed — an empty result means the failure happened BEFORE redemption (connection
-        // failure, DNS failure, non-2xx), so the presented refresh token is still valid and clearing
-        // the session would destroy a working one over a transient fault.
+        // A refusal raised INSIDE the exchange reaches the caller before any RotationResult exists, so
+        // rotation cannot be read off a result here. RefreshFlow.classify is the single place the three
+        // situations are told apart, and the switch below has NO default arm on purpose: a fourth Kind
+        // added later is a compile error here rather than a silent fall-through to the
+        // session-preserving default, which is the failure mode this dispatch exists to close.
         RotationResult rotation;
         try {
             rotation = refreshFlow.refresh(metadata, presentedRefreshToken);
         } catch (TokenSheriffException refusedExchange) {
-            RefreshFlow.redemptionOf(refusedExchange)
-                    .filter(RefreshRedemption::presentedTokenBurned)
-                    .ifPresent(redeemed -> quarantineRedeemedRefresh(sessionId, metadata, redeemed,
-                            revocationClient, clientAuthentication));
+            RefreshFailureClassification classification = RefreshFlow.classify(refusedExchange);
+            switch (classification.kind()) {
+                case REDEEMED -> {
+                    // The server consumed the grant. Only a redemption that BURNED the presented token
+                    // quarantines: a redeemed-but-not-rotated exchange (RFC 6749 §6 permits omitting a
+                    // new refresh token) leaves the presented token usable.
+                    RefreshRedemption redemption = Objects.requireNonNull(classification.redemption(),
+                            "a REDEEMED classification carries the redemption it was raised under");
+                    if (redemption.presentedTokenBurned()) {
+                        quarantineRedeemedRefresh(sessionId, metadata, redemption, revocationClient,
+                                clientAuthentication);
+                    }
+                }
+                // The server never redeemed anything, so there is no successor — but it declared the
+                // presented token invalid, so keeping the session would leave the caller holding a dead
+                // credential no retry revives.
+                case CREDENTIAL_REJECTED -> quarantineRejectedCredential(sessionId, metadata,
+                        revocationClient, clientAuthentication);
+                // The request never reached the point where the server processed it (connection
+                // failure, DNS failure, 5xx), so the presented refresh token is still valid. Clearing
+                // the session here would destroy a working one over a transient fault.
+                case PRE_REDEMPTION -> LOGGER.debug(
+                        "Refresh refused before the authorization server processed the grant; "
+                                + "leaving the session intact");
+            }
             throw refusedExchange;
         }
 
@@ -526,6 +555,23 @@ public class TokenLifecycleManager {
             LOGGER.warn(ClientLogMessages.WARN.REFRESH_IDENTITY_REJECTED_QUARANTINE, maskSessionId(sessionId));
         }
         revokeAndClearFailClosed(sessionId, metadata, rotatedToken, revocationClient, clientAuthentication);
+    }
+
+    /**
+     * Fails a session closed after the authorization server refused the presented refresh token as
+     * invalid (RFC 6749 §5.2 {@code invalid_grant} on a client-error status).
+     * <p>
+     * Nothing was redeemed on this path and nothing was rotated, so <strong>no revocation is
+     * attempted</strong>: there is no successor to name in one, and the presented token is precisely
+     * the credential the server has just told us it no longer honours. What remains is the client-side
+     * fail-closed clear — the store entry and the rotation family are dropped, forcing
+     * re-authentication — because a session left holding a credential the server has declared dead is a
+     * session that fails on its very next refresh with no way to recover.
+     */
+    private void quarantineRejectedCredential(String sessionId, ProviderMetadata metadata,
+            RevocationClient revocationClient, ClientAuthentication clientAuthentication) {
+        LOGGER.warn(ClientLogMessages.WARN.REFRESH_CREDENTIAL_REJECTED_QUARANTINE, maskSessionId(sessionId));
+        revokeAndClearFailClosed(sessionId, metadata, null, revocationClient, clientAuthentication);
     }
 
     /**

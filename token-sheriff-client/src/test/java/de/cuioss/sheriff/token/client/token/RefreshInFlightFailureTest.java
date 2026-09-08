@@ -60,6 +60,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * concurrent caller that joined the failed rotation must observe the same failure rather than
  * redeeming the token a second time.
  * <p>
+ * Every case here drives the failure with an HTTP 500 rather than an RFC 6749 §5.2 error response,
+ * because the property under test is <em>state preservation across a fault the authorization server
+ * never attributed to the credential</em>. A {@code 400 invalid_grant} is the opposite situation —
+ * {@code RefreshFlow.classify} reports it as
+ * {@link de.cuioss.sheriff.token.client.flow.RefreshFailureClassification.Kind#CREDENTIAL_REJECTED} and
+ * the session is deliberately cleared — so using one here would assert preservation against the one
+ * status that must not preserve. That path is pinned in {@code RefreshPostRedemptionQuarantineTest}.
+ * <p>
  * The cases live here rather than in {@code RefreshAdversarialTest} so neither class exceeds the
  * module's 400-line budget; both consume the shared {@link RefreshTestSupport} fixture.
  * <p>
@@ -97,7 +105,7 @@ class RefreshInFlightFailureTest extends RefreshTestSupport {
         String rt1 = Generators.letterStrings(20, 40).next();
         String originalIdToken = Generators.letterStrings(20, 40).next();
         manager.store(session, bearerBundle(rt1, originalIdToken));
-        getModuleDispatcher().returnOAuthError();
+        getModuleDispatcher().returnError();
         var clientAuth = clientAuth(config);
 
         assertThrows(TransportException.class,
@@ -125,7 +133,7 @@ class RefreshInFlightFailureTest extends RefreshTestSupport {
         String rt1 = Generators.letterStrings(20, 40).next();
         String rt2 = Generators.letterStrings(20, 40).next();
         manager.store(session, bearerBundle(rt1, null));
-        getModuleDispatcher().returnOAuthError();
+        getModuleDispatcher().returnError();
         var clientAuth = clientAuth(config);
         assertThrows(TransportException.class,
                 () -> manager.refresh(session, metadata, flow, revocationClient, idBridge, clientAuth));
@@ -162,7 +170,7 @@ class RefreshInFlightFailureTest extends RefreshTestSupport {
         };
         String session = Generators.letterStrings(10, 20).next();
         manager.store(session, bearerBundle(Generators.letterStrings(20, 40).next(), null));
-        getModuleDispatcher().returnOAuthError();
+        getModuleDispatcher().returnError();
 
         ExecutorService pool = Executors.newFixedThreadPool(2);
         try {
@@ -204,7 +212,7 @@ class RefreshInFlightFailureTest extends RefreshTestSupport {
         String session = Generators.letterStrings(10, 20).next();
         String rt2 = Generators.letterStrings(20, 40).next();
         manager.store(session, bearerBundle(Generators.letterStrings(20, 40).next(), null));
-        getModuleDispatcher().returnOAuthError();
+        getModuleDispatcher().returnError();
         var clientAuth = clientAuth(config);
         assertThrows(TransportException.class,
                 () -> manager.refresh(session, metadata, flow, revocationClient, idBridge, clientAuth));

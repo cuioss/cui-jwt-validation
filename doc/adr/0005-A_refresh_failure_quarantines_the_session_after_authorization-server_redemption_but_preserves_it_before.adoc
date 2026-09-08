@@ -12,7 +12,14 @@
 
 == Status
 
-Proposed
+Superseded by ADR-0010
+
+The two-state partition below — redeemed versus not — is correct about the redeemed branch, which
+ADR-0010 carries forward unchanged. It is incomplete about the other one: a client-error status the
+authorization server attributed to the presented credential itself (RFC 6749 §5.2 `invalid_grant`)
+redeems nothing, yet leaves the credential dead, and this ADR classifies it with the transient faults
+and preserves the session. ADR-0010 splits that branch into a pre-redemption state and a
+credential-rejected state.
 
 == Context
 
