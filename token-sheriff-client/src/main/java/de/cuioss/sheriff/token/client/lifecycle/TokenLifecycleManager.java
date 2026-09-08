@@ -486,10 +486,14 @@ public class TokenLifecycleManager {
      * <p>
      * A refusal raised INSIDE the exchange reaches the caller before any {@code RotationResult} exists,
      * so rotation cannot be read off a result here. {@link RefreshFlow#classify} is the single place the
-     * three situations are told apart, and the switch below has NO default arm on purpose: it is an
-     * enhanced (arrow-syntax) switch statement over an enum type (JLS SE21 §14.11.1), so the compiler
-     * already requires exhaustive case coverage — a fourth {@code Kind} added later is a compile error
-     * here rather than a silent fall-through to the session-preserving default, which is the failure
+     * three situations are told apart, and the {@code default} arm below is a real runtime guard rather
+     * than dead defensive code. An earlier revision of this comment claimed the compiler enforced
+     * exhaustiveness because the arms use arrow labels; that is wrong. Under JLS SE21 §14.11.1 an enum
+     * is a <em>legacy</em> selector type, and a switch STATEMENT is enhanced — and so exhaustiveness-checked
+     * — only when it carries a pattern label, a {@code null} label, or a non-legacy selector. Arrow labels
+     * govern fall-through between arms, not exhaustiveness. Without the {@code default} arm a fourth
+     * {@code Kind} would therefore compile, take no lifecycle action, and fall through to the caller's
+     * rethrow — silently leaving the session in whatever state it was already in, which is the failure
      * mode this dispatch exists to close.
      * <p>
      * This method decides the disposition only; it never rethrows. The refusal is rethrown by the caller
@@ -528,6 +532,12 @@ public class TokenLifecycleManager {
             case PRE_REDEMPTION -> LOGGER.debug(
                     "Refresh refused before the authorization server processed the grant; "
                             + "leaving the session intact");
+            // Unreachable while Kind has exactly the three constants above, and deliberately kept:
+            // this switch is NOT compiler-exhaustive (see the Javadoc), so a fourth Kind would
+            // otherwise take no disposition at all. Failing loud beats silently preserving a session
+            // whose credential state nothing decided.
+            default -> throw new IllegalStateException(
+                    "unhandled refresh failure classification: " + classification.kind());
         }
     }
 
