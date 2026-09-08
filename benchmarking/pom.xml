@@ -21,8 +21,6 @@
 
     <properties>
         <maven.jar.plugin.automatic.module.name>de.cuioss.sheriff.token.benchmarking</maven.jar.plugin.automatic.module.name>
-        <!-- JMH version for benchmarking -->
-        <version.jmh>1.37</version.jmh>
         <!-- External dependency versions -->
         <version.gson>2.14.0</version.gson>
         <version.hdrhistogram>2.2.2</version.hdrhistogram>

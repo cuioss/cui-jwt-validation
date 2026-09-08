@@ -4,7 +4,7 @@
     <parent>
         <groupId>de.cuioss</groupId>
         <artifactId>cui-quarkus-parent</artifactId>
-        <version>1.7.0</version>
+        <version>1.7.2</version>
         <relativePath />
     </parent>
     <groupId>de.cuioss.sheriff.token</groupId>
@@ -46,8 +46,6 @@
 
     <properties>
         <maven.compiler.release>21</maven.compiler.release>
-        <frontend.node.version>v22.22.0</frontend.node.version>
-        <frontend.npm.version>10.9.2</frontend.npm.version>
     </properties>
 
     <profiles>
@@ -157,10 +155,6 @@
                              same check. -->
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-help-plugin</artifactId>
-                        <!-- Explicit: maven-help-plugin is not in the inherited pluginManagement, and
-                             the parent's enforcer RequirePluginVersions rule rejects an unversioned
-                             plugin. exec-maven-plugin below needs no version - that one IS managed. -->
-                        <version>3.5.2</version>
                         <inherited>false</inherited>
                         <executions>
                             <execution>

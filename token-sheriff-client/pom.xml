@@ -18,9 +18,7 @@
 
     <properties>
         <maven.jar.plugin.automatic.module.name>de.cuioss.sheriff.token.client</maven.jar.plugin.automatic.module.name>
-        <version.lombok>1.18.48</version.lombok>
         <version.dsl.json>2.0.2</version.dsl.json>
-        <version.archunit>1.5.0</version.archunit>
     </properties>
 
     <dependencyManagement>
@@ -120,7 +118,6 @@
         <dependency>
             <groupId>de.cuioss</groupId>
             <artifactId>cui-http</artifactId>
-            <version>${version.cui.http}</version>
             <classifier>generators</classifier>
             <scope>test</scope>
         </dependency>
@@ -150,7 +147,6 @@
         <dependency>
             <groupId>com.tngtech.archunit</groupId>
             <artifactId>archunit-junit5</artifactId>
-            <version>${version.archunit}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
