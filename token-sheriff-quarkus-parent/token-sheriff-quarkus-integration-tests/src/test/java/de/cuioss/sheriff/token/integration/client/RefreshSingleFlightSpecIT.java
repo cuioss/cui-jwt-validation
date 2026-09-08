@@ -80,7 +80,7 @@ class RefreshSingleFlightSpecIT extends BaseIntegrationTest {
         IdTokenValidationBridge idBridge = RefreshEngineSupport.idTokenBridge(validator);
         ClientAuthentication clientAuthentication = RefreshEngineSupport.clientAuthentication(configuration);
         RevocationClient revocationClient = new RevocationClient(configuration);
-        ProviderMetadata metadata = RefreshEngineSupport.providerMetadata();
+        ProviderMetadata metadata = RefreshEngineSupport.discoveredProviderMetadata();
 
         CountDownLatch firstCallerParked = new CountDownLatch(1);
         CountDownLatch releaseFirstCaller = new CountDownLatch(1);
@@ -143,7 +143,7 @@ class RefreshSingleFlightSpecIT extends BaseIntegrationTest {
     }
 
     private static StoredToken acquireBundle() {
-        TestRealm.TokenResponse acquired = TestRealm.createFastRefreshRealm().obtainValidToken();
+        TestRealm.TokenResponse acquired = TestRealm.createClientEngineFastRefreshRealm().obtainValidToken();
         assertNotNull(acquired.refreshToken(), "the fast-expiry client must issue a refresh token");
         assertNotNull(acquired.expiresInSeconds(), "Keycloak must report the access-token lifetime");
         return new StoredToken(acquired.accessToken(), acquired.refreshToken(), acquired.idToken(),

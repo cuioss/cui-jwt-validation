@@ -54,7 +54,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * This is the in-repo E2E proof that the whole engine composes against a genuine provider, not a mock:
  * <ol>
  *     <li><strong>login &rarr; token</strong> — the direct-access grant yields a real access token, ID
- *         token, and refresh token from the integration realm;</li>
+ *         token, and refresh token from the {@code client-engine} realm;</li>
  *     <li><strong>userinfo</strong> — the userinfo document's {@code sub} is bound to the ID token
  *         {@code sub} through the production {@link SubBindingValidator}, and a forged foreign
  *         {@code sub} is rejected (OIDC Core §5.3.2);</li>
@@ -74,7 +74,7 @@ class FullFlowE2EIT extends BaseIntegrationTest {
 
     private static final CuiLogger LOGGER = new CuiLogger(FullFlowE2EIT.class);
 
-    private static final String BASE = "https://localhost:1443/realms/integration/protocol/openid-connect";
+    private static final String BASE = RefreshEngineSupport.ISSUER + "/protocol/openid-connect";
     private static final String USERINFO_ENDPOINT = BASE + "/userinfo";
     private static final String END_SESSION_ENDPOINT = BASE + "/logout";
     private static final String POST_LOGOUT_REDIRECT_URI = "https://localhost/callback";
@@ -85,7 +85,7 @@ class FullFlowE2EIT extends BaseIntegrationTest {
     @DisplayName("Should run login -> token -> userinfo -> refresh -> logout end-to-end")
     void shouldRunFullConfidentialClientFlow() throws Exception {
         // 1. login -> token (direct-access grant)
-        TestRealm.TokenResponse tokens = TestRealm.createIntegrationRealm().obtainValidToken();
+        TestRealm.TokenResponse tokens = TestRealm.createClientEngineRealm().obtainValidToken();
         assertAll("login yields a full token bundle",
                 () -> assertNotNull(tokens.accessToken(), "Keycloak must issue an access token"),
                 () -> assertNotNull(tokens.idToken(), "Keycloak must issue an ID token for the openid scope"),
@@ -116,7 +116,7 @@ class FullFlowE2EIT extends BaseIntegrationTest {
         RefreshFlow refreshFlow = RefreshEngineSupport.refreshFlow(configuration, accessBridge);
 
         RotationResult rotation =
-                refreshFlow.refresh(RefreshEngineSupport.providerMetadata(), tokens.refreshToken());
+                refreshFlow.refresh(RefreshEngineSupport.discoveredProviderMetadata(), tokens.refreshToken());
         LOGGER.debug("refresh rotated=%s", rotation.rotated());
         assertAll("refresh_token grant through the production RefreshFlow",
                 () -> assertTrue(rotation.rotated(), "Keycloak must rotate the refresh token on redemption"),

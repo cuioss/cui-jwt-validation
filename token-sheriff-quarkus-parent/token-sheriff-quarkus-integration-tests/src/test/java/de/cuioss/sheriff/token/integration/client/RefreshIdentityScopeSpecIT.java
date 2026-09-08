@@ -88,7 +88,7 @@ class RefreshIdentityScopeSpecIT extends BaseIntegrationTest {
     @DisplayName("Should accept the refresh of a subject-bound session and carry the subject through the rotation")
     void shouldPreserveTheBoundSubjectAcrossRefresh() {
         String sessionId = UUID.randomUUID().toString();
-        TestRealm.TokenResponse acquired = TestRealm.createIntegrationRealm().obtainValidToken();
+        TestRealm.TokenResponse acquired = TestRealm.createClientEngineRealm().obtainValidToken();
         assertNotNull(acquired.refreshToken(), "Keycloak must issue a refresh token via the password grant");
 
         String acquiredSubject = accessBridge.validateAccessToken(acquired.accessToken()).getSubject()
@@ -98,7 +98,7 @@ class RefreshIdentityScopeSpecIT extends BaseIntegrationTest {
                 acquiredSubject));
 
         StoredToken refreshed = assertDoesNotThrow(
-                () -> manager.refresh(sessionId, RefreshEngineSupport.providerMetadata(), refreshFlow,
+                () -> manager.refresh(sessionId, RefreshEngineSupport.discoveredProviderMetadata(), refreshFlow,
                         new RevocationClient(configuration), idBridge,
                         RefreshEngineSupport.clientAuthentication(configuration)),
                 "a refresh naming the same subject the session is bound to must be accepted")
@@ -118,11 +118,11 @@ class RefreshIdentityScopeSpecIT extends BaseIntegrationTest {
     @Test
     @DisplayName("Should classify and surface the scope Keycloak actually grants, without refusing it")
     void shouldReportTheGrantedScopeDelta() {
-        String initialRefreshToken = TestRealm.createIntegrationRealm().obtainValidToken().refreshToken();
+        String initialRefreshToken = TestRealm.createClientEngineRealm().obtainValidToken().refreshToken();
         assertNotNull(initialRefreshToken, "Keycloak must issue an initial refresh token via the password grant");
 
         RotationResult rotation = assertDoesNotThrow(
-                () -> refreshFlow.refresh(RefreshEngineSupport.providerMetadata(), initialRefreshToken),
+                () -> refreshFlow.refresh(RefreshEngineSupport.discoveredProviderMetadata(), initialRefreshToken),
                 "the lenient default posture must never refuse a real-AS grant");
 
         assertAll("granted scope reported",

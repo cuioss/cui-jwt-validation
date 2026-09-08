@@ -16,6 +16,7 @@
 package de.cuioss.sheriff.token.integration.client;
 
 import de.cuioss.sheriff.token.client.config.ClientConfiguration;
+import de.cuioss.sheriff.token.client.discovery.ProviderMetadata;
 import de.cuioss.sheriff.token.client.dpop.DpopProofGenerator;
 import de.cuioss.sheriff.token.client.flow.RefreshFlow;
 import de.cuioss.sheriff.token.client.lifecycle.RefreshScheduler;
@@ -79,10 +80,13 @@ class RefreshProductionPathSpecIT extends BaseIntegrationTest {
      */
     private static final Duration EXPIRY_BUDGET = Duration.ofSeconds(90);
 
+    /** Path segment every OIDC endpoint of a Keycloak realm hangs off its issuer. */
+    private static final String OIDC_PATH = "/protocol/openid-connect";
+
     @Test
     @DisplayName("Should rotate the refresh token and return a validated access token through RefreshFlow")
     void shouldRotateThroughProductionRefreshFlow() {
-        String initialRefreshToken = TestRealm.createIntegrationRealm().obtainValidToken().refreshToken();
+        String initialRefreshToken = TestRealm.createClientEngineRealm().obtainValidToken().refreshToken();
         assertNotNull(initialRefreshToken, "Keycloak must issue an initial refresh token via the password grant");
 
         ClientConfiguration configuration =
@@ -91,9 +95,10 @@ class RefreshProductionPathSpecIT extends BaseIntegrationTest {
         TokenValidationBridge accessBridge = RefreshEngineSupport.accessTokenBridge(validator);
         IdTokenValidationBridge idBridge = RefreshEngineSupport.idTokenBridge(validator);
         RefreshFlow refreshFlow = RefreshEngineSupport.refreshFlow(configuration, accessBridge);
+        ProviderMetadata metadata = RefreshEngineSupport.discoveredProviderMetadata();
 
         RotationResult rotation = drive("refresh_token exchange",
-                () -> refreshFlow.refresh(RefreshEngineSupport.providerMetadata(), initialRefreshToken));
+                () -> refreshFlow.refresh(metadata, initialRefreshToken));
 
         assertAll("production refresh",
                 () -> assertTrue(rotation.rotated(), "Keycloak rotates the refresh token on redemption"),
@@ -101,7 +106,7 @@ class RefreshProductionPathSpecIT extends BaseIntegrationTest {
                         "the rotated refresh token must differ from the redeemed one"),
                 () -> assertFalse(rotation.accessToken().getRawToken().isBlank(),
                         "the rotation must carry a non-blank access token"),
-                () -> assertEquals(KeycloakUrlSupport.INTERNAL_ISSUER, rotation.accessToken().getIssuer(),
+                () -> assertEquals(RefreshEngineSupport.ISSUER, rotation.accessToken().getIssuer(),
                         "the validated access token must carry the realm's issuer identity"),
                 () -> assertTrue(rotation.accessToken().getSubject().isPresent(),
                         "the validated access token must be subject bound"));
@@ -114,6 +119,32 @@ class RefreshProductionPathSpecIT extends BaseIntegrationTest {
         }
     }
 
+    /**
+     * Pins that the metadata the refresh legs run on genuinely came from the authorization server's
+     * discovery document, not from a constant assembled in this module.
+     * <p>
+     * Without this the switch to {@link RefreshEngineSupport#discoveredProviderMetadata()} would be
+     * unobservable: a hand-built metadata object carrying the same URLs would satisfy every other
+     * assertion in this class. The endpoints are checked against the paths the realm advertises off its
+     * own issuer, which is exactly what a discovery response for this realm must contain.
+     */
+    @Test
+    @DisplayName("Should obtain the provider metadata from the realm's discovery document")
+    void shouldObtainProviderMetadataFromDiscovery() {
+        ProviderMetadata metadata = RefreshEngineSupport.discoveredProviderMetadata();
+
+        assertAll("metadata resolved from discovery",
+                () -> assertEquals(RefreshEngineSupport.ISSUER, metadata.issuer,
+                        "the document must identify the client-engine realm as its issuer"),
+                () -> assertEquals(RefreshEngineSupport.ISSUER + OIDC_PATH + "/token", metadata.tokenEndpoint,
+                        "the token endpoint must be the one the realm advertises"),
+                () -> assertEquals(RefreshEngineSupport.ISSUER + OIDC_PATH + "/certs", metadata.jwksUri,
+                        "the JWKS URI must be the one the realm advertises"),
+                () -> assertEquals(RefreshEngineSupport.ISSUER + OIDC_PATH + "/revoke",
+                        metadata.revocationEndpoint,
+                        "the revocation endpoint must be the one the realm advertises"));
+    }
+
     @Test
     @DisplayName("Should preserve the DPoP sender constraint across a production refresh")
     void shouldPreserveDpopSenderConstraintAcrossRefresh() {
@@ -121,7 +152,7 @@ class RefreshProductionPathSpecIT extends BaseIntegrationTest {
         DpopProofGenerator proofGenerator = RefreshEngineSupport.dpopProofGenerator(proofKey);
 
         TestRealm.TokenResponse acquired =
-                TestRealm.createDpopRealm().obtainDpopBoundToken(new DpopProofHelper(proofKey));
+                TestRealm.createClientEngineDpopRealm().obtainDpopBoundToken(new DpopProofHelper(proofKey));
         assertNotNull(acquired.refreshToken(), "the DPoP-bound acquisition must issue a refresh token");
         assertTrue(claimsOf(acquired.accessToken()).contains(jktClaim(proofGenerator)),
                 "the acquired access token must already be bound to the test-owned proof key");
@@ -134,7 +165,8 @@ class RefreshProductionPathSpecIT extends BaseIntegrationTest {
                 RefreshEngineSupport.dpopRefreshFlow(configuration, accessBridge, proofKey);
 
         RotationResult rotation = drive("DPoP-constrained refresh_token exchange",
-                () -> refreshFlow.refresh(RefreshEngineSupport.providerMetadata(), acquired.refreshToken()));
+                () -> refreshFlow.refresh(RefreshEngineSupport.discoveredProviderMetadata(),
+                        acquired.refreshToken()));
 
         assertTrue(claimsOf(rotation.accessToken().getRawToken()).contains(jktClaim(proofGenerator)),
                 "the rotated access token must stay bound to the same proof key (cnf.jkt continuity)");
@@ -143,7 +175,7 @@ class RefreshProductionPathSpecIT extends BaseIntegrationTest {
     @Test
     @DisplayName("Should redeem a refresh token whose access token has already expired")
     void shouldRefreshAfterTheAccessTokenHasExpired() {
-        TestRealm.TokenResponse acquired = TestRealm.createFastRefreshRealm().obtainValidToken();
+        TestRealm.TokenResponse acquired = TestRealm.createClientEngineFastRefreshRealm().obtainValidToken();
         assertNotNull(acquired.refreshToken(), "the fast-expiry client must issue a refresh token");
         assertNotNull(acquired.expiresInSeconds(), "Keycloak must report the access-token lifetime");
 
@@ -166,7 +198,8 @@ class RefreshProductionPathSpecIT extends BaseIntegrationTest {
         RefreshFlow refreshFlow = RefreshEngineSupport.refreshFlow(configuration, accessBridge);
 
         RotationResult rotation = drive("expiry-driven refresh_token exchange",
-                () -> refreshFlow.refresh(RefreshEngineSupport.providerMetadata(), acquired.refreshToken()));
+                () -> refreshFlow.refresh(RefreshEngineSupport.discoveredProviderMetadata(),
+                        acquired.refreshToken()));
 
         assertAll("expiry-driven refresh",
                 () -> assertTrue(scheduler.needsRefresh(bundle, Instant.now()),
