@@ -41,7 +41,8 @@ Binding the same relationship inside the plugin's own `<configuration>` block in
 === Positive
 
 * The three invocation lanes (default, general-skip, own-tier-skip-override) each resolve to the correct running/not-running state, and the resolution is entirely declarative — no profile-specific logic is needed to keep them apart.
-* A coverage gate downstream of the integration-test tier is graded on a sample that is either fully present or legitimately absent, never on a partial sample produced by a tier that ran when the invocation intended it not to.
+* On the general-skip lane, a coverage gate downstream of the integration-test tier is graded on a sample that is either fully present or legitimately absent, never on a partial sample produced by a tier that ran when the invocation intended it not to.
+* The own-tier-skip-override lane is deliberately outside that guarantee, and the distinction is worth stating rather than glossing. Overriding only the integration-test tier leaves the unit tier running, so the gate is graded on unit coverage alone — a partial sample by construction. That is sound rather than a gap: unit coverage is real coverage, and a class that clears the threshold on it has genuinely cleared it. The unsound case this decision closes is the inverse — a tier running *against* the invocation's intent and contributing a sparse sample that neither reflects the tests nor is honestly absent. Guarding the gate on the own-tier flag was rejected for exactly this reason: it would disable a gate on a lane whose coverage is legitimate.
 * The command-line override escape hatch is preserved for every module that adopts this wiring, independent of which build plugin version is in use or whether that version's own skip property happens to alias the general flag.
 
 === Negative
