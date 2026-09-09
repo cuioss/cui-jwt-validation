@@ -51,19 +51,19 @@
   <!-- ============ SLAB 3 — validation ============ -->
   <rect class="slab" x="80" y="288" width="840" height="84" rx="6" ry="6"/>
   <line class="gutter-sep" x1="400" y1="296" x2="400" y2="364"/>
-  <text x="100" y="322" class="layer-header">…sheriff.token.validation</text>
+  <text x="100" y="322" class="layer-header">..sheriff.token.validation</text>
   <text x="100" y="342" class="layer-sub">layer in token-sheriff-validation</text>
   <text x="420" y="334" class="item">token validation — signatures, claims, pipeline</text>
 
   <!-- divider 3 : ArchUnit boundary -->
-  <line class="divider" x1="80"  y1="384" x2="360" y2="384"/>
-  <line class="divider" x1="640" y1="384" x2="920" y2="384"/>
-  <text x="500" y="388" class="boundary-lbl">ArchUnit — commons must not depend on …validation..</text>
+  <line class="divider" x1="80"  y1="384" x2="340" y2="384"/>
+  <line class="divider" x1="660" y1="384" x2="920" y2="384"/>
+  <text x="500" y="388" class="boundary-lbl">ArchUnit — commons must not depend on ..validation..</text>
 
   <!-- ============ SLAB 4 (bottom) — commons ============ -->
   <rect class="slab" x="80" y="398" width="840" height="96" rx="6" ry="6"/>
   <line class="gutter-sep" x1="400" y1="406" x2="400" y2="486"/>
-  <text x="100" y="436" class="layer-header">…sheriff.token.commons</text>
+  <text x="100" y="436" class="layer-header">..sheriff.token.commons</text>
   <text x="100" y="456" class="layer-sub">base layer in token-sheriff-validation</text>
   <text x="420" y="434" class="item">transport / error / events / metrics</text>
   <text x="420" y="458" class="item-sub">deps: cui-http, cui-tooling</text>

@@ -61,9 +61,9 @@ metrics; it never interprets a token's trust.*
 The layering is enforced by ArchUnit rules living in `token-sheriff-validation`'s test
 sources — giving the same guarantee a module boundary would, with one fewer artifact:
 
-* `…commons..` may depend only on the JDK, `cui-http`, `cui-tooling` — and *not* on
-  `…validation..`.
-* `…validation..` may depend on `…commons..` (the allowed direction).
+* `..commons..` may depend only on the JDK, `cui-http`, `cui-tooling` — and *not* on
+  `..validation..`.
+* `..validation..` may depend on `..commons..` (the allowed direction).
 * No package cycles across the `commons` / `validation` boundary.
 * The client boundary (`client → validation`, never the reverse) is enforced by *Maven* —
   the `token-sheriff-client` module declares the dependency.

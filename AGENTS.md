@@ -364,6 +364,12 @@ The project includes custom skills in `.claude/skills/`:
 - **Blank lines**: Required before all lists
 - **Header**: Include TOC and section numbering
 - **Source highlighting**: Use `:source-highlighter: highlight.js`
+- **Package and ArchUnit patterns**: Write them with literal periods, exactly as they appear in the
+  test sources — a documented pattern must be copy-pasteable into an ArchUnit rule without editing.
+  Never substitute the Unicode ellipsis character (U+2026) for the two-period ArchUnit wildcard, and
+  never use it to elide a package prefix: it renders as one glyph where the rule needs two periods,
+  so a reader who copies it gets a pattern that silently matches nothing. `DocumentedPackagePatternTest`
+  enforces this and fails the build when the glyph reappears in a documented package pattern.
 
 ### Javadoc Standards
 - Every public and protected class/interface must be documented
