@@ -48,16 +48,18 @@ import static org.junit.jupiter.api.Assertions.*;
  * Drives the {@code refresh_token} leg through the production client-authentication strategies other
  * than {@code client_secret_basic}, against the real Keycloak container.
  * <p>
- * The engine ships four strategies behind {@link ClientAuthenticationSelector} — three production
- * strategies and one alpha strategy — but only {@link ClientSecretBasicAuth} had ever authenticated a
- * refresh against a real authorization server: every other refresh spec in this module builds its
- * flow from {@link RefreshEngineSupport#clientAuthentication(ClientConfiguration)}, which is Basic.
+ * The strategies behind {@link ClientAuthenticationSelector} are the methods {@link ClientAuthMethod}
+ * declares — the production methods plus the alpha {@code tls_client_auth} — but only
+ * {@link ClientSecretBasicAuth} had ever authenticated a refresh against a real authorization server:
+ * every other refresh spec in this module builds its flow from
+ * {@link RefreshEngineSupport#clientAuthentication(ClientConfiguration)}, which is Basic.
  * This spec closes {@link ClientSecretPostAuth} and {@link PrivateKeyJwtAuth}, and pins the
  * selector's routing against the realm's genuinely advertised
- * {@code token_endpoint_auth_methods_supported}. With those legs closed the spec is
- * <strong>complete for the production strategy set</strong>.
+ * {@code token_endpoint_auth_methods_supported}. With those legs closed, <strong>every method the
+ * selector can actually select is exercised here</strong> — the claim tracks the selector's own
+ * iteration over {@link ClientAuthMethod} rather than a fixed strategy count.
  * <p>
- * {@code MtlsClientAuth} is outside that set by <em>classification</em>, not by omission:
+ * {@code MtlsClientAuth} is outside that exercised set by <em>classification</em>, not by omission:
  * {@code tls_client_auth} is an alpha capability — declared, never selected, and not a coverage
  * obligation while unexercised (ADR-0012). It is a transport-layer binding the client transport
  * cannot honor (no client key material is plumbed through the {@code SSLContext}), and
