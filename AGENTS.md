@@ -87,6 +87,20 @@ Multi-module Maven project:
 - **Encoding**: UTF-8
 - **Java features**: Use the modern Java features the configured release level allows (records, sealed classes, pattern matching, text blocks)
 - **Lombok**: Use `@Builder`, `@Value`, `@NonNull`, `@ToString`, `@EqualsAndHashCode` appropriately
+- **Preferred overloads**: Before adding an overload that production code will prefer over an
+  existing public method, ask two questions. Is the existing method overridable — is it public or
+  protected on a non-final class? And does anything actually override it? Include test doubles in
+  that second answer: subclasses of a production class are the population most likely to override a
+  method and least likely to be thought of as consumers, so a search that looks only at production
+  callers will report "nothing overrides it" and be wrong. If anything does override it, adding the
+  preferred overload is a behavioural break for every overrider — their override stops being
+  called — regardless of the change being source- and binary-compatible. Compatibility is not the
+  test; dispatch is. See ADR-0006 for the decision this check enforces.
+
+  Reviewer corollary: a test that extends a production class and starts timing out is a first-class
+  suspect for a dispatch-target change, not a flake. Re-read the dispatch path before re-running it,
+  retrying it, or marking it flaky — a timeout is what an override that no longer runs looks like
+  when the real implementation blocks on I/O the double was there to avoid.
 
 ### Logging Standards
 This project uses CUI logging standards with Java Util Logging:
@@ -364,6 +378,12 @@ The project includes custom skills in `.claude/skills/`:
 - **Blank lines**: Required before all lists
 - **Header**: Include TOC and section numbering
 - **Source highlighting**: Use `:source-highlighter: highlight.js`
+- **Package and ArchUnit patterns**: Write them with literal periods, exactly as they appear in the
+  test sources — a documented pattern must be copy-pasteable into an ArchUnit rule without editing.
+  Never substitute the Unicode ellipsis character (U+2026) for the two-period ArchUnit wildcard, and
+  never use it to elide a package prefix: it renders as one glyph where the rule needs two periods,
+  so a reader who copies it gets a pattern that silently matches nothing. `DocumentedPackagePatternTest`
+  enforces this and fails the build when the glyph reappears in a documented package pattern.
 
 ### Javadoc Standards
 - Every public and protected class/interface must be documented

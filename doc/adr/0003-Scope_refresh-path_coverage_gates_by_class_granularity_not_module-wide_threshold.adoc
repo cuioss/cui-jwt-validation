@@ -90,8 +90,8 @@ so responds to coverage removed from lines the change never touched. Neither sub
 *Negative / Risks:*
 
 * The `<includes>` list stays hand-maintained by decision — the derived alternatives (a
-  `@RefreshPath` marker annotation, or pattern-derived entries such as `…flow.Refresh*` /
-  `…flow.Redeemed*`) were rejected as, respectively, new public production API added to serve a
+  `@RefreshPath` marker annotation, or pattern-derived entries such as `..flow.Refresh*` /
+  `..flow.Redeemed*`) were rejected as, respectively, new public production API added to serve a
   build gate, and incomplete: the pattern shape misses `token.RotationResult`,
   `token.RefreshTokenFamily`, `lifecycle.RefreshScheduler` and `lifecycle.InMemoryTokenStore`.
   This is no longer an unguarded risk: `RefreshPathCoverageGuardTest` fails the build on both drift

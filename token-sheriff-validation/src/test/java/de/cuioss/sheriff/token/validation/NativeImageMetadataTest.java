@@ -58,6 +58,7 @@ class NativeImageMetadataTest {
     private static final String RUNTIME_INITIALIZED_CLASS =
             "de.cuioss.sheriff.token.validation.jwks.http.HttpJwksLoader";
     private static final String NAME_ATTRIBUTE = "name";
+    private static final String CONDITION_ATTRIBUTE = "condition";
     private static final String ALL_DECLARED_METHODS = "allDeclaredMethods";
     private static final String ALL_DECLARED_FIELDS = "allDeclaredFields";
     private static final String ALL_DECLARED_CONSTRUCTORS = "allDeclaredConstructors";
@@ -203,7 +204,7 @@ class NativeImageMetadataTest {
         @Test
         @DisplayName("Should declare the expected reflection flags for every registered name")
         void shouldDeclareTheExpectedReflectionFlagsForEveryRegisteredName() {
-            Map<String, Set<String>> declared = declaredReflectionFlags();
+            Map<String, Set<String>> declared = declaredReflectionFlags(readReflectConfig());
 
             List<Executable> assertions = new ArrayList<>(EXPECTED_REFLECTION_FLAGS.size());
             for (Map.Entry<String, Set<String>> expected : EXPECTED_REFLECTION_FLAGS.entrySet()) {
@@ -212,6 +213,49 @@ class NativeImageMetadataTest {
                         "Reflection flags should match the expected contract for " + expected.getKey()));
             }
             assertAll("every registered name declares its expected reflection flags", assertions);
+        }
+    }
+
+    @Nested
+    @DisplayName("reflection-flag discovery")
+    class ReflectionFlagDiscovery {
+
+        @Test
+        @DisplayName("Should count a non-boolean widening and ignore an explicit false")
+        void shouldCountNonBooleanWideningAndIgnoreExplicitFalse() {
+            JsonArray entries = parseEntries("""
+                    [
+                      {"name": "com.example.Widened", "methods": [{"name": "foo"}]},
+                      {"name": "com.example.Disabled", "allDeclaredFields": false}
+                    ]
+                    """);
+
+            Map<String, Set<String>> declared = declaredReflectionFlags(entries);
+
+            assertAll("a non-boolean widening is declared, an explicit false is not",
+                    () -> assertEquals(Set.of("methods"), declared.get("com.example.Widened"),
+                            "A non-boolean methods widening enlarges the reflective surface exactly as "
+                                    + "a boolean flag does and must surface as a declared flag"),
+                    () -> assertEquals(Set.<String>of(), declared.get("com.example.Disabled"),
+                            "An explicit false enables nothing, so it must not surface as a declared flag"));
+        }
+
+        @Test
+        @DisplayName("Should ignore the condition attribute while still counting real flags")
+        void shouldIgnoreConditionAttribute() {
+            JsonArray entries = parseEntries("""
+                    [
+                      {"name": "com.example.Conditional",
+                       "condition": {"typeReached": "com.example.Trigger"},
+                       "allDeclaredMethods": true}
+                    ]
+                    """);
+
+            Map<String, Set<String>> declared = declaredReflectionFlags(entries);
+
+            assertEquals(METHODS_ONLY, declared.get("com.example.Conditional"),
+                    "The condition attribute gates when an entry applies rather than granting "
+                            + "reflective access, so it must not surface as a declared flag");
         }
     }
 
@@ -243,24 +287,36 @@ class NativeImageMetadataTest {
      * Reads the reflection flags each entry actually enables, discovered from the file rather than
      * looked up against a fixed list of attribute names.
      * <p>
-     * Every attribute except {@code name} whose value is boolean {@code true} counts. Discovering
+     * Every attribute except {@code name} and {@code condition} counts unless it is an explicit
+     * {@code false}. GraalVM's {@code condition} attribute gates when an entry is applied rather
+     * than granting reflective access, so counting it would fail the comparison against
+     * {@link #EXPECTED_REFLECTION_FLAGS} over metadata that widens nothing. Discovering
      * them is what lets the caller catch a widened flag it has never heard of: an entry that adds
      * {@code "allPublicMethods": true} surfaces as an unexpected member of that type's declared set
      * and fails the comparison against {@link #EXPECTED_REFLECTION_FLAGS}, where iterating a fixed
      * list of the three known attributes would have ignored it and reported green.
      * <p>
+     * Counting every non-{@code false} value, rather than only boolean {@code true}, is what extends
+     * that reach to GraalVM's non-boolean widenings. {@code "methods": [...]} and
+     * {@code "fields": [...]} enlarge the reflective surface exactly as a boolean flag does, so a
+     * boolean-only predicate would have let one be added while this test stayed green.
+     * <p>
      * A flag written as an explicit {@code false} is deliberately not collected: it enables nothing
      * and enlarges no surface, so treating it as declared would fail the build over a no-op.
+     *
+     * @param entries the parsed reflect-config entries to read. Taken as a parameter so the
+     * discovery can be exercised against synthetic entries without mutating the shipped file.
+     * @return the set of flags each registered name declares, keyed by name
      */
-    private static Map<String, Set<String>> declaredReflectionFlags() {
-        JsonArray entries = readReflectConfig();
+    private static Map<String, Set<String>> declaredReflectionFlags(JsonArray entries) {
         Map<String, Set<String>> flagsByName = new LinkedHashMap<>();
         for (JsonValue entry : entries) {
             JsonObject object = entry.asJsonObject();
             Set<String> enabledFlags = new TreeSet<>();
             for (Map.Entry<String, JsonValue> attribute : object.entrySet()) {
                 if (!NAME_ATTRIBUTE.equals(attribute.getKey())
-                        && attribute.getValue().getValueType() == JsonValue.ValueType.TRUE) {
+                        && !CONDITION_ATTRIBUTE.equals(attribute.getKey())
+                        && attribute.getValue().getValueType() != JsonValue.ValueType.FALSE) {
                     enabledFlags.add(attribute.getKey());
                 }
             }
@@ -270,7 +326,11 @@ class NativeImageMetadataTest {
     }
 
     private static JsonArray readReflectConfig() {
-        try (JsonReader reader = Json.createReader(new StringReader(readResource(REFLECT_CONFIG)))) {
+        return parseEntries(readResource(REFLECT_CONFIG));
+    }
+
+    private static JsonArray parseEntries(String json) {
+        try (JsonReader reader = Json.createReader(new StringReader(json))) {
             return reader.readArray();
         }
     }

@@ -29,7 +29,7 @@ interprets trust*:
   capabilities.
 * *Metrics* (`commons.metrics`) — the `sheriff.token.*` metric identifiers, defined once.
 
-The boundary is enforced: ArchUnit forbids `commons` depending "up" on `…validation..` (see
+The boundary is enforced: ArchUnit forbids `commons` depending "up" on `..validation..` (see
 xref:architecture.adoc[Architecture]).
 
 == Start here
