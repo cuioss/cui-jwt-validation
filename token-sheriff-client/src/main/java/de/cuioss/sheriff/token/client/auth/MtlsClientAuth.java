@@ -22,14 +22,19 @@ import java.util.Map;
 /**
  * Mutual-TLS certificate-bound client authentication (RFC 8705, {@code tls_client_auth}).
  * <p>
+ * <strong>Alpha capability.</strong> The strategy is declared, never selected, and leaving it
+ * unexercised is not a coverage obligation; DPoP is the sender-constraining and
+ * client-authentication direction. The fail-fast constructor is the alpha contract — it refuses
+ * construction outright, so no configuration can route a request through this strategy.
+ * <p>
  * Mutual-TLS authenticates the client by the TLS client certificate presented during the
  * handshake — a transport-layer binding that must be configured as an {@code SSLContext} carrying
- * the client key material on the {@code HttpHandler}. No code path currently plumbs such an
+ * the client key material on the {@code HttpHandler}. No code path plumbs such an
  * {@code SSLContext} into the transport, so a {@code tls_client_auth} request would leave the
  * client without a bound certificate — an <em>unauthenticated</em> request. Rather than silently
  * producing that request (or leaning on a process-global default {@code SSLContext}), this strategy
- * <strong>fails fast at construction</strong> until the transport can honor mTLS (H4). No
- * {@code SSLContext} plumbing is added speculatively.
+ * <strong>fails fast at construction</strong> (H4). No {@code SSLContext} plumbing is added
+ * speculatively.
  *
  * @since 1.0
  * @author Oliver Wolff
@@ -38,9 +43,10 @@ import java.util.Map;
 public class MtlsClientAuth implements ClientAuthentication {
 
     /**
-     * Always throws — mutual-TLS is not supported until the transport can carry client key material.
+     * Always throws — an alpha strategy is not constructible, so the refusal is unconditional
+     * rather than a state the caller can configure its way out of.
      *
-     * @param clientId the OAuth 2.0 client id (unused; the strategy is not constructible yet)
+     * @param clientId the OAuth 2.0 client id (unused; an alpha strategy is not constructible)
      * @throws UnsupportedOperationException always, because no {@code SSLContext} client key
      *         material is plumbed into the transport, so {@code tls_client_auth} cannot be honored
      */
