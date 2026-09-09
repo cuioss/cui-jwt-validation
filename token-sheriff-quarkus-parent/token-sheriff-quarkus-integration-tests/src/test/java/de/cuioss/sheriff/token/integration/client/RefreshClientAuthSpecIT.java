@@ -48,17 +48,21 @@ import static org.junit.jupiter.api.Assertions.*;
  * Drives the {@code refresh_token} leg through the production client-authentication strategies other
  * than {@code client_secret_basic}, against the real Keycloak container.
  * <p>
- * The engine ships four strategies behind {@link ClientAuthenticationSelector}, but only
- * {@link ClientSecretBasicAuth} had ever authenticated a refresh against a real authorization server:
- * every other refresh spec in this module builds its flow from
- * {@link RefreshEngineSupport#clientAuthentication(ClientConfiguration)}, which is Basic. This spec
- * closes {@link ClientSecretPostAuth} and {@link PrivateKeyJwtAuth}, and pins the selector's routing
- * against the realm's genuinely advertised {@code token_endpoint_auth_methods_supported}.
+ * The engine ships four strategies behind {@link ClientAuthenticationSelector} — three production
+ * strategies and one alpha strategy — but only {@link ClientSecretBasicAuth} had ever authenticated a
+ * refresh against a real authorization server: every other refresh spec in this module builds its
+ * flow from {@link RefreshEngineSupport#clientAuthentication(ClientConfiguration)}, which is Basic.
+ * This spec closes {@link ClientSecretPostAuth} and {@link PrivateKeyJwtAuth}, and pins the
+ * selector's routing against the realm's genuinely advertised
+ * {@code token_endpoint_auth_methods_supported}. With those legs closed the spec is
+ * <strong>complete for the production strategy set</strong>.
  * <p>
- * {@code MtlsClientAuth} is deliberately absent: it is a transport-layer binding the client transport
+ * {@code MtlsClientAuth} is outside that set by <em>classification</em>, not by omission:
+ * {@code tls_client_auth} is an alpha capability — declared, never selected, and not a coverage
+ * obligation while unexercised (ADR-0012). It is a transport-layer binding the client transport
  * cannot honor (no client key material is plumbed through the {@code SSLContext}), and
- * {@link ClientAuthenticationSelector} skips {@code tls_client_auth} for exactly that reason. Driving
- * it would need certificate infrastructure this fixture does not have.
+ * {@link ClientAuthenticationSelector} skips it for exactly that reason. Driving it would need
+ * certificate infrastructure this fixture does not have.
  *
  * <h2>Ephemeral {@code private_key_jwt} key material</h2>
  * The assertion signing key is generated per test run and its public half is pushed onto the realm's
