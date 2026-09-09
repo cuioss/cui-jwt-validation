@@ -111,11 +111,13 @@ grants MUST NOT be implemented (<<_security_exclusions_legacy_discouraged>>).
 === CLIENT-4: Strong token-endpoint client authentication
 
 The engine MUST authenticate to the token endpoint (and PAR / revocation / introspection
-endpoints) and MUST prefer the *strongest method the authorization server offers*:
-`private_key_jwt` (RFC 7523) over a shared `client_secret`. `private_key_jwt` is the
-implemented key-based method; mTLS (`tls_client_auth`, RFC 8705) is an alpha capability —
-declared, never selected — and DPoP is the sender-constraining and client-authentication
-direction. When a
+endpoints). Among the strategies the caller has *configured*, the engine MUST prefer the
+*strongest method the authorization server also advertises*: `private_key_jwt` (RFC 7523)
+over a shared `client_secret`. Selection never reaches outside the configured set — a method
+the caller did not configure is never chosen, however the authorization server advertises it.
+`private_key_jwt` is the implemented key-based method; mTLS (`tls_client_auth`, RFC 8705) is
+an alpha capability — declared, never selected — and DPoP is the sender-constraining and
+client-authentication direction. When a
 `client_secret` is used it MUST be sent only over TLS (<<CLIENT-14>>, transport TLS is
 `COMMONS-2`) and via `client_secret_basic` / `client_secret_post` — never in a URL. Client
 credentials MUST be protected at rest and MUST NOT be logged.

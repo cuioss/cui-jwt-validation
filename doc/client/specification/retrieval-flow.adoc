@@ -92,14 +92,15 @@ The engine supports the secure subset of token-endpoint grants
 == [[_client_authentication]] Client authentication
 
 The engine authenticates to the token, PAR, revocation and introspection endpoints, choosing
-the *strongest method the AS offers* (xref:../requirements.adoc#CLIENT-4[CLIENT-4],
+the *strongest configured method the AS also advertises* — never a method the caller did not
+configure (xref:../requirements.adoc#CLIENT-4[CLIENT-4],
 xref:../threat-model.adoc#T-CLIENT-CRED[T-CLIENT-CRED]):
 
 [cols="1,2,1", options="header"]
 |===
 | Method | Notes | Source
 
-| `private_key_jwt` | Preferred — the key-based method the engine selects; asymmetric client assertion, no shared secret in transit. | https://www.rfc-editor.org/rfc/rfc7523[RFC 7523]
+| `private_key_jwt` | Preferred — the key-based method ranked first among the configured strategies; asymmetric client assertion, no shared secret in transit. | https://www.rfc-editor.org/rfc/rfc7523[RFC 7523]
 | mTLS (`tls_client_auth`) | Alpha — declared so an advertised entry resolves, never selected; the transport plumbs no client key material. DPoP is the sender-constraining and client-authentication direction. | https://www.rfc-editor.org/rfc/rfc8705[RFC 8705]
 | `client_secret_basic` / `client_secret_post` | Fallback only; secret sent over TLS, never in a URL. | https://www.rfc-editor.org/rfc/rfc6749#section-2.3[RFC 6749 §2.3]
 |===
