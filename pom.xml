@@ -50,108 +50,34 @@
 
     <profiles>
         <profile>
-            <!-- Local addition to the pre-commit profile inherited from cui-java-parent.
+            <!-- Parent-drift guard for the pre-commit profile.
 
-                 ORDERING DEFECT (what this block fixes).
-                 The inherited profile binds two MUTATING executions:
-                 - execution id `format-license-headers` on com.mycila:license-maven-plugin,
-                   goal format, declared phase process-sources;
-                 - execution id `rewrite` on org.openrewrite.maven:rewrite-maven-plugin,
-                   goal run, with NO declared phase - so it takes the run goal's default
-                   phase from the plugin descriptor, process-test-classes. That default is
-                   invisible from any pom in this repo, which is precisely how the ordering
-                   went unnoticed.
-                 Both phases precede verify, where the two assertions below sit. Every
-                 -Ppre-commit run therefore mutated the tree FIRST and only then asserted
-                 against the already-rewritten result: the assertions could not fail by
-                 construction, and a green exit code carried no information at all. A clean
-                 tree observed after such a run demonstrates only that the mutations had
-                 already been applied - not that the gate enforces anything.
+                 -Ppre-commit is inherited from cui-java-parent and AUTO-FIXES: it runs
+                 license:format and rewrite:run, both of which rewrite tracked sources in
+                 place and precede verify. That is the intended org-wide behaviour - the
+                 quality gate auto-fixes, in every language. Review what it changed and
+                 commit it.
 
-                 THE FIX.
-                 Both inherited executions are overridden BY ID below and bound to
-                 <phase>none</phase>. Maven merges plugin <execution> entries by id, so
-                 reusing the id overrides the inherited entry rather than appending beside
-                 it; neither mutating execution runs any more. -Ppre-commit is now a purely
-                 NON-MUTATING verify gate - license:check and rewrite:dryRun run in the
-                 verify phase and red the build when the tree is not already the gate's
-                 fixed point.
+                 This repo previously inverted that, overriding both inherited executions BY
+                 ID with <phase>none</phase> and adding license:check plus
+                 rewrite:dryRun(failOnDryRunResults=true) to make -Ppre-commit a non-mutating
+                 verify gate. That inversion has been removed. Two reasons, independent of
+                 each other:
 
-                 To APPLY the formatting pass the gate no longer performs, run it explicitly:
+                   1. It contradicted the org decision that the gate auto-fixes, leaving this
+                      repo the only one where -Ppre-commit means something different.
+                   2. It was fragile by construction. The override worked ONLY by matching the
+                      parent's execution ids, so a parent restructure that renamed either id
+                      would silently restore the mutations with no signal here at all - the
+                      overrides would simply append beside the inherited entries instead of
+                      merging onto them.
 
-                     ./mvnw -Ppre-commit license:format rewrite:run
-
-                 NEGATIVE-CONTROL EVIDENCE (measured, not reasoned about).
-                 The gate is demonstrated to REJECT a tree it would rewrite, not merely to
-                 accept a clean one. For BOTH halves - the rewrite half and the license half
-                 - a deliberate revertable mutation of a kind the active recipes actually
-                 make was introduced, the gate was run and exited NON-ZERO, the mutation was
-                 reverted, and the gate was re-run and exited ZERO. The recorded exit codes
-                 are carried in the plan's landing report. A green run on a mutated tree
-                 would be the defect reproducing.
-
-                 activeRecipes is deliberately NOT redeclared here: the parent's recipe list
-                 stays the single source of truth. No plugin version is declared for either
-                 plugin - both are already bound by the inherited profile, so no new build
-                 dependency is introduced.
-
-                 A future run that reds these assertions is reporting a real new mutation - it is not
-                 noise, and the remedy is to fix the source, suppress at the site with a recorded
-                 rationale, or add an <exclusions> entry here, never to relax the assertions. -->
+                 What remains below is unrelated to the mutation question and is deliberately
+                 KEPT: a durable guard asserting the parent has not silently re-activated
+                 org.openrewrite.java.migrate.util.JavaUtilAPIs. -->
             <id>pre-commit</id>
             <build>
                 <plugins>
-                    <plugin>
-                        <groupId>com.mycila</groupId>
-                        <artifactId>license-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <!-- UNBIND the inherited mutating execution. Same id as the
-                                     parent's entry, so Maven merges onto it instead of adding a
-                                     second one; phase none removes it from the lifecycle. Goals
-                                     and configuration stay inherited and are NOT redeclared. -->
-                                <id>format-license-headers</id>
-                                <phase>none</phase>
-                            </execution>
-                            <execution>
-                                <!-- Post-condition for format-license-headers: fails when any
-                                     header would still be rewritten. -->
-                                <id>assert-license-headers-unchanged</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>check</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.openrewrite.maven</groupId>
-                        <artifactId>rewrite-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <!-- UNBIND the inherited mutating execution. The parent declares
-                                     this id with goal run and NO phase, so it silently took the
-                                     descriptor default process-test-classes - ahead of the verify
-                                     assertion below. Same id here merges onto that entry; phase
-                                     none removes it from the lifecycle. Goals and configuration
-                                     stay inherited and are NOT redeclared. -->
-                                <id>rewrite</id>
-                                <phase>none</phase>
-                            </execution>
-                            <execution>
-                                <!-- Post-condition for the rewrite execution: fails when any
-                                     active recipe would still change a source file. -->
-                                <id>assert-no-rewrite-changes</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>dryRun</goal>
-                                </goals>
-                                <configuration>
-                                    <failOnDryRunResults>true</failOnDryRunResults>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
                     <plugin>
                         <!-- Durable guard for the parent-inherited JavaUtilAPIs exclusion.
 

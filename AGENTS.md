@@ -144,9 +144,9 @@ Mandatory for 3+ similar test variants. Common annotations:
    ```
    - Fix ALL errors and warnings (mandatory)
    - Address OpenRewrite markers (see section below)
-   - This is a **verify gate, not a formatter** — it never rewrites your files. When it reds on a
-     formatting or license-header finding, apply the pass explicitly with
-     `./mvnw -Ppre-commit license:format rewrite:run`, then re-run the gate.
+   - This **auto-fixes**: it rewrites your files in place (`license:format`, `rewrite:run`).
+     Review what it changed and commit it. A green run that produced no diff and a green run
+     that repaired the tree look identical — always check `git status` afterwards.
 
 2. **Final verification**:
    ```bash
@@ -278,33 +278,33 @@ suppression of a *different* recipe (`CuiLoggerStandardsRecipe`, at the two `%n`
 placement. That result speaks to the **placement mechanism** only. It says nothing about whether
 `InvalidExceptionUsageRecipe` honours the same placements.
 
-#### `-Ppre-commit` is a non-mutating verify gate
+#### `-Ppre-commit` auto-fixes
 
-`-Ppre-commit` does not rewrite your files any more, and it fails loud when it would have to.
+`-Ppre-commit` rewrites your files. That is intended: the quality gate auto-fixes, in every
+language and every cuioss repo. Review what it changed and commit it.
 
-The profile inherited from `cui-java-parent` binds two mutating executions — `format-license-headers`
-(`license:format`, phase `process-sources`) and `rewrite` (`rewrite:run`, no declared phase, so the
-descriptor default `process-test-classes`). Both ran *before* the `verify`-phase assertions meant to
-police them, so those assertions inspected an already-rewritten tree and could not fail by
-construction. The root `pom.xml` now overrides both executions **by id** with `<phase>none</phase>`,
-which unbinds them. What remains in `verify` is only the two non-mutating post-conditions:
-`license:check` (`assert-license-headers-unchanged`) and `rewrite:dryRun` with
-`failOnDryRunResults=true` (`assert-no-rewrite-changes`). If the gate would change a file, the build
-fails and names it.
+The profile inherited from `cui-java-parent` binds two mutating executions —
+`format-license-headers` (`license:format`, phase `process-sources`) and `rewrite` (`rewrite:run`,
+no declared phase, so the descriptor default `process-test-classes`). Both run ahead of `verify`.
+Strip a license header, run the gate, and it exits **zero** with the header silently restored and
+`git status` clean.
 
-To **apply** the formatting pass the gate no longer performs, run it explicitly:
+This repo previously inverted that, overriding both executions by id with `<phase>none</phase>` and
+adding `license:check` plus `rewrite:dryRun(failOnDryRunResults=true)` to make the profile a
+non-mutating verify gate. That inversion has been removed — it contradicted the org-wide decision
+that the gate auto-fixes, and it was fragile: the override worked only by matching the parent's
+execution ids, so a parent restructure that renamed either id would have silently restored the
+mutations with no signal here.
 
-```bash
-./mvnw -Ppre-commit license:format rewrite:run
-```
+What remains in the local `pre-commit` profile is unrelated to formatting: a parent-drift guard
+(`dump-effective-pom-for-recipe-audit` + `assert-javautilapis-excluded`, both
+`<inherited>false</inherited>`) asserting the parent has not silently re-activated
+`org.openrewrite.java.migrate.util.JavaUtilAPIs`, whose transitive `UseMapOf` recipe emits
+non-compiling output (see PR #577). Keep it.
 
-So a red `-Ppre-commit` run is now a genuine signal — and it is a signal the gate has been
-demonstrated to produce: for both halves, a deliberate mutation was introduced, the gate exited
-non-zero, the mutation was reverted, and the gate exited zero. A red assertion is reporting a real
-mutation: fix the source, run the explicit format command above, suppress at the site with a
-recorded rationale, or — only when none of those is possible — add an `<exclusions>` entry to the
-local `pre-commit` profile in the root `pom.xml`. Never relax the assertions, and never redeclare
-`activeRecipes` locally: the parent's recipe list is the single source of truth.
+The gate still fails on things it cannot fix — `check-javadocs-pre-commit` runs with
+`failOnError=true`/`doclint=html`. What it has no longer is a *formatting* assertion. Never
+redeclare `activeRecipes` locally: the parent's recipe list is the single source of truth.
 
 ## Pre-1.0 Project Rules
 
