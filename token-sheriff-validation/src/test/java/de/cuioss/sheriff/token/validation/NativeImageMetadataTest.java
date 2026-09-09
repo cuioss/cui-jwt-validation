@@ -58,6 +58,7 @@ class NativeImageMetadataTest {
     private static final String RUNTIME_INITIALIZED_CLASS =
             "de.cuioss.sheriff.token.validation.jwks.http.HttpJwksLoader";
     private static final String NAME_ATTRIBUTE = "name";
+    private static final String CONDITION_ATTRIBUTE = "condition";
     private static final String ALL_DECLARED_METHODS = "allDeclaredMethods";
     private static final String ALL_DECLARED_FIELDS = "allDeclaredFields";
     private static final String ALL_DECLARED_CONSTRUCTORS = "allDeclaredConstructors";
@@ -238,6 +239,24 @@ class NativeImageMetadataTest {
                     () -> assertEquals(Set.<String>of(), declared.get("com.example.Disabled"),
                             "An explicit false enables nothing, so it must not surface as a declared flag"));
         }
+
+        @Test
+        @DisplayName("Should ignore the condition attribute while still counting real flags")
+        void shouldIgnoreConditionAttribute() {
+            JsonArray entries = parseEntries("""
+                    [
+                      {"name": "com.example.Conditional",
+                       "condition": {"typeReached": "com.example.Trigger"},
+                       "allDeclaredMethods": true}
+                    ]
+                    """);
+
+            Map<String, Set<String>> declared = declaredReflectionFlags(entries);
+
+            assertEquals(METHODS_ONLY, declared.get("com.example.Conditional"),
+                    "The condition attribute gates when an entry applies rather than granting "
+                            + "reflective access, so it must not surface as a declared flag");
+        }
     }
 
     @Nested
@@ -268,7 +287,10 @@ class NativeImageMetadataTest {
      * Reads the reflection flags each entry actually enables, discovered from the file rather than
      * looked up against a fixed list of attribute names.
      * <p>
-     * Every attribute except {@code name} counts unless it is an explicit {@code false}. Discovering
+     * Every attribute except {@code name} and {@code condition} counts unless it is an explicit
+     * {@code false}. GraalVM's {@code condition} attribute gates when an entry is applied rather
+     * than granting reflective access, so counting it would fail the comparison against
+     * {@link #EXPECTED_REFLECTION_FLAGS} over metadata that widens nothing. Discovering
      * them is what lets the caller catch a widened flag it has never heard of: an entry that adds
      * {@code "allPublicMethods": true} surfaces as an unexpected member of that type's declared set
      * and fails the comparison against {@link #EXPECTED_REFLECTION_FLAGS}, where iterating a fixed
@@ -293,6 +315,7 @@ class NativeImageMetadataTest {
             Set<String> enabledFlags = new TreeSet<>();
             for (Map.Entry<String, JsonValue> attribute : object.entrySet()) {
                 if (!NAME_ATTRIBUTE.equals(attribute.getKey())
+                        && !CONDITION_ATTRIBUTE.equals(attribute.getKey())
                         && attribute.getValue().getValueType() != JsonValue.ValueType.FALSE) {
                     enabledFlags.add(attribute.getKey());
                 }
