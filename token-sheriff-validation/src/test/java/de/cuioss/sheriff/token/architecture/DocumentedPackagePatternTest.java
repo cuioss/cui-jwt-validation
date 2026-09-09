@@ -24,16 +24,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Keeps every documented package / ArchUnit pattern copy-pasteable.
@@ -132,7 +129,7 @@ class DocumentedPackagePatternTest {
 
     @Test
     @DisplayName("No documented package pattern in the repository uses the ellipsis glyph")
-    void repositoryCarriesNoElidedPackagePatterns() throws IOException {
+    void repositoryCarriesNoElidedPackagePatterns() throws Exception {
         Path repositoryRoot = resolveRepositoryRoot();
         assertTrue(Files.isRegularFile(repositoryRoot.resolve("pom.xml")),
                 "Repository root did not resolve to a Maven project root (resolved to " + repositoryRoot
@@ -151,7 +148,7 @@ class DocumentedPackagePatternTest {
     }
 
     private static Path resolveRepositoryRoot() {
-        Path moduleBase = Paths.get(System.getProperty("basedir", System.getProperty("user.dir")))
+        Path moduleBase = Path.of(System.getProperty("basedir", System.getProperty("user.dir")))
                 .toAbsolutePath()
                 .normalize();
         Path parent = moduleBase.getParent();
