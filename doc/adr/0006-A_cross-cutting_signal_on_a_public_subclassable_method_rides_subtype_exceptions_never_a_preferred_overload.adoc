@@ -81,7 +81,14 @@ contract, defeating the purpose of choosing this mechanism over the overload in 
 * A future maintainer adding a new call site inside the type can still reintroduce the rejected
   failure mode by adding a preferred overload out of familiarity with that pattern elsewhere in
   the codebase; the risk is mitigated only by this decision being visible at review time, not by
-  any mechanism that prevents the mistake structurally.
+  any mechanism that prevents the mistake structurally. What review-time visibility now has is a
+  checkable form: `AGENTS.md` § Code Standards carries the pre-flight check this decision implies —
+  before adding an overload the production path will prefer, establish whether the existing method
+  is overridable and whether anything overrides it, test doubles included — together with the
+  reviewer corollary that a timing-out test extending a production class is a dispatch-target
+  suspect rather than a flake. That is a rule a reviewer applies by reading, not a gate that fails
+  the build, so it sharpens the review-time mitigation without changing its nature: nothing here
+  prevents the mistake structurally.
 * If a carrier subtype is ever added as a sibling of the documented thrown type instead of a true
   subtype of it, the same silent-break failure mode this decision exists to avoid reappears in a
   different form — as a documented-`@throws`-contract violation instead of as a bypassed override.
