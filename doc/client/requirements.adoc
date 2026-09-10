@@ -187,17 +187,27 @@ exposed or tamperable in the browser. PAR is required by FAPI 2.0 and preferred 
 * Source: https://www.rfc-editor.org/rfc/rfc9126[RFC 9126], https://openid.net/specs/fapi-2_0-security-profile.html[FAPI 2.0] (PAR mandatory), https://www.rfc-editor.org/rfc/rfc9700#section-2.1[RFC 9700 §2.1].
 
 [#CLIENT-11]
-=== CLIENT-11: Requesting sender-constrained tokens (DPoP / mTLS)
+=== CLIENT-11: Requesting sender-constrained tokens (DPoP)
 
-The engine MUST be able to *request* sender-constrained tokens at the token endpoint — DPoP
-(RFC 9449) by presenting a DPoP proof, or mTLS (RFC 8705) certificate-bound tokens — so
-retrieved tokens cannot be replayed by a bearer that stole them. DPoP is the implemented
-direction; mTLS client authentication (`tls_client_auth`) is alpha, which leaves the
-certificate-bound sender-constraint mechanics here untouched — the two are distinct
-capabilities. The *validation* of the
-resulting binding is inherited from the validation module (`VALIDATION-8.7`); this
-requirement is the client-side delta of *asking for* the constraint and preserving it
-(<<CLIENT-18>>).
+The engine MUST be able to *request* sender-constrained tokens at the token endpoint by
+presenting a DPoP proof (RFC 9449), so retrieved tokens cannot be replayed by a bearer that
+stole them. DPoP is the implemented direction and the only token-request route this
+requirement mandates: it binds the issued token to the client's proof key without
+authenticating the client, so it composes with `private_key_jwt` (<<CLIENT-4>>) rather than
+replacing it.
+
+Requesting an mTLS (RFC 8705) certificate-bound token is *not* a capability this engine has,
+and this requirement does not demand it: obtaining that binding means presenting a client
+certificate at the token endpoint, and mTLS client authentication (`tls_client_auth`) is
+alpha — declared, never selected, with no `SSLContext` client key material plumbed into the
+transport (<<CLIENT-4>>). The certificate-bound case therefore stays specified only as a
+*binding kind the server-side lifecycle preserves* where a token already carries one
+(<<CLIENT-18>>) — preserving a `cnf.x5t#S256` binding is a capability distinct from the alpha
+client-authentication method.
+
+The *validation* of the resulting binding is inherited from the validation module
+(`VALIDATION-8.7`); this requirement is the client-side delta of *asking for* the constraint
+and preserving it (<<CLIENT-18>>).
 
 * Source: https://www.rfc-editor.org/rfc/rfc9449[RFC 9449], https://www.rfc-editor.org/rfc/rfc8705[RFC 8705], https://www.rfc-editor.org/rfc/rfc9700#section-4.10[RFC 9700 §4.10], https://openid.net/specs/fapi-2_0-security-profile.html[FAPI 2.0].
 
