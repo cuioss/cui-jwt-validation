@@ -56,7 +56,7 @@ Two boundaries keep the rule from over-reaching. It does not say `Optional` is u
 === Negative
 
 * The module genuinely contains two shapes for one domain concept, and the rule explains the split without removing it. A reader must know the rule to see the consistency; the code alone reads as a discrepancy.
-* A `@Nullable` component is only as safe as the tooling reading it. Where JSpecify analysis is not applied, the component degrades to an ordinary nullable reference with a comment, whereas an `Optional` would have been enforced by the type system regardless.
+* A `@Nullable` component is only as safe as the tooling reading it. Where JSpecify analysis is not applied, the component degrades to an ordinary nullable reference with a comment. An `Optional` component would still carry a typed absence API for the value it wraps, which the annotation does not — but that is not an unconditional type-system guarantee: the `Optional` reference is itself non-null only by the same `@NullMarked` declaration, so absent that analysis or an explicit runtime check it can be null just as the annotated reference can.
 * The compact-constructor obligation is a convention the language does not enforce. Nothing makes a future record null-check its non-optional components, so clause 3 depends on being remembered at each new record rather than on a mechanism.
 
 === Risks
