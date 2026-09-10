@@ -78,4 +78,4 @@ The alternatives split cleanly. Two of them chase uniformity by collapsing the d
 
 * ADR-0013 - Reject a compatibility shim that would resurrect a removed silent-drop defect class; the sibling decision governing how the same optional component is *constructed*, where this one governs how it is *typed*.
 * ADR-0010 - A refresh token the authorization server declares invalid is a third classification state; the refresh-token lifecycle whose absence-versus-invalid distinction this typing rule has to keep expressible.
-* `doc/client/architecture.adoc` - the client architecture document carrying the flow and token surfaces both shapes appear on.
+* `doc/client/architecture.adoc` - the client architecture document carrying the flow and token surfaces on which both shapes appear.
