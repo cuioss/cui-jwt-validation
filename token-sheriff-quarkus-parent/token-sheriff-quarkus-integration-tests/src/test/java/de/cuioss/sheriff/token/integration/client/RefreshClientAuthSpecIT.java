@@ -56,8 +56,11 @@ import static org.junit.jupiter.api.Assertions.*;
  * This spec closes {@link ClientSecretPostAuth} and {@link PrivateKeyJwtAuth}, and pins the
  * selector's routing against the realm's genuinely advertised
  * {@code token_endpoint_auth_methods_supported}. With those legs closed, <strong>every method the
- * selector can actually select is exercised here</strong> — the claim tracks the selector's own
- * iteration over {@link ClientAuthMethod} rather than a fixed strategy count.
+ * selector can actually select is exercised here</strong> — the claim is bounded by what
+ * {@link ClientAuthenticationSelector#select} does rather than by a fixed strategy count: it walks
+ * the caller-configured {@link ClientAuthentication} strategies it is handed, skips the alpha
+ * {@code tls_client_auth}, and keeps the strongest candidate whose {@link ClientAuthMethod} the
+ * authorization server advertises.
  * <p>
  * {@code MtlsClientAuth} is outside that exercised set by <em>classification</em>, not by omission:
  * {@code tls_client_auth} is an alpha capability — declared, never selected, and not a coverage
