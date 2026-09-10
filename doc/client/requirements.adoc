@@ -391,8 +391,9 @@ surface.
 
 | *Weak client auth where `private_key_jwt` is available; secrets over non-TLS*
 | Shared secrets are the weakest link; strong auth is available as `private_key_jwt`. mTLS
-  (`tls_client_auth`) is alpha and never selected, so it is not the strong alternative here;
-  DPoP is the sender-constraining and client-authentication direction.
+  (`tls_client_auth`) is alpha and never selected, so it is not the strong alternative here.
+  DPoP (RFC 9449) is the sender-constraining direction and is explicitly not a
+  client-authentication method.
 | https://www.rfc-editor.org/rfc/rfc9700[RFC 9700], https://www.rfc-editor.org/rfc/rfc7523[RFC 7523], https://www.rfc-editor.org/rfc/rfc8705[RFC 8705]
 |===
 
