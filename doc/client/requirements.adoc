@@ -116,8 +116,9 @@ endpoints). Among the strategies the caller has *configured*, the engine MUST pr
 over a shared `client_secret`. Selection never reaches outside the configured set — a method
 the caller did not configure is never chosen, however the authorization server advertises it.
 `private_key_jwt` is the implemented key-based method; mTLS (`tls_client_auth`, RFC 8705) is
-an alpha capability — declared, never selected — and DPoP is the sender-constraining and
-client-authentication direction. When a
+an alpha capability — declared, never selected — leaving `private_key_jwt` as the supported
+strong client-authentication route. DPoP (RFC 9449) is the sender-constraining direction
+(<<CLIENT-11>>) and is not itself a client-authentication method. When a
 `client_secret` is used it MUST be sent only over TLS (<<CLIENT-14>>, transport TLS is
 `COMMONS-2`) and via `client_secret_basic` / `client_secret_post` — never in a URL. Client
 credentials MUST be protected at rest and MUST NOT be logged.

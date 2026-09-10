@@ -23,9 +23,12 @@ import java.util.Map;
  * Mutual-TLS certificate-bound client authentication (RFC 8705, {@code tls_client_auth}).
  * <p>
  * <strong>Alpha capability.</strong> The strategy is declared, never selected, and leaving it
- * unexercised is not a coverage obligation; DPoP is the sender-constraining and
- * client-authentication direction. The fail-fast constructor is the alpha contract — it refuses
- * construction outright, so no configuration can route a request through this strategy.
+ * unexercised is not a coverage obligation; {@code private_key_jwt} is the supported
+ * client-authentication route. DPoP (RFC 9449) is the sender-constraining direction and is
+ * explicitly not a client-authentication method — it constrains how an issued token may be
+ * presented, leaving the choice of client-authentication method untouched. The fail-fast
+ * constructor is the alpha contract — it refuses construction outright, so no configuration can
+ * route a request through this strategy.
  * <p>
  * Mutual-TLS authenticates the client by the TLS client certificate presented during the
  * handshake — a transport-layer binding that must be configured as an {@code SSLContext} carrying
@@ -39,6 +42,8 @@ import java.util.Map;
  * @since 1.0
  * @author Oliver Wolff
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc8705">RFC 8705 - OAuth 2.0 Mutual-TLS</a>
+ * @see <a href="https://datatracker.ietf.org/doc/html/rfc9449">RFC 9449 - OAuth 2.0 Demonstrating
+ *      Proof of Possession (DPoP)</a>
  */
 public class MtlsClientAuth implements ClientAuthentication {
 

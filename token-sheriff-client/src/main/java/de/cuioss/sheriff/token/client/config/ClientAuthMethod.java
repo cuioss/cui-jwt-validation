@@ -66,8 +66,10 @@ public enum ClientAuthMethod {
      * <p>
      * <strong>Alpha method.</strong> It is declared so an advertised {@code tls_client_auth} entry
      * still resolves to a named method, it is never selected, and leaving it unexercised is not a
-     * coverage obligation. DPoP is the sender-constraining and client-authentication direction; the
-     * fail-fast constructor of {@code MtlsClientAuth} is what holds the classification.
+     * coverage obligation. {@link #PRIVATE_KEY_JWT} is the supported client-authentication route;
+     * DPoP (RFC 9449) is the sender-constraining direction and is not itself a client-authentication
+     * method, which is why it is absent from this enum. The fail-fast constructor of
+     * {@code MtlsClientAuth} is what holds the classification.
      */
     TLS_CLIENT_AUTH("tls_client_auth", 3);
 

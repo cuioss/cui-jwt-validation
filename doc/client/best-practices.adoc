@@ -49,9 +49,10 @@ record that boundary.
 | Use the *strongest client authentication the AS offers* — `private_key_jwt` (RFC 7523) over
   `client_secret`; secrets only over TLS, never in a URL; protect at rest; never log. mTLS
   (`tls_client_auth`, RFC 8705) is alpha — declared, never selected — so `private_key_jwt` is
-  the supported strong route and DPoP is the sender-constraining and client-authentication
-  direction.
-| https://www.rfc-editor.org/rfc/rfc7523[RFC 7523], https://www.rfc-editor.org/rfc/rfc8705[RFC 8705], https://www.rfc-editor.org/rfc/rfc9700#section-2.2[RFC 9700 §2.2]
+  the supported strong client-authentication route. DPoP (RFC 9449) is the sender-constraining
+  direction and is not a client-authentication method; it constrains how an issued token may be
+  presented and composes with whichever client-authentication method is in use.
+| https://www.rfc-editor.org/rfc/rfc7523[RFC 7523], https://www.rfc-editor.org/rfc/rfc8705[RFC 8705], https://www.rfc-editor.org/rfc/rfc9449[RFC 9449], https://www.rfc-editor.org/rfc/rfc9700#section-2.2[RFC 9700 §2.2]
 | xref:requirements.adoc#CLIENT-4[CLIENT-4] / xref:threat-model.adoc#T-CLIENT-CRED[T-CLIENT-CRED]
 
 | Defeat callback CSRF with a *session-bound `state`*; reject a missing / mismatched value.
