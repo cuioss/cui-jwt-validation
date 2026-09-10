@@ -116,9 +116,16 @@ The engine can *request* that retrieved tokens be sender-constrained
 (xref:../requirements.adoc#CLIENT-11[CLIENT-11],
 xref:../threat-model.adoc#T-TOKEN-REPLAY[T-TOKEN-REPLAY]):
 
-* *DPoP* (RFC 9449) — the engine presents a DPoP proof on the token request so the issued
-  access token is bound to its proof key (`cnf.jkt`).
-* *mTLS* (RFC 8705) — the token is bound to the client certificate.
+* *DPoP* (RFC 9449) — the implemented direction and the only token-request route specified
+  here: the engine presents a DPoP proof on the token request so the issued access token is
+  bound to its proof key (`cnf.jkt`).
+* *mTLS* (RFC 8705) — requesting a certificate-bound token is *not* a capability this engine
+  has: obtaining that binding means presenting a client certificate at the token endpoint,
+  and mTLS client authentication (`tls_client_auth`) is alpha
+  (<<_client_authentication>>). The certificate-bound case stays specified only as a
+  *binding kind the server-side lifecycle preserves* where a token already carries one
+  (xref:../requirements.adoc#CLIENT-18[CLIENT-18]) — preserving a `cnf.x5t#S256` binding is a
+  capability distinct from the alpha client-authentication method.
 
 Validation of the resulting binding is *inherited* from the validation module
 (`VALIDATION-8.7`); this spec covers only the client-side act of *asking for* the constraint.
